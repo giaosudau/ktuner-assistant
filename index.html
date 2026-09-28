@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Civic FE Tune Assist</title>
+<meta name="description" content="Guided AFR tuning for the Honda Civic FE 1.5T CVT on Vietnam E10 fuel: a KTuner and Hondata companion that reads your datalogs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Chakra+Petch:wght@600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<link rel="stylesheet" href="app/app.css">
+<script>
+  (function () {
+    try {
+      var s = JSON.parse(localStorage.getItem('kta-assist-v1') || 'null');
+      if (s && (s.theme === 'dark' || s.theme === 'light')) document.documentElement.setAttribute('data-theme', s.theme);
+    } catch (e) { /* storage blocked: follow the system theme */ }
+  })();
+</script>
+</head>
+<body>
+<div id="app" class="app"><noscript>Civic FE Tune Assist needs JavaScript to read your logs.</noscript></div>
+<script src="engine/kta-engine.js"></script>
+<script src="app/i18n.js"></script>
+<script src="app/app.js"></script>
+</body>
+</html>
