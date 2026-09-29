@@ -1,5 +1,5 @@
 /* Civic FE Tune Assist: the standalone app. Vanilla JS, no build step, works offline.
- * All tuning math lives in engine/kta-engine.js (window.KTA); all text in app/i18n.js. */
+ * All tuning math lives in engine/ (window.KTA: kta-engine, kta-drive, kta-ask); all text in app/i18n*.js. */
 (function () {
   'use strict';
   var K = window.KTA;
@@ -14,7 +14,10 @@
 
   var state = merge(defaults(), load());
   var slots = {};            // logs live only in this tab: { baseline, afm, wot, cool, hot, gain }
-  var ui = { copied: '', error: '', yaw: -38, pitch: 58, topics: { 'topic-0': true } };
+  var ui = { copied: '', error: '', yaw: -38, pitch: 58, topics: { 'topic-0': true }, explain: {}, driveErr: '', driveBusy: '', aiOpen: false };
+  var drives = { current: null, next: null, proof: null };   // drive-check logs live only in this tab
+  var ai = { key: '', models: [], caps: {}, busy: false, result: null, q: '', error: '' };
+  try { if (state.ai && state.ai.remember) ai.key = localStorage.getItem(STORE + '-key') || ''; } catch (e) { /* storage blocked */ }
 
   // ---------------------------------------------------------------------------
   // State
@@ -28,6 +31,7 @@
       applied: { wot: false, boost: false },
       review: { name: '', uses: 'KTuner', decision: '', notes: '', logs: false, diff: false, untouched: false, mech: false },
       page: '', mapTable: 'WOT_Enrich_L', mapView: 'grid', mapShow: 'after',
+      plan: { active: null, history: [] }, ai: { model: '', remember: false }, seenDrive: false,
       lastSlot: ''
     };
   }
@@ -164,6 +168,8 @@
     road26: '<svg viewBox="0 0 26 26" aria-hidden="true"><path d="M9 3 L5 23 M17 3 L21 23" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round"/><path d="M13 5 V8 M13 11.5 V14.5 M13 18 V21" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round"/></svg>'
   };
   ICON.map = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 9.5 L7 12.5 L12.5 9.5 M1.5 6.5 L7 9.5 L12.5 6.5 L7 3.5 Z" style="fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round"/></svg>';
+  ICON.pulse = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1 7.5 H3.8 L5.4 3 L8 11.5 L9.6 7.5 H13" style="fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round"/></svg>';
+  ICON.lock = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" style="fill:none;stroke:currentColor;stroke-width:1.6"/><path d="M5.5 7 V5 A2.5 2.5 0 0 1 10.5 5 V7" style="fill:none;stroke:currentColor;stroke-width:1.6"/></svg>';
   ICON.book = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2.5 H6 A1 1 0 0 1 7 3.5 V12 A1 1 0 0 0 6 11 H2 Z M12 2.5 H8 A1 1 0 0 0 7 3.5 V12 A1 1 0 0 1 8 11 H12 Z" style="fill:none;stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/></svg>';
   var VN_ICON = { sun: ICON.sun26, car: ICON.car26, rain: ICON.rain26, road: ICON.road26 };
 
@@ -255,6 +261,10 @@
   function viewRail() {
     var t = T(), d = doneMap();
     var h = '<nav class="rail" aria-label="' + esc(t.app.stepsNav) + '">';
+    var dOn = state.page === 'drive';
+    h += '<div class="rail-group"><div class="rail-label">' + esc(t.drive.startHere) + '</div><button type="button" class="step-btn ref-btn drive-btn" data-act="page" data-arg="drive"' + (dOn ? ' aria-current="page"' : '') + '>';
+    h += '<span class="step-dot">' + ICON.pulse + '</span><span class="step-text"><span class="step-title">' + esc(t.drive.nav.title) + '</span><span class="step-sub">' + esc(t.drive.nav.sub) + '</span>' + (state.plan.active ? '<span class="step-chip">' + esc(t.drive.doing) + '</span>' : '') + '</span></button></div>';
+    h += '<div class="rail-label rail-major">' + esc(t.drive.navFull) + '</div>';
     ['Prepare', 'Tune', 'Gain'].forEach(function (g) {
       h += '<div class="rail-group"><div class="rail-label">' + esc(t.groups[g]) + '</div>';
       [1, 2, 3, 4, 5, 6, 7].filter(function (n) { return GROUP_OF[n] === g; }).forEach(function (n) {
@@ -282,6 +292,7 @@
   }
 
   function viewMain() {
+    if (state.page === 'drive') return viewDrivePage();
     if (state.page === 'map') return viewMapPage();
     if (state.page === 'guide') return viewGuidePage();
     var t = T(), n = state.step, st = t.steps[n - 1], d = doneMap();
@@ -799,6 +810,351 @@
     return h + pageFoot() + '</main>';
   }
 
+  // ---------------------------------------------------------------------------
+  // Drive check: check a drive, do one thing, prove it (engine/kta-drive.js, engine/kta-ask.js)
+  // ---------------------------------------------------------------------------
+  var EXAMPLE_IDS = ['aug30-1601', 'aug30-1529', 'sep01-0813'];
+  function driveName(rec) { return rec.example ? T().drive.examples[rec.example].title : rec.name; }
+  function actionText(a) {
+    var D = T().drive, d = D.actions[a.id] || D.actions.fix;
+    if (a.tier === 'safety') {
+      var c = findCheck(drives.current ? drives.current.report.an : null, a.check) || { id: a.check, label: a.check, data: {} };
+      var tx = checkText(c);
+      return { title: d.title(tx.label), why: d.why(tx.display), steps: d.steps(tx.fix || ''), proof: d.proof(tx.label), undo: d.undo, note: '' };
+    }
+    return { title: d.title, why: d.why(a.ev, F), steps: d.steps, proof: d.proof(a.ev, F), undo: d.undo, note: d.note || '' };
+  }
+  function findCheck(an, id) {
+    var out = null;
+    if (an) an.gates.forEach(function (g) { g.checks.forEach(function (c) { if (c.id === id) out = c; }); });
+    return out;
+  }
+  function activeTitle() {
+    var A = state.plan.active;
+    if (!A) return '';
+    if (/^fix:/.test(A.id)) return T().drive.actions.fix.title(A.label || A.id.slice(4));
+    var d = T().drive.actions[A.id];
+    return d ? d.title : A.id;
+  }
+  function badgesHtml(a) {
+    var B = T().drive.badges, out = '<span class="badge is-tint">' + esc(B.tier[a.tier]) + '</span>';
+    out += '<span class="badge">' + esc(B.impact[a.impact]) + '</span><span class="badge">' + esc(B.effort[a.effort]) + '</span>';
+    out += '<span class="badge">' + esc(a.flash ? B.flash : B.noFlash) + '</span>';
+    if (!a.flash && a.effort === 1) out += '<span class="badge">' + esc(B.free) + '</span>';
+    out += '<span class="badge">' + esc(B.risk[a.risk || 0]) + '</span>';
+    return '<div class="badges">' + out + '</div>';
+  }
+
+  function viewDrivePage() {
+    var t = T(), D = t.drive, cur = drives.current;
+    var h = '<main class="main drive" id="main" tabindex="-1">' + pageHead(D.eyebrow, D.title, D.goal);
+    h += viewLoop3(D, cur);
+    if (ui.driveErr) h += '<div class="banner stop" role="alert">' + esc(ui.driveErr) + '</div>';
+    // an action in progress survives a reload: its proof card comes first, even before a drive is loaded
+    if (!cur) return h + (state.plan.active ? viewProve(D) : '') + viewDriveStart(D) + '</main>';
+    var R = cur.report, I = R.ins;
+    h += viewSafe(D, R);
+    if (state.plan.active) h += viewProve(D);
+    h += viewNow(D, R);
+    h += viewQueue(D, R);
+    h += '<section class="card"><div class="card-row"><h2 class="card-title">' + esc(D.feelTitle) + '</h2></div><p class="lead-sm"><b>' + esc(D.feel(I.accel && I.accel.headline, F)) + '</b></p>' + graphCard('accel', accelSvg(I), D) + '<p class="small-note">' + esc(D.feelNote) + '</p></section>';
+    h += '<section class="card"><div class="card-row"><h2 class="card-title">' + esc(D.graphsTitle) + '</h2></div><p class="muted" style="margin:0">' + esc(D.graphsNote) + '</p>';
+    h += graphCard('kc', kcSvg(I), D) + graphCard('timing', timingSvg(I), D) + graphCard('afr', afrSvg(I), D) + '</section>';
+    h += viewAsk(D, cur);
+    h += '<section class="card is-soft"><h2 class="card-title">' + esc(D.qualityTitle) + '</h2><ul class="dots">' + D.quality(I, F, t).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+    h += '<p class="small-note">' + esc(driveName(cur) + ' · ' + t.drive.source[I.meta.source] + ' · ' + D.facts(I, F)) + '</p></section>';
+    h += '<section class="card is-soft"><h2 class="card-title">' + esc(t.guide.sourcesTitle) + '</h2><div class="src-list">' + D.sources.map(function (s) { return '<a href="' + esc(s[0]) + '" target="_blank" rel="noopener">' + esc(s[1]) + '</a>'; }).join('') + '</div></section>';
+    return h + '</main>';
+  }
+
+  function viewLoop3(D, cur) {
+    var A = state.plan.active, P = drives.proof;
+    var st = [
+      { done: !!cur, line: cur ? driveName(cur) + ' · ' + T().verdict[cur.report.verdict] : D.loop[0].empty },
+      { done: !!A, active: !A && !!cur, line: A ? D.loop[1].active + ': ' + activeTitle() : (cur && cur.report.plan.now[0] ? actionText(cur.report.plan.now[0]).title : D.loop[1].empty) },
+      { done: !!P && P.verdict === 'keep', active: !!A && !P, line: P ? D.verdicts[P.verdict] : (A ? D.loop[2].ready : D.loop[2].empty) }
+    ];
+    var h = '<ol class="loop3" aria-label="' + esc(D.title) + '">';
+    st.forEach(function (s, k) {
+      h += '<li class="loop-step' + (s.done ? ' is-done' : '') + (s.active ? ' is-active' : '') + '"><span class="loop-n">' + (s.done ? ICON.check : k + 1) + '</span><span><b>' + esc(D.loop[k].title) + '</b><small>' + esc(s.line) + '</small></span></li>';
+    });
+    return h + '</ol>';
+  }
+
+  function loaderHtml(D, which, label) {
+    var h = '<div class="loader" data-drop="1"><label class="file-btn">' + ICON.upload + esc(label) + '<input type="file" accept=".csv,.txt,text/csv" data-drive="' + which + '" aria-label="' + esc(label) + '"></label>';
+    if (ui.driveBusy === 'file') h += '<span class="muted" role="status">' + esc(D.reading) + '</span>';
+    return h + '</div>';
+  }
+  function examplesHtml(D, which) {
+    var h = '<div class="ex-grid">';
+    EXAMPLE_IDS.forEach(function (id) {
+      var ex = D.examples[id], busy = ui.driveBusy === id;
+      h += '<button type="button" class="ex-card" data-act="example" data-arg="' + id + ':' + which + '"' + (busy ? ' aria-busy="true"' : '') + '><b>' + esc(ex.title) + '</b><small>' + esc(busy ? D.exampleLoading : ex.note) + '</small></button>';
+    });
+    return h + '</div>';
+  }
+  function viewDriveStart(D) {
+    var h = '<section class="card is-key"><h2 class="card-title">' + esc(D.loop[0].title) + '</h2>' + loaderHtml(D, 'current', D.load);
+    h += '<h3 class="sub-title">' + esc(D.examplesTitle) + '</h3>' + examplesHtml(D, 'current') + '<p class="small-note">' + esc(D.exampleNote) + '</p></section>';
+    return h;
+  }
+
+  function viewSafe(D, R) {
+    var t = T(), an = R.an;
+    var h = '<section class="card safe-card tinted st-' + an.verdict + '"><div class="safe-head">' + sIcon(an.verdict, 26) + '<div><div class="eyebrow">' + esc(D.safeTitle) + '</div><p class="safe-line">' + esc(D.safe[an.verdict]) + '</p></div>';
+    h += '<button type="button" class="btn-ghost" data-act="driveReset">' + esc(D.another) + '</button></div><div class="gchips">';
+    an.gates.forEach(function (g) {
+      h += '<details class="gchip st-' + g.status + '"><summary>' + sIcon(g.status, 16) + '<b>' + esc(t.gates[g.id]) + '</b><span>' + esc(t.status[g.status]) + '</span></summary><div class="gchip-body">';
+      g.checks.forEach(function (c) { var tx = checkText(c); h += '<div class="check-line st-' + c.status + '"><span class="dot"></span><span class="lbl">' + esc(tx.label) + '</span><span class="val">' + esc(tx.display) + '</span></div>'; });
+      h += '</div></details>';
+    });
+    return h + '</div></section>';
+  }
+
+  function viewNow(D, R) {
+    var P = R.plan, A = state.plan.active;
+    var h = '<section class="card is-key now-card"><div class="card-row"><h2 class="card-title">' + esc(D.nowTitle) + '</h2></div>';
+    var a = P.now[0];
+    if (!a) return h + '<p class="lead-sm"><b>' + esc(D.noActions) + '</b></p></section>';
+    var x = actionText(a), isActive = A && A.id === a.id;
+    h += '<div class="act-head"><span class="rank">1</span><div><h3 class="act-title">' + esc(x.title) + '</h3>' + badgesHtml(a) + (a.again ? '<p class="small-note">' + esc(D.cameBack) + '</p>' : '') + '</div></div>';
+    h += '<p class="body-sm"><b>' + esc(D.why) + '.</b> ' + esc(x.why) + '</p>';
+    h += '<div class="act-steps"><b>' + esc(D.steps) + '</b>' + list(x.steps.map(esc)) + '</div>';
+    h += '<div class="pairs act-pairs"><b>' + esc(D.proof) + '</b><span>' + esc(x.proof) + '</span>' + (x.undo ? '<b>' + esc(D.undo) + '</b><span>' + esc(x.undo) + '</span>' : '') + '</div>';
+    if (x.note) h += '<p class="small-note">' + esc(x.note) + '</p>';
+    h += '<div class="act-buttons">';
+    if (isActive) h += '<span class="pill st-good">' + ICON.check + esc(D.doing) + '</span><button type="button" class="btn-ghost" data-act="stopAction">' + esc(D.stopDoing) + '</button>';
+    else if (!A) h += '<button type="button" class="btn" data-act="startAction" data-arg="' + esc(a.id) + '">' + esc(D.start) + '</button>';
+    if (a.id === 'revs' || a.id === 'fuelCheck' || a.id === 'lowBoost') h += '<button type="button" class="link-btn" data-act="toGraph" data-arg="kc">' + esc(T().drive.graphs.kc.title) + '</button>';
+    if (a.id === 'richWot') h += '<button type="button" class="link-btn" data-act="toGraph" data-arg="afr">' + esc(T().drive.graphs.afr.title) + '</button>';
+    return h + '</div></section>';
+  }
+
+  function viewQueue(D, R) {
+    var P = R.plan, A = state.plan.active;
+    var h = '<section class="card"><h2 class="card-title">' + esc(D.nextTitle) + '</h2>';
+    if (!P.next.length) h += '<p class="muted" style="margin:0">-</p>';
+    P.next.forEach(function (a, k) {
+      var x = actionText(a), isActive = A && A.id === a.id;
+      h += '<details class="act-row"><summary><span class="rank">' + (k + 2) + '</span><span class="act-sum"><b>' + esc(x.title) + '</b>' + badgesHtml(a) + '</span>' + (isActive ? '<span class="pill st-good">' + esc(D.doing) + '</span>' : '') + '</summary>';
+      h += '<div class="act-body"><p class="body-sm"><b>' + esc(D.why) + '.</b> ' + esc(x.why) + '</p>' + list(x.steps.map(esc)) + '<div class="pairs act-pairs"><b>' + esc(D.proof) + '</b><span>' + esc(x.proof) + '</span>' + (x.undo ? '<b>' + esc(D.undo) + '</b><span>' + esc(x.undo) + '</span>' : '') + '</div>';
+      if (!A) h += '<div class="act-buttons"><button type="button" class="btn-ghost" data-act="startAction" data-arg="' + esc(a.id) + '">' + esc(D.start) + '</button></div>';
+      h += '</div></details>';
+    });
+    if (P.later.length) {
+      h += '<h3 class="sub-title">' + esc(D.laterTitle) + '</h3>';
+      P.later.forEach(function (a) {
+        var x = actionText(a);
+        h += '<div class="lock-row"><span class="lock">' + ICON.lock + '</span><div><b>' + esc(x.title) + '</b><small>' + esc(D.unlocksWhen) + ':</small><ul class="dots">' + (a.blockedBy || []).map(function (b) { var fn = D.blockers[b]; return '<li>' + esc(fn ? fn(R.ins, F) : b) + '</li>'; }).join('') + '</ul></div></div>';
+      });
+    }
+    h += '<details class="rank-rules"><summary>' + esc(D.rankWhy) + '</summary><ol class="steps">' + D.rankRules.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ol><a href="docs/PRODUCT-REVIEW.md" target="_blank" rel="noopener" class="small-note">' + esc(D.reviewLink) + '</a></details>';
+    if (P.fine.length) {
+      h += '<h3 class="sub-title">' + esc(D.fineTitle) + '</h3><div class="fine-list">';
+      P.fine.forEach(function (f) { var fn = D.fine[f.id]; h += '<div class="fine"><span class="tick">' + ICON.check + '</span><span><b>' + esc(D.actions[f.id].title) + '.</b> ' + esc(fn ? fn(R.ins, F) : '') + '</span></div>'; });
+      h += '</div>';
+    }
+    return h + '</section>';
+  }
+
+  function viewProve(D) {
+    var A = state.plan.active, P = drives.proof, nx = drives.next;
+    var h = '<section class="card is-key prove-card" id="prove"><div class="card-row"><h2 class="card-title">' + esc(D.proveTitle) + '</h2><span class="muted">' + esc(activeTitle() + ' · ' + D.startedOn(A.startedAt)) + '</span></div>';
+    if (!P) {
+      h += '<p class="body-sm">' + esc(D.loop[2].ready) + '</p>' + loaderHtml(D, 'next', D.loadNext);
+      h += '<h3 class="sub-title">' + esc(D.asNext) + '</h3>' + examplesHtml(D, 'next');
+      return h + '</section>';
+    }
+    var vs = { keep: 'good', partial: 'watch', retry: 'watch', inconclusive: 'nodata', undo: 'stop', stop: 'stop' }[P.verdict];
+    h += '<div class="prove-verdict tinted st-' + vs + '">' + sIcon(vs, 22) + '<div><b>' + esc(D.verdicts[P.verdict]) + '</b><small>' + esc(D.verdictHelp[P.verdict]) + '</small></div></div>';
+    if (P.matched.reasons.length) h += '<ul class="dots">' + P.matched.reasons.map(function (r) { return '<li>' + esc(D.reasons[r] || r) + '</li>'; }).join('') + '</ul>';
+    if (P.newStops.length) h += '<ul class="dots">' + P.newStops.map(function (id) { var c = findCheck(nx.report.an, id); return '<li>' + esc(c ? checkText(c).label + ': ' + checkText(c).display : id) + '</li>'; }).join('') + '</ul>';
+    if (P.metric) {
+      var name = D.metricNames[P.metric.name] || P.metric.name, fmtv = function (v) { return v == null ? '-' : (typeof v === 'number' ? F.num(v, Math.abs(v) < 10 ? 2 : 1) : String(v)); };
+      h += '<div class="table ba"><div class="row head"><span></span><span>' + esc(D.before) + '</span><span>' + esc(D.after) + '</span></div><div class="row"><span>' + esc(name) + '</span><span class="mono">' + esc(fmtv(P.metric.before)) + '</span><span class="mono">' + esc(fmtv(P.metric.after)) + '</span></div>';
+      if (P.metric.kcRiseBefore != null) h += '<div class="row"><span>' + esc(D.metricNames.kcRise) + '</span><span class="mono">' + esc(fmtv(P.metric.kcRiseBefore)) + '</span><span class="mono">' + esc(fmtv(P.metric.kcRiseAfter)) + '</span></div>';
+      h += '</div>';
+    }
+    h += '<p class="small-note">' + esc((A.beforeName || '') + ' → ' + driveName(nx)) + '</p><div class="act-buttons">';
+    if (P.verdict === 'keep' || P.verdict === 'partial') h += '<button type="button" class="btn" data-act="proofDone" data-arg="' + P.verdict + '">' + esc(D.keepNext) + '</button>';
+    if (P.verdict === 'undo' || P.verdict === 'stop') h += '<button type="button" class="btn" data-act="proofDone" data-arg="undo">' + esc(D.undoIt) + '</button>';
+    h += '<button type="button" class="btn-ghost" data-act="proofAgain">' + esc(D.tryAgain) + '</button>';
+    return h + '</div></section>';
+  }
+
+  function graphCard(id, svg, D) {
+    var G = D.graphs[id], open = !!ui.explain[id];
+    var h = '<div class="graph" id="graph-' + id + '"><div class="card-row"><h3 class="sub-title" style="margin:0">' + esc(G.title) + '</h3><span class="graph-btns"><button type="button" class="link-btn" data-act="explain" data-arg="' + id + '" aria-expanded="' + open + '">' + esc(D.explain) + '</button> <button type="button" class="link-btn" data-act="askGraph" data-arg="' + id + '">' + esc(D.askThis) + '</button></span></div>';
+    h += svg ? '<div class="chart">' + svg + '</div>' : '<p class="muted">-</p>';
+    h += '<div class="legend">' + G.legend.map(function (l, k) { return '<span><i class="lg lg-' + id + '-' + k + '"></i>' + esc(l) + '</span>'; }).join('') + '</div>';
+    if (open) h += '<p class="body-sm explain">' + esc(G.explain(drives.current.report.ins, F)) + '</p>';
+    return h + '</div>';
+  }
+  function tick(x1, y1, x2, y2) { return '<line x1="' + x1 + '" x2="' + x2 + '" y1="' + y1 + '" y2="' + y2 + '" style="stroke:var(--grid);stroke-width:1"/>'; }
+  function kcSvg(I) {
+    var f = K.view.kcTimeline(I);
+    if (!f.hasData) return '';
+    var s = '<svg viewBox="' + f.viewBox + '" role="img" aria-label="' + esc(T().drive.graphs.kc.title) + '">';
+    f.lug.forEach(function (b) { s += '<rect x="' + b.x + '" y="' + f.plotT + '" width="' + b.w + '" height="' + (f.plotB - f.plotT) + '" style="fill:var(--lug);opacity:' + b.o + '"/>'; });
+    f.yTicks.forEach(function (tk) { s += tick(f.plotL, tk.y, f.plotR, tk.y) + '<text x="' + (f.plotL - 6) + '" y="' + (tk.y + 4) + '" text-anchor="end">' + esc(tk.label) + '</text>'; });
+    f.iTicks.forEach(function (tk) { s += '<text x="' + (f.plotR + 6) + '" y="' + (tk.y + 4) + '" style="fill:var(--iat)">' + esc(tk.label) + '</text>'; });
+    f.xTicks.forEach(function (tk, i) { s += '<text x="' + tk.x + '" y="' + (f.plotB + 16) + '" text-anchor="' + (i === 0 ? 'start' : 'middle') + '">' + esc(tk.label) + '</text>'; });
+    s += '<line x1="' + f.plotL + '" x2="' + f.plotR + '" y1="' + f.limitY + '" y2="' + f.limitY + '" style="stroke:var(--stop-ic);stroke-width:1.5;stroke-dasharray:5 4"/>';
+    s += '<line x1="' + f.plotL + '" x2="' + f.plotR + '" y1="' + f.ronY + '" y2="' + f.ronY + '" style="stroke:var(--axis);stroke-width:1;stroke-dasharray:2 4"/>';
+    s += '<path d="' + f.iat + '" style="fill:none;stroke:var(--iat);stroke-width:1.4"/>';
+    s += '<path d="' + f.line + '" style="fill:none;stroke:var(--meas);stroke-width:2.4;stroke-linejoin:round"/>';
+    f.marks.forEach(function (m) {
+      var tip = (m.kind === 'rise' ? '▲ ' : '▼ ') + m.from.toFixed(2) + ' → ' + m.to.toFixed(2) + ' · ' + Math.round(m.t0 / 60) + '-' + Math.round(m.t1 / 60) + ' min · ' + m.rpm + ' rpm · ' + m.iat + ' °C' + (m.cause === 'lugging' ? ' · lugging' : '');
+      s += '<circle cx="' + m.x + '" cy="' + m.y + '" r="5" style="fill:var(--sheet);stroke:' + (m.kind === 'rise' ? 'var(--stop-ic)' : 'var(--good-ic)') + ';stroke-width:2.2"/><circle cx="' + m.x + '" cy="' + m.y + '" r="11" style="fill:transparent" data-tip="' + esc(tip) + '"/>';
+    });
+    return s + '</svg>';
+  }
+  function timingSvg(I) {
+    var f = K.view.timingMap(I);
+    if (!f.hasData) return '';
+    var s = '<svg viewBox="' + f.viewBox + '" role="img" aria-label="' + esc(T().drive.graphs.timing.title) + '">';
+    f.cells.forEach(function (c) {
+      s += '<rect x="' + c.x + '" y="' + c.y + '" width="' + c.w + '" height="' + c.h + '" rx="2" style="fill:' + c.fill + '" data-tip="' + esc(c.tip) + '"/>';
+      s += '<text x="' + (c.x + c.w / 2) + '" y="' + (c.y + c.h / 2 + 4) + '" text-anchor="middle" style="fill:' + c.ink + ';font-size:10.5px;pointer-events:none">' + esc(c.text) + '</text>';
+      if (c.krR) s += '<circle cx="' + (c.x + c.w - c.krR - 2) + '" cy="' + (c.y + c.krR + 2) + '" r="' + c.krR + '" style="fill:var(--cmd);opacity:0.85;pointer-events:none"/>';
+    });
+    if (f.lugBox) s += '<rect x="' + f.lugBox.x + '" y="' + f.lugBox.y + '" width="' + f.lugBox.w + '" height="' + f.lugBox.h + '" style="fill:none;stroke:var(--lug-line);stroke-width:2.5;stroke-dasharray:6 3;pointer-events:none"/>';
+    f.xTicks.forEach(function (tk) { s += '<text x="' + tk.x + '" y="' + (f.plotB + 15) + '" text-anchor="middle">' + esc(tk.label) + '</text>'; });
+    f.yTicks.forEach(function (tk) { s += '<text x="' + (f.plotL - 6) + '" y="' + (tk.y + 4) + '" text-anchor="end">' + esc(tk.label) + '</text>'; });
+    s += '<text class="axis-title" x="' + ((f.plotL + f.plotR) / 2) + '" y="' + (f.h - 4) + '" text-anchor="middle">rpm</text>';
+    s += '<text class="axis-title" x="12" y="' + (f.plotB / 2) + '" text-anchor="middle" transform="rotate(-90 12 ' + (f.plotB / 2) + ')">MAP (psi)</text>';
+    return s + '</svg>';
+  }
+  function afrSvg(I) {
+    var f = K.view.afrLoad(I);
+    if (!f.hasData) return '';
+    var s = '<svg viewBox="' + f.viewBox + '" role="img" aria-label="' + esc(T().drive.graphs.afr.title) + '">';
+    f.yTicks.forEach(function (tk) { s += tick(f.plotL, tk.y, f.plotR, tk.y) + '<text x="' + (f.plotL - 6) + '" y="' + (tk.y + 4) + '" text-anchor="end">' + esc(tk.label) + '</text>'; });
+    f.xTicks.forEach(function (tk) { s += '<text x="' + tk.x + '" y="' + (f.plotB + 16) + '" text-anchor="middle">' + esc(tk.label) + '</text>'; });
+    s += '<line x1="' + f.plotL + '" x2="' + f.plotR + '" y1="' + f.leanY + '" y2="' + f.leanY + '" style="stroke:var(--stop-ic);stroke-width:1.5"/>';
+    s += '<line x1="' + f.plotL + '" x2="' + f.plotR + '" y1="' + f.mapY + '" y2="' + f.mapY + '" style="stroke:var(--cmd);stroke-width:2;stroke-dasharray:6 4"/>';
+    f.bars.forEach(function (b) {
+      s += '<rect x="' + b.x + '" y="' + b.yLo + '" width="' + b.w + '" height="' + Math.max(2, b.yHi - b.yLo) + '" rx="4" style="fill:var(--band);stroke:var(--band-line)" data-tip="' + esc(b.tip) + '"/>';
+      s += '<circle cx="' + b.cx + '" cy="' + b.y + '" r="5.5" style="fill:var(--meas);stroke:var(--sheet);stroke-width:1.5;pointer-events:none"/>';
+      s += '<text x="' + (b.cx + 10) + '" y="' + (b.y + 4) + '" style="fill:var(--ink);font-weight:600">' + esc(b.afr.toFixed(1)) + '</text>';
+    });
+    return s + '</svg>';
+  }
+  function accelSvg(I) {
+    var f = K.view.accelBars(I);
+    if (!f.hasData) return '';
+    var s = '<svg viewBox="' + f.viewBox + '" role="img" aria-label="' + esc(T().drive.graphs.accel.title) + '">';
+    f.xTicks.forEach(function (tk) { s += tick(tk.x, 4, tk.x, f.plotB) + '<text x="' + tk.x + '" y="' + (f.plotB + 16) + '" text-anchor="middle">' + esc(tk.label) + '</text>'; });
+    f.bars.forEach(function (b) {
+      s += '<text x="' + (f.plotL - 8) + '" y="' + (b.y + b.h / 2 + 4) + '" text-anchor="end" style="fill:var(--ink-2)">' + esc(b.label) + '</text>';
+      s += '<rect x="' + b.x + '" y="' + b.y + '" width="' + Math.max(2, b.w) + '" height="' + b.h + '" rx="4" style="fill:' + (b.full ? 'var(--meas)' : 'var(--band-line)') + '" data-tip="' + esc(b.tip) + '"/>';
+      s += '<text x="' + (b.x + b.w + 6) + '" y="' + (b.y + b.h / 2 + 4) + '" style="fill:var(--ink);font-weight:600">' + esc(b.value) + '</text>';
+    });
+    return s + '</svg>';
+  }
+
+  function viewAsk(D, cur) {
+    var A = D.ask, r = ai.result;
+    var h = '<section class="card ask-card" id="ask"><div class="card-row"><h2 class="card-title">' + esc(A.title) + '</h2><span class="badge' + (ai.key && state.ai.model ? ' is-strong' : '') + '">' + esc(ai.key && state.ai.model ? A.ai : A.builtIn) + '</span></div>';
+    h += '<p class="body-sm">' + esc(A.sub) + '</p><div class="ask-sugg">';
+    A.suggestions.forEach(function (q) { h += '<button type="button" class="chip-btn" data-act="ask" data-arg="' + esc(q) + '">' + esc(q) + '</button>'; });
+    h += '</div><form class="ask-form" data-askform="1"><input type="text" id="ask-q" value="' + esc(ai.q) + '" placeholder="' + esc(A.placeholder) + '" aria-label="' + esc(A.placeholder) + '"><button type="submit" class="btn"' + (ai.busy ? ' disabled' : '') + '>' + esc(A.send) + '</button></form>';
+    if (ai.busy) h += '<p class="muted" role="status">' + esc(A.working) + '</p>';
+    if (r) {
+      var badge = r.mode === 'ai' ? (r.repaired ? A.repaired : A.verified) : (r.mode === 'builtin' ? A.builtIn : ({ unverified: A.unverified, refusal: A.refused }[r.reason] || A.failed));
+      h += '<div class="answer ' + (r.mode === 'ai' ? 'is-ai' : '') + '" role="status"><div class="answer-head"><span class="pill ' + (r.mode === 'ai' ? 'st-good' : (r.mode === 'builtin' ? 'st-nodata' : 'st-watch')) + '">' + esc(badge) + '</span></div>';
+      h += '<p>' + esc(r.answer).replace(/\n/g, '<br>') + '</p>';
+      if (r.trace && r.trace.length) {
+        h += '<details class="trace"><summary>' + esc(A.looked) + ' (' + r.trace.filter(function (s) { return s.kind === 'tool'; }).length + ')</summary><ul class="dots">';
+        r.trace.forEach(function (s) { h += '<li class="mono">' + esc(s.kind === 'tool' ? s.name + ' ' + JSON.stringify(s.input) + (s.error ? ' ✗ ' + s.error : '') : (s.ok ? '✓ check' : '✗ ' + s.issues.join(' | '))) + '</li>'; });
+        h += '</ul></details>';
+      }
+      if (r.issues && r.issues.length) h += '<details class="trace"><summary>' + esc(A.issues) + '</summary><ul class="dots">' + r.issues.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></details>';
+      if (r.error) h += '<p class="small-note">' + esc(r.error) + '</p>';
+      h += '</div>';
+    }
+    h += '<details class="ai-settings"' + (ui.aiOpen ? ' open' : '') + ' id="ai-settings"><summary>' + esc(A.settings) + '</summary><div class="form">';
+    h += '<label>' + esc(A.key) + '<input type="password" id="ai-key" data-aikey="1" autocomplete="off" value="' + esc(ai.key) + '"></label>';
+    h += '<label class="check-item"><input type="checkbox" data-bind="ai.remember"' + (state.ai.remember ? ' checked' : '') + '> ' + esc(A.remember) + '</label>';
+    h += '<label>' + esc(A.model) + '<input type="text" id="ai-model" data-bind="ai.model" list="ai-models" value="' + esc(state.ai.model) + '" placeholder="' + esc(A.modelHint) + '"></label><datalist id="ai-models">' + ai.models.map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.name) + '</option>'; }).join('') + '</datalist>';
+    h += '<div class="act-buttons"><button type="button" class="btn-ghost" data-act="loadModels">' + esc(A.loadModels) + '</button>' + (ai.models.length ? '<span class="muted">' + esc(A.modelsLoaded(ai.models.length)) + '</span>' : '') + '</div>';
+    if (ai.error) h += '<p class="small-note" role="alert">' + esc(ai.error) + '</p>';
+    h += '<p class="small-note">' + esc(A.keyNote) + ' ' + esc(A.privacy) + '</p>' + (ai.key ? '' : '<p class="small-note">' + esc(A.noKey) + '</p>') + '</div></details>';
+    return h + '</section>';
+  }
+
+  // ---- loading drives
+  function ingestDrive(text, name, example, which) {
+    try {
+      var parsed = K.parseCSV(text);
+      var log = K.buildLog(parsed, K.detectChannels(parsed.headers, parsed.columns));
+      var report = K.checkDrive(log, { history: state.plan.history });
+      var rec = { name: name || '', example: example || '', log: log, report: report };
+      if (which === 'next' && state.plan.active) {
+        drives.next = rec;
+        drives.proof = K.proveAction(state.plan.active.id, state.plan.active.before, report);
+      } else { drives.current = rec; drives.next = null; drives.proof = null; }
+      ai.result = null; ai.q = '';
+      ui.driveErr = '';
+    } catch (e) {
+      ui.driveErr = (name ? name + ': ' : '') + ((e && e.message) || e);
+    }
+    ui.driveBusy = '';
+    render();
+    if (which === 'next') { var p = document.getElementById('prove'); if (p) p.scrollIntoView({ block: 'start' }); }
+  }
+  function loadDriveFile(file, which) {
+    if (!file) return;
+    var reader = new FileReader();
+    ui.driveBusy = 'file'; ui.driveErr = ''; render();
+    // let the busy state paint before a big log (7 MB, 50,000 rows) is parsed
+    reader.onload = function () { setTimeout(function () { ingestDrive(String(reader.result), file.name, '', which); }, 30); };
+    reader.onerror = function () { ui.driveBusy = ''; ui.driveErr = T().errors.read(file.name); render(); };
+    reader.readAsText(file);
+  }
+  function decodeExample(ex) {
+    if (typeof DecompressionStream !== 'function' || typeof Response !== 'function') return Promise.reject(new Error('no gzip'));
+    var bin = atob(ex.gz), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  }
+  function loadExample(id, which) {
+    if (EXAMPLE_IDS.indexOf(id) < 0) return;
+    function go() {
+      decodeExample(window.KTA_EXAMPLES[id]).then(function (text) { ingestDrive(text, window.KTA_EXAMPLES[id].name, id, which); },
+        function () { ui.driveBusy = ''; ui.driveErr = T().drive.exampleError; render(); });
+    }
+    ui.driveBusy = id; ui.driveErr = ''; render();
+    if (window.KTA_EXAMPLES && window.KTA_EXAMPLES[id]) { go(); return; }
+    var s = document.createElement('script');
+    s.src = 'data/example-' + id + '.js';
+    s.onload = function () { if (window.KTA_EXAMPLES && window.KTA_EXAMPLES[id]) go(); else s.onerror(); };
+    s.onerror = function () { ui.driveBusy = ''; ui.driveErr = T().drive.exampleError; render(); };
+    document.head.appendChild(s);
+  }
+
+  // ---- asking
+  function askCtx() { var cur = drives.current; return { question: '', report: cur.report, log: cur.log, T: T().drive, checkText: checkText, F: F, lang: state.lang }; }
+  function runAsk(q) {
+    q = String(q || '').trim();
+    if (!q || !drives.current || ai.busy) return;
+    var o = askCtx(), offline = K.ask.offline(q, K.ask.context(o));
+    ai.q = q; ai.result = null;
+    if (!ai.key || !state.ai.model) { ai.result = { mode: 'builtin', answer: offline.answer }; render(); return; }
+    ai.busy = true; render();
+    o.question = q; o.apiKey = ai.key; o.model = state.ai.model; o.caps = ai.caps;
+    K.ask.run(o).then(function (res) {
+      ai.busy = false;
+      if (res.ok) ai.result = { mode: 'ai', answer: res.answer, repaired: res.repaired, trace: res.trace };
+      else ai.result = { mode: 'fallback', reason: res.reason, answer: offline.answer, issues: res.issues, error: res.error ? res.error + (res.status ? ' (' + res.status + ')' : '') : (res.category ? res.category : ''), trace: res.trace };
+      render();
+    });
+  }
+  function saveKey() {
+    try { if (state.ai.remember && ai.key) localStorage.setItem(STORE + '-key', ai.key); else localStorage.removeItem(STORE + '-key'); } catch (e) { /* storage blocked */ }
+  }
+
   function viewCheck(t, n) {
     var c = t.check, slot = slotFor(n), rec = slots[slot];
     var h = '<section class="card" aria-labelledby="check-title"><div class="card-row"><h2 class="card-title" id="check-title">' + esc(t.sections.check) + '</h2>';
@@ -864,7 +1220,7 @@
   }
 
   function viewAside() {
-    var t = T(), key = state.hint || (state.page === 'map' ? 'afm' : (state.page === 'guide' ? 'loop' : HINT_DEFAULT[state.step])), hint = t.hints[key];
+    var t = T(), key = state.hint || (state.page === 'drive' ? 'lugging' : (state.page === 'map' ? 'afm' : (state.page === 'guide' ? 'loop' : HINT_DEFAULT[state.step]))), hint = t.hints[key];
     var h = '<aside class="aside" aria-label="' + esc(t.app.explain) + '"><div class="hint" id="hint"><div class="eyebrow">' + esc(t.explain) + '</div>';
     h += '<h3>' + esc(hint.title) + '</h3>';
     hint.paras.forEach(function (p) { h += '<p>' + esc(p) + '</p>'; });
@@ -1022,7 +1378,7 @@
     },
     lang: function () { state.lang = state.lang === 'vi' ? 'en' : 'vi'; save(); render(); },
     page: function (arg) {
-      if (arg !== 'map' && arg !== 'guide') return;
+      if (arg !== 'map' && arg !== 'guide' && arg !== 'drive') return;
       state.page = arg; state.hint = ''; ui.copied = '';
       save();
       try { history.replaceState(null, '', '#' + arg + (arg === 'map' ? '/' + state.mapTable : '')); } catch (e) { /* file:// may refuse */ }
@@ -1043,6 +1399,54 @@
       try { history.replaceState(null, '', '#map/Ignition_Base_H'); } catch (e) { /* file:// may refuse */ }
       render({ top: true });
     },
+    example: function (arg) { var p = String(arg).split(':'); loadExample(p[0], p[1] === 'next' ? 'next' : 'current'); },
+    driveReset: function () { drives.current = null; drives.next = null; drives.proof = null; ai.result = null; ui.driveErr = ''; render({ top: true }); },
+    startAction: function (id) {
+      var cur = drives.current;
+      if (!cur) return;
+      var a = cur.report.plan.all.filter(function (x) { return x.id === id; })[0];
+      if (!a) return;
+      var c = a.tier === 'safety' ? findCheck(cur.report.an, a.check) : null;
+      state.plan = { active: { id: id, label: c ? checkText(c).label : '', startedAt: today(), beforeName: driveName(cur), before: K.proofSnapshot(cur.report) }, history: state.plan.history || [] };
+      drives.next = null; drives.proof = null;
+      save(); render();
+      var p = document.getElementById('prove');
+      if (p) p.scrollIntoView({ block: 'start' });
+    },
+    stopAction: function () { state.plan = { active: null, history: state.plan.history || [] }; drives.next = null; drives.proof = null; save(); render(); },
+    proofDone: function (verdict) {
+      var A = state.plan.active;
+      if (!A || !drives.next || !drives.proof) return;
+      var hist = (state.plan.history || []).concat([{ id: A.id, verdict: verdict === 'undo' ? 'undo' : drives.proof.verdict, date: today() }]).slice(-30);
+      state.plan = { active: null, history: hist };
+      drives.current = drives.next; drives.next = null; drives.proof = null;
+      drives.current.report.plan = K.planActions(drives.current.report, hist);
+      ai.result = null;
+      save(); render({ top: true });
+    },
+    proofAgain: function () { drives.next = null; drives.proof = null; render(); },
+    explain: function (id) { ui.explain[id] = !ui.explain[id]; render(); },
+    toGraph: function (id) {
+      ui.explain[id] = true; render();
+      var g = document.getElementById('graph-' + id);
+      if (g) g.scrollIntoView({ block: 'start' });
+    },
+    askGraph: function (id) {
+      var q = T().drive.ask.graphQ[id];
+      runAsk(q);
+      var a = document.getElementById('ask');
+      if (a) a.scrollIntoView({ block: 'start' });
+    },
+    ask: function (q) { runAsk(q); },
+    loadModels: function () {
+      if (!ai.key) { ai.error = T().drive.ask.noKey; render(); return; }
+      ai.error = ''; ui.aiOpen = true;
+      K.ask.listModels({ apiKey: ai.key }).then(function (list) {
+        ai.models = list;
+        if (list.length && !state.ai.model) { setPath('ai.model', list[0].id); save(); }
+        render();
+      }, function (e) { ai.error = String((e && e.message) || e); render(); });
+    },
     rot: function (arg) {
       if (arg === 'reset') { ui.yaw = -38; ui.pitch = 58; }
       else if (arg === 'left') ui.yaw -= 15;
@@ -1062,6 +1466,7 @@
 
   document.addEventListener('change', function (e) {
     var el = e.target;
+    if (el.hasAttribute('data-drive')) { loadDriveFile(el.files && el.files[0], el.getAttribute('data-drive') === 'next' ? 'next' : 'current'); el.value = ''; return; }
     if (el.hasAttribute('data-file')) { loadFile(el.files && el.files[0]); el.value = ''; return; }
     if (el.hasAttribute('data-map')) {
       var rec = slots[slotFor(state.step)];
@@ -1079,6 +1484,7 @@
       else if (el.type === 'number') { value = parseFloat(el.value); if (!isNum(value)) return; value = Math.max(16, Math.min(23, value)); }
       else value = el.value;
       setPath(path, value);
+      if (path === 'ai.remember') saveKey();
       save(); render();
       return;
     }
@@ -1092,6 +1498,7 @@
 
   document.addEventListener('input', function (e) {
     var el = e.target;
+    if (el.hasAttribute && el.hasAttribute('data-aikey')) { ai.key = el.value.trim(); saveKey(); return; }
     if (!el.hasAttribute || !el.hasAttribute('data-input')) return;
     setPath(el.getAttribute('data-input'), el.value);
     save();
@@ -1099,15 +1506,24 @@
     if (packet) packet.value = buildPacket();
   });
 
+  document.addEventListener('submit', function (e) {
+    if (!e.target || !e.target.hasAttribute('data-askform')) return;
+    e.preventDefault();
+    var q = document.getElementById('ask-q');
+    runAsk(q ? q.value : '');
+  });
+
   // keep the column-mapping panel open across re-renders
   document.addEventListener('toggle', function (e) {
     if (e.target && e.target.id === 'columns') ui.columnsOpen = e.target.open;
+    if (e.target && e.target.id === 'ai-settings') ui.aiOpen = e.target.open;
     if (e.target && e.target.classList && e.target.classList.contains('topic')) ui.topics[e.target.id] = e.target.open;
   }, true);
 
   // drag and drop a CSV anywhere on a step that takes a log
+  function dropTarget() { return state.page === 'drive' ? 'drive' : (!state.page && slotFor(state.step) ? 'step' : ''); }
   document.addEventListener('dragover', function (e) {
-    if (!slotFor(state.step)) return;
+    if (!dropTarget()) return;
     if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0) {
       e.preventDefault();
       var zone = document.querySelector('[data-drop]');
@@ -1121,12 +1537,15 @@
     }
   });
   document.addEventListener('drop', function (e) {
-    if (!slotFor(state.step)) return;
+    var tgt = dropTarget();
+    if (!tgt) return;
     e.preventDefault();
     var zone = document.querySelector('[data-drop]');
     if (zone) zone.classList.remove('is-drag');
     var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (file) loadFile(file);
+    if (!file) return;
+    if (tgt === 'drive') loadDriveFile(file, state.plan.active ? 'next' : 'current');
+    else loadFile(file);
   });
 
   // 3D surface: drag with a mouse, finger or pen; arrow keys when focused
@@ -1196,9 +1615,13 @@
     try { if (active && typeof active.selectionStart === 'number') sel = [active.selectionStart, active.selectionEnd]; } catch (e) { /* not a text field */ }
     var q = function (s) { return root.querySelector(s); };
     var keep = { main: q('.main') ? q('.main').scrollTop : 0, aside: q('.aside') ? q('.aside').scrollTop : 0, rail: q('.rail') ? q('.rail').scrollTop : 0, win: window.scrollY };
+    // open/closed panels: read them now; the 'toggle' event arrives asynchronously and can be late
+    if (q('#columns')) ui.columnsOpen = q('#columns').open;
+    if (q('#ai-settings')) ui.aiOpen = q('#ai-settings').open;
+    Array.prototype.forEach.call(root.querySelectorAll('details.topic'), function (d) { ui.topics[d.id] = d.open; });
     applyTheme();
     hideTip();
-    root.classList.toggle('page-wide', state.page === 'map' || state.page === 'guide');
+    root.classList.toggle('page-wide', state.page === 'map' || state.page === 'guide' || state.page === 'drive');
     root.innerHTML = view();
     if (opts.top) {
       if (q('.main')) q('.main').scrollTop = 0;
@@ -1219,17 +1642,23 @@
   // start
   var m = /#step-(\d)/.exec(location.hash || '');
   if (m) { state.step = Math.max(1, Math.min(7, parseInt(m[1], 10))); state.page = ''; }
-  var pm = /#(map|guide)(?:\/([^?#]+))?/.exec(location.hash || '');
+  var pm = /#(map|guide|drive)(?:\/([^?#]+))?/.exec(location.hash || '');
+  // first visit: the drive check is home
+  if (!m && !pm && !state.seenDrive) state.page = 'drive';
+  state.seenDrive = true;
+  save();
   if (pm) {
     state.page = pm[1];
     var want = pm[2] ? decodeURIComponent(pm[2]) : '';
     if (want && window.KTA_MAP && window.KTA_MAP.tables[want]) state.mapTable = want;
   }
+  var dq = /[?&]drive=([a-z0-9-]+)/.exec(location.search);
+  if (dq) { state.page = 'drive'; setTimeout(function () { loadExample(dq[1], 'current'); }, 0); }
   if (/[?&]demo=1\b/.test(location.search)) {
     ['baseline'].forEach(function (slot) { var rec = { name: '', sample: 'before', slot: slot, parsed: K.parseCSV(K.sampleCsv('before')) }; rec.mapping = K.detectChannels(rec.parsed.headers, rec.parsed.columns); analyzeRec(rec); slots[slot] = rec; state.lastSlot = slot; });
   }
   window.addEventListener('hashchange', function () {
-    var h = location.hash || '', sm = /#step-(\d)/.exec(h), pg = /#(map|guide)(?:\/([^?#]+))?/.exec(h);
+    var h = location.hash || '', sm = /#step-(\d)/.exec(h), pg = /#(map|guide|drive)(?:\/([^?#]+))?/.exec(h);
     if (sm) { state.step = Math.max(1, Math.min(7, parseInt(sm[1], 10))); state.page = ''; }
     else if (pg) {
       state.page = pg[1];
@@ -1244,5 +1673,5 @@
     if (mq.addEventListener) mq.addEventListener('change', onScheme); else if (mq.addListener) mq.addListener(onScheme);
   }
   render();
-  window.KTA_APP = { state: state, slots: slots, render: render, buildPacket: buildPacket };
+  window.KTA_APP = { state: state, slots: slots, drives: drives, ai: ai, render: render, buildPacket: buildPacket };
 })();
