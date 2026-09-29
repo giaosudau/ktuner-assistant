@@ -14,7 +14,7 @@
 
   var state = merge(defaults(), load());
   var slots = {};            // logs live only in this tab: { baseline, afm, wot, cool, hot, gain }
-  var ui = { copied: '', error: '' };
+  var ui = { copied: '', error: '', yaw: -38, pitch: 58, topics: { 'topic-0': true } };
 
   // ---------------------------------------------------------------------------
   // State
@@ -27,6 +27,7 @@
       prep: {}, confirmSlot: 'cool', afmPaste: '', ceiling: 21,
       applied: { wot: false, boost: false },
       review: { name: '', uses: 'KTuner', decision: '', notes: '', logs: false, diff: false, untouched: false, mech: false },
+      page: '', mapTable: 'WOT_Enrich_L', mapView: 'grid', mapShow: 'after',
       lastSlot: ''
     };
   }
@@ -162,6 +163,8 @@
     rain26: '<svg viewBox="0 0 26 26" aria-hidden="true"><path d="M5 11 A8 6 0 0 1 21 11 Z" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round"/><path d="M13 11 V20 A2 2 0 0 1 9 20" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round"/><path d="M3 24 C6 22 8 22 11 24 C14 26 16 26 19 24 C21 22.7 22.5 22.7 24 23.5" style="fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round"/></svg>',
     road26: '<svg viewBox="0 0 26 26" aria-hidden="true"><path d="M9 3 L5 23 M17 3 L21 23" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round"/><path d="M13 5 V8 M13 11.5 V14.5 M13 18 V21" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round"/></svg>'
   };
+  ICON.map = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1.5 9.5 L7 12.5 L12.5 9.5 M1.5 6.5 L7 9.5 L12.5 6.5 L7 3.5 Z" style="fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round"/></svg>';
+  ICON.book = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2.5 H6 A1 1 0 0 1 7 3.5 V12 A1 1 0 0 0 6 11 H2 Z M12 2.5 H8 A1 1 0 0 0 7 3.5 V12 A1 1 0 0 1 8 11 H12 Z" style="fill:none;stroke:currentColor;stroke-width:1.4;stroke-linejoin:round"/></svg>';
   var VN_ICON = { sun: ICON.sun26, car: ICON.car26, rain: ICON.rain26, road: ICON.road26 };
 
   function linkHint(key, text) { return '<button type="button" class="link-btn" data-act="hint" data-arg="' + key + '">' + esc(text) + '</button>'; }
@@ -255,7 +258,7 @@
     ['Prepare', 'Tune', 'Gain'].forEach(function (g) {
       h += '<div class="rail-group"><div class="rail-label">' + esc(t.groups[g]) + '</div>';
       [1, 2, 3, 4, 5, 6, 7].filter(function (n) { return GROUP_OF[n] === g; }).forEach(function (n) {
-        var st = t.steps[n - 1], cur = n === state.step, isDone = !!d[n];
+        var st = t.steps[n - 1], cur = !state.page && n === state.step, isDone = !!d[n];
         var hasLog = !!slots[slotFor(n)];
         var chip = isDone ? t.chips.done : (cur ? t.chips.here : (n === 6 ? (d[5] ? t.chips.optional : t.chips.after5) : (hasLog ? t.chips.progress : t.chips.todo)));
         h += '<button type="button" class="step-btn' + (isDone ? ' is-done' : '') + '" data-act="go" data-arg="' + n + '"' + (cur ? ' aria-current="step"' : '') + '>';
@@ -264,6 +267,13 @@
       });
       h += '</div>';
     });
+    h += '<div class="rail-group"><div class="rail-label">' + esc(t.nav2.reference) + '</div>';
+    [['map', ICON.map, t.nav2.map, t.nav2.mapSub], ['guide', ICON.book, t.nav2.guide, t.nav2.guideSub]].forEach(function (r) {
+      var on = state.page === r[0];
+      h += '<button type="button" class="step-btn ref-btn" data-act="page" data-arg="' + r[0] + '"' + (on ? ' aria-current="page"' : '') + '>';
+      h += '<span class="step-dot">' + r[1] + '</span><span class="step-text"><span class="step-title">' + esc(r[2]) + '</span><span class="step-sub">' + esc(r[3]) + '</span></span></button>';
+    });
+    h += '</div>';
     h += '<div class="loop-card"><div class="eyebrow">' + esc(t.loop.title) + '</div>';
     h += '<div class="loop-flow">' + t.loop.flow.map(esc).join('<i>→</i>') + '</div>';
     h += '<div class="loop-note">' + esc(t.loop.note) + '</div>';
@@ -272,6 +282,8 @@
   }
 
   function viewMain() {
+    if (state.page === 'map') return viewMapPage();
+    if (state.page === 'guide') return viewGuidePage();
     var t = T(), n = state.step, st = t.steps[n - 1], d = doneMap();
     var h = '<main class="main" id="main" tabindex="-1">';
     h += '<div class="step-head"><div class="eyebrow">' + esc(t.stepOf(n, t.groups[GROUP_OF[n]])) + '</div>';
@@ -349,7 +361,8 @@
     h += '<section class="card"><h2 class="card-title">' + esc(t.sections.doIn(toolName())) + '</h2><ol class="steps">';
     h += '<li>' + s.do1(esc(s.intake[state.intakePreset])) + '</li>';
     h += '<li>' + s.do2 + '<div class="form" style="margin-top:8px"><label for="afm-paste">' + esc(s.pasteLabel(toolName())) + '</label><textarea id="afm-paste" rows="2" class="mono" data-input="afmPaste" placeholder="0.6452&#9;0.7926&#9;1.0927&#9;…">' + esc(state.afmPaste) + '</textarea><span class="muted" style="color:' + (pasted && !pasted.ok ? 'var(--stop-fg)' : 'var(--ink-3)') + '">' + esc(msg) + '</span></div></li>';
-    h += '<li>' + s.do3 + '</li></ol></section>';
+    h += '<li>' + s.do3 + '</li></ol>';
+    h += '<button type="button" class="link-btn map-link" data-act="table" data-arg="MAF_Scaling_Custom">' + ICON.map + esc(t.nav2.showIn('MAF_Scaling_Custom')) + '</button></section>';
 
     h += '<section class="card is-key"><div class="card-row"><h2 class="card-title">' + esc(s.corrected) + '</h2>';
     if (cs && cs.sug.ok) h += '<span class="muted">' + esc(s.from + ': ' + recName(cs.src) + (cs.src.sample ? ' ' + s.simulated : '')) + '</span>';
@@ -379,7 +392,8 @@
   function viewS4(t) {
     var s = t.s4;
     var h = '<p class="lead">' + fill(esc(s.why), { loop: linkHint('loop', s.loopLink), afr: linkHint('afr', s.afrLink) }) + '</p>';
-    h += '<div class="note"><span class="badge-dark">E10</span><p>' + esc(s.e10(toolName())) + ' ' + linkHint('e10', s.e10Link) + '</p></div>';
+    h += '<div class="note"><span class="badge-dark">E10</span><p>' + esc(s.e10(toolName())) + ' ' + linkHint('e10', s.e10Link) + ' <button type="button" class="link-btn" data-act="page" data-arg="guide">' + esc(t.guide.e10.title) + '</button></p></div>';
+    h += '<button type="button" class="link-btn map-link" data-act="table" data-arg="WOT_Enrich_L">' + ICON.map + esc(t.nav2.showIn('WOT_Enrich_L / WOT_Enrich_H')) + '</button>';
     h += '<section class="grid-2"><div class="card"><h2 class="card-title">' + esc(t.sections.doIn(toolName())) + '</h2>' + list(s.do) + '</div>';
     h += '<div class="card"><h2 class="card-title">' + esc(t.sections.drive) + '</h2>' + list(s.drive.map(esc)) + '</div></section>';
     return h;
@@ -431,6 +445,7 @@
       h += '<div class="row"><span class="mono" style="font-weight:600">' + esc(F.num(r.rpm)) + '</span>' + r.cells.map(function (c) { return '<span class="mono">' + esc(c.from.toFixed(1) + ' → ' + c.to.toFixed(1)) + '</span>'; }).join('') + '</div>';
     });
     h += '</div><div style="font-size:13px;color:var(--ink-2)">' + s.l1Pass + '</div>';
+    h += '<button type="button" class="link-btn map-link" data-act="table" data-arg="WOT_Enrich_L">' + ICON.map + esc(t.nav2.showIn('WOT_Enrich_L / WOT_Enrich_H')) + '</button>';
     h += '<div class="check-item"><input type="checkbox" id="applied-wot" data-bind="applied.wot"' + (state.applied.wot ? ' checked' : '') + '><label for="applied-wot"><b>' + esc(state.lang === 'vi' ? 'Đã áp dụng vào map của tôi' : 'Applied in my map') + '</b></label></div></section>';
 
     h += '<section class="card"><div class="lever-head"><h2>' + esc(s.l2) + '</h2><span class="badge">' + esc(s.l2Tag) + '</span></div>';
@@ -441,7 +456,8 @@
       bs.rows.forEach(function (r) { h += '<div class="row"><span class="mono" style="font-weight:600">' + esc(F.num(r.rpm)) + '</span><span class="mono">' + esc(r.from + ' → ' + r.to + ' psi') + '</span></div>'; });
       h += '</div><div class="check-item"><input type="checkbox" id="applied-boost" data-bind="applied.boost"' + (state.applied.boost ? ' checked' : '') + '><label for="applied-boost"><b>' + esc(state.lang === 'vi' ? 'Đã áp dụng vào map của tôi' : 'Applied in my map') + '</b></label></div>';
     }
-    h += '<div style="font-size:13px;color:var(--ink-2)">' + s.l2Rules + '</div></section>';
+    h += '<div style="font-size:13px;color:var(--ink-2)">' + s.l2Rules + '</div>';
+    h += '<button type="button" class="link-btn map-link" data-act="table" data-arg="Boost_Target_1_Normal_L">' + ICON.map + esc(t.nav2.showIn('Boost_Target_1/2/3_Normal_L/H')) + '</button></section>';
     h += '<section class="card is-soft"><h2 class="card-title">' + esc(t.sections.leftAlone) + '</h2><div class="pairs">' + s.alone.map(function (p) { return '<b>' + esc(p[0]) + '</b><span>' + esc(p[1]) + '</span>'; }).join('') + '</div></section>';
     return h;
   }
@@ -466,6 +482,321 @@
     h += '<section class="card is-key"><div class="card-row"><label for="packet" class="card-title">' + esc(t.sections.packet) + '</label><span style="display:flex;gap:8px"><button type="button" class="btn-ghost" data-act="dlPacket">' + esc(s.download) + '</button><button type="button" class="btn" data-act="copyPacket">' + esc(ui.copied === 'packet' ? s.copied : (ui.copied === 'packet:manual' ? s.manual : s.copy)) + '</button></span></div>';
     h += '<p class="muted" style="margin:0;color:var(--ink-2)">' + esc(s.packetNote) + '</p><textarea id="packet" class="packet" rows="14" readonly>' + esc(buildPacket()) + '</textarea></section>';
     return h;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Your map: every table from the owner's file, 2D and 3D, with the cells to change
+  // ---------------------------------------------------------------------------
+  var MAP = window.KTA_MAP || { name: '', tables: {} };
+  var MAP_NAMES = Object.keys(MAP.tables);
+  var mapCache = {};
+  var B2_TABLES = ['Boost_Target_1_Normal_L', 'Boost_Target_1_Normal_H', 'Boost_Target_2_Normal_L', 'Boost_Target_2_Normal_H', 'Boost_Target_3_Normal_L', 'Boost_Target_3_Normal_H'];
+  function mapTable(name) {
+    if (!MAP.tables[name]) return null;
+    return mapCache[name] || (mapCache[name] = K.readTable(name, MAP.tables[name]));
+  }
+  function family(name) {
+    if (/^Boost_Target_\d_Normal_/.test(name)) return 'Boost_Target_Normal';
+    if (/^Boost_Target_\d_ECO_/.test(name)) return 'Boost_Target_ECO';
+    if (/^Knock_Sens_/.test(name)) return 'Knock_Sens';
+    if (/^DI_Fuel_Pressure_Target_/.test(name)) return 'DI_Fuel_Pressure_Target';
+    return name.replace(/_(L|H)$/, '');
+  }
+  function tableInfo(name) { return (T().tables || {})[family(name)] || { name: name, what: '', edit: '' }; }
+  function tableLabel(name) {
+    var b = /^Boost_Target_(\d)_(Normal|ECO)_(L|H)$/.exec(name);
+    if (b) return 'Boost Target ' + b[1] + ' ' + b[2] + ' ' + b[3];
+    var k = /^Knock_Sens_([0-9+]+)_/.exec(name), d = /_(\d+)pct$/.exec(name), lh = /_(L|H)$/.exec(name);
+    return tableInfo(name).name + (k ? ' ' + k[1] : '') + (d ? ' · ' + d[1] + ' % ethanol' : '') + (lh ? ' ' + lh[1] : '');
+  }
+  function termLabel(key) { var tm = T().terms.filter(function (x) { return x[0] === key; })[0]; return tm ? tm[1] : key; }
+  /** The basic-stage change for a table (null when the stage leaves it alone). */
+  function mapEdits(name) {
+    var tb = mapTable(name);
+    if (!tb || tb.meta.role !== 'edit') return null;
+    if (tb.meta.stage === 'A') { var c = currentSug(); return K.tableEdits(name, tableInUse(), { maf: c ? c.sug : null }); }
+    return K.tableEdits(name, tb.values, { ceiling: state.ceiling });
+  }
+  function deltaOf(a, b) { return Array.isArray(a[0]) ? a.map(function (row, r) { return row.map(function (v, c) { return v - b[r][c]; }); }) : a.map(function (v, k) { return v - b[k]; }); }
+  function fmtCell(v, digits) { return isNum(v) ? v.toFixed(digits) : '-'; }
+
+  function pageHead(eyebrow, title, goal) {
+    return '<div class="step-head"><div class="eyebrow">' + esc(eyebrow) + '</div><h1>' + esc(title) + '</h1><p class="goal">' + esc(goal) + '</p></div>';
+  }
+  function pageFoot() {
+    var t = T();
+    return '<div class="foot-nav"><button type="button" class="back" data-act="go" data-arg="' + state.step + '">← ' + esc(t.stepOf(state.step, t.groups[GROUP_OF[state.step]])) + '</button><span></span></div>';
+  }
+
+  function viewMapPage() {
+    var t = T(), m = t.map;
+    var name = MAP.tables[state.mapTable] ? state.mapTable : 'WOT_Enrich_L';
+    var h = '<main class="main" id="main" tabindex="-1">' + pageHead(m.eyebrow, m.title, m.goal);
+    if (!MAP_NAMES.length) return h + '<div class="banner stop">data/ktuner-map.js did not load.</div></main>';
+    h += viewBaseMap(m) + viewEditPlan(m);
+    h += '<section class="map-browser">' + viewTableList(m, name) + viewTablePanel(m, name) + '</section>';
+    h += '<p class="small-note">' + esc(m.digitized) + '</p>';
+    return h + pageFoot() + '</main>';
+  }
+
+  function viewBaseMap(m) {
+    var b = m.base;
+    var h = '<section class="card is-key"><div class="card-row"><h2 class="card-title">' + esc(b.title) + '</h2><span class="badge">' + esc(b.tag) + '</span></div>';
+    h += '<div class="base-facts">' + b.facts.map(function (f) { return '<div><span>' + esc(f[0]) + '</span><b>' + esc(f[1]) + '</b></div>'; }).join('') + '</div>';
+    h += '<p class="base-means">' + esc(b.means) + '</p>';
+    h += '<div class="note"><span class="badge-dark">ECO</span><p>' + esc(b.eco) + ' ' + linkHint('kcontrol', termLabel('kcontrol')) + '</p></div></section>';
+    return h;
+  }
+
+  function viewEditPlan(m) {
+    var p = m.plan;
+    var rows = [['A', ['MAF_Scaling_Custom']], ['B1', ['WOT_Enrich_L', 'WOT_Enrich_H']], ['B2', B2_TABLES]];
+    var h = '<section class="card"><h2 class="card-title">' + esc(p.title) + '</h2><div class="table plan"><div class="row head"><span>' + p.head.map(esc).join('</span><span>') + '</span></div>';
+    rows.forEach(function (r) {
+      var lab = p[r[0]], e = mapEdits(r[1][0]), n = e ? e.changed.length : 0;
+      var cells = r[0] === 'A' ? (e && !e.pending ? m.points(n) : p.pending) : (n ? p.cells(n) : p.none);
+      h += '<div class="row"><span><b>' + esc(lab[0]) + '</b></span><span class="tbl-names">';
+      h += r[1].map(function (x) { return '<button type="button" class="link-btn mono" data-act="table" data-arg="' + esc(x) + '">' + esc(x) + '</button>'; }).join('');
+      h += '<small>' + esc(lab[1]) + '</small></span><span class="mono">' + esc(cells) + '</span><span>' + esc(lab[2]) + '</span></div>';
+    });
+    return h + '</div></section>';
+  }
+
+  function groupedNames() {
+    var groups = {};
+    MAP_NAMES.forEach(function (n) { var r = (K.TABLES[n] || {}).role || 'info'; (groups[r] = groups[r] || []).push(n); });
+    return groups;
+  }
+  function viewTableList(m, cur) {
+    var groups = groupedNames();
+    var h = '<nav class="tlist" aria-label="' + esc(m.pick) + '">';
+    K.ROLE_ORDER.forEach(function (r) {
+      if (!groups[r]) return;
+      h += '<div class="tgroup"><div class="rail-label">' + esc(m.roles[r]) + '</div>';
+      groups[r].forEach(function (n) {
+        h += '<button type="button" class="tbtn role-' + r + '" data-act="table" data-arg="' + esc(n) + '"' + (n === cur ? ' aria-current="true"' : '') + '><span>' + esc(tableLabel(n)) + '</span><small class="mono">' + esc(n) + '</small></button>';
+      });
+      h += '</div>';
+    });
+    return h + '</nav>';
+  }
+  function viewTablePicker(m, cur) {
+    var groups = groupedNames();
+    var h = '<label class="tpick"><span>' + esc(m.pick) + '</span><select data-bind="mapTable">';
+    K.ROLE_ORDER.forEach(function (r) {
+      if (!groups[r]) return;
+      h += '<optgroup label="' + esc(m.roles[r]) + '">' + groups[r].map(function (n) { return '<option value="' + esc(n) + '"' + (n === cur ? ' selected' : '') + '>' + esc(tableLabel(n)) + '</option>'; }).join('') + '</optgroup>';
+    });
+    return h + '</select></label>';
+  }
+
+  /** What the panel draws for a table: the values, the base for dashed lines, and the marked cells. */
+  function panelModel(name) {
+    var tb = mapTable(name), meta = tb.meta, e = mapEdits(name);
+    var spark = /^Ignition_(Base|Max)_/.test(name);
+    var hasEdit = !!(e && e.changed.length);
+    var allowed = hasEdit ? ['after', 'before', 'diff'] : (spark ? ['before', 'smooth'] : ['before']);
+    var show = allowed.indexOf(state.mapShow) >= 0 ? state.mapShow : allowed[0];
+    var view = tb.curve && state.mapView === 'surface' ? 'lines' : (['grid', 'lines', 'surface'].indexOf(state.mapView) >= 0 ? state.mapView : 'grid');
+    var base = e ? e.before : tb.values, vals = base, dashed = null, marks = [], diff = false, sp = null;
+    if (hasEdit) marks = e.changed.map(function (x) { return { r: x.r, c: x.c, from: x.from, to: x.to }; });
+    if (show === 'after' && hasEdit) { vals = e.after; dashed = e.before; }
+    if (show === 'diff') { vals = deltaOf(e.after, e.before); diff = true; }
+    if (spark) {
+      sp = K.smoothPreview(tb.values, { x: tb.x });
+      if (show === 'smooth') {
+        vals = deltaOf(sp.after, tb.values); diff = true;
+        marks = sp.raisedCells.map(function (u) { return { r: u.r, c: u.c, from: u.from, to: u.to }; });
+      }
+    }
+    return { tb: tb, meta: meta, e: e, hasEdit: hasEdit, allowed: allowed, show: show, view: view, vals: vals, dashed: dashed, marks: marks, diff: diff, spark: spark, sp: sp };
+  }
+
+  function viewTablePanel(m, name) {
+    var t = T(), pm = panelModel(name), tb = pm.tb, meta = pm.meta, info = tableInfo(name), pair = K.pairOf(name);
+    var h = '<div class="tpanel" id="tpanel"><div class="tpanel-head"><div class="tpanel-title"><div class="eyebrow">' + esc(m.roles[meta.role] + (meta.stage ? ' · ' + m.stage[meta.stage] : '')) + '</div>';
+    h += '<h2 class="card-title">' + esc(tableLabel(name)) + '</h2><code>' + esc(name) + '</code></div>' + viewTablePicker(m, name) + '</div>';
+
+    // toolbar: 2D grid, 2D lines, 3D; what to show
+    h += '<div class="toolbar"><div class="seg" role="group" aria-label="' + esc(m.views.grid + ', ' + m.views.lines + ', ' + m.views.surface) + '">';
+    ['grid', 'lines', 'surface'].forEach(function (v) {
+      var off = v === 'surface' && tb.curve;
+      h += '<button type="button" data-act="set" data-arg="mapView:' + v + '" aria-pressed="' + (pm.view === v) + '"' + (off ? ' disabled title="' + esc(m.noSurface) + '"' : '') + '>' + esc(m.views[v]) + '</button>';
+    });
+    h += '</div>';
+    if (pm.allowed.length > 1) {
+      h += '<div class="seg" role="group" aria-label="' + esc(m.show.label) + '">' + pm.allowed.map(function (v) { return '<button type="button" data-act="set" data-arg="mapShow:' + v + '" aria-pressed="' + (pm.show === v) + '">' + esc(m.show[v]) + '</button>'; }).join('') + '</div>';
+    }
+    if (pair) h += '<button type="button" class="btn-ghost" data-act="table" data-arg="' + esc(pair) + '">' + esc(tableLabel(pair)) + ' →</button>';
+    h += '</div>';
+
+    // the picture
+    h += '<div class="viz">';
+    if (pm.view === 'grid') h += gridHtml(pm, m);
+    else if (pm.view === 'lines') h += linesHtml(pm, m);
+    else h += surfaceHtml(pm, m, name);
+    h += '</div>';
+
+    // what changes, and whether the shape holds
+    var facts = [];
+    if (meta.role === 'edit') {
+      var e = pm.e;
+      if (meta.stage === 'A' && e.pending) facts.push(['nodata', m.pendingAfm]);
+      else if (meta.stage === 'B2' && !e.changed.length) facts.push(['nodata', m.atCeiling]);
+      else {
+        facts.push(['good', tb.curve ? m.points(e.changed.length) : m.cells(e.changed.length)]);
+        var sm = K.smoothness(e.before, e.after, { tol: meta.tol });
+        facts.push(sm.ok ? ['good', m.shapeOk] : ['stop', m.shapeBad(sm.spikes.length)]);
+        if (!tb.curve) facts.push(['good', m.step(F.num(sm.stepBefore, meta.digits), F.num(sm.stepAfter, meta.digits), meta.unit)]);
+      }
+      if (pair) facts.push(['watch', m.also(pair)]);
+    } else if (pm.spark) facts.push(['stop', m.blind(pm.sp, name, F)]);
+    else facts.push(['nodata', m.noEdit]);
+    h += '<div class="proofs map-facts">' + facts.map(function (f) { return '<div class="proof">' + sIcon(f[0], 16) + '<span>' + esc(f[1]) + '</span></div>'; }).join('') + '</div>';
+
+    // what the table is, and how to change it
+    var pairs = [[m.info.what, info.what], [m.info.edit, info.edit]];
+    if (info.verify) pairs.push([m.info.verify, info.verify]);
+    if (info.shape) pairs.push([m.info.shape, info.shape]);
+    h += '<div class="pairs">' + pairs.map(function (p) { return '<b>' + esc(p[0]) + '</b><span>' + esc(p[1]) + '</span>'; }).join('') + '</div>';
+    if (meta.role === 'edit') h += '<div class="howto"><h3>' + esc(m.how) + '</h3>' + list(m.howSteps[meta.stage].map(esc)) + '</div>';
+    if (pair) h += '<p class="small-note">' + esc(m.lh) + '</p>';
+    return h + '</div>';
+  }
+
+  function gridHtml(pm, m) {
+    var tb = pm.tb, meta = pm.meta, digits = pm.diff ? Math.max(1, meta.digits) : meta.digits;
+    var mark = {};
+    pm.marks.forEach(function (x) { mark[x.r + ',' + x.c] = x; });
+    var h = '<div class="legend"><span><i class="sw-cell"></i>' + esc(m.legend.changed) + '</span><span class="mono">' + esc(meta.unit || '') + '</span></div>';
+    h += '<div class="grid-scroll" tabindex="0" role="region" aria-label="' + esc(tableLabel(tb.name)) + '"><table class="hgrid">';
+    if (tb.curve) {
+      var vals = pm.vals, before = pm.e ? pm.e.before : null;
+      var cell = function (v, k) {
+        var x = mark['0,' + k], bg = pm.diff ? diffBg(v) : '';
+        return '<td class="' + (x ? 'is-changed' : '') + '"' + (bg ? ' style="background:' + bg + '"' : '') + (x ? ' data-tip="' + esc(fmtCell(x.from, 3) + ' → ' + fmtCell(x.to, 3)) + '"' : '') + '>' + esc(fmtCell(v, pm.diff ? 3 : digits)) + '</td>';
+      };
+      h += '<tbody><tr><th class="rowh">' + esc(meta.x === 'rpm' ? m.axis.rpm : m.gridCurve.hz) + '</th>' + tb.x.map(function (x) { return '<th>' + esc(F.num(x)) + '</th>'; }).join('') + '</tr>';
+      h += '<tr><th class="rowh">' + esc(pm.diff ? 'Δ ' + meta.unit : (meta.unit || m.gridCurve.value)) + '</th>' + vals.map(cell).join('') + '</tr>';
+      if (before && pm.hasEdit && pm.show === 'after') h += '<tr><th class="rowh">' + esc(m.gridCurve.change) + '</th>' + vals.map(function (v, k) { return '<td class="pct">' + esc(before[k] ? F.signed((v / before[k] - 1) * 100, 1, '%') : '-') + '</td>'; }).join('') + '</tr>';
+      return h + '</tbody></table></div>';
+    }
+    var heat = K.view.heat(pm.vals, { rowLabels: tb.x, digits: digits });
+    h += '<thead><tr><th class="rowh">rpm \\ col</th>' + heat.cols.map(function (c) { return '<th>' + esc(c.label) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    heat.rows.forEach(function (row, r) {
+      h += '<tr><th class="rowh">' + esc(row.label) + '</th>';
+      row.cells.forEach(function (c, ci) {
+        var x = mark[r + ',' + ci], bg = pm.diff ? diffBg(c.v) : c.bg, fg = pm.diff ? 'var(--ink)' : c.fg;
+        var tip = x ? (fmtCell(x.from, meta.digits) + ' → ' + fmtCell(x.to, meta.digits) + (meta.unit ? ' ' + meta.unit : '')) : '';
+        h += '<td class="' + (x ? 'is-changed' : '') + '" style="background:' + bg + ';color:' + fg + '"' + (tip ? ' data-tip="' + esc(F.num(tb.x[r]) + ' rpm, col ' + ci + ': ' + tip) + '"' : '') + '>' + esc(pm.diff && c.v > 0 ? '+' + c.text : c.text) + '</td>';
+      });
+      h += '</tr>';
+    });
+    return h + '</tbody></table></div>';
+  }
+  function diffBg(v) { return !isNum(v) || Math.abs(v) < 1e-9 ? 'var(--sheet-2)' : (v > 0 ? 'rgba(235, 104, 52, ' + (0.18 + Math.min(0.5, Math.abs(v) * 0.12)) + ')' : 'rgba(42, 120, 214, ' + (0.18 + Math.min(0.5, Math.abs(v) * 0.12)) + ')'); }
+
+  function linesHtml(pm, m) {
+    var tb = pm.tb, meta = pm.meta;
+    var f = K.view.lines(pm.vals, { x: tb.x, before: pm.dashed, unit: meta.unit, xLabel: meta.x === 'Hz' ? m.axis.hz : m.axis.rpm, yLabel: pm.diff ? 'Δ ' + meta.unit : meta.unit });
+    var h = '<div class="legend">';
+    if (pm.dashed) h += '<span><i class="sw-line cmd"></i>' + esc(m.legend.after) + '</span><span><i class="sw-dash"></i>' + esc(m.legend.before) + '</span>';
+    if (!tb.curve) h += '<span class="muted">' + esc(m.axis.col) + ': col 0 → col ' + (Array.isArray(pm.vals[0]) ? pm.vals[0].length - 1 : 0) + '</span>';
+    h += '</div><div class="chart"><svg viewBox="' + f.viewBox + '" role="img" aria-label="' + esc(tableLabel(tb.name)) + '">' + axes(f);
+    f.series.forEach(function (s) {
+      if (s.before) h += '<path d="' + s.before + '" style="fill:none;stroke:var(--axis);stroke-width:1.6;stroke-dasharray:5 4"/>';
+      h += '<path d="' + s.d + '" style="fill:none;stroke:' + s.color + ';stroke-width:' + s.width + ';stroke-linejoin:round"' + (s.label ? ' data-tip="' + esc(s.label) + '"' : '') + '/>';
+    });
+    return h + '</svg></div>';
+  }
+
+  function narrow() { return !!(window.matchMedia && window.matchMedia('(max-width: 759px)').matches); }
+  function surfaceModel(pm) {
+    var meta = pm.meta;
+    return K.view.surface(pm.vals, {
+      x: pm.tb.x, yaw: ui.yaw, pitch: ui.pitch, w: narrow() ? 540 : 760, h: narrow() ? 500 : 470, diff: pm.diff, unit: pm.diff ? 'Δ ' + meta.unit : meta.unit,
+      digits: pm.diff ? Math.max(1, meta.digits) : meta.digits, rowUnit: 'rpm',
+      mark: pm.marks.map(function (x) { return { r: x.r, c: x.c, tip: F.num(pm.tb.x[x.r]) + ' rpm, col ' + x.c + ': ' + fmtCell(x.from, meta.digits) + ' → ' + fmtCell(x.to, meta.digits) }; })
+    });
+  }
+  function surfaceSvg(s, label, m) {
+    var h = '<svg viewBox="' + s.viewBox + '" role="img" aria-label="' + esc(label) + '">';
+    h += '<path class="s-floor" d="' + s.edge + '"/>';
+    s.quads.forEach(function (q) { h += '<polygon points="' + q.points + '" fill="' + q.fill + '" data-tip="' + esc(q.tip) + '"/>'; });
+    s.marks.forEach(function (k) { h += '<circle class="s-mark" cx="' + k.cx + '" cy="' + k.cy + '" r="3.6" data-tip="' + esc(k.tip) + '"/>'; });
+    s.labels.forEach(function (l) { h += '<text x="' + l.x + '" y="' + l.y + '" text-anchor="' + l.anchor + '">' + esc(l.text) + '</text>'; });
+    return h + '</svg>';
+  }
+  function surfaceHtml(pm, m, name) {
+    ui.surface = { name: name };
+    var h = '<div class="legend">';
+    if (pm.marks.length) h += '<span><i class="sw-mark"></i>' + esc(pm.show === 'smooth' ? m.legend.add : m.legend.changed) + '</span>';
+    if (pm.diff) h += '<span><i class="sw-sq" style="background:#e8710a"></i>+</span><span><i class="sw-sq" style="background:#2a78d6"></i>−</span>';
+    var flat = [];
+    pm.vals.forEach(function (row) { row.forEach(function (v) { if (isNum(v)) flat.push(v); }); });
+    var dg = pm.diff ? Math.max(1, pm.meta.digits) : pm.meta.digits;
+    var lo = Math.min.apply(null, flat), hi = Math.max.apply(null, flat);
+    h += '<span class="muted">' + esc(m.axes3d(pm.meta.unit || '', pm.diff, pm.diff ? F.signed(lo, dg) : F.num(lo, dg), pm.diff ? F.signed(hi, dg) : F.num(hi, dg))) + '</span></div>';
+    h += '<div class="surface" id="surface" tabindex="0" aria-label="' + esc(m.surfaceLabel(tableLabel(name))) + '">' + surfaceSvg(surfaceModel(pm), tableLabel(name), m) + '</div>';
+    h += '<div class="rot"><button type="button" data-act="rot" data-arg="left" aria-label="' + esc(m.turnLeft) + '">↺</button><button type="button" data-act="rot" data-arg="right" aria-label="' + esc(m.turnRight) + '">↻</button>';
+    h += '<button type="button" data-act="rot" data-arg="up" aria-label="' + esc(m.tiltUp) + '">↑</button><button type="button" data-act="rot" data-arg="down" aria-label="' + esc(m.tiltDown) + '">↓</button>';
+    h += '<button type="button" data-act="rot" data-arg="reset">' + esc(m.reset) + '</button><span class="muted">' + esc(m.dragHint) + '</span></div>';
+    return h;
+  }
+  var rafPending = false;
+  function redrawSurface() {
+    if (rafPending) return;
+    rafPending = true;
+    (window.requestAnimationFrame || function (f) { setTimeout(f, 16); })(function () {
+      rafPending = false;
+      var el = document.getElementById('surface');
+      if (!el || state.page !== 'map') return;
+      var name = MAP.tables[state.mapTable] ? state.mapTable : 'WOT_Enrich_L', pm = panelModel(name);
+      el.innerHTML = surfaceSvg(surfaceModel(pm), tableLabel(name), T().map);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Guide: basic road tune, E10 and boost answers, road pull, 3D fact check, panel
+  // ---------------------------------------------------------------------------
+  function viewGuidePage() {
+    var t = T(), g = t.guide;
+    var h = '<main class="main" id="main" tabindex="-1">' + pageHead(g.eyebrow, g.title, g.goal);
+
+    h += '<section class="card"><h2 class="card-title">' + esc(g.basic.title) + '</h2><div class="table basic"><div class="row head"><span>' + g.basic.head.map(esc).join('</span><span>') + '</span></div>';
+    g.basic.rows.forEach(function (r) {
+      h += '<div class="row"><span><b>' + esc(r[0]) + '</b></span><span><span class="pill st-' + r[1] + '">' + esc(r[2]) + '</span></span><span>' + esc(r[3]) + '</span><span class="muted-2">' + esc(r[4]) + '</span></div>';
+    });
+    h += '</div></section>';
+
+    h += '<section class="grid-2"><div class="card"><h2 class="card-title">' + esc(g.e10.title) + '</h2><p class="lead-sm"><b>' + esc(g.e10.lead) + '</b></p>' + list(g.e10.points.map(esc));
+    h += '<p class="body-sm">' + esc(g.e10.us) + ' ' + linkHint('e10', termLabel('e10')) + '</p><div class="note"><span class="badge-dark">WOT</span><p>' + esc(g.e10.then) + '</p></div></div>';
+    h += '<div class="card"><h2 class="card-title">' + esc(g.boost.title) + '</h2><ul class="dots">' + g.boost.points.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>';
+    h += '<button type="button" class="link-btn" data-act="table" data-arg="Boost_Target_1_Normal_L">' + esc(t.nav2.showIn('Boost_Target_1_Normal_L')) + '</button></div></section>';
+
+    h += '<section class="card"><div class="card-row"><h2 class="card-title">' + esc(g.pull.title) + '</h2><span class="muted">' + esc(g.pull.source) + '</span></div>' + list(g.pull.steps.map(esc)) + '</section>';
+
+    var ign = mapTable('Ignition_Base_H'), sp = ign ? K.smoothPreview(ign.values, { x: ign.x }) : null;
+    h += '<section class="card"><h2 class="card-title">' + esc(g.smooth.title) + '</h2><p class="lead-sm"><b>' + esc(g.smooth.verdict) + '</b></p><div class="pairs">';
+    g.smooth.points.forEach(function (p) { h += '<b>' + esc(p[0]) + '</b><span>' + esc(p[1] || (sp ? t.map.blind(sp, 'Ignition_Base_H', F) : '')) + '</span>'; });
+    h += '</div><p class="body-sm">' + esc(g.smooth.rule) + '</p><div><button type="button" class="btn-ghost" data-act="smoothDemo">' + esc(g.smooth.show) + '</button></div></section>';
+
+    h += '<section class="card"><h2 class="card-title">' + esc(g.panel.title) + '</h2><p class="muted" style="margin:0">' + esc(g.panel.note) + '</p><div class="panel">';
+    g.panel.topics.forEach(function (tp, i) {
+      var id = 'topic-' + i;
+      h += '<details class="topic" id="' + id + '"' + (ui.topics[id] ? ' open' : '') + '><summary>' + sIcon(tp.v[0], 18) + '<span>' + esc(tp.q) + '</span></summary><div class="voices">';
+      ['kt', 'hd', 'ols', 'honda'].forEach(function (k) { h += '<div class="voice"><b>' + esc(g.panel.who[k]) + '</b><p>' + esc(tp[k]) + '</p></div>'; });
+      h += '</div><div class="verdict st-' + tp.v[0] + '"><b>' + esc(g.panel.verdict) + '</b><p>' + esc(tp.v[1]) + '</p></div></details>';
+    });
+    h += '</div></section>';
+
+    var tagSt = { kept: 'good', adapted: 'watch', left: 'nodata' };
+    h += '<section class="card"><h2 class="card-title">' + esc(g.videos.title) + '</h2><div class="table vids"><div class="row head"><span>' + g.videos.head.map(esc).join('</span><span>') + '</span></div>';
+    g.videos.rows.forEach(function (r) { h += '<div class="row"><span>' + esc(r[0]) + '</span><span><span class="pill st-' + tagSt[r[1]] + '">' + esc(g.videos.tags[r[1]]) + '</span></span><span class="muted-2">' + esc(r[2]) + '</span></div>'; });
+    h += '</div></section>';
+
+    h += '<section class="card is-soft"><h2 class="card-title">' + esc(g.sourcesTitle) + '</h2><div class="src-list">' + g.sources.map(function (s) { return '<a href="' + esc(s[0]) + '" target="_blank" rel="noopener">' + esc(s[1]) + '</a>'; }).join('') + '</div><p class="small-note">' + esc(g.videosNote) + '</p></section>';
+    return h + pageFoot() + '</main>';
   }
 
   function viewCheck(t, n) {
@@ -533,7 +864,7 @@
   }
 
   function viewAside() {
-    var t = T(), key = state.hint || HINT_DEFAULT[state.step], hint = t.hints[key];
+    var t = T(), key = state.hint || (state.page === 'map' ? 'afm' : (state.page === 'guide' ? 'loop' : HINT_DEFAULT[state.step])), hint = t.hints[key];
     var h = '<aside class="aside" aria-label="' + esc(t.app.explain) + '"><div class="hint" id="hint"><div class="eyebrow">' + esc(t.explain) + '</div>';
     h += '<h3>' + esc(hint.title) + '</h3>';
     hint.paras.forEach(function (p) { h += '<p>' + esc(p) + '</p>'; });
@@ -596,10 +927,12 @@
   function ingest(text, name, sample, slot) {
     try {
       var parsed = K.parseCSV(text);
-      var rec = { name: name, sample: sample || '', parsed: parsed, mapping: K.detectChannels(parsed.headers, parsed.columns) };
+      var rec = { name: name, sample: sample || '', slot: slot, parsed: parsed, mapping: K.detectChannels(parsed.headers, parsed.columns) };
       analyzeRec(rec);
       slots[slot] = rec;
       state.lastSlot = slot;
+      // a new baseline is the torque reference for every later log
+      if (slot === 'baseline') Object.keys(slots).forEach(function (k) { if (k !== 'baseline') { try { analyzeRec(slots[k]); } catch (err) { /* keep old */ } } });
       ui.error = '';
     } catch (e) {
       ui.error = (name ? name + ': ' : '') + ((e && e.message) || e);
@@ -608,7 +941,9 @@
   }
   function analyzeRec(rec) {
     rec.log = K.buildLog(rec.parsed, rec.mapping);
-    rec.an = K.analyze(rec.log, { table: tableInUse() });
+    var base = slots.baseline;
+    var ref = rec.slot !== 'baseline' && base && base !== rec && base.an ? base.an.numbers.torqueMax : NaN;
+    rec.an = K.analyze(rec.log, { table: tableInUse(), torqueRef: ref });
   }
   function loadFile(file) {
     var slot = slotFor(state.step);
@@ -650,14 +985,14 @@
     go: function (arg) {
       var n = parseInt(arg, 10);
       if (!(n >= 1 && n <= 7)) return;
-      state.step = n; state.hint = ''; ui.copied = ''; ui.error = '';
+      state.step = n; state.page = ''; state.hint = ''; ui.copied = ''; ui.error = '';
       save();
       try { history.replaceState(null, '', '#step-' + n); } catch (e) { /* file:// may refuse */ }
       render({ top: true });
     },
     hint: function (arg) {
       state.hint = arg; save(); render();
-      if (window.matchMedia && window.matchMedia('(max-width: 1199px)').matches) {
+      if (state.page || (window.matchMedia && window.matchMedia('(max-width: 1199px)').matches)) {
         var el = document.getElementById('hint');
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
@@ -685,7 +1020,37 @@
       state.theme = dark ? 'light' : 'dark';
       save(); render();
     },
-    lang: function () { state.lang = state.lang === 'vi' ? 'en' : 'vi'; save(); render(); }
+    lang: function () { state.lang = state.lang === 'vi' ? 'en' : 'vi'; save(); render(); },
+    page: function (arg) {
+      if (arg !== 'map' && arg !== 'guide') return;
+      state.page = arg; state.hint = ''; ui.copied = '';
+      save();
+      try { history.replaceState(null, '', '#' + arg + (arg === 'map' ? '/' + state.mapTable : '')); } catch (e) { /* file:// may refuse */ }
+      render({ top: true });
+    },
+    table: function (name) {
+      if (!MAP.tables[name]) return;
+      var fresh = state.page !== 'map';
+      state.page = 'map'; state.mapTable = name; state.hint = '';
+      save();
+      try { history.replaceState(null, '', '#map/' + name); } catch (e) { /* file:// may refuse */ }
+      render({ top: fresh });
+      if (!fresh) { var p = document.getElementById('tpanel'); if (p && p.getBoundingClientRect().top < 0) p.scrollIntoView({ block: 'start' }); }
+    },
+    smoothDemo: function () {
+      state.page = 'map'; state.mapTable = 'Ignition_Base_H'; state.mapView = 'surface'; state.mapShow = 'smooth';
+      save();
+      try { history.replaceState(null, '', '#map/Ignition_Base_H'); } catch (e) { /* file:// may refuse */ }
+      render({ top: true });
+    },
+    rot: function (arg) {
+      if (arg === 'reset') { ui.yaw = -38; ui.pitch = 58; }
+      else if (arg === 'left') ui.yaw -= 15;
+      else if (arg === 'right') ui.yaw += 15;
+      else if (arg === 'up') ui.pitch = Math.min(88, ui.pitch + 8);
+      else if (arg === 'down') ui.pitch = Math.max(12, ui.pitch - 8);
+      redrawSurface();
+    }
   };
 
   document.addEventListener('click', function (e) {
@@ -737,6 +1102,7 @@
   // keep the column-mapping panel open across re-renders
   document.addEventListener('toggle', function (e) {
     if (e.target && e.target.id === 'columns') ui.columnsOpen = e.target.open;
+    if (e.target && e.target.classList && e.target.classList.contains('topic')) ui.topics[e.target.id] = e.target.open;
   }, true);
 
   // drag and drop a CSV anywhere on a step that takes a log
@@ -763,6 +1129,43 @@
     if (file) loadFile(file);
   });
 
+  // 3D surface: drag with a mouse, finger or pen; arrow keys when focused
+  var drag = null;
+  document.addEventListener('pointerdown', function (e) {
+    var el = e.target.closest ? e.target.closest('#surface') : null;
+    if (!el || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    drag = { x: e.clientX, y: e.clientY, yaw: ui.yaw, pitch: ui.pitch };
+    try { el.setPointerCapture(e.pointerId); } catch (err) { /* old browsers */ }
+    el.classList.add('is-drag');
+    hideTip();
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    ui.yaw = drag.yaw + (e.clientX - drag.x) * 0.5;
+    ui.pitch = Math.max(12, Math.min(88, drag.pitch - (e.clientY - drag.y) * 0.35));
+    redrawSurface();
+  });
+  function endDrag() {
+    if (!drag) return;
+    drag = null;
+    var el = document.getElementById('surface');
+    if (el) el.classList.remove('is-drag');
+  }
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', endDrag);
+  document.addEventListener('keydown', function (e) {
+    if (!e.target || e.target.id !== 'surface') return;
+    var k = e.key;
+    if (k === 'ArrowLeft') ui.yaw -= 10;
+    else if (k === 'ArrowRight') ui.yaw += 10;
+    else if (k === 'ArrowUp') ui.pitch = Math.min(88, ui.pitch + 6);
+    else if (k === 'ArrowDown') ui.pitch = Math.max(12, ui.pitch - 6);
+    else if (k === 'Home' || k === '0') { ui.yaw = -38; ui.pitch = 58; }
+    else return;
+    e.preventDefault();
+    redrawSurface();
+  });
+
   // chart tooltips
   var tip = null;
   function showTip(el, x, y) {
@@ -774,7 +1177,7 @@
     tip.style.top = Math.max(8, y - 36) + 'px';
   }
   function hideTip() { if (tip) tip.style.display = 'none'; }
-  document.addEventListener('mouseover', function (e) { var el = e.target.closest ? e.target.closest('[data-tip]') : null; if (el) showTip(el, e.clientX, e.clientY); else hideTip(); });
+  document.addEventListener('mouseover', function (e) { if (drag) return; var el = e.target.closest ? e.target.closest('[data-tip]') : null; if (el) showTip(el, e.clientX, e.clientY); else hideTip(); });
   document.addEventListener('mousemove', function (e) { if (tip && tip.style.display === 'block') { var el = e.target.closest ? e.target.closest('[data-tip]') : null; if (el) showTip(el, e.clientX, e.clientY); } });
   document.addEventListener('touchstart', function (e) { var el = e.target.closest ? e.target.closest('[data-tip]') : null; if (el) { var p = e.touches[0]; showTip(el, p.clientX, p.clientY); } else hideTip(); }, { passive: true });
 
@@ -795,6 +1198,7 @@
     var keep = { main: q('.main') ? q('.main').scrollTop : 0, aside: q('.aside') ? q('.aside').scrollTop : 0, rail: q('.rail') ? q('.rail').scrollTop : 0, win: window.scrollY };
     applyTheme();
     hideTip();
+    root.classList.toggle('page-wide', state.page === 'map' || state.page === 'guide');
     root.innerHTML = view();
     if (opts.top) {
       if (q('.main')) q('.main').scrollTop = 0;
@@ -814,10 +1218,26 @@
 
   // start
   var m = /#step-(\d)/.exec(location.hash || '');
-  if (m) state.step = Math.max(1, Math.min(7, parseInt(m[1], 10)));
-  if (/[?&]demo=1\b/.test(location.search)) {
-    ['baseline'].forEach(function (slot) { var rec = { name: '', sample: 'before', parsed: K.parseCSV(K.sampleCsv('before')) }; rec.mapping = K.detectChannels(rec.parsed.headers, rec.parsed.columns); analyzeRec(rec); slots[slot] = rec; state.lastSlot = slot; });
+  if (m) { state.step = Math.max(1, Math.min(7, parseInt(m[1], 10))); state.page = ''; }
+  var pm = /#(map|guide)(?:\/([^?#]+))?/.exec(location.hash || '');
+  if (pm) {
+    state.page = pm[1];
+    var want = pm[2] ? decodeURIComponent(pm[2]) : '';
+    if (want && window.KTA_MAP && window.KTA_MAP.tables[want]) state.mapTable = want;
   }
+  if (/[?&]demo=1\b/.test(location.search)) {
+    ['baseline'].forEach(function (slot) { var rec = { name: '', sample: 'before', slot: slot, parsed: K.parseCSV(K.sampleCsv('before')) }; rec.mapping = K.detectChannels(rec.parsed.headers, rec.parsed.columns); analyzeRec(rec); slots[slot] = rec; state.lastSlot = slot; });
+  }
+  window.addEventListener('hashchange', function () {
+    var h = location.hash || '', sm = /#step-(\d)/.exec(h), pg = /#(map|guide)(?:\/([^?#]+))?/.exec(h);
+    if (sm) { state.step = Math.max(1, Math.min(7, parseInt(sm[1], 10))); state.page = ''; }
+    else if (pg) {
+      state.page = pg[1];
+      var want = pg[2] ? decodeURIComponent(pg[2]) : '';
+      if (want && MAP.tables[want]) state.mapTable = want;
+    } else return;
+    save(); render({ top: true });
+  });
   if (window.matchMedia) {
     var mq = window.matchMedia('(prefers-color-scheme: dark)');
     var onScheme = function () { if (!state.theme) render(); };

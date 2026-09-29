@@ -161,7 +161,9 @@
     ect: { good: 100, watch: 105 },        // deg C
     cvt: { good: 90, watch: 100 },         // deg C CVT fluid
     knock: { good: 1.0, watch: 3.0 },      // deg retard, worst cylinder, WOT
-    torqueNm: 280,                         // CVT ceiling, ECU torque estimate
+    kControl: { good: 0.65, watch: 0.85 }, // learned knock level: 0 = RON 100, 1 = RON 90 (Hondata); RON95 sits near 0.5
+    torqueNm: 280,                         // CVT guideline when no base-map log gives a reference (ECU estimate)
+    torqueOverRef: { good: 1.03, watch: 1.08 }, // later logs vs the base map's own peak torque
     lowRpmBoost: { good: 1.5, watch: 3.0 },// psi over reference map below 3,000 rpm
     mafStepMax: 0.10,                      // max AFM change per round (fraction)
     minBinWeight: 8,                       // closed-loop samples per AFM point
@@ -646,13 +648,15 @@
   /**
    * Grades a normalized log. opts:
    *   table     current AFM (g/s) values, needed only when the log has g/s but no Hz
-   *   torqueNm  CVT ceiling (default LIMITS.torqueNm)
+   *   torqueNm  CVT guideline (default LIMITS.torqueNm), used when there is no torqueRef
+   *   torqueRef peak torque (Nm) of the untouched base map, from the baseline log
    */
   KTA.analyze = function (log, opts) {
     opts = opts || {};
     var L = KTA.LIMITS, n = log.n, has = log.has, dt = log.dt || 0.1;
     var axis = REF.maf.hz;
-    var ceiling = opts.torqueNm || L.torqueNm;
+    var torqueRef = isNum(opts.torqueRef) ? opts.torqueRef : NaN;
+    var ceiling = isNum(torqueRef) ? Math.round(torqueRef) : (opts.torqueNm || L.torqueNm);
 
     // ---- classify samples
     var warm = new Uint8Array(n), wot = new Uint8Array(n), cl = new Uint8Array(n), settled = new Uint8Array(n), sinceStart = new Float64Array(n);
@@ -849,16 +853,17 @@
     var knockStatus = grade(knockMax, L.knock);
     if (multiCyl * dt >= 0.3 && RANK[knockStatus] < RANK.stop) knockStatus = knockStatus === 'good' ? 'watch' : 'stop';
     var kcStatus = 'nodata';
-    if (isNum(kcEnd)) kcStatus = kcEnd - kcStart > 0.15 ? 'watch' : 'good';
+    if (isNum(kcEnd)) kcStatus = worst([grade(kcEnd, L.kControl), kcEnd - kcStart > 0.15 ? 'watch' : 'good']);
     var sparkChecks = [
       check('knock', 'Knock retard at WOT', knockStatus,
         isNum(knockMax) ? F.num(knockMax, 1) + '° worst' + (isNum(knockRpm) ? ' at ' + F.num(knockRpm) + ' rpm' : '') + (multiCyl ? ', ' + (multiCyl > 1 ? 'several cylinders together' : 'two cylinders') : '') : 'Knock retard not logged',
         '1° or less', 'Find the cause before adding anything: heat soak, fuel, boost. Richen WOT 0.3 AFR or drop 1 psi in that rpm. Never desensitize the knock sensors.',
         { value: knockMax, hint: 'knock', data: { value: knockMax, rpm: knockRpm, multi: multiCyl } }),
-      check('kControl', 'Knock control trend', kcStatus,
+      check('kControl', 'Knock control', kcStatus,
         isNum(kcEnd) ? F.num(kcStart, 2) + ' → ' + F.num(kcEnd, 2) : 'Not logged',
-        'Steady or falling', 'The ECU keeps finding knock and is drifting to its safer timing map. Treat it like knock retard.',
-        { value: kcEnd, hint: 'kcontrol', data: { start: kcStart, end: kcEnd } })
+        '0.65 or less, steady or falling',
+        isNum(kcEnd) && kcEnd > L.kControl.good ? 'The ECU rates your fuel below RON95 right now (heat, fuel or too much boost) and runs its safer timing. Add nothing; on hot days use ECO (18 psi).' : 'The ECU keeps finding knock and is drifting to its safer timing map. Treat it like knock retard.',
+        { value: kcEnd, hint: 'kcontrol', data: { start: kcStart, end: kcEnd, high: isNum(kcEnd) && kcEnd > L.kControl.good } })
     ];
     var heatChecks = [
       check('iat', 'Intake air temp', grade(iatMax, L.iat),
@@ -871,16 +876,20 @@
         { value: ectMax, hint: 'ect', data: { value: ectMax } })
     ];
     var torqueStatus = 'nodata';
-    if (isNum(torqueMax)) torqueStatus = torqueMax <= ceiling ? 'good' : (torqueMax <= ceiling * 1.05 ? 'watch' : 'stop');
+    if (isNum(torqueMax)) {
+      if (isNum(torqueRef)) torqueStatus = torqueMax <= torqueRef * L.torqueOverRef.good ? 'good' : (torqueMax <= torqueRef * L.torqueOverRef.watch ? 'watch' : 'stop');
+      else torqueStatus = torqueMax <= ceiling ? 'good' : 'watch';   // no reference: a guideline, never a Stop
+    }
     var cvtChecks = [
       check('cvtTemp', 'CVT fluid temp', grade(cvtMax, L.cvt),
         isNum(cvtMax) ? F.num(cvtMax, 0) + ' °C peak' : 'Not logged',
         '90 °C or less', 'Stop pulls and cruise gently until under 90 °C. Hot CVT fluid lets the belt slip, and the ECU cuts torque.',
         { value: cvtMax, hint: 'cvt', data: { value: cvtMax } }),
       check('torque', 'Engine torque', torqueStatus,
-        isNum(torqueMax) ? F.num(torqueMax, 0) + ' Nm peak (ceiling ' + ceiling + ')' : 'Not logged (fine)',
-        'At or under your ceiling', 'Above your CVT ceiling. Lower the boost target where it peaks.',
-        { value: torqueMax, hint: 'torque', data: { value: torqueMax, ceiling: ceiling } }),
+        isNum(torqueMax) ? F.num(torqueMax, 0) + ' Nm peak (' + (isNum(torqueRef) ? 'base map ' : 'guideline ') + ceiling + ')' : 'Not logged (fine)',
+        isNum(torqueRef) ? 'Within 3 % of your base map' : 'At or under 280 Nm',
+        isNum(torqueRef) ? 'More torque than your base map makes. Undo the last boost change; keep the added torque above 3,500 rpm.' : 'Above the 280 Nm guideline. If this is your untouched base map, that is the map\'s own level: add nothing on top and avoid hard launches.',
+        { value: torqueMax, hint: 'torque', data: { value: torqueMax, ceiling: ceiling, ref: isNum(torqueRef) } }),
       check('lowBoost', 'Boost below 3,000 rpm', grade(lowBoost, L.lowRpmBoost),
         isNum(lowBoost) ? F.signed(lowBoost, 1, ' psi') + ' vs reference map' : 'Needs a pull and boost',
         'Within 1.5 psi of the reference map', 'More low-rpm torque than the reference map. Put the boost target below 3,000 rpm back to stock: that is where the CVT belt is most stressed.',
@@ -1085,6 +1094,172 @@
   KTA.toRow = function (values, sep) { return values.map(function (v) { return String(roundTable(v)); }).join(sep || '\t'); };
 
   // ---------------------------------------------------------------------------
+  // The whole map: what each table is, what the basic stage changes in it, and
+  // whether an edit keeps the table's shape.
+  // ---------------------------------------------------------------------------
+  function extend(a, b) { var o = {}, k; for (k in a) o[k] = a[k]; for (k in b) o[k] = b[k]; return o; }
+  /**
+   * Every table in the digitized KTuner map (data/ktuner-maps-digitized.json).
+   *  role   edit (the basic stage changes it), check (read it against a log, don't edit),
+   *         leave (stock on purpose), never (never touch), preset (reference curve), info
+   *  stage  A = required (AFM Flow), B1 = optional lever 1 (WOT), B2 = optional lever 2 (boost)
+   *  kind   curve (one row against Hz or rpm) or map (rpm rows x load columns)
+   *  tol    how far a cell may stand out from its neighbours before an edit counts as a spike
+   */
+  var TABLES = {};
+  function def(names, meta) { names.forEach(function (n) { TABLES[n] = extend({ name: n, kind: 'map', digits: 1, tol: 0 }, meta); }); }
+  function lh(base) { return [base + '_L', base + '_H']; }
+  def(['MAF_Scaling_Custom'], { kind: 'curve', x: 'Hz', unit: 'g/s', role: 'edit', stage: 'A', group: 'air', digits: 3, tol: 1.5 });
+  def(['MAF_Scaling_Factory', 'MAF_Scaling_PRL_Race', 'MAF_Scaling_27Won_Race'], { kind: 'curve', x: 'Hz', unit: 'g/s', role: 'preset', group: 'air', digits: 3 });
+  def(['AFM_Flow_Raw_Visible'], { kind: 'curve', x: 'Hz', unit: 'g/s', role: 'info', group: 'air', digits: 3 });
+  def(lh('WOT_Enrich'), { unit: 'AFR', role: 'edit', stage: 'B1', group: 'fuel', tol: 0.2 });
+  def([].concat(lh('Boost_Target_1_Normal'), lh('Boost_Target_2_Normal'), lh('Boost_Target_3_Normal')), { unit: 'psi', role: 'edit', stage: 'B2', group: 'boost', tol: 1.0 });
+  def([].concat(lh('Boost_Target_1_ECO'), lh('Boost_Target_2_ECO'), lh('Boost_Target_3_ECO')), { unit: 'psi', role: 'check', group: 'boost', tol: 1.0 });
+  def(lh('Final_Boost_Target'), { unit: 'psi', role: 'leave', group: 'boost' });
+  def(['Boost_By_Gear_Limits'], { unit: 'psi', role: 'leave', group: 'protect' });
+  def(lh('Cylinder_Fill_Limitation'), { unit: 'mg', role: 'leave', group: 'protect', digits: 0 });
+  def([].concat(lh('Ignition_Base'), lh('Ignition_Max')), { unit: '°', role: 'leave', group: 'spark', tol: 2 });
+  def([].concat(lh('Knock_Sens_1+4'), lh('Knock_Sens_2+3')), { unit: '', role: 'never', group: 'spark', digits: 0 });
+  def(lh('Ethanol_Ign_Adj'), { unit: '°', role: 'leave', group: 'ethanol' });
+  def(lh('Ethanol_Boost_Target_Adj'), { unit: 'psi', role: 'leave', group: 'ethanol' });
+  def(['DI_Fuel_Pressure_Target_0pct', 'DI_Fuel_Pressure_Target_55pct'], { unit: 'kPa', role: 'check', group: 'fuel', digits: 0 });
+  def(['WOT_Exhaust_VTC_Low_Cam'], { kind: 'curve', x: 'rpm', unit: '°', role: 'leave', group: 'air' });
+  KTA.TABLES = TABLES;
+  KTA.ROLE_ORDER = ['edit', 'check', 'leave', 'never', 'preset', 'info'];
+
+  /** One table from the digitized JSON, normalized: curves come back as one row. */
+  KTA.readTable = function (name, raw) {
+    var meta = TABLES[name] || { name: name, kind: 'map', unit: '', role: 'info', group: 'other', digits: 1, tol: 0 };
+    var curve = meta.kind === 'curve' || (raw.values.length === 1 && raw.values[0].length === raw.rpm_axis.length);
+    return {
+      name: name, meta: meta, curve: curve, notes: raw.notes || '',
+      x: raw.rpm_axis.slice(),
+      values: curve ? raw.values[0].slice() : raw.values.map(function (r) { return r.slice(); })
+    };
+  };
+  /** The other half of an _L / _H pair, or ''. */
+  KTA.pairOf = function (name) {
+    var m = /^(.*)_(L|H)$/.exec(name);
+    if (!m) return '';
+    var other = m[1] + '_' + (m[2] === 'L' ? 'H' : 'L');
+    return TABLES[other] ? other : '';
+  };
+
+  /**
+   * The basic-stage change for one table, cell by cell, or null for a table the
+   * basic stage leaves alone. opts: { maf: suggestMaf result, ceiling: psi }.
+   * AFM Flow stays "pending" until a log gives a correction.
+   */
+  KTA.tableEdits = function (name, values, opts) {
+    opts = opts || {};
+    var meta = TABLES[name];
+    if (!meta || meta.role !== 'edit') return null;
+    var after, pending = false;
+    if (meta.stage === 'A') {
+      if (opts.maf && opts.maf.ok && opts.maf.after.length === values.length) after = opts.maf.after.slice();
+      else { after = values.slice(); pending = true; }
+    } else if (meta.stage === 'B1') after = KTA.suggestWotLean(values).values;
+    else after = KTA.suggestBoostStep(opts.ceiling, values).values;
+    var changed = [];
+    if (meta.kind === 'curve') {
+      values.forEach(function (v, k) { if (Math.abs(after[k] - v) > 1e-9) changed.push({ r: 0, c: k, from: v, to: after[k] }); });
+    } else {
+      values.forEach(function (row, r) { row.forEach(function (v, c) { if (Math.abs(after[r][c] - v) > 1e-9) changed.push({ r: r, c: c, from: v, to: after[r][c] }); }); });
+    }
+    return { name: name, stage: meta.stage, before: values, after: after, changed: changed, pending: pending };
+  };
+
+  /**
+   * Does an edit keep the table's shape? Flags any cell the edit turns into a new
+   * spike or dip against its neighbours (by more than tol). Ramps are fine: the ECU
+   * interpolates between cells, so a difference between neighbours becomes a slope,
+   * not a jump. Shapes already in the stock table are not flagged, because Honda and
+   * KTuner put some of them there on purpose. Curves (AFM Flow) are judged on the
+   * percentage change, which must be smooth, and on rising at every point.
+   */
+  KTA.smoothness = function (before, after, opts) {
+    opts = opts || {};
+    var curve = !Array.isArray(after[0]);
+    var B, A, tol = isNum(opts.tol) ? opts.tol : 0, spikes = [], k;
+    if (curve) {
+      B = [before.map(function () { return 0; })];
+      A = [after.map(function (v, i) { return before[i] ? (v / before[i] - 1) * 100 : 0; })];
+      for (k = 1; k < after.length; k++) if (!(after[k] > after[k - 1])) spikes.push({ r: 0, c: k, value: after[k], by: round(after[k] - after[k - 1], 4), kind: 'fall' });
+    } else { B = before; A = after; }
+    var R = A.length, C = A[0].length, near = [], changed = 0, r, c;
+    for (r = 0; r < R; r++) near.push(new Uint8Array(C));
+    for (r = 0; r < R; r++) for (c = 0; c < C; c++) {
+      if (Math.abs((curve ? after[c] - before[c] : A[r][c] - B[r][c])) <= 1e-9) continue;
+      changed++;
+      for (var dr = -1; dr <= 1; dr++) for (var dc = -1; dc <= 1; dc++) {
+        var rr = r + dr, cc = c + dc;
+        if (rr >= 0 && rr < R && cc >= 0 && cc < C) near[rr][cc] = 1;
+      }
+    }
+    function excess(M, r, c) {
+      var n = [];
+      if (r > 0) n.push(M[r - 1][c]);
+      if (r < R - 1) n.push(M[r + 1][c]);
+      if (c > 0) n.push(M[r][c - 1]);
+      if (c < C - 1) n.push(M[r][c + 1]);
+      if (n.length < 2) return 0;
+      var hi = Math.max.apply(null, n), lo = Math.min.apply(null, n), v = M[r][c];
+      return v > hi ? v - hi : (v < lo ? v - lo : 0);
+    }
+    var stepB = 0, stepA = 0;
+    for (r = 0; r < R; r++) for (c = 0; c < C; c++) {
+      if (!near[r][c]) continue;
+      var eA = excess(A, r, c), eB = excess(B, r, c);
+      if (Math.abs(eA) > tol && Math.abs(eA) > Math.abs(eB) + 1e-9) spikes.push({ r: r, c: c, value: curve ? after[c] : A[r][c], by: round(eA, 3), kind: eA > 0 ? 'spike' : 'dip' });
+      if (!curve) {
+        if (r + 1 < R) { stepB = Math.max(stepB, Math.abs(B[r + 1][c] - B[r][c])); stepA = Math.max(stepA, Math.abs(A[r + 1][c] - A[r][c])); }
+        if (c + 1 < C) { stepB = Math.max(stepB, Math.abs(B[r][c + 1] - B[r][c])); stepA = Math.max(stepA, Math.abs(A[r][c + 1] - A[r][c])); }
+      }
+    }
+    return { ok: spikes.length === 0, changed: changed, spikes: spikes, stepBefore: round(stepB, 3), stepAfter: round(stepA, 3) };
+  };
+
+  /**
+   * What a blind 3x3 smooth (1-2-1 weights) would do to a table. Used to show why
+   * the stock ignition map is not smoothed: it adds timing in the boosted,
+   * high-load zone, the peak-torque area where knock lives.
+   * opts: { x: row axis, minX (default 1500 when x is given), from: first high-load
+   *   column (default: the upper half), threshold (default 1) }
+   */
+  KTA.smoothPreview = function (values, opts) {
+    opts = opts || {};
+    var R = values.length, C = values[0].length, out = [], all = [];
+    var th = isNum(opts.threshold) ? opts.threshold : 1, from = isNum(opts.from) ? opts.from : Math.floor(C / 2);
+    var xs = opts.x && opts.x.length === R ? opts.x : null, minX = isNum(opts.minX) ? opts.minX : 1500;
+    for (var r = 0; r < R; r++) {
+      var row = [];
+      for (var c = 0; c < C; c++) {
+        var s = 0, w = 0;
+        for (var dr = -1; dr <= 1; dr++) for (var dc = -1; dc <= 1; dc++) {
+          var rr = r + dr, cc = c + dc;
+          if (rr < 0 || cc < 0 || rr >= R || cc >= C) continue;
+          var ww = (dr ? 1 : 2) * (dc ? 1 : 2);
+          s += values[rr][cc] * ww; w += ww;
+        }
+        row.push(s / w);
+        all.push({ r: r, c: c, x: xs ? xs[r] : r, from: values[r][c], to: round(s / w, 2), delta: round(s / w - values[r][c], 2) });
+      }
+      out.push(row);
+    }
+    var zone = all.filter(function (u) { return u.c >= from && (!xs || u.x >= minX) && u.delta > 0; }).sort(function (a, b) { return b.delta - a.delta; });
+    var up = all.filter(function (u) { return u.delta >= th; }).sort(function (a, b) { return b.delta - a.delta; });
+    return {
+      after: out,
+      top: up.slice(0, 3),
+      topHighLoad: zone.slice(0, 3),
+      raisedCells: zone.filter(function (u) { return u.delta >= th; }),
+      raisedHighLoad: zone.filter(function (u) { return u.delta >= th; }).length,
+      raised: up.length,
+      cut: all.filter(function (u) { return u.delta <= -th; }).length
+    };
+  };
+
+  // ---------------------------------------------------------------------------
   // Reference checks and the review packet
   // ---------------------------------------------------------------------------
   /**
@@ -1222,7 +1397,7 @@
     var segs = [['idle', 45], ['city', 170], ['highway', 100], ['decel', 7], ['wot', 7.5], ['cruise', 70], ['wot', 7.5], ['decel', 7], ['city', 60], ['idle', 25]];
     var dt = 0.1, t = 0;
     var amb = sc.hot ? 36 : 31;
-    var st = { ltft: 0, lam: 1, iat: amb + (sc.hot ? 20 : 9), ect: sc.hot ? 98 : 88, cvt: sc.hot ? 95 : 72, kc: sc.hot ? 0.28 : 0.18, boost: -8, kr: [0, 0, 0, 0], lamQ: [], tReach: -1, pull: 0 };
+    var st = { ltft: 0, lam: 1, iat: amb + (sc.hot ? 20 : 9), ect: sc.hot ? 98 : 88, cvt: sc.hot ? 95 : 72, kc: sc.hot ? 0.52 : 0.46, boost: -8, kr: [0, 0, 0, 0], lamQ: [], tReach: -1, pull: 0 };
     var head = ['Time (s)', 'Engine Speed (rpm)', 'Vehicle Speed (km/h)', 'Throttle Position (%)', 'MAP (kPa)', 'Boost (psi)', 'Boost Target (psi)',
       'MAF (Hz)', 'MAF (g/s)', 'AFR', 'AFR Command', 'STFT (%)', 'LTFT (%)', 'Ignition Timing (deg)',
       'Knock Retard Cyl1 (deg)', 'Knock Retard Cyl2 (deg)', 'Knock Retard Cyl3 (deg)', 'Knock Retard Cyl4 (deg)', 'Knock Control',
@@ -1292,7 +1467,7 @@
           if (sc.hot && rpm > 3300 && rpm < 5000) {
             var base2 = [2.4, 4.1, 3.6, 1.7];
             for (c = 0; c < 4; c++) st.kr[c] = Math.max(st.kr[c], base2[c] + g(0.3));
-            st.kc = Math.min(0.6, st.kc + 0.004);
+            st.kc = Math.min(0.82, st.kc + 0.004);
           } else if (rnd() < 0.015) { st.kr[Math.floor(rnd() * 4)] = 0.6 + rnd() * 0.3; }
         }
         var krMax = Math.max.apply(null, st.kr);
@@ -1472,6 +1647,165 @@
         };
       })
     };
+  };
+
+  function hexRgb(h) { var n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+  function rgbHex(c) { return '#' + c.map(function (v) { var s = Math.round(clamp(v, 0, 255)).toString(16); return s.length < 2 ? '0' + s : s; }).join(''); }
+  function shade(hex, k) { return rgbHex(hexRgb(hex).map(function (v) { return v * k; })); }
+  function niceTicks(lo, hi, n) {
+    var span = hi - lo || 1, raw = span / Math.max(1, n || 4), p = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), m = raw / p;
+    var st = (m <= 1 ? 1 : (m <= 2 ? 2 : (m <= 5 ? 5 : 10))) * p, out = [];
+    for (var v = Math.ceil(lo / st - 1e-9) * st; v <= hi + st * 1e-6; v += st) out.push(round(v, 6));
+    return out;
+  }
+  KTA.view.ORANGE = ['#fde3cc', '#f9c08f', '#f39a4f', '#e8710a', '#b85a08'];
+
+  /**
+   * A table as a 3-D surface: plain SVG polygons, drawn back to front. The rpm axis
+   * keeps its real spacing (the ECU interpolates on it); load columns are evenly
+   * spaced because their values were not captured.
+   * opts: { x: row axis, yaw, pitch (degrees), w, h, mark: [{r, c}], diff: true when
+   *   values are after - before, unit, digits, rowLabel, colLabel }
+   */
+  KTA.view.surface = function (values, opts) {
+    opts = opts || {};
+    var R = values.length, C = values[0].length, W = opts.w || 640, H = opts.h || 400;
+    var yaw = (isNum(opts.yaw) ? opts.yaw : -38) * Math.PI / 180, pitch = (isNum(opts.pitch) ? opts.pitch : 58) * Math.PI / 180;
+    var xs = opts.x && opts.x.length === R ? opts.x : values.map(function (_, r) { return r; });
+    var x0 = xs[0], x1 = xs[R - 1], flat = [];
+    values.forEach(function (row) { row.forEach(function (v) { if (isNum(v)) flat.push(v); }); });
+    var lo = Math.min.apply(null, flat), hi = Math.max.apply(null, flat);
+    if (opts.diff) { var mm = Math.max(Math.abs(lo), Math.abs(hi), 1e-6); lo = -mm; hi = mm; }
+    if (hi - lo < 1e-9) hi = lo + 1;
+    var cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch), ZS = 0.45;
+    function world(r, c, v) { return [(xs[r] - x0) / ((x1 - x0) || 1) - 0.5, (C > 1 ? c / (C - 1) : 0) - 0.5, ((v - lo) / (hi - lo)) * ZS]; }
+    function proj(p) {
+      var xr = p[0] * cy - p[1] * sy, yr = p[0] * sy + p[1] * cy;
+      return { x: xr, y: yr * sp - p[2] * cp, d: yr * cp + p[2] * sp };
+    }
+    var P = [], r, c;
+    for (r = 0; r < R; r++) { P.push([]); for (c = 0; c < C; c++) P[r].push(proj(world(r, c, isNum(values[r][c]) ? values[r][c] : lo))); }
+    // corners of the floor and the top of the height axis, for framing and labels
+    var floor = [[0, 0], [R - 1, 0], [R - 1, C - 1], [0, C - 1]].map(function (q) { var w = world(q[0], q[1], lo); w[2] = 0; return proj(w); });
+    var pts = [];
+    P.forEach(function (row) { row.forEach(function (p) { pts.push(p); }); });
+    floor.forEach(function (p) { pts.push(p); });
+    var bx0 = Math.min.apply(null, pts.map(function (p) { return p.x; })), bx1 = Math.max.apply(null, pts.map(function (p) { return p.x; }));
+    var by0 = Math.min.apply(null, pts.map(function (p) { return p.y; })), by1 = Math.max.apply(null, pts.map(function (p) { return p.y; }));
+    var pad = { l: 58, r: 40, t: 18, b: 40 };
+    var k = Math.min((W - pad.l - pad.r) / ((bx1 - bx0) || 1), (H - pad.t - pad.b) / ((by1 - by0) || 1));
+    var ox = pad.l + ((W - pad.l - pad.r) - (bx1 - bx0) * k) / 2 - bx0 * k, oy = pad.t + ((H - pad.t - pad.b) - (by1 - by0) * k) / 2 - by0 * k;
+    function sx(p) { return round(ox + p.x * k, 1); }
+    function syy(p) { return round(oy + p.y * k, 1); }
+    var light = [-0.45, -0.55, 0.9], ll = Math.sqrt(light[0] * light[0] + light[1] * light[1] + light[2] * light[2]);
+    light = light.map(function (v) { return v / ll; });
+    var digits = opts.digits == null ? 1 : opts.digits, unit = opts.unit ? ' ' + opts.unit : '';
+    var quads = [];
+    for (r = 0; r < R - 1; r++) for (c = 0; c < C - 1; c++) {
+      var v4 = [values[r][c], values[r + 1][c], values[r + 1][c + 1], values[r][c + 1]];
+      var avg = (v4[0] + v4[1] + v4[2] + v4[3]) / 4;
+      var w0 = world(r, c, v4[0]), w1 = world(r + 1, c, v4[1]), w2 = world(r + 1, c + 1, v4[2]), w3 = world(r, c + 1, v4[3]);
+      var a = [w2[0] - w0[0], w2[1] - w0[1], w2[2] - w0[2]], b = [w3[0] - w1[0], w3[1] - w1[1], w3[2] - w1[2]];
+      var n = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+      var nl = Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]) || 1;
+      if (n[2] < 0) nl = -nl;
+      var lit = 0.66 + 0.4 * Math.max(0, (n[0] * light[0] + n[1] * light[1] + n[2] * light[2]) / nl);
+      var base;
+      if (opts.diff) {
+        var t = avg / hi;
+        base = Math.abs(t) < 0.02 ? '#c9d1d9' : (t > 0 ? KTA.view.ORANGE[Math.min(4, 1 + Math.round(Math.abs(t) * 3))] : BLUE[Math.min(12, 4 + Math.round(Math.abs(t) * 8))]);
+      } else base = BLUE[Math.round(clamp((avg - lo) / (hi - lo), 0, 1) * (BLUE.length - 1))];
+      var q = [P[r][c], P[r + 1][c], P[r + 1][c + 1], P[r][c + 1]];
+      quads.push({
+        d: (q[0].d + q[1].d + q[2].d + q[3].d) / 4,
+        points: q.map(function (p) { return sx(p) + ',' + syy(p); }).join(' '),
+        fill: shade(base, lit),
+        tip: group(xs[r]) + '–' + group(xs[r + 1]) + (opts.rowUnit ? ' ' + opts.rowUnit : '') + ' · col ' + c + '–' + (c + 1) + ': ' + Math.min.apply(null, v4).toFixed(digits) + '…' + Math.max.apply(null, v4).toFixed(digits) + unit
+      });
+    }
+    quads.sort(function (p, q) { return p.d - q.d; });
+    var marks = (opts.mark || []).filter(function (m) { return m.r < R && m.c < C; }).map(function (m) {
+      var p = P[m.r][m.c];
+      return { cx: sx(p), cy: syy(p), d: p.d, tip: m.tip || '' };
+    }).sort(function (p, q) { return p.d - q.d; });
+    // floor outline and axis labels on the two edges nearest the viewer
+    var F = floor.map(function (p) { return [sx(p), syy(p)]; });
+    var edge = 'M' + F.map(function (p) { return p[0] + ' ' + p[1]; }).join(' L') + ' Z';
+    var labels = [];
+    var rowEdgeC = floor[0].d + floor[1].d >= floor[3].d + floor[2].d ? 0 : C - 1;   // rpm labels along the nearer long edge
+    var colEdgeR = floor[1].d + floor[2].d >= floor[0].d + floor[3].d ? R - 1 : 0;   // column labels along the nearer short edge
+    var cxm = (F[0][0] + F[1][0] + F[2][0] + F[3][0]) / 4, cym = (F[0][1] + F[1][1] + F[2][1] + F[3][1]) / 4;
+    function outward(x, y, dist) { var dx = x - cxm, dy = y - cym, l = Math.sqrt(dx * dx + dy * dy) || 1; return [round(x + dx / l * dist, 1), round(y + dy / l * dist, 1)]; }
+    niceTicks(x0, x1, 5).forEach(function (tv) {
+      if (tv < x0 || tv > x1) return;
+      var ww = [(tv - x0) / ((x1 - x0) || 1) - 0.5, (rowEdgeC ? 1 : 0) - 0.5, 0], p = proj(ww), o = outward(sx(p), syy(p), 16);
+      labels.push({ x: o[0], y: o[1], text: opts.x ? group(tv) : String(tv), anchor: 'middle' });
+    });
+    var colStep = C > 12 ? 5 : (C > 6 ? 3 : 1);
+    for (c = 0; c < C; c += colStep) {
+      var pc = proj([(colEdgeR ? 1 : 0) - 0.5, (C > 1 ? c / (C - 1) : 0) - 0.5, 0]), oc = outward(sx(pc), syy(pc), 14);
+      labels.push({ x: oc[0], y: oc[1], text: String(c), anchor: 'middle' });
+    }
+    // height axis at the back corner of the floor, away from the tick labels on the near edges
+    var li = 0;
+    for (var i = 1; i < 4; i++) if (floor[i].d < floor[li].d) li = i;
+    var cr = [[0, 0], [R - 1, 0], [R - 1, C - 1], [0, C - 1]][li];
+    var zb = world(cr[0], cr[1], lo), zt = world(cr[0], cr[1], hi);
+    zb[2] = 0; var pb = proj(zb), pt = proj(zt);
+    var zAxis = { x1: sx(pb), y1: syy(pb), x2: sx(pt), y2: syy(pt) };
+    var zLabels = [
+      { x: round(zAxis.x2 - 6, 1), y: round(zAxis.y2 + 4, 1), text: hi.toFixed(digits) + unit },
+      { x: round(zAxis.x1 - 6, 1), y: round(zAxis.y1 + 4, 1), text: lo.toFixed(digits) + unit }
+    ];
+    if (Math.abs(zAxis.y2 - zAxis.y1) < 14) zLabels.pop();
+    return {
+      w: W, h: H, viewBox: '0 0 ' + W + ' ' + H, quads: quads, marks: marks, edge: edge,
+      labels: labels, zAxis: zAxis, zLabels: zLabels, rowLabel: opts.rowLabel || 'rpm', colLabel: opts.colLabel || 'column',
+      rowTitle: (function () { var mid = outward((F[rowEdgeC ? 2 : 0][0] + F[rowEdgeC ? 3 : 1][0]) / 2, (F[rowEdgeC ? 2 : 0][1] + F[rowEdgeC ? 3 : 1][1]) / 2, 34); return { x: mid[0], y: mid[1] }; })(),
+      colTitle: (function () { var mid = outward((F[colEdgeR ? 1 : 0][0] + F[colEdgeR ? 2 : 3][0]) / 2, (F[colEdgeR ? 1 : 0][1] + F[colEdgeR ? 2 : 3][1]) / 2, 32); return { x: mid[0], y: mid[1] }; })(),
+      min: lo, max: hi
+    };
+  };
+
+  /**
+   * A table as lines against its row axis: one line per load column (maps) or one
+   * line (curves). The stock line is drawn dashed wherever the edit changes it.
+   * opts: { x, before, w, h, unit, xLabel, yLabel, digits }
+   */
+  KTA.view.lines = function (values, opts) {
+    opts = opts || {};
+    var box = { w: opts.w || 640, h: opts.h || 260, l: 52, r: 16, t: 14, b: 38 };
+    var curve = !Array.isArray(values[0]);
+    var rows = curve ? [values] : values[0].map(function (_, c) { return values.map(function (row) { return row[c]; }); });
+    var brows = opts.before ? (curve ? [opts.before] : opts.before[0].map(function (_, c) { return opts.before.map(function (row) { return row[c]; }); })) : null;
+    var xs = opts.x || rows[0].map(function (_, i) { return i; });
+    var flat = [];
+    rows.concat(brows || []).forEach(function (s) { s.forEach(function (v) { if (isNum(v)) flat.push(v); }); });
+    var lo = Math.min.apply(null, flat), hi = Math.max.apply(null, flat);
+    if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+    var yt = niceTicks(lo, hi, 4), xt = niceTicks(xs[0], xs[xs.length - 1], 5);
+    var y0 = Math.min(lo, yt[0]), y1 = Math.max(hi, yt[yt.length - 1]);
+    var sx = scale(xs[0], xs[xs.length - 1], box.l, box.w - box.r), sy = scale(y1, y0, box.t, box.h - box.b);
+    var f = frame(box,
+      xt.filter(function (v) { return v >= xs[0] && v <= xs[xs.length - 1]; }).map(function (v) { return { v: v, label: group(v) }; }),
+      yt.map(function (v) { return { v: v, label: String(round(v, 3)) }; }),
+      sx, sy, opts.xLabel || '', opts.yLabel || '');
+    var n = rows.length;
+    f.series = rows.map(function (s, c) {
+      var changed = !!brows && s.some(function (v, i) { return Math.abs(v - brows[c][i]) > 1e-9; });
+      var tone = n > 1 ? BLUE[Math.round(3 + (c / (n - 1)) * 9)] : BLUE[9];
+      return {
+        d: pathOf(s.map(function (v, i) { return [sx(xs[i]), sy(v)]; })),
+        before: changed ? pathOf(brows[c].map(function (v, i) { return [sx(xs[i]), sy(v)]; })) : '',
+        color: changed ? KTA.view.ORANGE[3] : tone,
+        width: changed ? 2.4 : 1.6,
+        changed: changed,
+        label: curve ? '' : 'col ' + c,
+        end: { x: round(sx(xs[xs.length - 1]) + 4, 1), y: round(sy(s[s.length - 1]) + 4, 1) }
+      };
+    });
+    f.series.sort(function (a, b) { return (a.changed ? 1 : 0) - (b.changed ? 1 : 0); });
+    return f;
   };
 
   return KTA;

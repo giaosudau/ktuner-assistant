@@ -113,6 +113,70 @@ async function run() {
     for (const part of ['# Civic FE Tune Assist: review packet', '## Changes', '## Evidence', '| Gate | Status | Numbers |', '## Reference checks', 'Anh T. (KTuner)', 'Decision: Approve']) assert.ok(packet.includes(part), 'missing: ' + part);
   });
 
+  await step('Map: the Reference link opens all 39 tables, the base map and the edit plan', async () => {
+    await page.click('[data-act="page"][data-arg="map"]');
+    assert.equal(await page.textContent('.step-head h1'), 'Your KTuner map');
+    assert.equal(await page.locator('.tlist .tbtn').count(), 39);
+    assert.match(await page.textContent('.card.is-key'), /Starter 21 Dual Tune 2/);
+    const plan = await page.textContent('.table.plan');
+    for (const name of ['MAF_Scaling_Custom', 'WOT_Enrich_L', 'WOT_Enrich_H', 'Boost_Target_3_Normal_H']) assert.ok(plan.includes(name), 'plan names ' + name);
+    assert.match(plan, /\d+ points change/);                      // a log is loaded, so the AFM row is computed
+  });
+
+  await step('Map: WOT Enrichment marks 27 cells in 2D and 3D and passes the shape check', async () => {
+    await page.click('.tlist [data-act="table"][data-arg="WOT_Enrich_L"]');
+    await page.click('[data-act="set"][data-arg="mapView:grid"]');
+    assert.equal(await page.locator('.hgrid td.is-changed').count(), 27);
+    assert.match(await page.textContent('.map-facts'), /no new spikes or dips/);
+    await page.click('[data-act="set"][data-arg="mapView:surface"]');
+    assert.equal(await page.locator('#surface polygon').count(), 19 * 9);
+    assert.equal(await page.locator('#surface circle.s-mark').count(), 27);
+    const before = await page.getAttribute('#surface polygon >> nth=0', 'points');
+    await page.focus('#surface');
+    await page.keyboard.press('ArrowRight');
+    await page.waitForFunction((b) => document.querySelector('#surface polygon').getAttribute('points') !== b, before);
+    const pts = await page.getAttribute('#surface polygon >> nth=0', 'points');
+    assert.ok(!/NaN/.test(pts));
+    await page.click('[data-act="set"][data-arg="mapShow:diff"]');
+    assert.ok(await page.locator('#surface polygon').count() > 0);
+    await page.click('[data-act="set"][data-arg="mapView:lines"]');
+    assert.ok(await page.locator('.viz svg path').count() >= 10);
+    await page.click('[data-act="set"][data-arg="mapShow:after"]');
+  });
+
+  await step('Map: AFM Flow shows the computed row; a curve has no 3D view', async () => {
+    await page.click('.tlist [data-act="table"][data-arg="MAF_Scaling_Custom"]');
+    assert.equal(await page.locator('[data-arg="mapView:surface"]').isDisabled(), true);
+    await page.click('[data-act="set"][data-arg="mapView:grid"]');
+    assert.ok(await page.locator('.hgrid td.is-changed').count() > 20);
+    assert.match(await page.textContent('.map-facts'), /no new spikes or dips/);
+  });
+
+  await step('Map: stock ignition carries the blind-smoothing warning', async () => {
+    await page.click('.tlist [data-act="table"][data-arg="Ignition_Base_H"]');
+    assert.match(await page.textContent('.map-facts'), /Blind smoothing test on Ignition_Base_H: a 3×3 smooth would add \+1\.3° at 2,000 rpm/);
+    await page.click('[data-act="set"][data-arg="mapView:surface"]');
+    await page.click('[data-act="set"][data-arg="mapShow:smooth"]');
+    assert.equal(await page.locator('#surface circle.s-mark').count(), 7);
+  });
+
+  await step('Guide: basic road tune, E10 answer, tuner panel and video verdicts', async () => {
+    await page.click('[data-act="page"][data-arg="guide"]');
+    assert.equal(await page.textContent('.step-head h1'), 'Road tune guide and tuner panel');
+    assert.equal(await page.locator('.table.basic .row:not(.head)').count(), 9);
+    assert.equal(await page.locator('details.topic').count(), 7);
+    assert.equal(await page.locator('.table.vids .row:not(.head)').count(), 20);
+    const text = await page.textContent('main');
+    for (const part of ['Does E10 need more fuel?', 'A safe road pull, no dyno', 'Smooth what you change, not what Honda made']) assert.ok(text.includes(part), 'guide has: ' + part);
+    await page.click('details.topic >> nth=1 >> summary');
+    assert.equal(await page.locator('details.topic[open]').count(), 2);
+    await page.click('[data-act="smoothDemo"]');
+    assert.equal(await page.textContent('.tpanel h2'), 'Ignition base H');
+    assert.equal(await page.getAttribute('[data-act="set"][data-arg="mapShow:smooth"]', 'aria-pressed'), 'true');
+    await page.click('[data-act="go"][data-arg="7"]');
+    assert.equal(await page.textContent('.step-head h1'), 'Review and sign-off');
+  });
+
   await step('Vietnamese: the whole flow switches language', async () => {
     await page.click('[data-act="lang"]');
     assert.equal(await page.textContent('.step-head h1'), 'Duyệt và ký xác nhận');
@@ -135,6 +199,12 @@ async function run() {
     await phone.click('[data-act="sample"][data-arg="before"]');
     const overflow = await phone.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     assert.equal(overflow, 0);
+    await phone.click('[data-act="page"][data-arg="map"]');
+    await phone.selectOption('.tpick select', 'Boost_Target_1_Normal_H');
+    await phone.click('[data-act="set"][data-arg="mapView:surface"]');
+    assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0);
+    await phone.click('[data-act="page"][data-arg="guide"]');
+    assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0);
     await phone.close();
   });
 

@@ -211,3 +211,115 @@ test('view models produce finite geometry', () => {
   assert.equal(heat.rows.length, 20);
   assert.equal(heat.rows[0].cells.length, 10);
 });
+
+// ---------------------------------------------------------------------------
+// The whole map: catalog, edit plan, shape checks, 3-D view
+// ---------------------------------------------------------------------------
+const MAP = require('../data/ktuner-maps-digitized.json');
+const table = (name) => K.readTable(name, MAP[name]);
+
+test('map catalog: every digitized table has a role, and only three kinds are edited', () => {
+  const names = Object.keys(MAP);
+  assert.equal(names.length, 39);
+  for (const n of names) assert.ok(K.TABLES[n], `catalog has ${n}`);
+  const edited = names.filter((n) => K.TABLES[n].role === 'edit');
+  assert.deepEqual(new Set(edited.map((n) => K.TABLES[n].stage)), new Set(['A', 'B1', 'B2']));
+  assert.ok(edited.every((n) => /^(MAF_Scaling_Custom|WOT_Enrich_[LH]|Boost_Target_[123]_Normal_[LH])$/.test(n)));
+  for (const n of names.filter((x) => /^Knock_Sens/.test(x))) assert.equal(K.TABLES[n].role, 'never');
+  assert.equal(K.pairOf('WOT_Enrich_L'), 'WOT_Enrich_H');
+  assert.equal(K.pairOf('Boost_By_Gear_Limits'), '');
+  const maf = table('MAF_Scaling_Custom');
+  assert.ok(maf.curve);
+  assert.equal(maf.values.length, 103);
+});
+
+test('edit plan: lever 1 and lever 2 name the exact cells, and keep the shape', () => {
+  for (const n of ['WOT_Enrich_L', 'WOT_Enrich_H']) {
+    const t = table(n), e = K.tableEdits(n, t.values, {});
+    assert.equal(e.changed.length, 27, n);                     // 9 rows from 3,000 rpm x 3 full-load columns
+    assert.ok(e.changed.every((x) => t.x[x.r] >= 3000 && x.c >= 7));
+    assert.ok(e.changed.every((x) => x.to === (t.x[x.r] >= 5500 ? 11.3 : 11.5)));
+    assert.ok(K.smoothness(e.before, e.after, { tol: t.meta.tol }).ok, n);
+  }
+  const b = table('Boost_Target_1_Normal_H');
+  assert.equal(K.tableEdits(b.name, b.values, { ceiling: 21 }).changed.length, 0);  // at the map peak already
+  const e = K.tableEdits(b.name, b.values, { ceiling: 22 });
+  assert.equal(e.changed.length, 45);
+  assert.ok(e.changed.every((x) => b.x[x.r] >= 3500 && b.x[x.r] <= 5500 && x.to === 22));
+  assert.ok(K.smoothness(e.before, e.after, { tol: 1 }).ok);
+  assert.equal(K.tableEdits('Ignition_Base_H', table('Ignition_Base_H').values, {}), null);
+  const maf = table('MAF_Scaling_Custom');
+  assert.equal(K.tableEdits(maf.name, maf.values, {}).pending, true);
+});
+
+test('smoothness: flags a new spike, ignores shapes already in the stock table', () => {
+  const t = table('WOT_Enrich_L');
+  const bad = t.values.map((r) => r.slice());
+  bad[13][8] = 12.6;                                            // one lean cell at 4,000 rpm
+  const s = K.smoothness(t.values, bad, { tol: 0.2 });
+  assert.equal(s.ok, false);
+  assert.equal(s.spikes[0].kind, 'spike');
+  assert.equal(s.spikes[0].r, 13);
+  const ign = table('Ignition_Base_H');
+  assert.ok(K.smoothness(ign.values, ign.values.map((r) => r.slice()), { tol: 2 }).ok);
+  // AFM Flow: a smooth correction passes, a single-point bump and a fall do not
+  const m = table('MAF_Scaling_Custom').values;
+  assert.ok(K.smoothness(m, m.map((v) => v * 1.04), { tol: 1.5 }).ok);
+  const bump = m.slice(); bump[40] *= 1.06;
+  assert.equal(K.smoothness(m, bump, { tol: 1.5 }).ok, false);
+  const fall = m.slice(); fall[50] = fall[49];
+  assert.ok(K.smoothness(m, fall, { tol: 1.5 }).spikes.some((x) => x.kind === 'fall'));
+});
+
+test('blind smoothing would add timing to the stock ignition map', () => {
+  const p = K.smoothPreview(table('Ignition_Base_H').values);
+  assert.ok(p.top[0].delta > 3, 'adds more than 3 degrees somewhere');
+  assert.ok(p.raisedHighLoad > 0, 'adds timing in high-load cells');
+  assert.equal(p.after.length, 20);
+});
+
+test('3-D surface and line views produce finite geometry, rotated any way', () => {
+  const t = table('Boost_Target_1_Normal_H');
+  for (const yaw of [-180, -38, 0, 90, 135]) {
+    for (const pitch of [10, 58, 89]) {
+      const s = K.view.surface(t.values, { x: t.x, yaw, pitch, mark: [{ r: 12, c: 7 }], unit: 'psi' });
+      assert.equal(s.quads.length, 19 * 15);
+      assert.ok(s.quads.every((q) => !/NaN|Infinity/.test(q.points) && /^#[0-9a-f]{6}$/.test(q.fill)), `yaw ${yaw} pitch ${pitch}`);
+      assert.ok(s.marks.every((m) => Number.isFinite(m.cx) && Number.isFinite(m.cy)));
+      assert.ok(s.labels.length > 3);
+    }
+  }
+  const d = K.view.surface(t.values.map((r) => r.map(() => 0)), { diff: true });
+  assert.ok(d.quads.every((q) => !/NaN/.test(q.points)));
+  const e = K.tableEdits('WOT_Enrich_L', table('WOT_Enrich_L').values, {});
+  const l = K.view.lines(e.after, { x: table('WOT_Enrich_L').x, before: e.before });
+  assert.equal(l.series.filter((s) => s.changed).length, 3);
+  assert.ok(l.series.every((s) => !/NaN/.test(s.d)));
+  const c = K.view.lines(table('MAF_Scaling_Custom').values, { x: table('MAF_Scaling_Custom').x });
+  assert.equal(c.series.length, 1);
+});
+
+test('knock control: RON95-level is fine, a high level is a Watch', () => {
+  const base = K.readLog(K.sampleCsv('after'));
+  const an = K.analyze(base, {});
+  assert.equal(status(an, 'spark', 'kControl'), 'good');
+  const lines = K.sampleCsv('after').split('\n');
+  const col = lines[0].split(',').indexOf('Knock Control');
+  const hi = K.readLog(lines.map((l, i) => { if (i === 0 || !l) return l; const f = l.split(','); f[col] = '0.78'; return f.join(','); }).join('\n'));
+  assert.ok(hi.has.kControl);
+  const an2 = K.analyze(hi, {});
+  assert.equal(status(an2, 'spark', 'kControl'), 'watch');
+  assert.ok(an2.gates.find((g) => g.id === 'spark').checks.find((c) => c.id === 'kControl').data.high);
+});
+
+test('torque: judged against the base map when a baseline gives a reference', () => {
+  const log = K.readLog(K.sampleCsv('after'));
+  const n = log.n;
+  log.torque = new Float64Array(n).fill(300);
+  log.has.torque = true;
+  const noRef = K.analyze(log, {});
+  assert.equal(status(noRef, 'cvt', 'torque'), 'watch');          // over the 280 Nm guideline: never a Stop without a reference
+  assert.equal(status(K.analyze(log, { torqueRef: 298 }), 'cvt', 'torque'), 'good');
+  assert.equal(status(K.analyze(log, { torqueRef: 280 }), 'cvt', 'torque'), 'watch');
+  assert.equal(status(K.analyze(log, { torqueRef: 260 }), 'cvt', 'torque'), 'stop');
+});
