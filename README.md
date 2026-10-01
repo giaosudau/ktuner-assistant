@@ -4,6 +4,10 @@ A guided companion for tuning a **Honda Civic FE (11th gen) 1.5T CVT** with **KT
 
 It starts from a normal drive. Load a KTuner TunerView log and the app checks safety first. It then gives you **one thing to do**: free habits before flashes, the biggest effect for the least work first. The next log **proves** whether it worked. When the evidence asks for a real calibration, the full 7-step AFR method (bolt-ons: high-volume intake, downpipe, front pipe, cat-back, big intercooler and CVT cooler) is one click away. It works in English and Tiếng Việt, and it never touches the ECU: you make every change yourself, then the log decides.
 
+## Guided demo
+
+Open `demo/index.html` for a 7-step click-through (← and → keys work): open a drive, safety verdict, your #1, start it, an honest "cannot tell" proof, a "keep" proof, and the list moving up. It runs the real engine on your real logs. The one simulated piece, the next hot drive, is labelled. If your browser blocks reading the logs from `file://`, run `python3 -m http.server` in the project folder.
+
 ## Open it
 
 Double-click `index.html`. It runs offline in any recent Chrome, Edge, Safari or Firefox. Your logs stay in the browser tab and are never uploaded anywhere. Settings, ticked checklists and the action you are working on are remembered on that device.
