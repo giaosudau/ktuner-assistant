@@ -4,6 +4,14 @@ A guided companion for tuning a **Honda Civic FE (11th gen) 1.5T CVT** with **KT
 
 It starts from a normal drive. Load a KTuner TunerView log and the app checks safety first. It then gives you **one thing to do**: free habits before flashes, the biggest effect for the least work first. The next log **proves** whether it worked. When the evidence asks for a real calibration, the full 7-step AFR method (bolt-ons: high-volume intake, downpipe, front pipe, cat-back, big intercooler and CVT cooler) is one click away. It works in English and Tiếng Việt, and it never touches the ECU: you make every change yourself, then the log decides.
 
+## Run it
+
+- A) Double-click `index.html` (`file://`). The 3 built-in drives work; your own CSVs may be blocked by the browser.
+- B) `npm run dev` (or `python3 -m http.server 8000`), then open http://localhost:8000/ — use this for your own logs.
+- C) Guided tour: open `demo/index.html` — 10 steps on the real engine and real logs.
+- Drive check → "Load a TunerView CSV", or pick "Your three drives (built in)"; "Load log folder" reads every TunerView CSV, oldest first.
+- Car history lives in block 4 ("Your car over time"); "Add Flash" and "Export / Import History file" live with the Car history views.
+
 ## Guided demo
 
 Open `demo/index.html` for a 10-step click-through (← and → keys work): open a drive, safety verdict, your #1, start it, an honest "cannot tell" proof, a "keep" proof, the list moving up, then the **simple tune**, the **build path** and the **fact check**. It runs the real engine on your real logs. The one simulated piece, the next hot drive, is labelled. If your browser blocks reading the logs from `file://`, run `python3 -m http.server` in the project folder.
@@ -250,25 +258,35 @@ engine/kta-engine.js    tuning math: CSV reading, channel detection, glitch filt
                         gain levers, table catalog, edit plan, shape check, 3D surface, sample logs
 engine/kta-drive.js     drive check: insights (lugging, Knock Control episodes, heat, mixture by boost, trims by
                         load, pulls and headroom, acceleration windows, timing map), the ranked queue, proof, graphs
+engine/kta-car.js       car history: every checked drive remembered, Baseline, Flashes and the Map each drive was on,
+                        Shakedown drive, Unexplained change, the Flash plan (P1–P9), History file export/import
+engine/kta-build.js     build path: which mods next, ranked from your own log and map, locked by what you have proven
 engine/kta-ask.js       "Ask about this drive": fixed tools, the number check, the API loop, built-in answers
-data/example-*.js       your three TunerView drives, trimmed (gzip + base64 so they open from file://)
+data/example-*.js       nine TunerView drives (the 3 built into the Drive check plus 6 fixtures for the car-history
+                        tickets), trimmed (gzip + base64 so they open from file://)
 docs/PRODUCT-REVIEW.md  the product review: good, bad, debate, decisions, loop, priority rules, safety, metrics
 data/KTuner-Maps-Digitized.xlsx   your digitized KTuner map, as you sent it
 data/ktuner-maps-digitized.json   the same map as JSON (source of truth for the app)
 data/KTuner-Maps-Edit-Plan.xlsx   your map with the edit plan sheet and highlighted cells
 data/ktuner-map.js      the whole map as a script, so the app works from file://
+tools/car-history-check.js   runs every TunerView CSV in a folder through the Car module in time order
+                        (`npm run car-check -- "/path/to/logs"`, defaults to ~/Desktop)
 tools/sync-ref.js       rebuilds the engine's reference block and data/ktuner-map.js from the JSON
 tools/edit-plan.js      prints the edit plan, cell by cell, from the engine
 tools/annotate-xlsx.py  writes data/KTuner-Maps-Edit-Plan.xlsx (python3 + openpyxl)
 tools/build-examples.js builds data/example-*.js from TunerView CSV exports
 test/engine.test.js     engine tests (node --test)
 test/drive.test.js      drive check on your three real logs
+test/car.test.js        car history through the public Car operation: identity, verdicts, Shakedown,
+                        Unexplained change, Flash plan, History file round-trip
 test/ask.test.js        the AI helper against a scripted fake API (no network, no key)
 e2e/app.e2e.js          end-to-end run of the app in Chromium (Playwright)
 ```
 
 ```
-npm test          # engine, drive check and AI helper tests, no dependencies
+npm run dev         # serve at http://localhost:8000/ (file:// works for the built-in drives only)
+npm test            # engine, drive check, AI helper, build path and car history tests, no dependencies
+npm run car-check -- "/path/to/logs"   # every TunerView CSV in a folder through the Car module (defaults to ~/Desktop)
 npm run e2e       # needs Playwright (npm i, or a global install on NODE_PATH)
 npm run sync-ref  # after editing data/ktuner-maps-digitized.json
 python3 tools/annotate-xlsx.py   # refresh the annotated spreadsheet
