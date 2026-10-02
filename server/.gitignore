@@ -1,0 +1,9 @@
+# The loop's server output and local run state. The tuning loop is local-first.
+ktuner.db
+ktuner.db-wal
+ktuner.db-shm
+.pytest_cache/
+__pycache__/
+*.pyc
+.env
+.env.local

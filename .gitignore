@@ -1,3 +1,16 @@
 node_modules/
 .DS_Store
 *.log
+.env
+.env.*
+!.env.example
+
+# Local scratch: Playwright output and one-off screenshots
+.playwright-mcp/
+node_modules/
+server/.venv/
+server/*.db
+server/*.db-journal
+__pycache__/
+.pytest_cache/
+*.pyc

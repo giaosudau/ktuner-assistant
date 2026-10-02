@@ -1,0 +1,8 @@
+# Next.js build output and local env. The chat is built, never committed.
+.next/
+out/
+next-env.d.ts.bak
+.env.local
+.env*.local
+node_modules/
+*.tsbuildinfotsconfig.tsbuildinfo

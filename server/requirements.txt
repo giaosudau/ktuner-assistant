@@ -1,0 +1,16 @@
+# Civic FE Tune Assist — the tuning loop server (ADR 0004).
+#   python3 -m pip install -r requirements.txt
+#   cd server && python3 -m uvicorn kta_server.app:app --reload
+# With no key in ../.env every reply is the built-in one; the loop still works.
+fastapi==0.142.2
+uvicorn==0.54.0
+# The engine is called through server/kta_worker/worker.js; nothing else touches it.
+langgraph==1.2.12
+langchain-openai==1.6.7
+ag-ui-langgraph==0.0.46
+pydantic==2.13.5
+python-dotenv==1.2.4
+# POST /upload is multipart.
+python-multipart==0.0.32
+httpx==0.28.1
+pytest==9.1.1
