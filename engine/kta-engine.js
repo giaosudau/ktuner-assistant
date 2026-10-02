@@ -1121,7 +1121,8 @@
       check('kControl', 'Fuel-quality score (Knock Control)', kcStatus,
         isNum(kcEnd) ? F.num(kcStart, 2) + ' → ' + F.num(kcEnd, 2) + (kcPeak > Math.max(kcStart, kcEnd) + 0.02 ? ' (peak ' + F.num(kcPeak, 2) + ')' : '')
           + (timingCost >= L.score.showDeg ? '. Under boost your score costs about ' + F.num(timingCost, 1) + '° of timing' : '')
-          + (kcNoHard ? '. No hard driving until it drops' : '') : 'Not logged',
+          + (kcNoHard ? '. No hard driving until it drops' : '')
+          + (isNum(kcStart) && kcStart > baseline ? '. Starts high after a Flash, ECU reset or new tank: give it 10–15 calm minutes before judging' : '') : 'Not logged',
         '0.56 or less; no hard driving from 0.62 held; Stop 0.80 (provisional)',
         kcNoHard ? 'No hard driving until it drops below 0.62: fill RON95 E10 at a busy station, drive the ECO map (18 psi), and give it 10–15 calm minutes.'
           : (isNum(kcEnd) && kcEnd >= L.score.watch ? 'The ECU is pulling timing for fuel or heat. Add nothing; on hot days use ECO (18 psi).' : 'The ECU kept hearing knock during this drive and moved toward its safer timing. Find where it rose (the Drive check shows it) before adding anything.'),

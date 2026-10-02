@@ -87,13 +87,14 @@
       noKc: 'Knock Control is not in the second log.',
       noData: 'The second log does not have that channel.',
       accelNotMatched: 'The two drives have no matching acceleration run (same speed window, foot down, similar intake temperature).',
-      lessTown: 'The second drive had much less town driving (15-60 km/h), where lugging shows.'
+      lessTown: 'The second drive had much less town driving (15-60 km/h), where lugging shows.',
+      notHotRestart: 'The second drive is no hot restart, so it cannot prove the hot-restart habit.'
     },
     keepNext: 'Keep it and go to the next item', undoIt: 'I undid it', tryAgain: 'Try again',
     before: 'Before', after: 'After',
     metricNames: {
       lugShare: 'Lugging (% of moving time)', pullIat: 'Intake air at pull start (°C)', cvtMax: 'CVT peak (°C)', kcEnd: 'Knock Control at the end',
-      channels: 'Missing channels', iatMoving: 'Intake air while moving (°C)', trimWorst: 'Worst fuel trim (%)', wotAfr: 'Full-load AFR', kcRise: 'Knock Control rise', accel: '50→70 km/h (s)'
+      channels: 'Missing channels', iatMoving: 'Intake air while moving (°C)', trimWorst: 'Worst fuel trim (%)', wotAfr: 'Full-load AFR', kcRise: 'Knock Control rise', accel: '50→70 km/h (s)', firstPullIAT: 'First pull intake (°C)'
     },
     actions: {
       revs: {
@@ -113,6 +114,17 @@
         proof: function (ev, F) { return 'Lugging under ' + F.num(Math.max(2, ev.lugShare * 0.6), 1) + ' % of moving time, and Knock Control not rising (this drive: ' + n2(F, ev.kcFrom) + ' → ' + n2(F, ev.kcTo) + ').'; },
         undo: 'Nothing to undo: it is a habit. It costs a little fuel in town.',
         note: 'Owners report the same on the Hondata forum: Knock Control climbing at 1,300-1,700 rpm just below 0 psi while full throttle stays clean. High load at low rpm is also where turbo DI engines risk low-speed pre-ignition; API SP / GF-6 oils are tested against it.'
+      },
+      hotRestart: {
+        title: 'Give a hot restart 3–5 minutes before any hard acceleration',
+        why: function (ev, F) { return 'This drive started ' + (ev.gapMin != null ? n1(F, ev.gapMin) + ' minutes after the previous one ' : '') + 'with intake air already at ' + n0(F, ev.startIAT) + ' °C, and the first hard pull began ' + n0(F, ev.firstPullT) + ' s in at ' + n0(F, ev.firstPullIAT) + ' °C. Pulling hard on heat-soaked air is where this engine knocks first.'; },
+        steps: [
+          'After a hot restart, drive 3–5 minutes of moving air before any hard acceleration, and wait for IAT at 48 °C or less.',
+          'No pulls straight out of a car park, a fuel stop or a traffic queue.',
+          'Log your next hot restart the same way and load it in step 3.'
+        ],
+        proof: function (ev, F) { return 'The next hot restart\'s first pull starts at 48 °C or less (this drive: ' + n0(F, ev.firstPullIAT) + ' °C).'; },
+        undo: 'Nothing to undo: it is a habit.'
       },
       cooldown: {
         title: 'Cool the intake before a pull',
@@ -244,6 +256,7 @@
     fine: {
       revs: function (I, F) { return I.lug ? 'Knock Control did not climb while lugging (lugging ' + n1(F, I.lug.share) + ' % of moving time).' : 'No lugging data.'; },
       cooldown: function (I, F) { return I.boost && I.boost.hard ? 'Pulls started with intake air at ' + n0(F, I.boost.pullIat) + ' °C.' : 'No hard pull in this drive.'; },
+      hotRestart: function (I, F) { return I.hotRestart && I.hotRestart.isRestart ? 'Hot restart (intake ' + n0(F, I.hotRestart.startIAT) + ' °C), driven gently: no hard pull started hot in the first 5 minutes.' : 'No hot restart.'; },
       cvtHeat: function (I, F) { return 'CVT peaked at ' + n0(F, I.heat.cvtMax) + ' °C.'; },
       fuelCheck: function (I, F) { return I.kc ? 'Knock Control ended at ' + n2(F, I.kc.end) + ': the ECU is happy with the fuel.' : 'Knock Control not logged.'; },
       data: function () { return 'All the channels the app needs are in the log.'; },
@@ -483,13 +496,14 @@
       noKc: 'Log sau không có Knock Control.',
       noData: 'Log sau không có kênh đó.',
       accelNotMatched: 'Hai chuyến không có lần tăng tốc nào so được (cùng khoảng tốc độ, đạp lút ga, nhiệt độ khí nạp tương tự).',
-      lessTown: 'Chuyến sau chạy trong phố (15-60 km/h) ít hơn nhiều, trong khi ì máy chỉ lộ ra ở đó.'
+      lessTown: 'Chuyến sau chạy trong phố (15-60 km/h) ít hơn nhiều, trong khi ì máy chỉ lộ ra ở đó.',
+      notHotRestart: 'Chuyến sau không phải nổ máy lúc còn nóng, nên không chứng minh được thói quen này.'
     },
     keepNext: 'Giữ lại và sang việc tiếp theo', undoIt: 'Tôi đã hoàn tác', tryAgain: 'Làm lại',
     before: 'Trước', after: 'Sau',
     metricNames: {
       lugShare: 'Ì máy (% thời gian xe chạy)', pullIat: 'Khí nạp lúc bắt đầu kéo (°C)', cvtMax: 'CVT cao nhất (°C)', kcEnd: 'Knock Control cuối chuyến',
-      channels: 'Số kênh còn thiếu', iatMoving: 'Khí nạp khi xe chạy (°C)', trimWorst: 'Trim nhiên liệu lệch nhất (%)', wotAfr: 'AFR khi tải tối đa', kcRise: 'Mức tăng Knock Control', accel: '50→70 km/h (giây)'
+      channels: 'Số kênh còn thiếu', iatMoving: 'Khí nạp khi xe chạy (°C)', trimWorst: 'Trim nhiên liệu lệch nhất (%)', wotAfr: 'AFR khi tải tối đa', kcRise: 'Mức tăng Knock Control', accel: '50→70 km/h (giây)', firstPullIAT: 'Khí nạp lúc bắt đầu kéo (°C)'
     },
     actions: {
       revs: {
@@ -509,6 +523,17 @@
         proof: function (ev, F) { return 'Ì máy dưới ' + F.num(Math.max(2, ev.lugShare * 0.6), 1) + ' % thời gian xe chạy, và Knock Control không tăng (chuyến này: ' + n2(F, ev.kcFrom) + ' → ' + n2(F, ev.kcTo) + ').'; },
         undo: 'Không có gì để hoàn tác: đây là thói quen. Tốn thêm chút xăng trong phố.',
         note: 'Chủ xe trên diễn đàn Hondata cũng gặp đúng như vậy: Knock Control tăng ở 1,300-1,700 rpm ngay dưới 0 psi trong khi đạp hết ga vẫn sạch. Tải cao ở vòng tua thấp cũng là vùng máy turbo phun xăng trực tiếp dễ bị đánh lửa sớm ở tốc độ thấp (LSPI); dầu chuẩn API SP / GF-6 được thử nghiệm để chống hiện tượng này.'
+      },
+      hotRestart: {
+        title: 'Sau khi nổ máy lúc còn nóng, chạy 3–5 phút rồi mới kéo ga mạnh',
+        why: function (ev, F) { return 'Chuyến này nổ máy ' + (ev.gapMin != null ? n1(F, ev.gapMin) + ' phút sau chuyến trước ' : '') + 'khi khí nạp đã ở ' + n0(F, ev.startIAT) + ' °C, và lần kéo mạnh đầu tiên bắt đầu ở giây thứ ' + n0(F, ev.firstPullT) + ' với ' + n0(F, ev.firstPullIAT) + ' °C. Kéo ga mạnh khi khí còn hầm nóng là lúc máy này kích nổ đầu tiên.'; },
+        steps: [
+          'Sau khi nổ máy lúc còn nóng, chạy 3–5 phút đón gió rồi mới kéo ga mạnh, chờ IAT từ 48 °C trở xuống.',
+          'Không kéo ga ngay khi ra khỏi bãi xe, cây xăng hay đoạn kẹt xe.',
+          'Log chuyến nổ máy nóng tiếp theo như cũ và nạp ở bước 3.'
+        ],
+        proof: function (ev, F) { return 'Lần kéo đầu của chuyến nổ máy nóng tiếp theo bắt đầu từ 48 °C trở xuống (chuyến này: ' + n0(F, ev.firstPullIAT) + ' °C).'; },
+        undo: 'Không có gì để hoàn tác: đây là thói quen.'
       },
       cooldown: {
         title: 'Làm mát khí nạp trước khi kéo ga',
@@ -640,6 +665,7 @@
     fine: {
       revs: function (I, F) { return I.lug ? 'Knock Control không tăng khi ì máy (ì máy ' + n1(F, I.lug.share) + ' % thời gian xe chạy).' : 'Không có dữ liệu ì máy.'; },
       cooldown: function (I, F) { return I.boost && I.boost.hard ? 'Các lần kéo bắt đầu với khí nạp ' + n0(F, I.boost.pullIat) + ' °C.' : 'Chuyến này không có lần kéo mạnh.'; },
+      hotRestart: function (I, F) { return I.hotRestart && I.hotRestart.isRestart ? 'Nổ máy lúc còn nóng (khí nạp ' + n0(F, I.hotRestart.startIAT) + ' °C), chạy nhẹ nhàng: không lần kéo mạnh nào bắt đầu lúc nóng trong 5 phút đầu.' : 'Không phải nổ máy lúc còn nóng.'; },
       cvtHeat: function (I, F) { return 'CVT cao nhất ' + n0(F, I.heat.cvtMax) + ' °C.'; },
       fuelCheck: function (I, F) { return I.kc ? 'Knock Control kết thúc ở ' + n2(F, I.kc.end) + ': ECU hài lòng với xăng.' : 'Không log Knock Control.'; },
       data: function () { return 'Log có đủ các kênh app cần.'; },

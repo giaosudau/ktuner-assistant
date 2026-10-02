@@ -423,3 +423,68 @@ test('issue 02: the app answers E10 and the 21 psi map with the car\'s own numbe
   assert.ok(/0\.69|0\.73/.test(en), 'under-boost lambda vs target is quoted');
   assert.ok(!/no knock margin/i.test(en), 'Starter 21 is no longer said to have no margin');
 });
+
+// ---------------------------------------------------------------------------
+// Issue 07 — hot restart and high-start score.
+// ---------------------------------------------------------------------------
+
+function msOf(name) { return K.parseDriveStart(name).getTime(); }
+const START_1529 = msOf('TunerView_20260830_152931.csv');
+const START_1601 = msOf('TunerView_20260830_160151.csv');
+const driveWithPrev = (id, prevEndMs, startMs) => {
+  const log = K.readLog(csv(id));
+  return K.checkDrive(log, { driveStartMs: startMs, prevEndMs });
+};
+const endMs = (id, startMs) => startMs + drive(id).log.duration * 1000;
+
+test('issue 07: a hot restart is detected from the previous drive and the intake', () => {
+  assert.ok(K.parseDriveStart('TunerView_20260830_160151.csv') instanceof Date);
+  assert.equal(msOf('TunerView_20260830_160151.csv'), new Date(2026, 7, 30, 16, 1, 51).getTime());
+  assert.equal(K.parseDriveStart('random.csv'), null);
+  // Aug 30 15:29 ended 13 min before 16:01 started at intake 64 °C: hot restart.
+  const r = driveWithPrev('aug30-1601', endMs('aug30-1529', START_1529), START_1601);
+  assert.equal(r.ins.hotRestart.isRestart, true);
+  assert.ok(r.ins.hotRestart.gapMin > 10 && r.ins.hotRestart.gapMin < 15, 'gap: ' + r.ins.hotRestart.gapMin);
+  assert.equal(r.ins.hotRestart.advice, true, 'first hard pull at 82 s started at 60 °C');
+  // With no previous drive, intake 64 °C alone is enough.
+  assert.equal(K.checkDrive(K.readLog(csv('aug30-1601')), { driveStartMs: START_1601 }).ins.hotRestart.isRestart, true);
+  // 15:29 is a hot restart too, but its first hard pull started 13 min in: gentle, fine.
+  const gentle = driveWithPrev('aug30-1529', msOf('TunerView_20260830_150925.csv') + 4000, START_1529);
+  assert.equal(gentle.ins.hotRestart.isRestart, true);
+  assert.equal(gentle.ins.hotRestart.advice, false);
+  assert.ok(gentle.plan.fine.some((f) => f.id === 'hotRestart'), 'gentle hot restarts list as fine');
+  // A cool start is no hot restart.
+  assert.equal(cool().report.ins.hotRestart.isRestart, false);
+});
+
+test('issue 07: the hot-restart advice is proven by a cool-starting next pull', () => {
+  const before = driveWithPrev('aug30-1601', endMs('aug30-1529', START_1529), START_1601);
+  assert.ok(before.plan.next.concat(before.plan.now).some((a) => a.id === 'hotRestart'), 'advice is an action');
+  const cooled = cloneLog(before.log || K.readLog(csv('aug30-1601')), (l) => {
+    for (let i = 0; i < l.n; i++) if (l.t[i] > 60 && l.t[i] < 140) l.iat[i] = 46 + (i % 2);
+  });
+  const after = K.checkDrive(cooled, { driveStartMs: START_1601 + 86400000, prevEndMs: START_1601 + 86400000 - 10 * 60000 });
+  assert.equal(after.ins.hotRestart.isRestart, true);
+  assert.ok(after.ins.hotRestart.firstPull && after.ins.hotRestart.firstPull.iat0 <= 48, 'next first pull starts cool: ' + JSON.stringify(after.ins.hotRestart.firstPull));
+  assert.equal(K.proveAction('hotRestart', before, after).verdict, 'keep');
+  const stillHot = K.checkDrive(K.readLog(csv('aug30-1601')), { driveStartMs: START_1601 + 86400000, prevEndMs: START_1601 + 86400000 - 10 * 60000 });
+  assert.equal(K.proveAction('hotRestart', before, stillHot).verdict, 'retry');
+  assert.equal(K.proveAction('hotRestart', before, cool().report).verdict, 'inconclusive', 'a non-hot-restart proves nothing');
+});
+
+test('issue 07: a score that starts high gets its sentence, in both languages', () => {
+  const { log } = cool();
+  const high = cloneLog(log, (l) => {
+    for (let i = 0; i < l.n && l.t[i] < 500; i++) l.kControl[i] = i % 10 < 7 ? 0.61 : 0.62;
+  });
+  const kc = K.checkDrive(high).an.gates.flatMap((g) => g.checks).find((c) => c.id === 'kControl');
+  assert.equal(kc.data.highStart, true, 'starts 0.61 above the 0.49 baseline');
+  assert.ok(/Starts high after a Flash/.test(kc.display), kc.display);
+  const fs = require('fs'), vm = require('vm');
+  const window = {};
+  vm.createContext(window); window.window = window;
+  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n-drive.js', 'utf8'), window);
+  assert.ok(/10–15 calm minutes/.test(window.KTA_I18N.en.checks.kControl.display(kc.data, K.fmt)));
+  assert.ok(/10–15 phút/.test(window.KTA_I18N.vi.checks.kControl.display(kc.data, K.fmt)));
+});

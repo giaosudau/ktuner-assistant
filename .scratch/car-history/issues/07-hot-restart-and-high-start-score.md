@@ -10,9 +10,12 @@
 **Blocked by:** 03 — Car module and Car history
 
 **Status:** ready-for-agent
+**Status:** done (detection + advice + proof + EN/VI; suite 95/95 with car/ask/build)
 
-- [ ] Aug 30 15:29 then 16:01 (13 min apart, start intake 64 °C): 16:01 is a Hot restart.
-- [ ] Of the owner's drives, the advice appears only on drives where a hard pull started hot within 5 minutes; the others list the Hot restart as fine.
-- [ ] Aug 21 21:37 (score starts 0.61) shows the high-start sentence.
-- [ ] The proof rule passes or fails correctly on a pair of drives with first-pull intake 51 °C → 46 °C.
-- [ ] New wording in English and Tiếng Việt.
+- [x] Aug 30 15:29 then 16:01 (13 min apart, start intake 64 °C): 16:01 is a Hot restart.
+- [x] Of the owner's drives, the advice appears only on drives where a hard pull started hot within 5 minutes; the others list the Hot restart as fine.
+- [x] Aug 21 21:37 (score starts 0.61) shows the high-start sentence.
+- [x] The proof rule passes or fails correctly on a pair of drives with first-pull intake 51 °C → 46 °C.
+- [x] New wording in English and Tiếng Việt.
+
+Notes (local check on all 16): hot restarts on 15 Aug 09:22, 21 Aug 21:37, 22 Aug 09:03, 23 Aug 20:38, 30 Aug 15:29 + 16:01; advice only on 09:03 and 16:01. High-start sentence fires from any start above Baseline (0.50+ on 4 drives) — literal per spec, may read noisy; consider +0.05 later. `checkDrive` takes `{driveStartMs, prevEndMs}` (Car module passes both; intake-only rule without a previous drive). Proof requires the next drive to be a hot restart whose first pull starts ≤ 48 °C.

@@ -86,10 +86,19 @@
   }
 
   // ---------------------------------------------------------------------------
-  // Insights: the numbers behind the queue
+  // Drive identity and hot restarts
   // ---------------------------------------------------------------------------
-  KTA.driveInsights = function (log, an) {
-    an = an || KTA.analyze(log);
+  // Drive identity is the start time from the TunerView file name
+  // (TunerView_YYYYMMDD_HHMMSS); the Car module owns identity, this only parses.
+  KTA.parseDriveStart = function (name) {
+    var m = /TunerView_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/.exec(String(name || ''));
+    if (!m) return null;
+    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+  };
+  KTA.driveInsights = function (log, an, opts) {
+    opts = opts || {};
+    an = an || KTA.analyze(log, opts);
+    var baseline = isNum(opts.baseline) ? opts.baseline : KTA.LIMITS.score.baseline;
     var n = log.n, has = log.has, dt = log.dt || 0.1;
     var load = has.load ? log.load : null;
     var pedal = has.tpsCmd ? log.tpsCmd : (has.pedal ? log.pedal : (has.tps ? log.tps : null));
@@ -207,6 +216,7 @@
       var kcRiseHere = isNum(an2.kControlPeak) && isNum(an2.kControlStart) ? Math.max(0, an2.kControlPeak - an2.kControlStart) : NaN;
       I.kc = {
         start: r2(an2.kControlStart), end: r2(an2.kControlEnd), peak: r2(an2.kControlPeak), rise: r2(kcRiseHere),
+        highStart: isNum(an2.kControlStart) && an2.kControlStart > baseline,
         min: r2(quantile(kcS, 0)), timeline: pts, episodes: episodes, ups: ups,
         upSteps: ups.length, lugUpSteps: ups.filter(function (u) { return u.lug; }).length,
         upRpm: r0(median(ups.map(function (u) { return u.rpm; }).filter(isNum))), upVss: r0(median(ups.map(function (u) { return u.vss; }).filter(isNum))), upLoad: r1(median(ups.map(function (u) { return u.load; }).filter(isNum))),
@@ -310,6 +320,26 @@
     if (isNum(I.heat.iatStill) && isNum(I.heat.iatMoving)) I.heat.soak = I.heat.iatStill - I.heat.iatMoving;
     I.heat.hot = isNum(I.heat.iatMoving) && I.heat.iatMoving >= DL.hotDrive;
     I.heat.cool = isNum(I.heat.iatMoving) && I.heat.iatMoving < DL.coolDrive;
+
+    // ---- hot restart: started within 30 min of the previous drive's end with intake
+    // at 50 °C or more (with no previous drive known, intake 50 °C or more is enough).
+    // The advice appears only when a hard pull started above 48 °C in the first 5 min;
+    // a gently driven hot restart is fine. Proof is the next such drive's first pull
+    // starting at 48 °C or less.
+    var startIAT = NaN;
+    if (has.iat) {
+      var s0 = [];
+      for (var sq = 0; sq < n && log.t[sq] < 30; sq++) if (isNum(log.iat[sq])) s0.push(log.iat[sq]);
+      if (s0.length) { s0.sort(function (a, b) { return a - b; }); startIAT = s0[s0.length >> 1]; }
+    }
+    var gapMin = isNum(opts.driveStartMs) && isNum(opts.prevEndMs) ? (opts.driveStartMs - opts.prevEndMs) / 60000 : NaN;
+    var isRestart = isNum(startIAT) && startIAT >= 50 && (!isNum(gapMin) || (gapMin >= 0 && gapMin <= 30));
+    var hardPulls = I.boost ? I.boost.events.filter(function (e) { return e.hard; }) : [];
+    I.hotRestart = {
+      isRestart: isRestart, gapMin: isNum(gapMin) ? r1(gapMin) : null, startIAT: r0(startIAT),
+      advice: isRestart && hardPulls.some(function (e) { return e.t0 <= 300 && e.iat0 > DL.pullIatGood; }),
+      firstPull: hardPulls.length ? { t0: hardPulls[0].t0, iat0: hardPulls[0].iat0 } : null
+    };
 
     // ---- acceleration windows: the feel, measured the same way every time
     if (has.vss) {
@@ -444,6 +474,14 @@
       proof: { metric: 'iatMoving', dir: 'up' }
     },
     {
+      id: 'hotRestart', tier: 'drive', impact: 1, effort: 1, risk: 0, flash: false,
+      when: function (I) {
+        if (!I.hotRestart || !I.hotRestart.advice) return null;
+        return { strength: 0.6, ev: { startIAT: I.hotRestart.startIAT, gapMin: I.hotRestart.gapMin, firstPullT: I.hotRestart.firstPull.t0, firstPullIAT: I.hotRestart.firstPull.iat0 } };
+      },
+      proof: { metric: 'firstPullIAT', dir: 'down' }
+    },
+    {
       id: 'heatHw', tier: 'hardware', impact: 2, effort: 2, risk: 0, flash: false,
       when: function (I) {
         if (!I.boost || !I.boost.hard || !(I.heat.iatMoving >= DL.hotDrive + 3) || !(I.heat.iatLoad >= 50)) return null;
@@ -562,12 +600,15 @@
   };
 
   // ---------------------------------------------------------------------------
-  // One call: log -> report
+  // One call: log -> report. opts are passed to analyze and driveInsights:
+  //   baseline, isShakedown (see analyze), driveStartMs + prevEndMs (hot restart:
+  //   epoch ms of this drive's start from its file name, and of the previous
+  //   drive's end; the Car module owns identity and passes both in).
   // ---------------------------------------------------------------------------
   KTA.checkDrive = function (log, opts) {
     opts = opts || {};
     var an = KTA.analyze(log, opts);
-    var ins = KTA.driveInsights(log, an);
+    var ins = KTA.driveInsights(log, an, opts);
     var report = { an: an, ins: ins };
     report.plan = KTA.planActions(report, opts.history);
     report.verdict = an.verdict;
@@ -586,6 +627,7 @@
     var I = rep.ins, an = rep.an;
     switch (name) {
       case 'lugShare': return I.lug ? I.lug.share : NaN;
+      case 'firstPullIAT': return I.hotRestart && I.hotRestart.firstPull ? I.hotRestart.firstPull.iat0 : NaN;
       case 'kcRise': return I.kc ? I.kc.rise : NaN;
       case 'kcEnd': return I.kc ? I.kc.end : NaN;
       case 'pullIat': return I.boost ? I.boost.pullIat : NaN;
@@ -631,10 +673,10 @@
     out.metric = { name: m, before: isNum(bv) ? bv : null, after: isNum(av) ? av : null };
 
     // Comparable drives? A cooler second drive can not prove a heat or knock fix.
-    var heatSensitive = ['revs', 'cooldown', 'cvtHeat', 'fuelCheck', 'heatHw', 'lowBoost', 'moreBoost', 'wotLean'].indexOf(id) >= 0;
+    var heatSensitive = ['revs', 'cooldown', 'cvtHeat', 'fuelCheck', 'heatHw', 'lowBoost', 'moreBoost', 'wotLean', 'hotRestart'].indexOf(id) >= 0;
     if (heatSensitive && isNum(B.heat.iatMoving) && isNum(A.heat.iatMoving) && A.heat.iatMoving < B.heat.iatMoving - DL.matchIat) reasons.push('cooler');
     if ((id === 'revs' || id === 'lowBoost') && !(A.meta.movingSeconds >= DL.minMoving)) reasons.push('short');
-    if ((id === 'cooldown' || id === 'wotLean' || id === 'moreBoost' || id === 'richWot') && !(A.boost && A.boost.hard)) reasons.push('noPulls');
+    if ((id === 'cooldown' || id === 'wotLean' || id === 'moreBoost' || id === 'richWot' || id === 'hotRestart') && !(A.boost && A.boost.hard)) reasons.push('noPulls');
     if ((id === 'revs' || id === 'lowBoost' || id === 'fuelCheck') && !A.kc) reasons.push('noKc');
     // lugging and its knock only show in town: a highway drive proves nothing about them
     if ((id === 'revs' || id === 'lowBoost') && isNum(B.meta.townSeconds) && !(A.meta.townSeconds >= 0.5 * B.meta.townSeconds)) reasons.push('lessTown');
@@ -659,6 +701,13 @@
         break;
       }
       case 'hotLog': out.verdict = A.heat.hot ? 'keep' : 'retry'; break;
+      case 'hotRestart': {
+        var hb = B.hotRestart, ha = A.hotRestart;
+        if (!hb || !hb.advice || !hb.firstPull) { out.verdict = 'inconclusive'; break; }
+        if (!ha || !ha.isRestart || !ha.firstPull) { out.matched.ok = false; reasons.push('notHotRestart'); out.verdict = 'inconclusive'; break; }
+        out.verdict = ha.firstPull.iat0 <= DL.pullIatGood ? 'keep' : (ha.firstPull.iat0 < hb.firstPull.iat0 ? 'partial' : 'retry');
+        break;
+      }
       case 'heatHw': out.verdict = av <= bv - 4 ? 'keep' : (av < bv ? 'partial' : 'retry'); break;
       case 'afm': out.verdict = Math.abs(av) <= KTA.LIMITS.trim.good ? 'keep' : (Math.abs(av) < Math.abs(bv) ? 'partial' : 'undo'); break;
       case 'richWot': {
@@ -697,6 +746,7 @@
       ins: {
         meta: pick(I.meta, ['duration', 'movingSeconds', 'townSeconds', 'source']),
         heat: pick(I.heat, ['iatMoving', 'iatStill', 'iatLoad', 'cvtMax', 'cvtMed', 'hot', 'cool']),
+        hotRestart: I.hotRestart ? { isRestart: I.hotRestart.isRestart, advice: I.hotRestart.advice, gapMin: I.hotRestart.gapMin, startIAT: I.hotRestart.startIAT, firstPull: I.hotRestart.firstPull ? { t0: I.hotRestart.firstPull.t0, iat0: I.hotRestart.firstPull.iat0 } : null } : null,
         lug: pick(I.lug, ['seconds', 'share', 'ign', 'ignRef']),
         kc: I.kc ? { start: I.kc.start, end: I.kc.end, peak: I.kc.peak, rise: I.kc.rise, lugRises: I.kc.lugRises } : null,
         boost: pick(I.boost, ['hard', 'pullIat', 'peakMap']),
