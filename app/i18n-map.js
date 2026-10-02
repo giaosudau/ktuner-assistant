@@ -36,7 +36,7 @@
     MAF_Scaling_Custom: { name: 'AFM Flow (Custom)',
       what: 'Turns the air-flow sensor’s frequency (Hz) into grams of air per second at 103 points. Fuel, load, the torque estimate and the CVT’s torque signal all start from this number.',
       edit: 'Stage A, required after an intake. The app computes the whole corrected row from your cruise trims and full-throttle error (Step 3). Paste it over this row.',
-      verify: 'Trims within ±5 % at every AFM point you drove; full throttle within ±0.3 AFR of the command.',
+      verify: 'Trims within ±5 % at every AFM point you drove; full throttle within 0.5 AFR of the map at 12 psi and up.',
       shape: 'Rises at every point, and the percentage change is smooth: no single-point bumps.' },
     MAF_Scaling_Factory: { name: 'AFM Flow (factory)', what: 'Honda’s curve for the stock intake housing. Above 4,375 Hz it is partly reconstructed from your screenshot.', edit: 'Reference only. Compare your corrected row against it.' },
     MAF_Scaling_PRL_Race: { name: 'AFM Flow (PRL Race preset)', what: 'KTuner’s curve for the PRL Race intake housing. A bigger housing passes more air at the same frequency, so the curve sits higher than factory.', edit: 'Start from it only if you run that exact housing. Then correct it from your logs.' },
@@ -132,9 +132,9 @@
       title: 'Basic road tune: what changes and what doesn’t',
       head: ['Item', 'Verdict', 'Where', 'How you know'],
       rows: [
-        ['Air measurement (AFM Flow)', 'good', 'Change, first', 'AFM Flow (Custom) · Stage A', 'Trims ±5 %; full throttle ±0.3 AFR'],
-        ['AFR at full throttle', 'watch', 'Check; one small optional lean', 'WOT Enrichment L/H · Lever 1', 'Measured vs command ±0.3; never leaner than 12.0'],
-        ['Fuel for E10', 'watch', 'No blanket +4 %', 'Nothing to type (see below)', 'Cruise trims 2-4 % positive is normal; the full-throttle check decides'],
+        ['Air measurement (AFM Flow)', 'good', 'Change, first', 'AFM Flow (Custom) · Stage A', 'Trims ±5 %; full throttle within 0.5 AFR of the map'],
+        ['AFR at full throttle', 'watch', 'Check; one small optional lean', 'WOT Enrichment L/H · Lever 1', 'Within 0.5 of the map at 12 psi and up; never 1.0 leaner held 0.3 s'],
+        ['Fuel for E10', 'watch', 'No blanket +4 %', 'Nothing to type (see below)', 'Cruise trims sit around -0.8 % (median) on your logs; the full-throttle check decides'],
         ['Boost', 'nodata', 'No change in the basic stage', 'Boost Target Normal: already 21 psi (stock ≈ 16.5)', 'Tracks target ±1.5 psi; no overshoot with the downpipe'],
         ['Ignition timing', 'nodata', 'Leave stock', 'The ECU’s knock control', 'Knock retard ≤ 1°; knock control ≤ 0.56 and steady'],
         ['Knock sensitivity', 'stop', 'Never', '-', '-'],
@@ -147,7 +147,7 @@
       title: 'Does E10 need more fuel?',
       lead: 'Not by hand. Three facts and one check:',
       points: [
-        'At idle and cruise the ECU runs closed loop. The A/F sensor sees E10 is a little lean and the trims add the fuel, about 2-4 %. Nothing to type.',
+        'At idle and cruise the ECU runs closed loop. The A/F sensor measures lambda, so E10 needs no offset: your cruise trims sit around -0.8 % (median). Nothing to type.',
         'The Step 3 AFM correction is built from those trims, so it carries the E10 difference too. The ECU then reads a little more air than there is. That errs towards less timing and meeting its torque guard slightly early: the safe direction.',
         'At full throttle the ECU runs open loop. Hondata’s FlashPro guidance: the long-term trim only works in closed loop, and the ECU goes open loop once the target is richer than about 13:1. Nothing corrects E10 there on its own, so the full-throttle check is the proof.'
       ],
@@ -286,7 +286,7 @@
     MAF_Scaling_Custom: { name: 'AFM Flow (Custom)',
       what: 'Đổi tần số của cảm biến lưu lượng khí (Hz) thành gram khí mỗi giây, qua 103 điểm. Xăng, tải, mô-men ước tính và tín hiệu mô-men gửi cho hộp CVT đều bắt đầu từ con số này.',
       edit: 'Giai đoạn A, bắt buộc sau khi thay cổ hút. App tính cả hàng đã hiệu chỉnh từ trim khi chạy đều và sai số khi đạp hết ga (Bước 3). Dán đè lên hàng này.',
-      verify: 'Trim trong khoảng ±5 % ở mọi điểm AFM bạn đã chạy qua; đạp hết ga lệch không quá ±0.3 AFR so với lệnh.',
+      verify: 'Trim trong khoảng ±5 % ở mọi điểm AFM bạn đã chạy qua; đạp hết ga trong 0.5 AFR so với map từ 12 psi trở lên.',
       shape: 'Tăng ở mọi điểm, và phần trăm thay đổi phải mượt: không có điểm lồi đơn lẻ.' },
     MAF_Scaling_Factory: { name: 'AFM Flow (zin)', what: 'Đường cong của Honda cho họng gió zin. Từ 4,375 Hz trở lên được dựng lại một phần từ ảnh chụp của bạn.', edit: 'Chỉ để tham khảo. So hàng đã hiệu chỉnh của bạn với nó.' },
     MAF_Scaling_PRL_Race: { name: 'AFM Flow (preset PRL Race)', what: 'Đường cong KTuner làm sẵn cho họng PRL Race. Họng lớn hơn cho nhiều khí đi qua hơn ở cùng tần số, nên đường cong nằm cao hơn bản zin.', edit: 'Chỉ bắt đầu từ nó nếu bạn dùng đúng họng đó. Sau đó hiệu chỉnh tiếp từ log.' },
@@ -382,9 +382,9 @@
       title: 'Tune cơ bản trên đường: cái gì đổi, cái gì không',
       head: ['Hạng mục', 'Kết luận', 'Ở đâu', 'Biết bằng cách nào'],
       rows: [
-        ['Đo khí nạp (AFM Flow)', 'good', 'Sửa, làm đầu tiên', 'AFM Flow (Custom) · Giai đoạn A', 'Trim ±5 %; đạp hết ga ±0.3 AFR'],
-        ['AFR khi đạp hết ga', 'watch', 'Kiểm tra; một lần làm nghèo nhẹ tuỳ chọn', 'WOT Enrichment L/H · Đòn bẩy 1', 'Đo so với lệnh ±0.3; không bao giờ nghèo hơn 12.0'],
-        ['Xăng cho E10', 'watch', 'Không cộng thẳng +4 %', 'Không cần gõ gì (xem bên dưới)', 'Trim khi chạy đều dương 2-4 % là bình thường; kiểm tra đạp hết ga mới quyết định'],
+        ['Đo khí nạp (AFM Flow)', 'good', 'Sửa, làm đầu tiên', 'AFM Flow (Custom) · Giai đoạn A', 'Trim ±5 %; đạp hết ga trong 0.5 AFR so với map'],
+        ['AFR khi đạp hết ga', 'watch', 'Kiểm tra; một lần làm nghèo nhẹ tuỳ chọn', 'WOT Enrichment L/H · Đòn bẩy 1', 'Trong 0.5 so với map từ 12 psi trở lên; không bao giờ loãng hơn 1.0 giữ 0.3 giây'],
+        ['Xăng cho E10', 'watch', 'Không cộng thẳng +4 %', 'Không cần gõ gì (xem bên dưới)', 'Trim chạy đều quanh -0.8 % (trung vị) trên log của bạn; kiểm tra đạp hết ga mới quyết định'],
         ['Boost', 'nodata', 'Không đổi ở giai đoạn cơ bản', 'Boost Target Normal: đã là 21 psi (zin ≈ 16.5)', 'Bám mục tiêu ±1.5 psi; không vọt boost khi có downpipe'],
         ['Góc đánh lửa', 'nodata', 'Giữ nguyên', 'Knock control của ECU', 'Lùi lửa ≤ 1°; knock control ≤ 0.56 và ổn định'],
         ['Độ nhạy kích nổ', 'stop', 'Không bao giờ', '-', '-'],
@@ -397,7 +397,7 @@
       title: 'E10 có cần thêm xăng không?',
       lead: 'Không cần làm tay. Ba sự thật và một lần kiểm tra:',
       points: [
-        'Khi nổ không tải và chạy đều, ECU chạy vòng kín. Cảm biến A/F thấy E10 hơi nghèo và trim tự thêm xăng, khoảng 2-4 %. Không cần gõ gì.',
+        'Khi nổ không tải và chạy đều, ECU chạy vòng kín. Cảm biến A/F đo lambda nên E10 không cần bù thêm: trim chạy đều của bạn quanh -0.8 % (trung vị). Không cần gõ gì.',
         'Hiệu chỉnh AFM ở Bước 3 được tính từ chính các trim đó, nên nó mang luôn phần chênh của E10. Khi đó ECU đọc lượng khí hơi nhiều hơn thực tế. Sai lệch này nghiêng về phía ít lửa hơn và chạm lớp bảo vệ mô-men sớm hơn một chút: tức là phía an toàn.',
         'Khi đạp hết ga, ECU chạy vòng hở. Theo hướng dẫn FlashPro của Hondata: trim dài hạn chỉ tác dụng ở vòng kín, và ECU chuyển sang vòng hở khi mục tiêu giàu hơn khoảng 13:1. Ở đó không có gì tự bù cho E10, nên kiểm tra khi đạp hết ga là bằng chứng.'
       ],
