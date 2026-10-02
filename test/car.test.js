@@ -230,20 +230,106 @@ test('Aug 23 with a flash recorded: no unexplained question, shakedown instead',
   assert.equal(r.report.isShakedown, true);
 });
 
-test('Aug 30 15:29 after a 0.49 drive: the starting score asks', () => {
+// ---------------------------------------------------------------------------
+// 02 — the four false alarms (owner-voices.md §4), at the public Car operation
+// ---------------------------------------------------------------------------
+
+test('30 Aug 15:29 (0.58 → 0.49) is the normal after-flash pattern, not an Unexplained change', () => {
   let s = K.carEmpty();
   s = ingest(s, 'aug23-1959').state;
   const r = ingest(s, 'aug30-1529');
-  assert.ok(r.report.unexplained, 'asks');
-  assert.ok(r.report.unexplained.reasons.includes('score'), JSON.stringify(r.report.unexplained));
+  assert.equal(r.report.summary.kcStart, 0.58, 'the Drive starts high');
+  assert.ok(r.report.summary.kcEnd <= r.report.baseline.value + K.CAR_RULES.scoreShakedown, 'and settles to the Baseline');
+  assert.equal(r.report.unexplained, null, 'asks nothing: no Flash changed this car');
+  // Said in the owner's words, not as a status name.
+  assert.ok(r.report.afterFlash, 'the drive card carries the sentence');
+  assert.match(r.report.afterFlash.text, /started at 0\.58 and settled to your Baseline/);
+  assert.ok(!/exempt|after-flash|normal/i.test(r.report.afterFlash.text), r.report.afterFlash.text);
+  // Reopening the remembered Drive says the same thing.
+  const again = K.carReport(r.state, r.report.identity);
+  assert.equal(again.unexplained, null);
+  assert.equal(again.afterFlash.text, r.report.afterFlash.text);
 });
 
-test('22 Aug to 30 Aug: the boost-target step asks', () => {
+test('a starting score above 0.60 still asks, even when it settles', () => {
+  // 21 Aug 21:37 on this car started 0.61 and ended 0.55: a start above the
+  // after-flash band is a real question, so it is not exempt (owner-voices.md §4).
+  const state = synth([
+    { id: 'd1', start: 1000, kcStart: 0.49, kcEnd: 0.49 },
+    { id: 'd2', start: 2000, kcStart: 0.49, kcEnd: 0.49 },
+    { id: 'd3', start: 3000, kcStart: 0.49, kcEnd: 0.49 },
+    { id: 'd4', start: 4000, kcStart: 0.61, kcEnd: 0.55 },
+  ]);
+  const r = K.carReport(state, 'd4');
+  assert.ok(r.unexplained, 'asks');
+  assert.deepEqual(r.unexplained.reasons, ['score']);
+  assert.equal(r.afterFlash, null, 'no after-flash sentence: the start was above 0.60');
+});
+
+test('a Drive with no pull never raises "Unexplained change: boost" against Drives that had one', () => {
+  // The owner's own case: 22 Aug 09:50 peaked at 8.7 psi target with no hard pull,
+  // while 22 Aug 09:03 (nine pulls) peaked at 16.3. Asking about that is noise:
+  // the highest target per Drive depends on whether the owner pulled at all.
   let s = K.carEmpty();
-  for (const id of ['aug22-0950', 'aug23-1959', 'aug23-2038']) s = ingest(s, id).state;
+  s = ingest(s, 'aug22-0903').state;
+  assert.equal(K.carReport(s, '20260822-090322').summary.hardPulls, 9, 'nine hard pulls');
+  const r = ingest(s, 'aug22-0950');
+  assert.equal(r.report.summary.hardPulls, 0, 'no hard pull in this Drive');
+  assert.ok(!r.report.unexplained || !r.report.unexplained.reasons.includes('boost'),
+    JSON.stringify(r.report.unexplained));
+});
+
+test('a Drive with pulls is still compared against the pulls, and still asks when the target moved', () => {
+  // Same rule, both sides pulled: a real target move is still an Unexplained change.
+  const state = synth([
+    { id: 'd1', start: 1000, boostTarget: 16, hardPulls: 3 },
+    { id: 'd2', start: 2000, boostTarget: 16, hardPulls: 2 },
+    { id: 'd3', start: 3000, boostTarget: 16, hardPulls: 4 },
+    { id: 'd4', start: 4000, boostTarget: 22, hardPulls: 2 },
+  ]);
+  const r = K.carReport(state, 'd4');
+  assert.ok(r.unexplained, 'asks');
+  assert.deepEqual(r.unexplained.reasons, ['boost']);
+  assert.equal(r.afterFlash, null);
+});
+
+test('one pull Drive is not this car\'s boost normal: the comparison waits for three', () => {
+  // Below the floor there is no "normal" to jump from, so nothing is asked.
+  const few = synth([
+    { id: 'd1', start: 1000, boostTarget: 12, hardPulls: 2 },
+    { id: 'd2', start: 2000, boostTarget: 22, hardPulls: 2 },
+  ]);
+  assert.equal(K.carReport(few, 'd2').unexplained, null);
+  const enough = synth([
+    { id: 'd1', start: 1000, boostTarget: 16, hardPulls: 2 },
+    { id: 'd2', start: 2000, boostTarget: 16, hardPulls: 2 },
+    { id: 'd3', start: 3000, boostTarget: 16, hardPulls: 2 },
+    { id: 'd4', start: 4000, boostTarget: 22, hardPulls: 2 },
+  ]);
+  assert.deepEqual(K.carReport(enough, 'd4').unexplained.reasons, ['boost']);
+});
+
+test('the score threshold that makes the after-flash band is one number, in CAR_RULES', () => {
+  assert.equal(K.CAR_RULES.afterFlashStart, 0.60);
+  assert.ok(K.CAR_RULES.scoreJump > 0, 'the old starting-score jump is still there for a start above the band');
+  // Exactly at the band counts as the pattern; a hair above does not.
+  const at = synth([{ id: 'd1', start: 1000, kcStart: 0.60, kcEnd: 0.49 }, { id: 'd2', start: 2000, kcStart: 0.49, kcEnd: 0.49 }]);
+  assert.ok(K.carReport(at, 'd1').afterFlash, '0.60 settling to the Baseline is the pattern');
+  const over = synth([{ id: 'd1', start: 1000, kcStart: 0.61, kcEnd: 0.49 }, { id: 'd2', start: 2000, kcStart: 0.49, kcEnd: 0.49 }]);
+  assert.equal(K.carReport(over, 'd1').afterFlash, null);
+  // A start in the band that does NOT settle is still a question.
+  const stuck = synth([{ id: 'd1', start: 1000, kcStart: 0.58, kcEnd: 0.60 }, { id: 'd2', start: 2000, kcStart: 0.49, kcEnd: 0.49 }]);
+  assert.equal(K.carReport(stuck, 'd1').afterFlash, null);
+});
+
+test('30 Aug 15:29 against three pull Drives: the trim jump still asks, the boost one does not', () => {
+  // The trim Stop on 23 Aug 20:38 is a real fault and must keep asking; the boost
+  // reason next to it came only from the owner not pulling that day.
+  let s = K.carEmpty();
+  for (const id of ['aug22-0903', 'aug23-1959', 'aug23-2038']) s = ingest(s, id).state;
   const r = ingest(s, 'aug30-1529');
-  assert.ok(r.report.unexplained, 'asks');
-  assert.ok(r.report.unexplained.reasons.includes('boost'), JSON.stringify(r.report.unexplained) + ' median source check');
+  assert.equal(r.report.summary.hardPulls, 8, 'eight hard pulls');
+  assert.equal(r.report.unexplained, null, 'the reference Drives had no pulls to compare against');
 });
 
 test('answers stick: neither keeps a watch line, and it survives reload', () => {
@@ -502,9 +588,10 @@ test('two boost candidates: the safety fix is planned, the other waits to be pro
   const s = trimState([]);
   const drives = [];
   for (let i = 0; i < 5; i++) {
-    // Overshoot opens an overshoot question, the high starting score a score
-    // question: both fixes are P2-eligible, so P4 picks one family member.
-    drives.push({ id: 'd' + (i + 1), verdict: 'watch', trimWorst: -1, kcStart: 0.60, kcEnd: 0.49, overshoot: 3.0, lugShare: 8, boostTarget: 16 });
+    // Overshoot opens an overshoot question, and a starting score of 0.65 (above
+    // the 0.60 after-flash band) a score question: both fixes are P2-eligible, so
+    // P4 picks one family member.
+    drives.push({ id: 'd' + (i + 1), verdict: 'watch', trimWorst: -1, kcStart: 0.65, kcEnd: 0.49, overshoot: 3.0, lugShare: 8, boostTarget: 16 });
   }
   const t = synth(drives);
   const p = K.carFlashPlan(t, MAP, { now: NOW, history: [{ id: 'revs', verdict: 'keep' }] });

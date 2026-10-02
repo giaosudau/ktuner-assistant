@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const zlib = require('zlib');
 const K = require('../engine/kta-drive.js');
 
-const IDS = ['aug30-1601', 'aug30-1529', 'sep01-0813', 'sep05-0756', 'aug30-1509', 'aug22-0950'];
+const IDS = ['aug30-1601', 'aug30-1529', 'sep01-0813', 'sep05-0756', 'aug30-1509', 'aug22-0950', 'aug22-0903', 'aug23-1959', 'aug23-2038'];
 IDS.forEach((id) => require('../data/example-' + id + '.js'));
 const csv = (id) => zlib.gunzipSync(Buffer.from(globalThis.KTA_EXAMPLES[id].gz, 'base64')).toString('utf8');
 const cache = {};
@@ -487,4 +487,224 @@ test('issue 07: a score that starts high gets its sentence, in both languages', 
   vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n-drive.js', 'utf8'), window);
   assert.ok(/10–15 calm minutes/.test(window.KTA_I18N.en.checks.kControl.display(kc.data, K.fmt)));
   assert.ok(/10–15 phút/.test(window.KTA_I18N.vi.checks.kControl.display(kc.data, K.fmt)));
+});
+
+// ---------------------------------------------------------------------------
+// Ticket 02 — the false alarms (owner-voices.md §4, tuner-play-panel.md T1).
+// Every assertion is on what the owner would see: the line's Verdict word, its
+// numbers, the ranked actions and the Flash plan. Never internals.
+// ---------------------------------------------------------------------------
+
+// A score raised above 5,200 rpm, on the owner's own 15:29 pull drive: the top
+// of one pull is held past 5,200 rpm and the Fuel-quality score sits at 0.70
+// there, which is what the non-Si ECU does on purpose (owner-voices.md §3).
+// Only the score and the revs move; everything else is the real log.
+function scoreAboveHighRpm(log, value, t0, t1) {
+  return cloneLog(log, (l) => {
+    for (let i = 0; i < l.n; i++) {
+      if (l.t[i] < t0 || l.t[i] > t1) continue;
+      l.rpm[i] = Math.max(l.rpm[i], K.DRIVE_LIMITS.kcHighRpm + 400);
+      l.kControl[i] = value;
+    }
+  });
+}
+// 15:29 has a pull that reaches 5,095 rpm at 929 s: hold 5,600 rpm and a raised
+// score across that stretch of the drive.
+function highRpmPull(value) {
+  return scoreAboveHighRpm(pulls().log, value, 925, 945);
+}
+// 16:01 lugs at about 1,300 rpm: hold the top end and a raised score there.
+function highRpmHot(value) {
+  return scoreAboveHighRpm(hot().log, value, 900, 940);
+}
+
+test('ticket 02: a rise above 5,200 rpm is shown but never counts toward a fuel or heat verdict', () => {
+  const base = pulls().report;
+  assert.equal(check(base.an, 'kControl').status, 'watch', '15:29 on its own is a Watch: ' + check(base.an, 'kControl').display);
+  const raised = K.checkDrive(highRpmPull(0.70));
+  const kc = check(raised.an, 'kControl');
+  // The rise is in the data, in full: the peak, the episodes and the chart.
+  assert.ok(kc.data.peak >= 0.69, 'the peak still shows what the ECU did: ' + kc.data.peak);
+  const high = raised.ins.kc.episodes.filter((e) => e.kind === 'rise' && !e.counts);
+  assert.ok(high.length >= 1, 'at least one rise is marked as not counting');
+  assert.ok(high.every((e) => e.episodeRpm > K.DRIVE_LIMITS.kcHighRpm), JSON.stringify(high.map((e) => e.episodeRpm)));
+  assert.equal(raised.ins.kc.excludedRises, high.length);
+  assert.ok(K.view.kcTimeline(raised.ins).marks.some((m) => m.counts === false), 'the chart still draws it');
+  assert.ok(raised.ins.kc.judgedPeak < raised.ins.kc.peak, 'the peak the verdicts read is the lower one');
+  // And the owner is told why, in plain words, not as a status name.
+  assert.match(kc.display, /5,200 rpm/, kc.display);
+  assert.match(kc.display, /on purpose/, kc.display);
+  assert.ok(!/exempt|ignore/i.test(kc.display), kc.display);
+});
+
+test('ticket 02: the same score at the same place, below 5,200 rpm, is a real Watch', () => {
+  // Same drive, same 0.70, but the revs are the ones the owner actually pulled at:
+  // now it is fuel or heat, and the fuel question is asked.
+  const low = scoreAboveHighRpm(pulls().log, 0.70, 925, 945);
+  const kept = cloneLog(low, (l) => {
+    for (let i = 0; i < l.n; i++) if (l.t[i] >= 925 && l.t[i] <= 945 && l.rpm[i] > K.DRIVE_LIMITS.kcHighRpm) l.rpm[i] = 5100;
+  });
+  const r = K.checkDrive(kept);
+  assert.equal(check(r.an, 'kControl').status, 'watch', '0.70 under 5,200 rpm is fuel or heat: ' + check(r.an, 'kControl').display);
+  assert.ok(!/5,200 rpm/.test(check(r.an, 'kControl').display), 'and no excuse is offered');
+  assert.ok(r.ins.kc.episodes.filter((e) => e.kind === 'rise').every((e) => e.counts));
+  assert.ok(r.plan.all.some((a) => a.id === 'fuelCheck'), '"check the fuel" is asked: ' + r.plan.all.map((a) => a.id));
+});
+
+test('ticket 02: "no hard driving" is a Watch with that sentence, and the high-rpm rule cannot remove a Stop', () => {
+  const held = cloneLog(cool().log, (l) => {
+    for (let i = 0; i < l.n && l.t[i] < 400; i++) l.kControl[i] = i % 10 < 7 ? 0.65 : 0.66;
+  });
+  const kc = check(K.checkDrive(held).an, 'kControl');
+  assert.equal(kc.status, 'watch', 'never a Stop of its own: ' + kc.display);
+  assert.equal(kc.data.noHard, true);
+  assert.match(kc.display, /No hard driving until it drops/, kc.display);
+  // A score at the Stop line reached only above 5,200 rpm: still a Stop. Engine first.
+  const stop = K.checkDrive(highRpmPull(K.LIMITS.score.stop + 0.02));
+  assert.equal(check(stop.an, 'kControl').status, 'stop',
+    'a Stop that protects the engine is never silenced: ' + check(stop.an, 'kControl').display);
+  assert.equal(stop.verdict, 'stop');
+});
+
+test('ticket 02: the fuel question and the boost lever ignore a high-rpm rise', () => {
+  const raised = K.checkDrive(highRpmPull(0.70));
+  assert.ok(!raised.plan.all.some((a) => a.id === 'fuelCheck'),
+    'no "check the fuel" from a rise the ECU raised on purpose: ' + raised.plan.all.map((a) => a.id).join(','));
+  assert.ok(!raised.plan.all.some((a) => a.id === 'lowBoost'),
+    'and no boost-at-low-rpm lever proposed off it');
+  // The lugging rises on 16:01 are still a Watch, and the free habit still leads.
+  const hotHigh = K.checkDrive(highRpmHot(0.70));
+  const lug = hotHigh.ins.kc.episodes.filter((e) => e.cause === 'lugging');
+  assert.ok(lug.length >= 1 && lug.every((e) => e.counts), 'lugging rises still count');
+  assert.ok(hotHigh.plan.now.concat(hotHigh.plan.next).some((a) => a.id === 'revs'),
+    'keep the revs up is still on the list: ' + hotHigh.plan.all.map((a) => a.id).join(','));
+});
+
+test('ticket 02: a proof reads the rise that counts, so a high-rpm raise is not the owner\'s fault', () => {
+  const before = pulls().report;
+  const after = K.checkDrive(highRpmPull(0.70));
+  // The raw rise went up (the ECU did it) but the rise the proof reads did not.
+  assert.ok(after.ins.kc.rise > before.ins.kc.rise, 'the raw numbers still show it: ' + before.ins.kc.rise + ' to ' + after.ins.kc.rise);
+  assert.equal(after.ins.kc.judgedRise, before.ins.kc.judgedRise, 'the judged rise is unchanged');
+  assert.equal(K.proveAction('lowBoost', before, after).verdict, 'keep',
+    'the flash is not undone for a rise the ECU asked for');
+  assert.equal(K.proveAction('fuelCheck', before, after).verdict, 'keep',
+    'nor is "check the fuel" left open');
+  // A proof of the free habit still shows both numbers to the owner.
+  const proof = K.proveAction('revs', hot().report, K.checkDrive(highRpmHot(0.70)));
+  assert.equal(proof.metric.name, 'lugShare');
+  assert.ok(proof.metric.kcRiseBefore != null && proof.metric.kcRiseAfter != null,
+    'the proof shows its numbers: ' + JSON.stringify(proof.metric));
+  // The threshold lives in the limits with its source, not in a magic number here.
+  assert.equal(K.DRIVE_LIMITS.kcHighRpm, 5200);
+  assert.equal(K.LIMITS.score.highRpm, 5200, 'the check line reads the same one number');
+});
+
+// ---------------------------------------------------------------------------
+// Ticket 02 — checks diagnose, only the Flash plan prescribes (T1)
+// ---------------------------------------------------------------------------
+
+// Every way a remedy can name a KTuner table: the table id from the map file,
+// the family name the engine and the app use, or the words for editing one.
+const TABLE_WORDS = /\b(AFM[ _]Flow|WOT[ _]Enrich|Boost[ _]Target|MAF[ _]Scaling|Nominal Lambda|Ignition[ _]Base|Knock[ _]Sens|Dual[ _]Boost|Rev[ _]Limit|Cylinder[ _]Fill|TVWC|VTS)\b|\b(correct|extend|change|edit|lower|raise|pull|trim)\b[^.]*\btable\b|\bmap cell|\bcell \d|\bpaste\b/i;
+
+// Every Drive the app can be handed: the owner's real logs and the built-in
+// samples, so a remedy can never be written that the fixtures never reach.
+const ALL_LOGS = () => ['aug30-1601', 'aug30-1529', 'sep01-0813', 'sep05-0756', 'aug22-0950', 'aug22-0903', 'aug23-1959', 'aug23-2038']
+  .map((id) => K.readLog(csv(id)));
+const ALL_SAMPLES = () => ['hot', 'after'].map((name) => K.readLog(K.sampleCsv(name)));
+
+test('ticket 02: no check names a KTuner table, on any Drive the app can be given', () => {
+  const logs = ALL_LOGS().concat(ALL_SAMPLES());
+  let fixes = 0;
+  logs.forEach((log, i) => {
+    const an = K.checkDrive(log).an;
+    for (const g of an.gates) {
+      for (const c of g.checks) {
+        if (!c.fix) continue;
+        fixes++;
+        // the KTuner table ids themselves
+        for (const id of Object.keys(K.TABLES || {})) {
+          assert.ok(!new RegExp('\\b' + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(c.fix),
+            'check ' + c.id + ' names table ' + id + ': ' + c.fix);
+        }
+        assert.ok(!TABLE_WORDS.test(c.fix), 'check ' + c.id + ' remedy prescribes a table: ' + c.fix);
+        assert.ok(c.fix.length > 20, 'check ' + c.id + ' still says something useful: ' + c.fix);
+      }
+    }
+  });
+  assert.ok(fixes >= 3, 'the fixtures really did exercise remedies: ' + fixes);
+});
+
+test('ticket 02: the Flash plan still names the tables, and is the only thing that does', () => {
+  const CAR = require('../engine/kta-car.js');
+  const MAP = require('../data/ktuner-maps-digitized.json');
+  const NOW = 1756723200000;
+  // A trim Watch plans the AFM Flow curve, by its KTuner table id and with cells.
+  const trims = [];
+  for (let i = 0; i < 5; i++) trims.push({ id: 'd' + (i + 1), start: (i + 1) * 1000, trimWorst: -7, verdict: 'watch', kcEnd: 0.49 });
+  const afm = CAR.carFlashPlan(CAR.carEmpty() && Object.assign(CAR.carEmpty(), { drives: trims.reduce((a, d) => (a[d.id] = Object.assign({ hardPulls: 2, boostTarget: 16, overshoot: 1, lugShare: 1, shakedown: 'none', calmSec: 700, missing: [], flat: [], duration: 900, moving: 800, cool: true, hot: false, hotRestart: false, tooShort: false, kcStart: 0.49, kcPeak: 0.49, iatMoving: 36, cvtPeak: 80, mixLeanest: 10.5, mixTarget: 11, wgAtPeak: 2.5, accel5070: null, verdict: 'watch', updatedAt: NOW }, d), a), {}) }), MAP, { now: NOW });
+  assert.equal(afm.kind, 'one-family');
+  assert.deepEqual(afm.tables.map((t) => t.id), ['MAF_Scaling_Custom']);
+  assert.ok(afm.cells.length === 0 && afm.afmPasteRow, 'the paste-ready row the owner types into KTuner');
+  // An overshoot Watch plans the six boost targets, again by id and cell.
+  const overs = [];
+  for (let i = 0; i < 5; i++) overs.push({ id: 'e' + (i + 1), start: (i + 1) * 1000, trimWorst: -1, verdict: 'watch', kcEnd: 0.49, overshoot: 3, hardPulls: 2 });
+  const boost = CAR.carFlashPlan(Object.assign(CAR.carEmpty(), { drives: overs.reduce((a, d) => (a[d.id] = Object.assign({ hardPulls: 2, boostTarget: 16, lugShare: 1, shakedown: 'none', calmSec: 700, missing: [], flat: [], duration: 900, moving: 800, cool: true, hot: false, hotRestart: false, tooShort: false, kcStart: 0.49, kcPeak: 0.49, iatMoving: 36, cvtPeak: 80, mixLeanest: 10.5, mixTarget: 11, wgAtPeak: 2.5, accel5070: null, updatedAt: NOW }, d), a), {}) }), MAP, { now: NOW });
+  assert.equal(boost.kind, 'one-family');
+  assert.ok(boost.tables.some((t) => t.id.startsWith('Boost_Target_')), 'named by id: ' + boost.tables.map((t) => t.id).join(','));
+  assert.ok(boost.cells.length > 0 && boost.cells.every((c) => c.rpm && c.col && c.before != null && c.after != null));
+});
+
+test('ticket 02: the app\'s own copy of every remedy names no table either, in both languages', () => {
+  const fs = require('fs'), vm = require('vm');
+  const window = {};
+  vm.createContext(window); window.window = window;
+  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n-drive.js', 'utf8'), window);
+  let fixes = 0;
+  for (const lang of ['en', 'vi']) {
+    ALL_LOGS().concat(ALL_SAMPLES()).forEach((log) => {
+      const an = K.checkDrive(log).an;
+      for (const g of an.gates) {
+        for (const c of g.checks) {
+          if (c.status === 'good' || c.status === 'nodata') continue;
+          const d = window.KTA_I18N[lang].checks[c.id];
+          assert.ok(d, lang + ' has text for ' + c.id);
+          const fix = d.fix(c.data || {}, K.fmt);
+          fixes++;
+          assert.ok(!TABLE_WORDS.test(fix), lang + ' ' + c.id + ' remedy prescribes a table: ' + fix);
+        }
+      }
+    });
+  }
+  assert.ok(fixes >= 6, 'both languages really did exercise remedies: ' + fixes);
+});
+
+test('ticket 02: the app shows the after-flash sentence and the 5,200 rpm note in the owner\'s words', () => {
+  const fs = require('fs'), vm = require('vm');
+  const window = {};
+  vm.createContext(window); window.window = window;
+  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n-drive.js', 'utf8'), window);
+  const T = window.KTA_I18N;
+  // The after-flash pattern: a sentence, not a status name, in both languages.
+  for (const lang of ['en', 'vi']) {
+    const sentence = T[lang].car.afterFlash({ start: 0.58, end: 0.49, baseline: 0.5 });
+    assert.match(sentence, /0\.58/, lang + ': ' + sentence);
+    assert.match(sentence, /0\.50/, lang + ' names the Baseline: ' + sentence);
+    assert.ok(!/exempt|after-flash|normal|Watch|OK\b/i.test(sentence), lang + ' leaks a status name: ' + sentence);
+  }
+  // The 5,200 rpm note: said plainly, with the number, in both languages.
+  const c = K.checkDrive(highRpmPull(0.70)).an.gates.flatMap((g) => g.checks).find((x) => x.id === 'kControl');
+  for (const lang of ['en', 'vi']) {
+    const line = T[lang].checks.kControl.display(c.data, K.fmt);
+    assert.match(line, /5,200/, lang + ': ' + line);
+    assert.match(line, /0\.70/, lang + ' gives the number: ' + line);
+  }
+  assert.match(T.en.checks.kControl.display(c.data, K.fmt), /on purpose/);
+  assert.match(T.vi.checks.kControl.display(c.data, K.fmt), /chủ động/);
+  // And a drive with no high-rpm rise carries no excuse.
+  const plain = check(pulls().report.an, 'kControl');
+  assert.ok(!/5,200/.test(T.en.checks.kControl.display(plain.data, K.fmt)), plain.display);
 });

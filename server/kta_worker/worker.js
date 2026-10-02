@@ -178,6 +178,7 @@ function driveOut(report) {
     flashCause: report.flashCause || null,
     hardDrivingWatch: !!report.hardDrivingWatch,
     unexplained: report.unexplained || null,
+    afterFlash: report.afterFlash || null,
     unexplainedWatch: !!report.unexplainedWatch,
     hotRestart: !!report.hotRestart,
     summary: null,

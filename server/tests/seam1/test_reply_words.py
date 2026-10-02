@@ -9,6 +9,7 @@ word outside CONTEXT.md's vocabulary sneaks in.
 from __future__ import annotations
 
 import json
+import tempfile
 from pathlib import Path
 
 from conftest import Loop, owner_csv
@@ -74,6 +75,46 @@ def test_the_timing_a_score_costs_comes_from_the_worker_not_from_python(loop: Lo
 def test_a_trim_stop_puts_the_trims_first_because_they_are_the_cause():
     say = C.first_sentence(drive("stop", kcPeak=0.5, timingCostDeg=0.1, trimWorst=-21.4), LIMITS)
     assert say.startswith("Stop driving hard: worst fuel trim −21.4 %, ")
+
+
+# -- the after-flash note ------------------------------------------------
+def test_a_fresh_flash_that_settles_is_reassurance_not_an_alarm():
+    """Ticket 02: the after-flash pattern is exempt, and the owner is told so."""
+    note = C.after_flash_note({"afterFlash": {"start": 0.58, "end": 0.49}})
+    assert note == (
+        "Knock Control started at 0.58 and settled to your Baseline (0.49): "
+        "that is what a fresh flash does."
+    )
+    # Every word here is reassurance; "exempt", "baseline drift" and "ok" are not.
+    assert "exempt" not in note.lower()
+    assert "baseline drift" not in note.lower()
+
+
+def test_no_after_flash_note_when_the_drive_did_not_settle_that_way():
+    assert C.after_flash_note({"afterFlash": None}) is None
+    assert C.after_flash_note({}) is None
+    assert C.after_flash_note({"afterFlash": {"start": None, "end": 0.49}}) is None
+
+
+def test_the_owner_s_own_after_flash_drive_says_it_in_the_reply():
+    """30 Aug 15:29 starts 0.58 and settles to 0.49 — the real Drive, not a stub."""
+    loop = Loop(Path(tempfile.mkdtemp())).start()
+    try:
+        replies = dict(loop.run(loop.reply_to_all_owner_drives()))
+    finally:
+        loop.close()
+    card = replies["aug30-1529"].card
+    assert card["afterFlash"] == (
+        "Knock Control started at 0.58 and settled to your Baseline (0.49): "
+        "that is what a fresh flash does."
+    )
+    # It is reassurance, not a Stop: the Drive is still a Watch, and the
+    # after-flash note is the reassurance, not the Verdict word.
+    assert card["verdict"] == "Watch"
+    assert card["verdict"] != "Stop"
+    # Only the Drive that settles that way carries it.
+    assert "aug30-1601" in replies
+    assert replies["aug30-1601"].card["afterFlash"] is None
 
 
 def test_trims_inside_five_percent_never_reach_the_first_sentence():

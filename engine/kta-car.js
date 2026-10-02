@@ -43,7 +43,12 @@
   var SCORE_SHAKEDOWN = 0.06;    // a Shakedown passes with the score near the Baseline
   var TRIM_JUMP = 5;             // an Unexplained change moves the worst trim more than 5 points
   var TARGET_JUMP = 2;           // ... or the highest boost target more than 2 psi
+  var TARGET_REF_MIN = 3;        // Drives with pulls needed before boost targets are compared
+                                 // (the same floor as every other median here: 1 drive is not a normal)
   var SCORE_JUMP = 0.08;         // ... or starts the score this far above the Baseline
+  var AFTER_FLASH_START = 0.60;  // a Drive starting at or below this and settling to the
+                                 // Baseline is what a fresh flash does (owner-voices.md §3),
+                                 // not an Unexplained change. A start above it still counts.
   var LEAN_WATCH = 0.5;          // AFR points leaner than the Map's full-load target
   var LEAN_STOP = 1.0;
   var VIETNAM_OFFSET = 7 * 3600 * 1000; // TunerView names are Vietnam wall time
@@ -51,7 +56,8 @@
     version: CAR_VERSION, defaultBaseline: DEFAULT_BASELINE, coolIat: COOL_IAT,
     minMoving: MIN_MOVING, shakedownCalm: SHAKEDOWN_CALM, trimOk: TRIM_OK,
     scoreShakedown: SCORE_SHAKEDOWN, trimJump: TRIM_JUMP, targetJump: TARGET_JUMP,
-    scoreJump: SCORE_JUMP
+    scoreJump: SCORE_JUMP, afterFlashStart: AFTER_FLASH_START,
+    targetRefMin: TARGET_REF_MIN
   };
 
   // ---------------------------------------------------------------------------
@@ -313,6 +319,23 @@
     var xs = vals.filter(isNum);
     return xs.length ? median(xs) : null;
   }
+  function afterFlashPattern(summary, baseline) {
+    // The normal after-flash pattern: the Fuel-quality score starts at or below
+    // AFTER_FLASH_START and settles back to the Baseline (owner-voices.md §3: a fresh
+    // flash starts the score near 0.59 and calm driving drops it to 0.49). Said in the
+    // owner's words, so the screen never shows a status name for it.
+    if (!isNum(summary.kcStart) || !isNum(summary.kcEnd)) return null;
+    if (summary.kcStart > AFTER_FLASH_START) return null;
+    if (summary.kcEnd > baseline.value + SCORE_SHAKEDOWN) return null;
+    return {
+      start: summary.kcStart,
+      end: summary.kcEnd,
+      baseline: baseline.value,
+      text: 'Knock Control started at ' + summary.kcStart.toFixed(2) +
+        ' and settled to your Baseline (' + baseline.value.toFixed(2) + '): that is what a fresh flash does.'
+    };
+  }
+
   function unexplainedFor(s, summary, baseline) {
     // Compared with the median of non-hidden drives since the last Flash
     // (at least 3), else the last 5 non-hidden drives.
@@ -330,11 +353,25 @@
     if (ref.length) {
       var trimMed = medianOf(ref.map(function (d) { return d.trimWorst; }));
       if (isNum(summary.trimWorst) && isNum(trimMed) && Math.abs(summary.trimWorst - trimMed) > TRIM_JUMP) reasons.push('trim');
-      var tgtMed = medianOf(ref.map(function (d) { return d.boostTarget; }));
-      if (isNum(summary.boostTarget) && isNum(tgtMed) && Math.abs(summary.boostTarget - tgtMed) > TARGET_JUMP) reasons.push('boost');
+      // Boost targets are only comparable between Drives that both had a hard pull:
+      // the highest target per Drive depends on whether the owner pulled at all
+      // (owner-voices.md §4: 8.7 psi with no pulls, 19.2 with them). So a Drive with
+      // pulls is compared only against Drives with pulls, and a Drive without a pull
+      // is never asked about its target. Like every median here, the reference needs
+      // three Drives: one pull Drive is not this car's normal (TARGET_REF_MIN).
+      if ((summary.hardPulls || 0) > 0) {
+        var pulled = ref.filter(function (d) { return (d.hardPulls || 0) > 0; });
+        if (pulled.length >= TARGET_REF_MIN) {
+          var tgtMed = medianOf(pulled.map(function (d) { return d.boostTarget; }));
+          if (isNum(summary.boostTarget) && isNum(tgtMed) && Math.abs(summary.boostTarget - tgtMed) > TARGET_JUMP) reasons.push('boost');
+        }
+      }
     }
-    // The starting score needs no history: the Baseline alone judges it.
-    if (isNum(summary.kcStart) && summary.kcStart >= baseline.value + SCORE_JUMP) reasons.push('score');
+    // The starting score needs no history: the Baseline alone judges it. The normal
+    // after-flash start is not an Unexplained change; a start above 0.60 still is.
+    if (isNum(summary.kcStart) && summary.kcStart >= baseline.value + SCORE_JUMP && !afterFlashPattern(summary, baseline)) {
+      reasons.push('score');
+    }
     return reasons.length ? { reasons: reasons } : null;
   }
 
@@ -355,7 +392,7 @@
           isShakedown: false,
           shakedown: { role: 'none', status: s.shakedown.status, calmSec: 0, needed: SHAKEDOWN_CALM, passed: false },
           flashCause: null, hardDrivingWatch: false,
-          unexplained: null, unexplainedWatch: false,
+          unexplained: null, unexplainedWatch: false, afterFlash: null,
           hotRestart: false, firstDrive: false,
           drive: rep
         }
@@ -430,6 +467,9 @@
       unexplained.state = 'answered-' + s.answers[summary.id];
     }
     var unexplainedWatch = s.answers[summary.id] === 'neither';
+    // Said in the owner's words when the starting score was the normal after-flash
+    // pattern, so the screen never shows a status name for it.
+    var afterFlash = unexplained ? null : afterFlashPattern(summary, baseline);
 
     var rows = KTA.carTableRows(s);
     return {
@@ -446,6 +486,7 @@
         },
         flashCause: flashCause, hardDrivingWatch: hardDrivingWatch,
         unexplained: unexplained, unexplainedWatch: unexplainedWatch,
+        afterFlash: afterFlash,
         hotRestart: summary.hotRestart,
         firstDrive: rows.length > 0 && rows[0].id === summary.id,
         drive: rep
@@ -485,6 +526,7 @@
       },
       flashCause: flashCause, hardDrivingWatch: false,
       unexplained: unexplained, unexplainedWatch: s.answers[driveId] === 'neither',
+      afterFlash: unexplained ? null : afterFlashPattern(summary, baseline),
       hotRestart: summary.hotRestart,
       firstDrive: rows.length > 0 && rows[0].id === driveId,
       drive: null
@@ -531,7 +573,7 @@
           trimWorst: d.trimWorst, iatMoving: d.iatMoving, cvtPeak: d.cvtPeak,
           lugShare: d.lugShare,
           accel5070: d.accel5070 ? { seconds: d.accel5070.seconds, iat: d.accel5070.iat } : null,
-          boostTarget: d.boostTarget,
+          boostTarget: d.boostTarget, hardPulls: d.hardPulls,
           overshoot: d.overshoot != null ? d.overshoot : null,
           wgAtPeak: d.wgAtPeak != null ? d.wgAtPeak : null,
           map: flash ? flash.map : null,

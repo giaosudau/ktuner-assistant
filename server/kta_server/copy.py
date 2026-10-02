@@ -151,6 +151,26 @@ def first_sentence(drive: Mapping[str, Any], limits: Mapping[str, Any]) -> str:
     return f"{lead}: " + ", ".join(clauses) + "."
 
 
+def after_flash_note(drive: Mapping[str, Any]) -> str | None:
+    """The after-flash pattern, in the owner's words.
+
+    A Drive whose Fuel-quality score starts at or below 0.60 and settles to the
+    Baseline is what a fresh flash does (engine `CAR_RULES.afterFlashStart`).
+    That is reassurance, not an alarm, so it is said here instead of being
+    silently exempted (ticket 02, PM note 2).
+    """
+    af = drive.get("afterFlash")
+    if not af:
+        return None
+    start, end = af.get("start"), af.get("end")
+    if start is None or end is None:
+        return None
+    return (
+        f"Knock Control started at {n(start, 2)} and settled to your Baseline "
+        f"({n(end, 2)}): that is what a fresh flash does."
+    )
+
+
 def four_numbers(drive: Mapping[str, Any]) -> list[dict[str, Any]]:
     """The four numbers as a compact row: intake air, Knock Control, trims, pulls."""
     summary = drive.get("summary") or {}
@@ -279,6 +299,7 @@ def build_reply(
     """
     return {
         "say": first_sentence(drive, limits),
+        "afterFlash": after_flash_note(drive),
         "window": window_line(drives_read, len(drives_read), bool(drive.get("tooShort"))),
         "numbers": [] if drive.get("tooShort") else four_numbers(drive),
         "verdict": verdict_word(drive),
@@ -295,6 +316,7 @@ __all__ = [
     "channel_name",
     "drive_stamp",
     "first_sentence",
+    "after_flash_note",
     "four_numbers",
     "n",
     "next_step",

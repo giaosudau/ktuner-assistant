@@ -37,6 +37,9 @@
     richBy: 0.5,                     // AFR points richer than the map at full load that deserve a look
     headroom: { small: 5, some: 15 },// % wastegate open at the boost peak
     kcSteady: 0.55,                  // Knock Control to call the fuel and heat margin healthy
+    kcHighRpm: 5200,                 // rpm: above this the non-Si ECU raises the score on purpose
+                                     // (owner-voices.md §3), so a rise up there is excluded
+                                     // from the fuel and heat verdicts and only shown
     matchIat: 8,                     // deg C: two drives are comparable within this, or the second is hotter
     minMoving: 600                   // s of moving time for a before/after on habits
   };
@@ -210,6 +213,14 @@
         e.cause = e.kind === 'rise'
           ? (e.steps && e.lugSteps / e.steps >= DL.kcLugSteps ? 'lugging' : (e.boostSeconds >= 3 ? 'boost' : (e.iat >= 55 ? 'heat' : 'unclear')))
           : (e.lugShare < 0.1 && e.rpm >= 1800 ? 'revs' : 'other');
+        // The episode's own revs decide whether it counts toward a fuel or heat verdict:
+        // the ECU raises the score on purpose above about 5,200 rpm
+        // (owner-voices.md §3, DL.kcHighRpm), so an episode that reached that band
+        // is not evidence about fuel or heat. rpmP90 is the episode's top-end revs,
+        // with rpm (its median) as the fallback. The episode stays in the list either
+        // way, marked counts: false, so the chart and the numbers still show it.
+        e.episodeRpm = isNum(e.rpmP90) ? e.rpmP90 : e.rpm;
+        e.counts = !(isNum(e.episodeRpm) && e.episodeRpm > DL.kcHighRpm);
         episodes.push(e);
       }
       var an2 = an.numbers;
@@ -223,6 +234,17 @@
         rises: episodes.filter(function (x) { return x.kind === 'rise'; }).length,
         lugRises: episodes.filter(function (x) { return x.kind === 'rise' && x.cause === 'lugging'; }).length
       };
+      // Which rises count toward a fuel or heat verdict. The non-Si ECU raises the
+      // score on purpose above about 5,200 rpm (owner-voices.md §3), so an episode up
+      // there says nothing about fuel or heat: it is excluded from the verdicts and
+      // kept in the episodes above with counts: false, so the chart still shows it.
+      var risesAll = episodes.filter(function (x) { return x.kind === 'rise'; });
+      var counted = risesAll.filter(function (x) { return x.counts; });
+      I.kc.countedRises = counted.length;
+      I.kc.countedLugRises = counted.filter(function (x) { return x.cause === 'lugging'; }).length;
+      I.kc.excludedRises = risesAll.length - counted.length;
+      I.kc.judgedPeak = r2(counted.length ? Math.max.apply(null, counted.map(function (x) { return x.to; })) : I.kc.start);
+      I.kc.judgedRise = isNum(I.kc.start) ? r2(Math.max(0, I.kc.judgedPeak - I.kc.start)) : null;
     }
 
     // ---- boost events: the pulls, with what the turbo, fuel and heat did in each
@@ -421,7 +443,9 @@
       id: 'revs', tier: 'drive', impact: 3, effort: 1, risk: 0, flash: false,
       when: function (I) {
         if (!I.lug) return null;
-        var rise = I.kc ? I.kc.episodes.filter(function (e) { return e.kind === 'rise' && e.cause === 'lugging'; }) : [];
+        // Lugging rises at or below kcHighRpm only: up there the ECU raises the
+        // score on purpose, so it is not the owner's habit (owner-voices.md §3).
+        var rise = I.kc ? I.kc.episodes.filter(function (e) { return e.kind === 'rise' && e.cause === 'lugging' && e.counts; }) : [];
         var hotLug = I.heat.hot && I.lug.share >= DL.lugShare * 100 && I.lug.krP90 >= 3;
         if (!rise.length && !hotLug) return null;
         var top = rise.sort(function (a, b) { return (b.to - b.from) - (a.to - a.from); })[0] || null;
@@ -429,6 +453,7 @@
           strength: rise.length ? 1 : 0.5,
           ev: { lugSeconds: I.lug.seconds, lugShare: I.lug.share, lugRpm: I.lug.rpm, ign: I.lug.ign, ignRef: I.lug.ignRef, ignDelta: I.lug.ignDelta, kr: I.lug.kr, krRef: I.lug.krRef, iat: I.lug.iat,
             kcFrom: top ? top.from : null, kcTo: top ? top.to : null, riseAt: top ? top.t0 : null, riseLug: top ? top.lugShare : null, riseRpm: top ? top.rpm : null, rises: rise.length,
+            skippedRises: I.kc ? I.kc.excludedRises : 0,
             fallRpm: I.kc ? (I.kc.episodes.filter(function (e) { return e.kind === 'fall' && e.cause === 'revs'; })[0] || {}).rpm || null : null }
         };
       },
@@ -455,10 +480,12 @@
     {
       id: 'fuelCheck', tier: 'drive', impact: 3, effort: 1, risk: 0, flash: false,
       when: function (I) {
-        if (!I.kc || !(I.kc.end > DL.fuelKc)) return null;
-        return { strength: 1, ev: { kcEnd: I.kc.end, kcStart: I.kc.start, lugRises: I.kc.lugRises } };
+        // The fuel verdict reads the peak of the rises that count, not the ECU's
+        // own raises above DL.kcHighRpm (owner-voices.md §3).
+        if (!I.kc || !(I.kc.judgedPeak > DL.kcFuel)) return null;
+        return { strength: 1, ev: { kcEnd: I.kc.end, kcStart: I.kc.start, judgedPeak: I.kc.judgedPeak, lugRises: I.kc.countedLugRises } };
       },
-      proof: { metric: 'kcEnd', dir: 'down' }
+      proof: { metric: 'kcJudgedPeak', dir: 'down' }
     },
     {
       id: 'data', tier: 'data', impact: 2, effort: 1, risk: 0, flash: false,
@@ -508,8 +535,8 @@
     {
       id: 'lowBoost', tier: 'tune', impact: 1, effort: 3, risk: 1, flash: true,
       when: function (I) {
-        if (!I.kc || !I.kc.lugRises) return null;
-        return { strength: 0.5, ev: { lugRises: I.kc.lugRises, kcTo: I.kc.peak } };
+        if (!I.kc || !I.kc.countedLugRises) return null;
+        return { strength: 0.5, ev: { lugRises: I.kc.countedLugRises, kcTo: I.kc.judgedPeak } };
       },
       needs: function (I, hist) { return tried(hist, 'revs') ? null : ['revs']; },
       proof: { metric: 'kcRise', dir: 'down' }
@@ -536,7 +563,7 @@
   function gainBlockers(I, an, which) {
     var out = [];
     if (hasStop(an) || an.verdict === 'watch') out.push('gates');
-    if (I.kc && (I.kc.end > DL.kcSteady || I.kc.rise > DL.kcStep)) out.push('kc');
+    if (I.kc && (I.kc.end > DL.kcSteady || I.kc.judgedRise > DL.kcStep)) out.push('kc');
     if (I.boost && I.boost.pullIat >= DL.pullIatGood) out.push('pullIat');
     if (isNum(I.heat.cvtMax) && I.heat.cvtMax > KTA.LIMITS.cvt.good) out.push('cvt');
     if (!I.quality.hasAfrCmd) out.push('data');
@@ -629,6 +656,7 @@
       case 'lugShare': return I.lug ? I.lug.share : NaN;
       case 'firstPullIAT': return I.hotRestart && I.hotRestart.firstPull ? I.hotRestart.firstPull.iat0 : NaN;
       case 'kcRise': return I.kc ? I.kc.rise : NaN;
+      case 'kcJudgedPeak': return I.kc ? I.kc.judgedPeak : NaN;
       case 'kcEnd': return I.kc ? I.kc.end : NaN;
       case 'pullIat': return I.boost ? I.boost.pullIat : NaN;
       case 'cvtMax': return I.heat.cvtMax;
@@ -686,14 +714,14 @@
     switch (id) {
       case 'revs': {
         var lugOk = isNum(av) && (av <= 2 || av <= bv * 0.6);
-        var kcOk = A.kc && A.kc.rise <= 0.05 && !(A.kc.lugRises > 0);
-        out.metric.kcRiseBefore = B.kc ? B.kc.rise : null; out.metric.kcRiseAfter = A.kc.rise;
+        var kcOk = A.kc && A.kc.judgedRise <= 0.05 && !(A.kc.countedLugRises > 0);
+        out.metric.kcRiseBefore = B.kc ? B.kc.judgedRise : null; out.metric.kcRiseAfter = A.kc.judgedRise;
         out.verdict = lugOk && kcOk ? 'keep' : (lugOk || (kcOk && av < bv) ? 'partial' : 'retry');
         break;
       }
       case 'cooldown': out.verdict = av <= DL.pullIatGood || av <= bv - 5 ? 'keep' : (av < bv ? 'partial' : 'retry'); break;
       case 'cvtHeat': out.verdict = av <= KTA.LIMITS.cvt.good ? 'keep' : (av < bv ? 'partial' : 'retry'); break;
-      case 'fuelCheck': out.verdict = av <= DL.fuelKc ? 'keep' : (av < bv - 0.03 ? 'partial' : 'retry'); break;
+      case 'fuelCheck': out.verdict = av <= DL.kcFuel ? 'keep' : (av < bv - 0.03 ? 'partial' : 'retry'); break;
       case 'data': {
         var miss = A.quality.missing;
         out.metric = { name: 'channels', before: B.quality.missing.length, after: miss.length, missing: miss.slice() };
@@ -716,7 +744,7 @@
         out.verdict = isNum(cmd) && Math.abs(av - cmd) <= 0.3 ? 'keep' : 'undo';
         break;
       }
-      case 'lowBoost': out.verdict = A.kc.rise <= 0.05 && !A.kc.lugRises ? 'keep' : 'undo'; break;
+      case 'lowBoost': out.verdict = A.kc.judgedRise <= 0.05 && !A.kc.countedLugRises ? 'keep' : 'undo'; break;
       case 'wotLean': case 'moreBoost': {
         // same speed window, foot down in both, similar intake air; and nothing new to watch
         var ha = A.accel && A.accel.headline, hb = B.accel && B.accel.headline;
@@ -748,7 +776,12 @@
         heat: pick(I.heat, ['iatMoving', 'iatStill', 'iatLoad', 'cvtMax', 'cvtMed', 'hot', 'cool']),
         hotRestart: I.hotRestart ? { isRestart: I.hotRestart.isRestart, advice: I.hotRestart.advice, gapMin: I.hotRestart.gapMin, startIAT: I.hotRestart.startIAT, firstPull: I.hotRestart.firstPull ? { t0: I.hotRestart.firstPull.t0, iat0: I.hotRestart.firstPull.iat0 } : null } : null,
         lug: pick(I.lug, ['seconds', 'share', 'ign', 'ignRef']),
-        kc: I.kc ? { start: I.kc.start, end: I.kc.end, peak: I.kc.peak, rise: I.kc.rise, lugRises: I.kc.lugRises } : null,
+        kc: I.kc ? {
+          start: I.kc.start, end: I.kc.end, peak: I.kc.peak, rise: I.kc.rise,
+          judgedPeak: I.kc.judgedPeak, judgedRise: I.kc.judgedRise,
+          lugRises: I.kc.lugRises, countedLugRises: I.kc.countedLugRises,
+          countedRises: I.kc.countedRises, excludedRises: I.kc.excludedRises
+        } : null,
         boost: pick(I.boost, ['hard', 'pullIat', 'peakMap']),
         mix: pick(I.mix, ['fullLoadAfr', 'cmd']),
         trims: pick(I.trims, ['worst']),
@@ -772,7 +805,7 @@
       if (typeof v === 'object') Object.keys(v).forEach(function (k) { if (k.charAt(0) !== '_') walk(v[k], path ? path + '.' + k : k); });
     }
     var I = report.ins;
-    walk({ lug: I.lug, kc: I.kc ? { start: I.kc.start, end: I.kc.end, peak: I.kc.peak, rise: I.kc.rise, episodes: I.kc.episodes } : null, heat: I.heat, mix: I.mix, boost: I.boost ? { count: I.boost.count, hard: I.boost.hard, peakMap: I.boost.peakMap, peakBoost: I.boost.peakBoost, peakTarget: I.boost.peakTarget, wgAtPeak: I.boost.wgAtPeak, headroom: I.boost.headroom, pullIat: I.boost.pullIat, pullIatMax: I.boost.pullIatMax, overshoot: I.boost.overshoot } : null, trims: I.trims, accel: I.accel ? { best: I.accel.best } : null, meta: I.meta }, '');
+    walk({ lug: I.lug, kc: I.kc ? { start: I.kc.start, end: I.kc.end, peak: I.kc.peak, rise: I.kc.rise, judgedPeak: I.kc.judgedPeak, judgedRise: I.kc.judgedRise, countedRises: I.kc.countedRises, excludedRises: I.kc.excludedRises, episodes: I.kc.episodes } : null, heat: I.heat, mix: I.mix, boost: I.boost ? { count: I.boost.count, hard: I.boost.hard, peakMap: I.boost.peakMap, peakBoost: I.boost.peakBoost, peakTarget: I.boost.peakTarget, wgAtPeak: I.boost.wgAtPeak, headroom: I.boost.headroom, pullIat: I.boost.pullIat, pullIatMax: I.boost.pullIatMax, overshoot: I.boost.overshoot } : null, trims: I.trims, accel: I.accel ? { best: I.accel.best } : null, meta: I.meta }, '');
     report.an.gates.forEach(function (g) { g.checks.forEach(function (c) { out['check.' + c.id + '.status'] = c.status; if (isNum(c.value)) out['check.' + c.id + '.value'] = c.value; }); });
     return out;
   };
@@ -808,8 +841,10 @@
     f.lug = pts.filter(function (p) { return p.lug >= 0.2; }).map(function (p) { return { x: round(sx(p.t), 1), w: round(bw, 1), o: round(Math.min(0.55, 0.15 + p.lug * 0.5), 2) }; });
     f.limitY = round(sy(KTA.LIMITS.kControl.good), 1);
     f.ronY = round(sy(0.5), 1);
+    // Every episode is drawn, including the ones the ECU raises on purpose above
+    // kcHighRpm (owner-voices.md §3): excluded from the verdicts, never hidden.
     f.marks = I.kc.episodes.map(function (e) {
-      return { kind: e.kind, cause: e.cause, x: round(sx(e.t1 - 5), 1), y: round(sy(e.to), 1), from: e.from, to: e.to, t0: e.t0, t1: e.t1, lug: e.lugShare, rpm: e.rpm, iat: e.iat };
+      return { kind: e.kind, cause: e.cause, counts: e.counts, x: round(sx(e.t1 - 5), 1), y: round(sy(e.to), 1), from: e.from, to: e.to, t0: e.t0, t1: e.t1, lug: e.lugShare, rpm: e.rpm, iat: e.iat };
     });
     f.hasData = true;
     return f;

@@ -939,6 +939,10 @@
       h += '<div class="banner warn" role="status">' + esc(C.unexplainedWatch) + '</div>';
     } else if (c.unexplained && c.unexplained.state === 'answered-fuel') {
       h += '<div class="banner warn" role="status">' + esc(C.fuelAdvice) + '</div>';
+    } else if (c.afterFlash) {
+      // Not a status name: the sentence the owner would say out loud
+      // (owner-voices.md §3, a fresh flash starts the score high and it settles).
+      h += '<div class="banner good" role="status">' + esc(C.afterFlash(c.afterFlash)) + '</div>';
     }
     return h;
   }

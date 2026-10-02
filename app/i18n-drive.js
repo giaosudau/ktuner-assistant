@@ -869,6 +869,12 @@
     answerNeither: 'Neither',
     fuelAdvice: 'New fuel needs 10–15 calm minutes before you judge it.',
     unexplainedWatch: 'Unexplained change.',
+    // Said in the owner's words, never as a status name: a fresh flash starts the
+    // Fuel-quality score high and calm driving settles it (owner-voices.md §3).
+    afterFlash: function (a) {
+      return 'Knock Control started at ' + a.start.toFixed(2) + ' and settled to your Baseline (' +
+        a.baseline.toFixed(2) + '): that is what a fresh flash does.';
+    },
     flashCauseTitle: 'Stop right after a Flash.',
     flashCauseWhy: 'Fuel trims are far off from the first second, which usually means the Map’s AFM preset, not the engine.',
     driveTitle: 'This drive',
@@ -973,6 +979,12 @@
     answerNeither: 'Không phải hai cái trên',
     fuelAdvice: 'Xăng mới cần 10–15 phút chạy êm rồi hãy đánh giá.',
     unexplainedWatch: 'Thay đổi chưa rõ nguyên nhân.',
+    // Nói theo lời chủ xe, không phải tên trạng thái: nạp map mới thì điểm khởi
+    // đầu cao và chạy êm sẽ hạ nó về Baseline (owner-voices.md §3).
+    afterFlash: function (a) {
+      return 'Knock Control khởi đầu ở ' + a.start.toFixed(2) + ' và hạ về Baseline của bạn (' +
+        a.baseline.toFixed(2) + '): nạp map mới là vậy.';
+    },
     flashCauseTitle: 'Stop ngay sau khi nạp Map.',
     flashCauseWhy: 'Trim xăng lệch nhiều ngay từ giây đầu, thường là do preset AFM của Map chứ không phải động cơ.',
     driveTitle: 'Chuyến này',
