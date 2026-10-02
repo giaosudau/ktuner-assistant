@@ -629,3 +629,34 @@ test('the flash plan is deterministic for the same state and clock', () => {
   const { state: s } = ownerState();
   assert.deepEqual(K.carFlashPlan(s, MAP, { now: NOW }), K.carFlashPlan(s, MAP, { now: NOW }));
 });
+
+test('next-flash card contract: 19:59, one Flash at 20:00, 20:38 Stop → Undo naming that file', () => {
+  let s = K.carEmpty();
+  s = ingest(s, 'aug23-1959').state;
+  s = K.carRecordFlash(s, { time: Date.UTC(2026, 7, 23, 13, 0, 0), map: 'Starter 21', changed: 'other', note: '' }, { now: NOW }).state;
+  s = ingest(s, 'aug23-2038').state;
+  const p = K.carFlashPlan(s, MAP, { now: NOW });
+  assert.equal(p.kind, 'undo');
+  assert.match(p.headline, /previous map file/i);
+  assert.match(p.undoName, /Starter 21/);
+  assert.equal(p.route, 'preset');
+  assert.equal(p.tables.length, 0);
+  assert.equal(p.cells.length, 0);
+  // "Record this Flash" from the card names the file and starts the Shakedown drive.
+  assert.equal(p.prefill.map, 'Starter 21');
+  const r = K.carRecordFlash(K.carEmpty(), p.prefill, { now: NOW });
+  assert.equal(r.state.shakedown.status, 'pending');
+});
+
+test('next-flash card contract: no-change carries six levers and no file, table or prefill', () => {
+  const { state: s } = ownerState();
+  const p = K.carFlashPlan(s, MAP, { now: NOW });
+  assert.equal(p.kind, 'no-change');
+  assert.deepEqual(p.levers.map((l) => l.id), ['afm', 'mixture', 'boostPlus', 'boostLow', 'downpipe', 'hot']);
+  assert.ok(p.levers.every((l) => l.reason && l.unlocks), 'every lever carries reason + unlock');
+  assert.equal(p.saveAs, null);
+  assert.equal(p.prefill, null);
+  assert.equal(p.undoName, null);
+  assert.equal(p.tables.length, 0);
+  assert.equal(p.cells.length, 0);
+});
