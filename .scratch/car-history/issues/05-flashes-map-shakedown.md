@@ -13,10 +13,13 @@
 **Blocked by:** 03 — Car module and Car history
 
 **Status:** ready-for-agent
+**Status:** done (engine: Flash CRUD + Map + Shakedown machine + proof verified; 2 gaps fixed; suite 113/113)
 
-- [ ] Aug 23 19:59 then a Flash at 20:00 ("AFM preset") then 20:38: 20:38 is a Shakedown drive that does not pass; its Stop names the Flash and says "re-flash the previous Map or the right preset".
-- [ ] A Shakedown with 6 calm minutes carries to the next drive and passes there after 4 more.
-- [ ] A drive with no Flash before it shows "Map: not recorded"; after adding a Flash dated before it, the card shows that Map.
-- [ ] Proving "keep the revs up" across a recorded Flash gives "Can't tell: Map changed in between".
-- [ ] Flash records live in the car state from ticket 03 and appear as lines on the charts if ticket 04 is in.
-- [ ] New wording in English and Tiếng Việt.
+- [x] Aug 23 19:59 then a Flash at 20:00 ("AFM preset") then 20:38: 20:38 is a Shakedown drive that does not pass; its Stop names the Flash and says "re-flash the previous Map or the right preset". (Fixed: the Stop now also names the *previous* map file, and `carReport` names it when the drive is reopened — the Undo answer needs that name.)
+- [x] A Shakedown with 6 calm minutes carries to the next drive and passes there after 4 more. (Fixed: banked minutes survived only in memory — `normalize` dropped the per-drive shares, so a reload double-counted. Now reload-safe and tested.)
+- [x] A drive with no Flash before it shows "Map: not recorded"; after adding a Flash dated before it, the card shows that Map. (Plus: the highest boost target measured rides on the summary/table row even when unmapped.)
+- [x] Proving "keep the revs up" across a recorded Flash gives "Can't tell: Map changed in between".
+- [x] Flash records live in the car state from ticket 03 and appear as lines on the charts if ticket 04 is in. (Engine half done — `carChartSeries` exposes Flash times + Maps; the drawn lines are ticket 04 / UI track.)
+- [ ] New wording in English and Tiếng Việt. (UI track — other agent.)
+
+PM note: the owner gains the missing link between a bad drive and what they flashed — 20:38 now reads as "the 20:00 Flash did this, drive calmly, undo to the known-good file". Verified useful on the real logs (calm banking, hard-driving Watch vs Stop separation). Residual risk: "delete asks once" and the banner/progress rendering are UI-track; engine enforces the state machine underneath.

@@ -55,3 +55,16 @@ console.log('\ndrives: ' + rows.filter((r) => r.verdict !== 'too-short').length 
   ' · baseline ' + base.value.toFixed(2) + ' from ' + base.n + ' cool drives');
 console.log('stops: ' + rows.filter((r) => r.verdict === 'stop').map((r) => r.drive).join(', '));
 console.log('asks: ' + rows.filter((r) => r.unexplained).map((r) => r.drive + ':' + r.unexplained).join(', '));
+
+// The Next Flash card the engine proposes for this history (spec P1–P9).
+try {
+  const map = require('../data/ktuner-maps-digitized.json');
+  const plan = K.carFlashPlan(state, map, { now: Date.now() });
+  console.log('\nflash plan: ' + plan.kind + ' — ' + plan.headline);
+  (plan.levers || []).forEach((l) => console.log('  [' + l.status + '] ' + l.title + ' — ' + l.reason));
+  if (plan.kind === 'one-family') {
+    console.log('  tables: ' + plan.tables.map((t) => t.id).join(', '));
+    console.log('  cells: ' + plan.cells.length + ' · save as: ' + plan.saveAs + ' · undo: ' + plan.undoName);
+  }
+  if (plan.kind === 'undo') console.log('  undo: ' + plan.undoName);
+} catch (e) { console.log('\nflash plan unavailable: ' + e.message); }
