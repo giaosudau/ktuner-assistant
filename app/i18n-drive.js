@@ -255,6 +255,30 @@
     },
     unavailableLine: function (d, F, T) { var nm = ((T.drive.qualityChannels || {})[d.flat] || d.flat); return 'Can\'t tell: ' + nm + ' was flat for the whole drive.'; },
     unavailableFix: function (d, F, T) { var nm = ((T.drive.qualityChannels || {})[d.flat] || d.flat); return T.drive.channelFix(nm); },
+    basisNotes: {
+      'trims-data': 'cruise trims on your 16 drives sit within ±4%',
+      'mixture-rule': 'Watch 0.5 / Stop 1.0 AFR leaner than your map\'s 11.0; healthy drives run 0.2+ richer',
+      'fuelpress-rule': 'actual pressure must hold 90% of target under load',
+      'overshoot-rule': 'over +2.5 psi the downpipe spool needs a retune',
+      'undershoot-rule': '1.5 psi band around target after spool',
+      'mafheadroom': 'the AFM table ends at 10,000 Hz',
+      'knock-rule': 'over 3°, or several cylinders together, is real knock',
+      'score-rule': 'timing cost 10.2° × (score − 0.49) from KTuner\'s formula on your logs; the cut points are judgement',
+      'score-stop': 'Stop 0.80 (3.2° of timing): never reached on your car',
+      'iat-cap': 'heat alone never stops: the score catches heat turning into knock',
+      'ect-stop': 'Stop 105 °C: no Honda limit published in what was read',
+      'cvt-stop': 'Stop 100 °C: no Honda limit published in what was read; this car peaks at 95 °C',
+      'slip-watch': '0 events in your 16 drives: threshold unproven, Watch only',
+      'lowboost-rule': 'low-rpm torque is the CVT belt\'s hardest job',
+      'app-limit': 'an app limit'
+    },
+    basisLine: function (b) {
+      var head = { data: 'from your data', primary: 'from Honda or KTuner', physics: 'physics', judgement: 'our judgement', provisional: 'provisional' }[b.t] || 'judgement';
+      var note = (this.basisNotes || {})[b.k] || b.k || '';
+      var s = 'Basis: ' + head + ' — ' + note + '.';
+      if (b.t === 'provisional') s += ' Provisional: not yet seen on your car.';
+      return s;
+    },
     feelTitle: 'The feel, in numbers',
     feel: function (h, F) { return h ? 'Best ' + h.from + '→' + h.to + ' km/h: ' + F.num(h.seconds, 2) + ' s' + (h.full ? ' with your foot down' : ' (pedal ' + h.pedalMin + ' % or more)') + ', boost up to ' + n1(F, h.mapMax) + ' psi, intake ' + n0(F, h.iat) + ' °C.' : 'No clean acceleration run in this drive (pedal held at 60 % or more through a speed window).'; },
     feelNote: 'Compare runs only at a similar intake temperature (±8 °C): heat alone changes these by a few tenths.',
@@ -264,7 +288,7 @@
     graphs: {
       kc: {
         title: 'Knock Control through the drive',
-        legend: ['Knock Control', 'Lugging', 'Intake air (°C)', 'Safer-timing line 0.65'],
+        legend: ['Knock Control', 'Lugging', 'Intake air (°C)', 'Watch line 0.56'],
         explain: function (I, F) {
           var k = I.kc;
           var s = 'The blue line is Knock Control: about 0.5 means RON95; higher means the ECU heard knock and moved toward its safer timing everywhere. Orange bars mark time spent lugging (900-1,700 rpm with load). The grey line is intake air.';
@@ -281,7 +305,7 @@
         legend: ['Ignition advance (darker = more)', 'Scheduled knock retard', 'Lugging zone'],
         explain: function (I, F) {
           var s = 'Each cell is the median ignition advance at that rpm and manifold pressure in this drive; darker is more advance. Orange dots are knock retard (on this ECU, retard scheduled from Knock Control). The outlined box is the lugging zone.';
-          if (I.lug && isNum(I.lug.ign) && isNum(I.lug.ignRef)) s += ' In the lugging zone the median advance is ' + n1(F, I.lug.ign) + '° with ' + n1(F, I.lug.kr) + '° retard; at the same load at 2,000-3,000 rpm it is ' + n1(F, I.lug.ignRef) + '° with ' + n1(F, I.lug.krRef) + '°. The engine works hardest there for the least torque.';
+          if (I.lug && isNum(I.lug.ignDeltaShown)) s += ' In the lugging zone the median advance is ' + n1(F, I.lug.ign) + '° with ' + n1(F, I.lug.kr) + '° retard; at the same load at 2,000-3,000 rpm it is ' + n1(F, I.lug.ignRef) + '° with ' + n1(F, I.lug.krRef) + '°. The engine works hardest there for the least torque.';
           return s;
         }
       },
@@ -627,6 +651,30 @@
     },
     unavailableLine: function (d, F, T) { var nm = ((T.drive.qualityChannels || {})[d.flat] || d.flat); return 'Không kết luận được: ' + nm + ' đứng yên suốt chuyến.'; },
     unavailableFix: function (d, F, T) { var nm = ((T.drive.qualityChannels || {})[d.flat] || d.flat); return T.drive.channelFix(nm); },
+    basisNotes: {
+      'trims-data': 'trim chạy đều trên 16 chuyến của bạn nằm trong ±4%',
+      'mixture-rule': 'Theo dõi khi loãng hơn 0.5 / Dừng khi loãng hơn 1.0 AFR so với 11.0 của map; xe khỏe chạy giàu hơn từ 0.2',
+      'fuelpress-rule': 'áp suất thực phải giữ 90% mục tiêu khi có tải',
+      'overshoot-rule': 'vọt quá +2.5 psi thì downpipe cần chỉnh lại',
+      'undershoot-rule': 'biên 1.5 psi quanh mục tiêu sau khi lên boost',
+      'mafheadroom': 'bảng AFM kết thúc ở 10,000 Hz',
+      'knock-rule': 'quá 3°, hoặc nhiều máy cùng lúc, mới là kích nổ thật',
+      'score-rule': 'giá trị góc lửa mất đi 10.2° × (điểm − 0.49) theo công thức KTuner trên log của bạn; các ngưỡng là nhận định',
+      'score-stop': 'Dừng ở 0.80 (mất 3.2° góc lửa): chưa từng thấy trên xe bạn',
+      'iat-cap': 'riêng nhiệt không bao giờ Dừng: điểm chất lượng xăng bắt được nhiệt biến thành kích nổ',
+      'ect-stop': 'Dừng ở 105 °C: chưa đọc được giới hạn Honda công bố',
+      'cvt-stop': 'Dừng ở 100 °C: chưa đọc được giới hạn Honda công bố; xe bạn cao nhất 95 °C',
+      'slip-watch': '0 lần trượt trên 16 chuyến của bạn: ngưỡng chưa kiểm chứng, chỉ Theo dõi',
+      'lowboost-rule': 'mô-men ở vòng tua thấp là việc nặng nhất của dây đai CVT',
+      'app-limit': 'một giới hạn của app'
+    },
+    basisLine: function (b) {
+      var head = { data: 'từ số liệu của bạn', primary: 'từ Honda hoặc KTuner', physics: 'vật lý', judgement: 'nhận định của chúng tôi', provisional: 'tạm thời' }[b.t] || 'nhận định';
+      var note = (this.basisNotes || {})[b.k] || b.k || '';
+      var s = 'Căn cứ: ' + head + ' — ' + note + '.';
+      if (b.t === 'provisional') s += ' Tạm thời: chưa từng thấy trên xe của bạn.';
+      return s;
+    },
     feelTitle: 'Cảm giác, bằng con số',
     feel: function (h, F) { return h ? 'Nhanh nhất ' + h.from + '→' + h.to + ' km/h: ' + F.num(h.seconds, 2) + ' giây' + (h.full ? ' khi đạp lút ga' : ' (chân ga từ ' + h.pedalMin + ' % trở lên)') + ', boost tới ' + n1(F, h.mapMax) + ' psi, khí nạp ' + n0(F, h.iat) + ' °C.' : 'Chuyến này không có lần tăng tốc sạch nào (giữ chân ga từ 60 % trở lên qua một khoảng tốc độ).'; },
     feelNote: 'Chỉ so các lần chạy ở nhiệt độ khí nạp tương tự (±8 °C): riêng nhiệt đã thay đổi các con số này vài phần mười giây.',
@@ -636,7 +684,7 @@
     graphs: {
       kc: {
         title: 'Knock Control trong suốt chuyến đi',
-        legend: ['Knock Control', 'Ì máy', 'Khí nạp (°C)', 'Ngưỡng góc lửa an toàn 0.65'],
+        legend: ['Knock Control', 'Ì máy', 'Khí nạp (°C)', 'Ngưỡng theo dõi 0.56'],
         explain: function (I, F) {
           var k = I.kc;
           var s = 'Đường xanh là Knock Control: khoảng 0.5 nghĩa là RON95; cao hơn nghĩa là ECU nghe thấy kích nổ và chuyển dần sang góc lửa an toàn ở mọi nơi. Các vạch cam là lúc ì máy (900-1,700 rpm có tải). Đường xám là khí nạp.';
@@ -653,7 +701,7 @@
         legend: ['Góc đánh lửa sớm (đậm = nhiều hơn)', 'Lùi lửa kích nổ theo lịch', 'Vùng ì máy'],
         explain: function (I, F) {
           var s = 'Mỗi ô là góc đánh lửa sớm trung vị ở vòng tua và áp suất cổ hút đó trong chuyến này; càng đậm càng sớm. Chấm cam là lùi lửa kích nổ (trên ECU này là lùi lửa lên lịch từ Knock Control). Khung viền là vùng ì máy.';
-          if (I.lug && isNum(I.lug.ign) && isNum(I.lug.ignRef)) s += ' Trong vùng ì máy góc lửa trung vị là ' + n1(F, I.lug.ign) + '° với ' + n1(F, I.lug.kr) + '° lùi lửa; cùng mức tải ở 2,000-3,000 rpm là ' + n1(F, I.lug.ignRef) + '° với ' + n1(F, I.lug.krRef) + '°. Máy làm việc vất vả nhất ở đó mà được ít mô-men nhất.';
+          if (I.lug && isNum(I.lug.ignDeltaShown)) s += ' Trong vùng ì máy góc lửa trung vị là ' + n1(F, I.lug.ign) + '° với ' + n1(F, I.lug.kr) + '° lùi lửa; cùng mức tải ở 2,000-3,000 rpm là ' + n1(F, I.lug.ignRef) + '° với ' + n1(F, I.lug.krRef) + '°. Máy làm việc vất vả nhất ở đó mà được ít mô-men nhất.';
           return s;
         }
       },

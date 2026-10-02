@@ -93,11 +93,11 @@ test('buildLog: AFR on the gasoline scale becomes lambda', () => {
 
 test('analyze: sample A (after mods, before calibration) is flagged and explained', () => {
   const an = K.analyze(K.readLog(K.sampleCsv('before')));
-  assert.equal(an.verdict, 'stop');
+  assert.equal(an.verdict, 'watch');
   assert.equal(an.events.length, 2);
   assert.ok(an.closedLoopSeconds > 300);
   assert.ok(an.numbers.trimWorst > 7, 'trims show the under-reading intake');
-  assert.equal(status(an, 'fuel', 'wotAfr'), 'stop');
+  assert.equal(status(an, 'fuel', 'wotAfr'), 'watch', '11.8 median at 12 psi and up: 0.8 leaner than the map, never held at 12.0');
   assert.ok(an.wot.signedErrAfr > 0.6, 'WOT runs lean of command');
   assert.equal(gateStatus(an, 'spark'), 'good');
   assert.equal(gateStatus(an, 'heat'), 'good');
@@ -109,11 +109,11 @@ test('analyze: sample B (after the correction) passes every gate', () => {
   for (const g of an.gates) assert.ok(g.status === 'good' || g.status === 'nodata', `${g.id} is ${g.status}`);
 });
 
-test('analyze: sample C (hot, heat-soaked) stops on spark, heat and CVT', () => {
+test('analyze: sample C (hot, heat-soaked) stops on spark and CVT; heat caps at Watch', () => {
   const an = K.analyze(K.readLog(K.sampleCsv('hot')));
   assert.equal(an.verdict, 'stop');
   assert.equal(gateStatus(an, 'spark'), 'stop');
-  assert.equal(status(an, 'heat', 'iat'), 'stop');
+  assert.equal(status(an, 'heat', 'iat'), 'watch', 'intake heat alone never stops');
   assert.equal(status(an, 'cvt', 'cvtTemp'), 'stop');
   assert.equal(status(an, 'fuel', 'fuelPress'), 'watch');
   assert.ok(an.readiness.some((r) => /Fuel pressure fell/.test(r)));
@@ -299,7 +299,7 @@ test('3-D surface and line views produce finite geometry, rotated any way', () =
   assert.equal(c.series.length, 1);
 });
 
-test('knock control: RON95-level is fine, a high level is a Watch', () => {
+test('knock control: RON95-level is fine, a high held level is a Watch with no hard driving', () => {
   const base = K.readLog(K.sampleCsv('after'));
   const an = K.analyze(base, {});
   assert.equal(status(an, 'spark', 'kControl'), 'good');
@@ -310,18 +310,33 @@ test('knock control: RON95-level is fine, a high level is a Watch', () => {
   const hi = K.readLog(lines.map((l, i) => { if (i === 0 || !l) return l; const f = l.split(','); f[col] = i % 7 < 2 ? '0.79' : '0.78'; return f.join(','); }).join('\n'));
   assert.ok(hi.has.kControl);
   const an2 = K.analyze(hi, {});
+  const kc = an2.gates.find((g) => g.id === 'spark').checks.find((c) => c.id === 'kControl');
   assert.equal(status(an2, 'spark', 'kControl'), 'watch');
-  assert.ok(an2.gates.find((g) => g.id === 'spark').checks.find((c) => c.id === 'kControl').data.high);
+  assert.equal(kc.data.noHard, true, 'starts high and holds it: no hard driving until it drops');
+  assert.ok(kc.data.high);
+  assert.ok(Math.abs(kc.data.timingCost - 3.0) < 0.15, 'costs about 3.0°: ' + kc.data.timingCost);
 });
 
-test('torque: judged against the base map when a baseline gives a reference', () => {
+test('no torque line: the CVT is judged on slip, Watch-only', () => {
+  const slipOf = (an) => an.gates.flatMap((g) => g.checks).find((c) => c.id === 'slip');
+  for (const id of ['before', 'after', 'hot']) {
+    const an = K.analyze(K.readLog(K.sampleCsv(id)));
+    assert.equal(an.gates.flatMap((g) => g.checks).find((c) => c.id === 'torque'), undefined, id + ' carries no torque line');
+    assert.ok(slipOf(an), id + ' carries a slip line');
+    assert.ok(['good', 'watch'].includes(slipOf(an).status), id + ' slip is ' + slipOf(an).status);
+  }
+  // Revs jumping 300 rpm with no speed under boost is a Watch, never a Stop.
   const log = K.readLog(K.sampleCsv('after'));
-  const n = log.n;
-  log.torque = new Float64Array(n).fill(300);
-  log.has.torque = true;
-  const noRef = K.analyze(log, {});
-  assert.equal(status(noRef, 'cvt', 'torque'), 'watch');          // over the 280 Nm guideline: never a Stop without a reference
-  assert.equal(status(K.analyze(log, { torqueRef: 298 }), 'cvt', 'torque'), 'good');
-  assert.equal(status(K.analyze(log, { torqueRef: 280 }), 'cvt', 'torque'), 'watch');
-  assert.equal(status(K.analyze(log, { torqueRef: 260 }), 'cvt', 'torque'), 'stop');
+  let at = -1;
+  for (let i = 0; i < log.n; i++) if (log.load[i] >= 10 && log.vss[i] > 40) { at = i; break; }
+  assert.ok(at > 0);
+  log.rpm[at + 1] = log.rpm[at] + 300; log.rpm[at + 2] = log.rpm[at] + 300;
+  log.vss[at + 1] = log.vss[at]; log.vss[at + 2] = log.vss[at];
+  const slipped = K.analyze(log, {});
+  assert.equal(slipOf(slipped).status, 'watch');
+  assert.ok(!slipped.gates.some((g) => g.checks.some((c) => c.id === 'slip' && c.status === 'stop')));
+  // Without speed the line is honest about what it cannot judge.
+  const noVss = K.readLog(K.sampleCsv('after'));
+  noVss.vss = null; noVss.has.vss = false;
+  assert.equal(slipOf(K.analyze(noVss, {})).status, 'nodata');
 });

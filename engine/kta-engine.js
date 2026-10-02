@@ -147,24 +147,25 @@
     'e5-92': { label: 'E5 RON92', stoich: 14.4, ok: false }
   };
 
-  // Thresholds for the five health gates. Each is conservative on purpose:
-  // tropical heat and pump E10 leave less knock margin than a US 91/93 map assumes.
+  // Thresholds for the health gates. Every limit rests on this car's data, a primary
+  // source, or physics — see docs/research/fact-check.md, quoted in each check's basis.
+  // The Fuel-quality score is judged by the timing it costs under boost
+  // (KTuner's formula, this map's 10.2° retard table): Watch 0.56 (0.7°),
+  // "no hard driving" 0.62 held from the start (1.3°), Stop 0.80 (3.2°, provisional).
   KTA.LIMITS = {
     trim: { good: 5, watch: 10 },          // |STFT+LTFT| %, per MAF point with data
-    wotErr: { good: 0.3, watch: 0.6 },     // |measured - commanded| AFR points at WOT
-    wotLeanLambda: 0.82,                   // never leaner than this under boost (12.0 AFR)
     fuelPress: { good: 0.90, watch: 0.80 },// DI pressure actual / target, WOT (5th percentile)
     overshoot: { good: 1.5, watch: 2.5 },  // psi above target during a pull
     undershoot: { good: 1.5, watch: 3.0 }, // psi below target after spool, mean
     mafHz: { good: 9500, watch: 9900 },    // AFM table ends at 10,000 Hz
-    iat: { good: 50, watch: 60 },          // deg C during WOT
-    ect: { good: 100, watch: 105 },        // deg C
-    cvt: { good: 90, watch: 100 },         // deg C CVT fluid
+    iat: { good: 50, watch: 60 },          // deg C: heat alone caps at Watch, never Stop
+    ect: { good: 100, watch: 105 },       // deg C: Stop 105 is provisional (no Honda limit read)
+    cvt: { good: 90, watch: 100 },         // deg C: Stop 100 is provisional (this car peaks at 95)
     knock: { good: 1.0, watch: 3.0 },      // deg retard, worst cylinder, WOT
-    kControl: { good: 0.65, watch: 0.85 }, // learned knock level: 0 = RON 100, 1 = RON 90 (Hondata); RON95 sits near 0.5
-    kControlRise: 0.10,                    // a rise this big within one drive means the ECU kept hearing knock
-    torqueNm: 280,                         // CVT guideline when no base-map log gives a reference (ECU estimate)
-    torqueOverRef: { good: 1.03, watch: 1.08 }, // later logs vs the base map's own peak torque
+    kControl: { good: 0.56, watch: 0.80 }, // learned knock level vs the score rule below
+    score: { baseline: 0.49, tableDeg: 10.2, watch: 0.56, noHard: 0.62, noHardSecs: 60, stop: 0.80, showDeg: 0.5 },
+    mixture: { target: 11.0, boostPsi: 12, watchLean: 0.5, stopLean: 1.0, holdS: 0.3 },
+    slip: { rpm: 250, secs: 0.33, vss: 1, mapPsi: 8, tps: 50 },
     lowRpmBoost: { good: 1.5, watch: 3.0 },// psi over reference map below 3,000 rpm
     mafStepMax: 0.10,                      // max AFM change per round (fraction)
     minBinWeight: 8,                       // closed-loop samples per AFM point
@@ -748,21 +749,24 @@
   function check(id, label, status, display, target, fix, extra) {
     var c = { id: id, label: label, status: status, display: display, target: target, fix: status === 'good' || status === 'nodata' ? '' : fix };
     if (extra) for (var k in extra) c[k] = extra[k];
+    // Every limit states its basis (fact-check.md): data, primary, physics,
+    // judgement, or provisional ("not yet seen on your car").
+    if (!c.basis) c.basis = { t: 'judgement', k: 'app-limit' };
     return c;
   }
 
   /**
    * Grades a normalized log. opts:
    *   table     current AFM (g/s) values, needed only when the log has g/s but no Hz
-   *   torqueNm  CVT guideline (default LIMITS.torqueNm), used when there is no torqueRef
-   *   torqueRef peak torque (Nm) of the untouched base map, from the baseline log
+   *   baseline  this car's Fuel-quality score Baseline (default 0.49, until the Car
+   *               module learns it from cool drives); only moves the timing-cost line
+   *   isShakedown  accepted for the Car module; the drive check itself is unchanged
    */
   KTA.analyze = function (log, opts) {
     opts = opts || {};
     var L = KTA.LIMITS, n = log.n, has = log.has, dt = log.dt || 0.1;
     var axis = REF.maf.hz;
-    var torqueRef = isNum(opts.torqueRef) ? opts.torqueRef : NaN;
-    var ceiling = isNum(torqueRef) ? Math.round(torqueRef) : (opts.torqueNm || L.torqueNm);
+    var baseline = isNum(opts.baseline) ? opts.baseline : L.score.baseline;
 
     // ---- classify samples
     var warm = new Uint8Array(n), wot = new Uint8Array(n), cl = new Uint8Array(n), settled = new Uint8Array(n), sinceStart = new Float64Array(n);
@@ -866,14 +870,36 @@
       return { rpm: r.rpm, n: r.n, lamCmd: r.cmd / r.n, lam: r.meas / r.n, errAfr: r.err / r.n, lamMax: r.lamMax };
     });
 
-    var boosted = new Uint8Array(n);
-    for (i = 0; i < n; i++) boosted[i] = settled[i] && (!has.boost || log.boost[i] >= 8) ? 1 : 0;
-    var leanest = has.lam ? sustainedMax(log.lam, boosted, Math.max(1, Math.round(0.15 / dt))) : { value: NaN, index: -1 };
-    // No AFR command in the log (KTuner TunerView default): compare with what the map asks at full load.
+    // ---- mixture under boost (fact-check §6): only at 12 psi and up, where the map's
+    // WOT_Enrich target is its full-load value (11.0 = λ 0.75 on Starter 21; the lower
+    // columns ask 11.5 to 14.7 and the load axis was not captured, so no per-cell check).
+    // Judged as distance from the map's own full-load target: Watch 0.5 AFR leaner
+    // (11.5), Stop 1.0 leaner (12.0) held 0.3 s. The Stop means the commanded fuel is
+    // not arriving (pump, AFM preset, injector), not an absolute danger line.
+    // Logged AFR is gasoline-scale (λ × 14.7), so no E10 correction.
     var mapWot = Math.min.apply(null, REF.wot.values[REF.wot.values.length - 1]);
-    var wotMeasured = has.lam ? median(log.lam, boosted) : NaN;
+    var mixLoad = has.load ? log.load : (has.boost ? log.boost : null);
+    var mixCand = new Uint8Array(n), mixCandN = 0;
+    if (mixLoad && has.lam) for (i = 0; i < n; i++) if (settled[i] && mixLoad[i] >= L.mixture.boostPsi) { mixCand[i] = 1; mixCandN++; }
+    var mixMedAfr = mixCandN ? median(log.lam, mixCand) * GAS : NaN;
+    var mixDiff = mixMedAfr - L.mixture.target;
+    var mixLean = NaN, mixLeanT = NaN, mixHeldS = 0;
+    if (mixCandN) {
+      var mlm = maxOf(log.lam, mixCand); mixLean = mlm.value; mixLeanT = mlm.index >= 0 ? log.t[mlm.index] : NaN;
+      var runT0 = NaN;
+      for (i = 0; i < n; i++) {
+        if (mixCand[i] && log.lam[i] * GAS >= L.mixture.target + L.mixture.stopLean) {
+          if (!isNum(runT0)) runT0 = log.t[i];
+          var runDur = log.t[i] - runT0 + dt;
+          if (runDur > mixHeldS) mixHeldS = runDur;
+        } else runT0 = NaN;
+      }
+    }
+    var leanStop = mixCandN > 0 && (mixHeldS >= L.mixture.holdS || mixDiff >= L.mixture.stopLean);
+    var wotStatus = 'nodata';
+    if (mixCandN > 0) wotStatus = leanStop ? 'stop' : (mixDiff >= L.mixture.watchLean ? 'watch' : 'good');
 
-    // ---- summary numbers
+    // ---- summary numbers (vs the AFR command when the log has one: the Full-method page)
     var wotAbsErr = NaN, wotSignedErr = NaN;
     if (has.lam && has.lamCmd) {
       var abs = [], sgn = [];
@@ -919,8 +945,9 @@
       if (has.knockCyl) for (i = 0; i < n; i++) if ((events.length ? inEvent[i] : 1) && log.knockCyl[i] >= 2) multiCyl++;
     }
     var kcStart = NaN, kcEnd = NaN, kcPeak = NaN, kcPeakT = NaN;
+    var kcSmooth = null;
     if (has.kControl) {
-      var kcSmooth = rollingMedian(log.kControl, Math.max(2, Math.round(2.5 / dt)));
+      kcSmooth = rollingMedian(log.kControl, Math.max(2, Math.round(2.5 / dt)));
       var span = Math.max(1, Math.round(n * 0.15));
       var head = new Uint8Array(n), tail = new Uint8Array(n);
       for (i = 0; i < span; i++) head[i] = 1;
@@ -928,7 +955,26 @@
       kcStart = median(kcSmooth, head); kcEnd = median(kcSmooth, tail);
       var kpk = maxOf(kcSmooth); kcPeak = kpk.value; kcPeakT = kpk.index >= 0 ? log.t[kpk.index] : NaN;
     }
-    var kcRise = isNum(kcPeak) && isNum(kcStart) ? Math.max(0, kcPeak - kcStart) : NaN;
+    // Fuel-quality score, judged by what it costs under boost (ADR 0001): cost =
+    // table x (score - Baseline). Watch from 0.56 (0.7°). "No hard driving" when the
+    // drive STARTS at 0.62 (1.3°) and holds it for 60 s or more: a high score that is
+    // still there when you set off is fuel or heat, and hard driving waits until it
+    // drops. A score earned mid-drive (16:01 climbs 0.49 -> 0.65 through 0.62 but never
+    // holds it) keeps its plain Watch and its own cause and action. Stop at 0.80,
+    // provisional: never reached on this car.
+    var kcStatus = 'nodata', kcNoHard = false, timingCost = NaN;
+    if (isNum(kcPeak)) {
+      if (kcPeak >= L.score.stop) kcStatus = 'stop';
+      else {
+        if (isNum(kcStart) && kcStart >= L.score.noHard) {
+          var holdS = 0;
+          for (i = 0; i < n && log.t[i] < 120; i++) if (isNum(kcSmooth[i]) && kcSmooth[i] >= L.score.noHard) holdS += log.w[i];
+          kcNoHard = holdS >= L.score.noHardSecs;
+        }
+        kcStatus = kcPeak >= L.score.watch ? 'watch' : 'good';
+      }
+    }
+    if (isNum(kcEnd)) timingCost = L.score.tableDeg * (kcEnd - baseline);
 
     // Intake air: the hottest air a pull breathed. Without a pull, the air under load, then while
     // moving: heat soak at a standstill is shown separately and never graded as a pull.
@@ -950,7 +996,6 @@
     }
     var ectMax = has.ect ? quantile(log.ect, 0.995) : NaN;
     var cvtMax = has.cvt ? quantile(log.cvt, 0.995) : NaN;
-    var torqueMax = has.torque ? quantile(log.torque, 0.995) : NaN;
     var lowBoost = NaN;
     if (has.boost && has.rpm && events.length) {
       var lb = [];
@@ -1035,88 +1080,112 @@
     });
     if (!clBins && (has.stft || has.ltft)) trimWorst = mean(trim, cl);
 
-    var leanStop = isNum(leanest.value) && leanest.value > L.wotLeanLambda;
-    var wotNoCmd = !isNum(wotAbsErr) && has.lam && isNum(wotMeasured);
-    var wotDiff = wotNoCmd ? wotMeasured * GAS - mapWot : NaN;   // + = leaner than the map asks
-    var wotStatus = 'nodata';
-    if (isNum(wotAbsErr)) wotStatus = leanStop ? 'stop' : grade(wotAbsErr, L.wotErr);
-    else if (wotNoCmd) wotStatus = leanStop ? 'stop' : (wotDiff > L.wotErr.watch ? 'watch' : 'good');   // richer than asked is safe
     var fuelChecks = [
       check('trims', 'Fuel trims (cruise)', grade(Math.abs(trimWorst), L.trim),
         isNum(trimWorst) ? F.signed(trimWorst, 1, ' %') + (isNum(trimWorstHz) ? ' at ' + F.hz(trimWorstHz) : '') : 'No steady cruise found',
         'Within ±5 %', 'Step 3: correct the AFM Flow table with the values this app computes.',
-        { value: trimWorst, hint: 'trims', data: { value: trimWorst, hz: trimWorstHz } }),
-      check('wotAfr', 'WOT mixture vs command', wotStatus,
-        isNum(wotAbsErr) ? F.num(wotAbsErr, 2) + ' AFR ' + (wotSignedErr > 0 ? 'lean' : 'rich') + ' on average'
-          : (wotNoCmd ? F.num(wotMeasured * GAS, 1) + ' AFR at full load, map asks ' + F.num(mapWot, 1) : 'No full-throttle pull found'),
-        'Within ±0.3 AFR, never leaner than 12.0 (λ 0.82)', isNum(leanest.value) && leanest.value > L.wotLeanLambda
-          ? 'Stop pulls. Leanest ' + F.afrLambda(leanest.value) + ' under boost. Step 4: fix fuel before any more full-throttle runs.'
+        { value: trimWorst, hint: 'trims', basis: { t: 'data', k: 'trims-data' }, data: { value: trimWorst, hz: trimWorstHz } }),
+      check('wotAfr', 'Mixture at 12 psi and up', wotStatus,
+        mixCandN ? F.num(mixMedAfr, 1) + ' AFR at 12 psi and up, map asks ' + F.num(L.mixture.target, 1) + (mixDiff < -0.05 ? ' (richer: safe)' : '') : 'No time at 12 psi or more',
+        'Within 0.5 AFR of the map, never 1.0 leaner held 0.3 s',
+        leanStop ? 'Stop pulls: the fuel asked for is not arriving (pump, AFM preset or injector). Fix fuel before any more full-throttle runs.'
           : 'Step 4: extend the AFM correction into the high-Hz end, then log again.',
-        { value: wotAbsErr, hint: 'afr', data: { value: wotAbsErr, signed: wotSignedErr, leanest: leanest.value, leanStop: leanStop, noCmd: wotNoCmd, measured: wotMeasured * GAS, target: mapWot, diff: wotDiff } }),
+        { value: mixDiff, hint: 'afr', basis: { t: 'judgement', k: 'mixture-rule' }, data: { measured: mixMedAfr, target: L.mixture.target, diff: mixDiff, leanest: mixLean, leanestT: mixLeanT, leanStop: leanStop, heldSecs: round(mixHeldS, 2), noCmd: !has.lamCmd } }),
       check('fuelPress', 'DI fuel pressure at WOT', grade(fp05, L.fuelPress, true),
         isNum(fp05) ? F.num(fp05 * 100, 0) + ' % of target (worst 5 %)' : 'Not logged',
-        '90 % of target or more', 'The high-pressure pump is at its limit. Do not add boost. Check the fuel filter; E10 needs about 4 % more fuel.',
-        { value: fp05, hint: 'fuelPress', data: { value: fp05 } })
+        '90 % of target or more', 'The high-pressure pump is at its limit. Do not add boost. Check the fuel filter and pump supply.',
+        { value: fp05, hint: 'fuelPress', basis: { t: 'judgement', k: 'fuelpress-rule' }, data: { value: fp05 } })
     ];
     var airChecks = [
       check('overshoot', 'Boost overshoot', grade(overshoot, L.overshoot),
         isNum(overshoot) ? F.signed(overshoot, 1, ' psi') + (isNum(overshootRpm) ? ' at ' + F.num(overshootRpm) + ' rpm' : '') : 'Needs boost and boost target',
         'Under +1.5 psi', 'Downpipe spools earlier. Lower the boost target 1 psi at 2,500-3,250 rpm (spool zone) and log again.',
-        { value: overshoot, hint: 'boost', data: { value: overshoot, rpm: overshootRpm } }),
+        { value: overshoot, hint: 'boost', basis: { t: 'judgement', k: 'overshoot-rule' }, data: { value: overshoot, rpm: overshootRpm } }),
       check('undershoot', 'Boost reaches target', grade(undershoot, L.undershoot),
         !isNum(undershoot) ? 'Needs boost and boost target' : (Math.abs(undershoot) < 0.3 ? 'On target after spool' : F.num(Math.abs(undershoot), 1) + ' psi ' + (undershoot > 0 ? 'below' : 'above') + ' target after spool'),
         'Within 1.5 psi', 'Look for a boost leak (intercooler couplers, clamps) before changing any table.',
-        { value: undershoot, hint: 'boost', data: { value: undershoot } }),
+        { value: undershoot, hint: 'boost', basis: { t: 'judgement', k: 'undershoot-rule' }, data: { value: undershoot } }),
       check('mafHz', 'AFM sensor headroom', grade(mafMax, L.mafHz),
         isNum(mafMax) ? F.hz(mafMax) + ' peak' : 'AFM Hz not logged',
         'Under 9,500 Hz', 'The sensor is close to 10,000 Hz, the end of the table. Do not add boost.',
-        { value: mafMax, hint: 'afm', data: { value: mafMax } })
+        { value: mafMax, hint: 'afm', basis: { t: 'judgement', k: 'mafheadroom' }, data: { value: mafMax } })
     ];
     var knockStatus = knockScheduled ? 'good' : grade(knockMax, L.knock);
     if (!knockScheduled && multiCyl * dt >= 0.3 && RANK[knockStatus] < RANK.stop) knockStatus = knockStatus === 'good' ? 'watch' : 'stop';
-    var kcStatus = 'nodata';
-    if (isNum(kcEnd)) kcStatus = worst([grade(kcEnd, L.kControl), kcRise > L.kControlRise + 1e-9 ? 'watch' : 'good']);
     var sparkChecks = [
       check('knock', 'Knock retard at WOT', knockStatus,
         knockScheduled ? F.num(knockLoadMed, 1) + '° under boost, scheduled by Knock Control (not knock events)'
           : (isNum(knockMax) ? F.num(knockMax, 1) + '° worst' + (isNum(knockRpm) ? ' at ' + F.num(knockRpm) + ' rpm' : '') + (multiCyl ? ', ' + (multiCyl > 1 ? 'several cylinders together' : 'two cylinders') : '') : 'Knock retard not logged'),
         knockScheduled ? 'Follows Knock Control' : '1° or less', 'Find the cause before adding anything: heat soak, fuel, boost. Richen WOT 0.3 AFR or drop 1 psi in that rpm. Never desensitize the knock sensors.',
-        { value: knockMax, hint: 'knock', data: { value: knockMax, rpm: knockRpm, multi: multiCyl, scheduled: knockScheduled, loadMedian: knockLoadMed } }),
-      check('kControl', 'Knock control', kcStatus,
-        isNum(kcEnd) ? F.num(kcStart, 2) + ' → ' + F.num(kcEnd, 2) + (kcPeak > Math.max(kcStart, kcEnd) + 0.02 ? ' (peak ' + F.num(kcPeak, 2) + ')' : '') : 'Not logged',
-        '0.65 or less, steady or falling',
-        isNum(kcEnd) && kcEnd > L.kControl.good ? 'The ECU rates your fuel below RON95 right now (heat, fuel or too much boost) and runs its safer timing. Add nothing; on hot days use ECO (18 psi).' : 'The ECU kept hearing knock during this drive and moved toward its safer timing. Find where it rose (the Drive check shows it) before adding anything.',
-        { value: kcEnd, hint: 'kcontrol', data: { start: kcStart, end: kcEnd, peak: kcPeak, peakT: kcPeakT, rise: kcRise, high: isNum(kcEnd) && kcEnd > L.kControl.good } })
+        { value: knockMax, hint: 'knock', basis: { t: 'judgement', k: 'knock-rule' }, data: { value: knockMax, rpm: knockRpm, multi: multiCyl, scheduled: knockScheduled, loadMedian: knockLoadMed } }),
+      check('kControl', 'Fuel-quality score (Knock Control)', kcStatus,
+        isNum(kcEnd) ? F.num(kcStart, 2) + ' → ' + F.num(kcEnd, 2) + (kcPeak > Math.max(kcStart, kcEnd) + 0.02 ? ' (peak ' + F.num(kcPeak, 2) + ')' : '')
+          + (timingCost >= L.score.showDeg ? '. Under boost your score costs about ' + F.num(timingCost, 1) + '° of timing' : '')
+          + (kcNoHard ? '. No hard driving until it drops' : '') : 'Not logged',
+        '0.56 or less; no hard driving from 0.62 held; Stop 0.80 (provisional)',
+        kcNoHard ? 'No hard driving until it drops below 0.62: fill RON95 E10 at a busy station, drive the ECO map (18 psi), and give it 10–15 calm minutes.'
+          : (isNum(kcEnd) && kcEnd >= L.score.watch ? 'The ECU is pulling timing for fuel or heat. Add nothing; on hot days use ECO (18 psi).' : 'The ECU kept hearing knock during this drive and moved toward its safer timing. Find where it rose (the Drive check shows it) before adding anything.'),
+        { value: kcEnd, hint: 'kcontrol',
+          basis: kcStatus === 'stop'
+            ? { t: 'provisional', k: 'score-stop' }
+            : { t: 'judgement', k: 'score-rule' },
+          data: { start: kcStart, end: kcEnd, peak: kcPeak, peakT: kcPeakT, noHard: kcNoHard, timingCost: timingCost, highStart: isNum(kcStart) && kcStart > baseline, high: isNum(kcEnd) && kcEnd >= L.score.watch } })
     ];
+    // Intake heat alone caps at Watch: the score's own limits already catch heat
+    // turning into knock, so one danger is never counted twice.
+    var iatStatus = grade(iatMax, L.iat);
+    if (iatStatus === 'stop') iatStatus = 'watch';
     var heatChecks = [
-      check('iat', 'Intake air temp', grade(iatMax, L.iat),
+      check('iat', 'Intake air temp', iatStatus,
         isNum(iatMax) ? F.num(iatMax, 0) + ' °C peak' + (iatWhere === 'pull' ? ' in a pull' : (iatWhere === 'load' ? ' under boost' : (iatWhere === 'moving' ? ' while moving' : ''))) : 'Not logged',
         '50 °C or less', 'Heat-soaked. Cruise 5 minutes to cool before a pull. If it stays high, check the intercooler airflow and the intake heat shield.',
-        { value: iatMax, hint: 'iat', data: { value: iatMax, inPull: iatWhere === 'pull', where: iatWhere, soak: iatSoak } }),
+        { value: iatMax, hint: 'iat', basis: { t: 'judgement', k: 'iat-cap' }, data: { value: iatMax, inPull: iatWhere === 'pull', where: iatWhere, soak: iatSoak } }),
       check('ect', 'Coolant temp', grade(ectMax, L.ect),
         isNum(ectMax) ? F.num(ectMax, 0) + ' °C peak' : 'Not logged',
         '100 °C or less', 'Stop logging until coolant is back under 95 °C. Check the radiator, fan and coolant level.',
-        { value: ectMax, hint: 'ect', data: { value: ectMax } })
+        { value: ectMax, hint: 'ect', basis: { t: 'provisional', k: 'ect-stop' }, data: { value: ectMax } })
     ];
-    var torqueStatus = 'nodata';
-    if (isNum(torqueMax)) {
-      if (isNum(torqueRef)) torqueStatus = torqueMax <= torqueRef * L.torqueOverRef.good ? 'good' : (torqueMax <= torqueRef * L.torqueOverRef.watch ? 'watch' : 'stop');
-      else torqueStatus = torqueMax <= ceiling ? 'good' : 'watch';   // no reference: a guideline, never a Stop
+    // CVT slip (Watch only): revs jumping without speed under boost. Revs up 250 rpm
+    // within 0.33 s while speed gains under 1 km/h, with MAP at 8 psi or more, throttle
+    // command at 50% or more and speed over 20 km/h. 0 events in the owner's 16 drives
+    // (~2,400 boosted rows), so the threshold is unproven against a real slip: the
+    // check never says worse than Watch. The g-sensor channel reads 0 on every row
+    // and is not used. (The old torque check is gone: the logs carry no torque value,
+    // and its 250 Nm figure was a 10th-gen FlashPro warning contradicted by the
+    // 11th-gen maps' own +50 lb-ft.)
+    var tpsA = has.tpsCmd ? log.tpsCmd : (has.tps ? log.tps : (has.pedal ? log.pedal : null));
+    var slipLoad = has.load ? log.load : (has.boost ? log.boost : null);
+    var slipEvents = 0, slipAt = NaN;
+    var slipReady = has.rpm && has.vss && !!slipLoad && !!tpsA;
+    if (slipReady) {
+      var slipStep = Math.max(1, Math.round(L.slip.secs / dt));
+      for (i = 0; i + slipStep < n; i++) {
+        var j = i + slipStep;
+        var ld1 = slipLoad[i], ld2 = slipLoad[j];
+        if (!(ld1 >= L.slip.mapPsi && ld2 >= L.slip.mapPsi)) continue;
+        if (!(tpsA[i] >= L.slip.tps && tpsA[j] >= L.slip.tps)) continue;
+        if (!(log.vss[i] > 20 && log.vss[j] > 20)) continue;
+        if (!isNum(log.rpm[i]) || !isNum(log.rpm[j]) || !isNum(log.vss[i]) || !isNum(log.vss[j])) continue;
+        if (log.rpm[j] - log.rpm[i] > L.slip.rpm && log.vss[j] - log.vss[i] < L.slip.vss) {
+          slipEvents++;
+          if (!isNum(slipAt)) slipAt = log.t[i];
+          i = j;
+        }
+      }
     }
     var cvtChecks = [
       check('cvtTemp', 'CVT fluid temp', grade(cvtMax, L.cvt),
         isNum(cvtMax) ? F.num(cvtMax, 0) + ' °C peak' : 'Not logged',
         '90 °C or less', 'Stop pulls and cruise gently until under 90 °C. Hot CVT fluid lets the belt slip, and the ECU cuts torque.',
-        { value: cvtMax, hint: 'cvt', data: { value: cvtMax } }),
-      check('torque', 'Engine torque', torqueStatus,
-        isNum(torqueMax) ? F.num(torqueMax, 0) + ' Nm peak (' + (isNum(torqueRef) ? 'base map ' : 'guideline ') + ceiling + ')' : 'Not logged (fine)',
-        isNum(torqueRef) ? 'Within 3 % of your base map' : 'At or under 280 Nm',
-        isNum(torqueRef) ? 'More torque than your base map makes. Undo the last boost change; keep the added torque above 3,500 rpm.' : 'Above the 280 Nm guideline. If this is your untouched base map, that is the map\'s own level: add nothing on top and avoid hard launches.',
-        { value: torqueMax, hint: 'torque', data: { value: torqueMax, ceiling: ceiling, ref: isNum(torqueRef) } }),
+        { value: cvtMax, hint: 'cvt', basis: { t: 'provisional', k: 'cvt-stop' }, data: { value: cvtMax } }),
+      check('slip', 'CVT slip (revs without speed)', !slipReady ? 'nodata' : (slipEvents > 0 ? 'watch' : 'good'),
+        !slipReady ? 'Needs rpm, speed, boost and throttle' : (slipEvents > 0 ? slipEvents + ' slip event' + (slipEvents === 1 ? '' : 's') + ' under boost' : 'No slip seen under boost'),
+        'No slip under boost', 'If the revs jump without speed under boost, the belt may be slipping. Log again with rpm, speed, boost and throttle command; if it repeats, have the CVT fluid and belt checked.',
+        { value: slipEvents, hint: 'slip', basis: { t: 'provisional', k: 'slip-watch' }, data: { events: slipEvents, at: slipAt } }),
       check('lowBoost', 'Boost below 3,000 rpm', grade(lowBoost, L.lowRpmBoost),
         isNum(lowBoost) ? F.signed(lowBoost, 1, ' psi') + ' vs reference map' : 'Needs a pull and boost',
         'Within 1.5 psi of the reference map', 'More low-rpm torque than the reference map. Put the boost target below 3,000 rpm back to stock: that is where the CVT belt is most stressed.',
-        { value: lowBoost, hint: 'cvtbelt', data: { value: lowBoost } })
+        { value: lowBoost, hint: 'cvtbelt', basis: { t: 'judgement', k: 'lowboost-rule' }, data: { value: lowBoost } })
     ];
 
     // A flat channel poisons only the lines read from it: they become Can't tell
@@ -1175,8 +1244,8 @@
       events: events.map(function (e) { return { t0: e.t0, t1: e.t1, duration: e.duration, rpm0: e.rpm0, rpm1: e.rpm1 }; }),
       closedLoopSeconds: round(clSeconds, 1),
       maf: { axis: axis, cl: clBins, wot: wotBins, binsWithData: binsWithData, fpLimitedSeconds: round(fpLimited * dt, 1) },
-      wot: { byRpm: byRpm, absErrAfr: wotAbsErr, signedErrAfr: wotSignedErr, leanestLambda: leanest.value, leanestRpm: leanest.index >= 0 && has.rpm ? log.rpm[leanest.index] : NaN, fuelPressRatio: fp05 },
-      numbers: { overshoot: overshoot, undershoot: undershoot, mafMax: mafMax, knockMax: knockMax, iatMax: iatMax, ectMax: ectMax, cvtMax: cvtMax, torqueMax: torqueMax, lowBoost: lowBoost, kControlStart: kcStart, kControlEnd: kcEnd, kControlPeak: kcPeak, kControlRise: kcRise, trimWorst: trimWorst, wotMeasuredAfr: wotNoCmd ? wotMeasured * GAS : NaN, wotMapAfr: mapWot, iatSoak: iatSoak },
+      wot: { byRpm: byRpm, absErrAfr: wotAbsErr, signedErrAfr: wotSignedErr, leanestLambda: mixLean, leanestT: mixLeanT, fuelPressRatio: fp05 },
+      numbers: { overshoot: overshoot, undershoot: undershoot, mafMax: mafMax, knockMax: knockMax, iatMax: iatMax, ectMax: ectMax, cvtMax: cvtMax, lowBoost: lowBoost, kControlStart: kcStart, kControlEnd: kcEnd, kControlPeak: kcPeak, trimWorst: trimWorst, wotMeasuredAfr: mixMedAfr, wotMapAfr: mapWot, iatSoak: iatSoak },
       knockScheduled: knockScheduled,
       gates: gates,
       verdict: verdict,

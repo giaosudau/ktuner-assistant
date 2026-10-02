@@ -24,6 +24,7 @@
     lugRef: { rpmMin: 2000, rpmMax: 3000, loadMin: -3, loadMax: 5 },           // the same load, healthy rpm
     lugShare: 0.05,                  // share of moving time that counts as a habit
     kcStep: 0.04,                    // a Knock Control move this big is an episode
+    kcFuel: 0.65,                    // above this the ECU rates the fuel below RON95: check the fuel
     kcLugSteps: 0.5,                 // share of an episode's step-ups made while lugging to blame lugging
     kcWindow: 30,                    // s of driving before an episode that are searched for its cause
     pullLoad: 4,                     // psi (MAP gauge): under boost
@@ -132,6 +133,9 @@
         iat: r0(q(log.iat, 0.5, lug)), rpm: r0(q(log.rpm, 0.5, lug)), load: r1(q(load, 0.5, lug)), refSeconds: r0(secs(log, ref))
       };
       I.lug.ignDelta = isNum(I.lug.ign) && isNum(I.lug.ignRef) ? r1(I.lug.ignRef - I.lug.ign) : null;
+      // "Timing lost while lugging" is shown only for a real loss: at least the
+      // ignition channel's 1° logged step, on 30 s or more of reference driving.
+      I.lug.ignDeltaShown = isNum(I.lug.ignDelta) && I.lug.ignDelta >= 1 && isNum(I.lug.refSeconds) && I.lug.refSeconds >= 30 ? I.lug.ignDelta : null;
       I._lugMask = lug;
     }
 
@@ -200,8 +204,9 @@
         episodes.push(e);
       }
       var an2 = an.numbers;
+      var kcRiseHere = isNum(an2.kControlPeak) && isNum(an2.kControlStart) ? Math.max(0, an2.kControlPeak - an2.kControlStart) : NaN;
       I.kc = {
-        start: r2(an2.kControlStart), end: r2(an2.kControlEnd), peak: r2(an2.kControlPeak), rise: r2(an2.kControlRise),
+        start: r2(an2.kControlStart), end: r2(an2.kControlEnd), peak: r2(an2.kControlPeak), rise: r2(kcRiseHere),
         min: r2(quantile(kcS, 0)), timeline: pts, episodes: episodes, ups: ups,
         upSteps: ups.length, lugUpSteps: ups.filter(function (u) { return u.lug; }).length,
         upRpm: r0(median(ups.map(function (u) { return u.rpm; }).filter(isNum))), upVss: r0(median(ups.map(function (u) { return u.vss; }).filter(isNum))), upLoad: r1(median(ups.map(function (u) { return u.load; }).filter(isNum))),
@@ -371,7 +376,7 @@
   KTA.TIERS = TIERS;
   // When several checks say Stop, fix the one that can break the engine first: knock and a lean
   // mixture, then what feeds them (fuel pressure, boost, heat), then the drivetrain.
-  var SAFETY_ORDER = ['knock', 'wotAfr', 'fuelPress', 'kControl', 'overshoot', 'iat', 'ect', 'undershoot', 'mafHz', 'cvtTemp', 'torque', 'lowBoost', 'trims'];
+  var SAFETY_ORDER = ['knock', 'wotAfr', 'fuelPress', 'kControl', 'overshoot', 'iat', 'ect', 'undershoot', 'mafHz', 'cvtTemp', 'lowBoost', 'trims'];
   KTA.SAFETY_ORDER = SAFETY_ORDER;
 
   function gateCheck(an, id) {
@@ -420,7 +425,7 @@
     {
       id: 'fuelCheck', tier: 'drive', impact: 3, effort: 1, risk: 0, flash: false,
       when: function (I) {
-        if (!I.kc || !(I.kc.end > KTA.LIMITS.kControl.good)) return null;
+        if (!I.kc || !(I.kc.end > DL.fuelKc)) return null;
         return { strength: 1, ev: { kcEnd: I.kc.end, kcStart: I.kc.start, lugRises: I.kc.lugRises } };
       },
       proof: { metric: 'kcEnd', dir: 'down' }
@@ -646,7 +651,7 @@
       }
       case 'cooldown': out.verdict = av <= DL.pullIatGood || av <= bv - 5 ? 'keep' : (av < bv ? 'partial' : 'retry'); break;
       case 'cvtHeat': out.verdict = av <= KTA.LIMITS.cvt.good ? 'keep' : (av < bv ? 'partial' : 'retry'); break;
-      case 'fuelCheck': out.verdict = av <= KTA.LIMITS.kControl.good ? 'keep' : (av < bv - 0.03 ? 'partial' : 'retry'); break;
+      case 'fuelCheck': out.verdict = av <= DL.fuelKc ? 'keep' : (av < bv - 0.03 ? 'partial' : 'retry'); break;
       case 'data': {
         var miss = A.quality.missing;
         out.metric = { name: 'channels', before: B.quality.missing.length, after: miss.length, missing: miss.slice() };

@@ -14,13 +14,16 @@
 **Blocked by:** None — can start immediately.
 
 **Status:** ready-for-agent
+**Status:** done (limits + basis + slip + text; suite 92/92 with car/ask/build)
 
-- [ ] Aug 30 16:01: Watch on the Fuel-quality score (ends 0.64 ≈ 1.5°), not "No hard driving"; the line shows "costs about 1.5° of timing under boost".
-- [ ] Sep 1 08:13: OK, with no timing-cost line.
-- [ ] Aug 22 09:50 (intake 64 °C, score 0.50): Watch on heat, not Stop. Committed as a compressed fixture.
-- [ ] All 16 drives (local check): no mixture Watch or Stop (10.1–10.7 against 11.0); CVT slip 0 events.
-- [ ] A synthetic drive at 12.0 AFR held 0.3 s at ≥ 12 psi → Stop; at 12.5 AFR and 6 psi → no mixture line.
-- [ ] Every safety line's *Why?* shows its basis in one line: from your data / from Honda or KTuner / physics / our judgement / provisional ("provisional: not yet seen on your car").
-- [ ] No torque line appears on any drive.
-- [ ] The Fact check and Build path text match `fact-check.md` §1 and §4.
-- [ ] New wording in English and Tiếng Việt.
+- [x] Aug 30 16:01: Watch on the Fuel-quality score (ends 0.64 ≈ 1.5°), not "No hard driving"; the line shows "costs about 1.5° of timing under boost".
+- [x] Sep 1 08:13: OK, with no timing-cost line.
+- [x] Aug 22 09:50 (intake 64 °C, score 0.50): Watch on heat, not Stop. Committed as a compressed fixture.
+- [x] All 16 drives (local check): no mixture Watch or Stop (10.1–10.7 against 11.0); CVT slip 0 events.
+- [x] A synthetic drive at 12.0 AFR held 0.3 s at ≥ 12 psi → Stop; at 12.5 AFR and 6 psi → no mixture line.
+- [x] Every safety line's *Why?* shows its basis in one line: from your data / from Honda or KTuner / physics / our judgement / provisional ("provisional: not yet seen on your car").
+- [x] No torque line appears on any drive.
+- [x] The Fact check and Build path text match `fact-check.md` §1 and §4.
+- [x] New wording in English and Tiếng Việt.
+
+Notes: "no hard driving" fires only when a drive STARTS at 0.62+ and holds it 60 s+ (a score earned mid-drive, like 16:01's climb, keeps its plain Watch — the sentence "until it drops" is about a pre-existing elevation). Timing cost = 10.2° × (end − Baseline 0.49), shown from 0.5°. Mixture Watch is median-based, Stop is held-based. `Why?` basis rides on every check (`c.basis` + `drive.basisLine` EN/VI) ready for the story track to render. fuelCheck habit still fires at 0.65; timeline line moved to the 0.56 Watch.

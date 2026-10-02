@@ -1530,9 +1530,7 @@
   }
   function analyzeRec(rec) {
     rec.log = K.buildLog(rec.parsed, rec.mapping);
-    var base = slots.baseline;
-    var ref = rec.slot !== 'baseline' && base && base !== rec && base.an ? base.an.numbers.torqueMax : NaN;
-    rec.an = K.analyze(rec.log, { table: tableInUse(), torqueRef: ref });
+    rec.an = K.analyze(rec.log, { table: tableInUse() });
   }
   function loadFile(file) {
     var slot = slotFor(state.step);

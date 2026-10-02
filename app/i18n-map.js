@@ -72,7 +72,7 @@
       title: 'Base map: KTuner Starter 21 Dual Tune 2', tag: 'KTuner’s figures',
       facts: [['ECO button · Stage 1', '18 psi · up to +40 lb-ft, +30 whp'], ['Normal and Sport · Stage 2', '21 psi · up to +58 lb-ft, +55 whp'], ['Also in the map', 'Sharper throttle, low-end damping removed, less turbo lag']],
       means: 'The boost gain is already in your map: 21 psi against about 16.5 psi stock. So the basic stage adds no boost. It makes the air reading and the fuel right for your parts, then proves the car stays safe in Vietnam heat.',
-      eco: 'ECO (18 psi) is your hot-day mode. If knock control climbs past 0.65 on a hot afternoon, drive in ECO.'
+      eco: 'ECO (18 psi) is your hot-day mode. If knock control holds 0.62 or more on a hot afternoon, drive in ECO.'
     },
     plan: {
       title: 'The edit plan, in order',
@@ -136,7 +136,7 @@
         ['AFR at full throttle', 'watch', 'Check; one small optional lean', 'WOT Enrichment L/H · Lever 1', 'Measured vs command ±0.3; never leaner than 12.0'],
         ['Fuel for E10', 'watch', 'No blanket +4 %', 'Nothing to type (see below)', 'Cruise trims 2-4 % positive is normal; the full-throttle check decides'],
         ['Boost', 'nodata', 'No change in the basic stage', 'Boost Target Normal: already 21 psi (stock ≈ 16.5)', 'Tracks target ±1.5 psi; no overshoot with the downpipe'],
-        ['Ignition timing', 'nodata', 'Leave stock', 'The ECU’s knock control', 'Knock retard ≤ 1°; knock control ≤ 0.65 and steady'],
+        ['Ignition timing', 'nodata', 'Leave stock', 'The ECU’s knock control', 'Knock retard ≤ 1°; knock control ≤ 0.56 and steady'],
         ['Knock sensitivity', 'stop', 'Never', '-', '-'],
         ['DI fuel pressure', 'nodata', 'Check only', 'DI Fuel Pressure Target', 'Actual ≥ 90 % of target in a pull'],
         ['CVT protection', 'nodata', 'Leave stock', 'Cylinder fill limit, boost by gear', 'CVT ≤ 90 °C; torque within 3 % of the base map'],
@@ -322,7 +322,7 @@
       title: 'Map gốc: KTuner Starter 21 Dual Tune 2', tag: 'Số liệu của KTuner',
       facts: [['Nút ECO · Stage 1', '18 psi · thêm tới +40 lb-ft, +30 whp'], ['Normal và Sport · Stage 2', '21 psi · thêm tới +58 lb-ft, +55 whp'], ['Map còn thay đổi', 'Chân ga nhạy hơn, bỏ độ trễ ga ở dải thấp, turbo lên sớm hơn']],
       means: 'Phần tăng boost đã có sẵn trong map của bạn: 21 psi so với khoảng 16.5 psi zin. Vì vậy giai đoạn cơ bản không tăng boost. Nó làm cho số đo khí và lượng xăng đúng với đồ độ của bạn, rồi chứng minh xe vẫn an toàn trong cái nóng Việt Nam.',
-      eco: 'ECO (18 psi) là chế độ cho ngày nóng. Nếu knock control vượt 0.65 vào buổi chiều nóng, hãy chạy ECO.'
+      eco: 'ECO (18 psi) là chế độ cho ngày nóng. Nếu knock control giữ từ 0.62 trở lên vào buổi chiều nóng, hãy chạy ECO.'
     },
     plan: {
       title: 'Kế hoạch sửa, theo thứ tự',
@@ -386,7 +386,7 @@
         ['AFR khi đạp hết ga', 'watch', 'Kiểm tra; một lần làm nghèo nhẹ tuỳ chọn', 'WOT Enrichment L/H · Đòn bẩy 1', 'Đo so với lệnh ±0.3; không bao giờ nghèo hơn 12.0'],
         ['Xăng cho E10', 'watch', 'Không cộng thẳng +4 %', 'Không cần gõ gì (xem bên dưới)', 'Trim khi chạy đều dương 2-4 % là bình thường; kiểm tra đạp hết ga mới quyết định'],
         ['Boost', 'nodata', 'Không đổi ở giai đoạn cơ bản', 'Boost Target Normal: đã là 21 psi (zin ≈ 16.5)', 'Bám mục tiêu ±1.5 psi; không vọt boost khi có downpipe'],
-        ['Góc đánh lửa', 'nodata', 'Giữ nguyên', 'Knock control của ECU', 'Lùi lửa ≤ 1°; knock control ≤ 0.65 và ổn định'],
+        ['Góc đánh lửa', 'nodata', 'Giữ nguyên', 'Knock control của ECU', 'Lùi lửa ≤ 1°; knock control ≤ 0.56 và ổn định'],
         ['Độ nhạy kích nổ', 'stop', 'Không bao giờ', '-', '-'],
         ['Áp suất xăng DI', 'nodata', 'Chỉ kiểm tra', 'DI Fuel Pressure Target', 'Thực tế ≥ 90 % mục tiêu khi kéo ga'],
         ['Bảo vệ CVT', 'nodata', 'Giữ nguyên', 'Giới hạn nạp khí, boost theo số', 'CVT ≤ 90 °C; mô-men không quá 3 % so với map gốc'],

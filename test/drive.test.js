@@ -61,7 +61,7 @@ test('analyze on real logs: no false Stops, Honda knock semantics, mixture judge
   assert.equal(knock.data.scheduled, true, 'a steady ~5 deg under boost is scheduled retard');
   const kc = check(an, 'kControl');
   assert.equal(kc.status, 'watch');
-  assert.ok(kc.data.rise >= 0.1 && kc.data.peak >= 0.62, 'Knock Control climbed in this drive');
+  assert.ok(kc.data.peak >= 0.62 && kc.data.peak - kc.data.start >= 0.1, 'Knock Control climbed in this drive');
   const wot = check(an, 'wotAfr');
   assert.equal(wot.data.noCmd, true);
   assert.equal(wot.status, 'good', 'richer than the map is the safe side');
@@ -279,4 +279,147 @@ test('issue 01: the engine\'s internal status names never reach the screen', () 
     assert.ok(/TunerView/.test(blob), lang + ' gives the TunerView fix');
     assert.ok(!/\bgood\b|\bnodata\b/.test(blob), lang + ' leaks an engine id: ' + blob.slice(0, 120));
   }
+});
+
+// ---------------------------------------------------------------------------
+// Issue 02 — evidence-based limits (fact-check.md wins on every number).
+// ---------------------------------------------------------------------------
+
+function cloneLog(log, fn) {
+  const out = Object.assign({}, log, { has: Object.assign({}, log.has) });
+  for (const k of Object.keys(log)) {
+    if (log[k] instanceof Float64Array) out[k] = Float64Array.from(log[k]);
+    else if (log[k] instanceof Uint8Array) out[k] = Uint8Array.from(log[k]);
+  }
+  fn(out);
+  return out;
+}
+// A short, honest cruise: 20 s of reference driving, then lugging. Cool, calm,
+// gentle — only the reference band is short, so lugging timing stays hidden.
+function tinyCruiseCsv() {
+  const head = 'Time,Engine Speed (rpm),Vehicle Speed (km/h),Throttle Position (%),MAP (kPa),O2 (AFR),ECT (C),IAT (C),Knock Control,STFT B1 (%),LTFT B1 (%),Ignition Timing (deg),DIFP,DIFP Target';
+  const rows = [head];
+  let t = 0;
+  const push = (rpm, vss, tps, map, afr, ect, iat, kc, stft, ltft, ign, fp, fpT) => rows.push([t.toFixed(1), rpm, vss, tps, map, afr, ect, iat, kc, stft, ltft, ign, fp, fpT].join(','));
+  for (let i = 0; t < 20; i++, t += 0.1) push(2400 + (i % 5) * 8, 60 + (i % 3), 22 + (i % 2), 100 + (i % 3) * 0.4, 14.6 + (i % 2) * 0.1, 88 + (i % 2), 36 + (i % 2), 0.49 + (i % 2) * 0.01, (i % 5) * 0.2, (i % 3) * 0.1, 30 + (i % 2), 3000 + (i % 5) * 40, 3050 + (i % 3) * 30);
+  for (let i = 0; t < 140; i++, t += 0.1) push(1400 + (i % 7) * 6, 45 + (i % 2), 28 + (i % 2), 95 + (i % 3) * 0.4, 14.6 + (i % 2) * 0.1, 89 + (i % 2), 37 + (i % 2), 0.49 + (i % 2) * 0.01, (i % 5) * 0.2, (i % 3) * 0.1, 22 + (i % 2), 2900 + (i % 5) * 40, 2950 + (i % 3) * 30);
+  return rows.join('\n');
+}
+
+test('issue 02: the score is judged by the timing it costs under boost', () => {
+  const an = hot().report.an;
+  const kc = check(an, 'kControl');
+  assert.equal(kc.status, 'watch', 'Aug 30 16:01 ends 0.64: Watch');
+  assert.equal(kc.data.noHard, false, 'not "no hard driving": the score moved through 0.62, never held it');
+  assert.ok(Math.abs(kc.data.timingCost - 1.5) < 0.15, 'costs about 1.5°: ' + kc.data.timingCost);
+  assert.ok(/costs about 1\.5/.test(kc.display), 'the line says what it costs: ' + kc.display);
+});
+
+test('issue 02: a cool morning shows OK with no timing-cost line', () => {
+  const an = cool().report.an;
+  assert.equal(an.verdict, 'good');
+  const kc = check(an, 'kControl');
+  assert.equal(kc.status, 'good');
+  assert.ok(!/costs about/.test(kc.display), 'ends 0.49: nothing to show: ' + kc.display);
+});
+
+test('issue 02: hot intake alone is a Watch, never a Stop', () => {
+  const an = drive('aug22-0950').report.an;
+  assert.equal(check(an, 'iat').status, 'watch', 'intake 64 °C with a 0.50 score');
+  assert.equal(an.verdict, 'watch');
+});
+
+test('issue 02: healthy drives carry no mixture Watch/Stop, no slip, no torque line', () => {
+  for (const id of ['aug30-1601', 'aug30-1529', 'sep01-0813', 'sep05-0756', 'aug22-0950']) {
+    const an = drive(id).report.an;
+    assert.ok(['good', 'nodata'].includes(check(an, 'wotAfr').status), id + ' mixture: ' + check(an, 'wotAfr').status);
+    const slip = check(an, 'slip');
+    assert.ok(slip, id + ' has a slip line');
+    assert.equal(slip.status, slip.status === 'nodata' ? 'nodata' : 'good', id + ' slip: ' + slip.status + ' ' + JSON.stringify(slip.data));
+    assert.equal(check(an, 'torque'), undefined, id + ' has no torque line');
+  }
+});
+
+test('issue 02: lean at full boost, held, is a Stop; lean part-load is nothing', () => {
+  const { log } = pulls();
+  const lean = cloneLog(log, (l) => {
+    // Hold 12.0 AFR for a full second inside the biggest pull, at 12 psi and up.
+    let best = null;
+    for (let i = 0; i < l.n; i++) if (l.load[i] >= 15 && (!best || l.load[i] > l.load[best])) best = i;
+    assert.ok(best != null, 'a pull to lean out');
+    for (let i = best; i < Math.min(l.n, best + 12) && l.load[i] >= 12; i++) l.lam[i] = 12.0 / 14.7;
+  });
+  const stop = K.checkDrive(lean).an;
+  const wot = check(stop, 'wotAfr');
+  assert.equal(wot.status, 'stop', '12.0 held at 12 psi and up: ' + wot.display);
+  assert.ok(/not arriving/.test(wot.fix), 'the Stop says the fuel is not arriving: ' + wot.fix);
+  const part = cloneLog(log, (l) => {
+    for (let i = 0; i < l.n; i++) if (l.load[i] >= 4 && l.load[i] < 8) l.lam[i] = 12.5 / 14.7;
+  });
+  assert.ok(['good', 'nodata'].includes(check(K.checkDrive(part).an, 'wotAfr').status), '12.5 AFR at 6 psi is outside the full-load rule');
+});
+
+test('issue 02: CVT slip is a Watch, never a Stop, and needs all four channels', () => {
+  const { log } = pulls();
+  const slipped = cloneLog(log, (l) => {
+    let at = -1;
+    for (let i = 0; i < l.n; i++) if (l.load[i] >= 10 && l.tpsCmd[i] >= 60 && l.vss[i] > 40) { at = i; break; }
+    assert.ok(at > 0, 'boosted cruising to slip in');
+    // A real slip is abrupt and held: revs jump and stay up while speed stands still.
+    l.rpm[at + 1] = l.rpm[at] + 300; l.rpm[at + 2] = l.rpm[at] + 300;
+    l.vss[at + 1] = l.vss[at]; l.vss[at + 2] = l.vss[at];
+  });
+  const an = K.checkDrive(slipped).an;
+  assert.equal(check(an, 'slip').status, 'watch', 'revs jump 300 rpm with no speed under boost');
+  assert.ok(!an.gates.some((g) => g.checks.some((c) => c.id === 'slip' && c.status === 'stop')), 'slip is Watch-only');
+});
+
+test('issue 02: "no hard driving" fires only when a high score holds from the start', () => {
+  const { log } = cool();
+  const stuck = cloneLog(log, (l) => {
+    for (let i = 0; i < l.n && l.t[i] < 400; i++) l.kControl[i] = i % 10 < 7 ? 0.65 : 0.66;
+  });
+  const kc = check(K.checkDrive(stuck).an, 'kControl');
+  assert.equal(kc.status, 'watch');
+  assert.equal(kc.data.noHard, true, 'starts 0.65 and holds it');
+  assert.ok(/No hard driving until it drops/.test(kc.display), kc.display);
+});
+
+test('issue 02: timing lost while lugging stays hidden when small or short', () => {
+  const lug1601 = hot().report.ins.lug;
+  assert.ok(lug1601.ignDeltaShown != null && lug1601.ignDeltaShown >= 1, 'Aug 30 16:01 shows a real loss: ' + lug1601.ignDeltaShown);
+  const tiny = K.checkDrive(K.readLog(tinyCruiseCsv()));
+  assert.equal(tiny.verdict, 'good', 'the short cruise is otherwise healthy: ' + tiny.verdict);
+  assert.equal(tiny.ins.lug.ignDeltaShown, null, 'reference band under 30 s: no loss shown');
+});
+
+test('issue 02: every safety line states its basis in one line, EN+VI', () => {
+  const fs = require('fs'), vm = require('vm');
+  const window = {};
+  vm.createContext(window); window.window = window;
+  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n-drive.js', 'utf8'), window);
+  const seen = new Set();
+  for (const id of ['aug30-1601', 'sep01-0813']) {
+    const an = drive(id).report.an;
+    for (const g of an.gates) for (const c of g.checks) {
+      assert.ok(c.basis && ['data', 'primary', 'physics', 'judgement', 'provisional'].includes(c.basis.t), c.id + ' carries a basis');
+      seen.add(c.id + ':' + c.basis.t);
+      for (const lang of ['en', 'vi']) {
+        const line = window.KTA_I18N[lang].drive.basisLine(c.basis);
+        assert.ok(line.length > 10, lang + ' ' + c.id);
+        if (c.basis.t === 'provisional') assert.ok(/provisional|tạm thời|chưa từng/i.test(line), lang + ' provisional says so: ' + line);
+      }
+    }
+  }
+  assert.ok([...seen].some((s) => /provisional/.test(s)), 'a provisional limit is exercised: ' + [...seen].join(','));
+});
+
+test('issue 02: the app answers E10 and the 21 psi map with the car\'s own numbers', () => {
+  const fs = require('fs');
+  const en = fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8');
+  assert.ok(!/2-4 ?% positive|2–4 ?% positive/.test(en), 'the refuted +3% E10 trim offset is gone');
+  assert.ok(/-0\.8 ?%/.test(en), 'cruise median trim −0.8% is quoted');
+  assert.ok(/0\.69|0\.73/.test(en), 'under-boost lambda vs target is quoted');
+  assert.ok(!/no knock margin/i.test(en), 'Starter 21 is no longer said to have no margin');
 });

@@ -100,6 +100,13 @@
   // ---------------------------------------------------------------------------
   // Reading one drive out of a normalized log
   // ---------------------------------------------------------------------------
+  function engineFlat(rep) {
+    // The drive check owns flat detection (its quality gate); the summary only
+    // carries the list. Fall back to a local read when the engine predates it.
+    if (rep && rep.an && Array.isArray(rep.an.flatChannels) && rep.an.flatChannels.length) return rep.an.flatChannels.slice();
+    if (rep && rep.ins && rep.ins.quality && Array.isArray(rep.ins.quality.flat) && rep.ins.quality.flat.length) return rep.ins.quality.flat.slice();
+    return null;
+  }
   function movingMask(log) {
     var n = log.n, has = log.has, m = new Uint8Array(n);
     for (var i = 0; i < n; i++) m[i] = has.vss ? (log.vss[i] >= 3 ? 1 : 0) : ((!has.rpm || log.rpm[i] >= 900) ? 1 : 0);
@@ -181,7 +188,7 @@
       mixLeanest: I.mix ? I.mix.leanest : null,
       mixTarget: I.mix ? I.mix.mapAfr : null,
       missing: (log.missing || []).slice(),
-      flat: flatChannels(log),
+      flat: engineFlat(rep) || flatChannels(log),
       calmSec: calmSeconds(log),
       hardPulls: I.boost ? I.boost.hard : 0,
       shakedown: 'none', // this drive's role: none | pending | passed
