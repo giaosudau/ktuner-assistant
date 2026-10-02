@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   var K = window.KTA, T = window.KTA_I18N.en, D = T.drive, F = K.fmt;
-  var ID = 'aug30-1601', COOL = 'sep01-0813', ACTION = 'revs';
+  var ID = 'aug30-1601', COOL = 'sep01-0813', PULLS = 'aug30-1529', ACTION = 'revs';
 
   var S = { step: 0, busy: '', err: '' };
   var reports = {}, sim = null, proofReal = null, proofSim = null, afterPlan = null;
@@ -209,8 +209,78 @@
     var low = R.plan.all.filter(function (x) { return x.id === 'lowBoost'; })[0];
     if (low) h += '<p class="small-note"><b>' + esc(D.actions.lowBoost.title) + '</b> ' + (low.blockedBy ? 'is still locked.' : 'is now unlocked, because the free fix was proven first.') + '</p>';
     h += '</section>';
+    h += '<div class="hint-card">Next: the simple tune for this car, the mods ranked by your own log, and the claims behind them, fact-checked.</div>';
     h += '<section class="card is-soft"><h2 class="card-title">Go further</h2><div class="act-buttons"><a class="btn" href="../index.html">Open the real app</a><a class="btn-ghost" href="../docs/PRODUCT-REVIEW.md">Why it works this way</a></div><p class="small-note">The real app takes your own TunerView CSV, never uploads it, keeps one action at a time across reloads, and adds the Ask panel, the map explorer and the Full method.</p></section>';
     return h;
+  }
+
+  // ---------------------------------------------------------------- build path (mods), from engine/kta-build.js
+  var BU = K.build, MAPF = window.KTA_MAP || { tables: {} };
+  function src(ids) {
+    return ids.map(function (s) { var x = BU.SOURCES[s]; return x.url ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.name) + '</a>' : esc(x.name); }).join(' · ');
+  }
+  function lvl(n) { return ['', 'low', 'medium', 'high'][n]; }
+  function buildCard(row, rank, I, F) {
+    var it = row.item, st = it.notForThisCar ? 'stop' : row.locks.length ? 'watch' : 'good';
+    var h = '<section class="card build-card st-' + st + '"><div class="act-head"><span class="rank">' + rank + '</span><div><h3 class="act-title">' + esc(it.title) + '</h3>';
+    h += '<div class="badges"><span class="badge">Effect ' + lvl(it.effect) + '</span><span class="badge">Effort ' + lvl(it.effort) + '</span><span class="badge">Risk ' + lvl(it.risk) + '</span></div></div></div>';
+    h += '<div class="pairs act-pairs"><b>Claimed gain</b><span>' + esc(it.gain) + '</span><b>What it changes</b><span>' + esc(it.change) + '</span>' + (it.prove ? '<b>Proof</b><span>' + esc(it.prove) + '</span>' : '') + '</div>';
+    if (it.tables.length) {
+      h += '<h4 class="sub-title">In your KTuner map</h4><ul class="map-list">';
+      it.tables.forEach(function (t) { var ok = !!MAPF.tables[t.id]; h += '<li class="' + (ok ? 'ok' : 'miss') + '"><code>' + esc(t.id) + '</code> ' + (ok ? '✓' : '✗ not in your file') + ' · ' + esc(t.what) + '</li>'; });
+      h += '</ul>';
+    }
+    if (it.steps) h += '<h4 class="sub-title">How to tune it</h4>' + list(it.steps);
+    if (it.features.length) h += '<h4 class="sub-title">KTuner settings outside the tables</h4><ul class="dots">' + it.features.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>';
+    if (row.locks.length) h += '<div class="lock-why"><b>' + (it.notForThisCar ? 'Not for this car' : 'Locked') + ':</b><ul class="dots">' + row.locks.map(function (l) { return '<li>' + esc(BU.lockText(l, I, F)) + '</li>'; }).join('') + '</ul></div>';
+    else if (it.notForThisCar) h += '<div class="lock-why"><b>Not for this car.</b></div>';
+    return h + '<p class="small-note">Sources: ' + src(it.sources) + '</p></section>';
+  }
+  function scrSimple() {
+    var R = reports[PULLS], I = R.ins, N = R.an.numbers, F = BU.mapFacts(MAPF), rows = BU.afmCompare(MAPF);
+    var drives = [[PULLS, reports[PULLS]], [ID, reports[ID]], [COOL, reports[COOL]]];
+    var worstTrim = Math.max.apply(null, drives.map(function (d) { return Math.abs(d[1].ins.trims.worst); }));
+    var h = '<section class="card is-key"><h2 class="card-title">1 · Air first: the AFM curve must match the intake housing</h2>';
+    h += '<p class="body-sm">Same sensor frequency, two curves from your map file. A street housing (PRL HVI) needs the <b>Factory</b> curve. With the <b>PRL Race</b> preset the ECU believes this much more air is coming in, fuels for it, and the trims would have to pull the right-hand column. They cannot go that far, so the check engine light comes on (a "too rich" or AFM range code).</p>';
+    h += '<div class="table l4"><div class="row head"><span>AFM Hz</span><span>Factory g/s</span><span>PRL Race g/s</span><span>Reads</span><span>Trim needed</span></div>';
+    rows.forEach(function (r) { h += '<div class="row"><span class="mono">' + r.hz.toLocaleString('en') + '</span><span class="mono">' + n(r.factory, 2) + '</span><span class="mono">' + n(r.prl, 2) + '</span><span class="mono">×' + n(r.ratio, 2) + '</span><span class="mono" style="color:var(--stop-fg)">' + n(r.trim) + ' %</span></div>'; });
+    h += '</div>';
+    h += '<div class="pairs act-pairs"><b>Your three drives</b><span>' + drives.map(function (d) { return D.examples[d[0]].title + ': worst cruise trim ' + n(d[1].ins.trims.worst) + ' %'; }).join(' · ') + '</span><b>Verdict</b><span>' + (worstTrim < 5 ? 'Inside ±5 %: your AFM curve matches your housing. No AFM change.' : 'Outside ±5 %: correct the AFM curve before anything else.') + '</span></div></section>';
+
+    h += '<div class="two"><section class="card"><h2 class="card-title">2 · E10: keep the targets</h2><p class="body-sm">The ECU and the A/F sensor work in lambda, so 14.7 on screen is still λ 1.00 on E10. The trims cover the small extra fuel; do not move it into the AFM table.</p>';
+    h += '<div class="pairs act-pairs"><b>Full load</b><span>Map asks ' + n(N.wotMapAfr) + ' AFR, measured ' + n(N.wotMeasuredAfr) + ': richer, so safe</span><b>Fuel</b><span>E10 RON95 ≈ US 91: the floor of most US maps</span></div></section>';
+    h += '<section class="card"><h2 class="card-title">3 · Ignition and boost: leave them to the basemap</h2><div class="pairs act-pairs"><b>Ignition</b><span>Knock Control ' + n(reports[ID].ins.kc.start, 2) + ' → ' + n(reports[ID].ins.kc.end, 2) + ' on the hot drive. Fix heat and lugging; never add timing on the road.</span>';
+    h += '<b>Boost</b><span>Map ' + n(F.normalPeak) + ' psi Normal / ' + n(F.ecoPeak) + ' psi ECO; real peak ' + n(I.boost.peakBoost) + ' psi with the wastegate ' + n(I.boost.wgAtPeak) + ' % open. ECO on hot days.</span></div></section></div>';
+
+    h += '<div class="two"><section class="card"><h2 class="card-title">Do</h2>' + list(BU.SIMPLE.doList) + '</section><section class="card"><h2 class="card-title">Do not</h2>' + list(BU.SIMPLE.dontList) + '</section></div>';
+    return h;
+  }
+
+  function scrBuild() {
+    var R = reports[PULLS], I = R.ins, P = BU.plan(R, MAPF), F = P.facts, need = BU.airFor(300), k = 0;
+    var h = '<div class="tiles">' +
+      tile(n(F.normalPeak) + ' / ' + n(F.ecoPeak) + ' psi', 'Your map: Normal / ECO boost target') +
+      tile(n(I.boost.peakBoost) + ' psi', 'Real peak boost (target ' + n(I.boost.peakTarget) + ')') +
+      tile(n(I.boost.wgAtPeak) + ' %', 'Wastegate open at that peak: turbo near its limit', I.boost.headroom === 'small') +
+      tile(n(I.boost.pullIat, 0) + ' °C', 'Intake air at the start of a pull', I.boost.pullIat > 45) +
+      tile(F.afm.factory.gs + ' g/s', 'Factory AFM curve end (' + F.afm.factory.hz.toLocaleString('en') + ' Hz); 300 whp needs ≈ ' + need) + '</div>';
+    h += '<div class="hint-card">Ranked the same way as the Drive check (3 × effect − 2 × effort − 2 × risk), then locked by what <b>this</b> log and <b>this</b> map say. Every table below is looked up in your map file.</div>';
+    h += '<h2 class="card-title">Do now</h2>';
+    P.now.forEach(function (r) { h += buildCard(r, ++k, I, F); });
+    h += '<h2 class="card-title">Later, when the lock clears</h2>';
+    P.later.forEach(function (r) { h += buildCard(r, ++k, I, F); });
+    h += '<h2 class="card-title">Not for a CVT on E10 RON95</h2>';
+    P.no.forEach(function (r) { h += buildCard(r, ++k, I, F); });
+    return h;
+  }
+  var VERDICT = { 'true': ['good', 'True'], partly: ['watch', 'Partly'], unverified: ['nodata', 'Not verified'], wrongForYou: ['stop', 'Not on your car'] };
+  function scrClaims() {
+    var h = '<section class="card"><h2 class="card-title">What people say, checked</h2><div class="claims">';
+    BU.CLAIMS.forEach(function (c) {
+      var v = VERDICT[c.verdict];
+      h += '<div class="claim"><span class="pill st-' + v[0] + '">' + esc(v[1]) + '</span><div><b>' + esc(c.claim) + '</b><p class="body-sm">' + esc(c.note) + '</p><small class="muted">Confidence ' + esc(c.conf) + ' · ' + src(c.src) + '</small></div></div>';
+    });
+    return h + '</div><p class="small-note">Confidence: high = the tuner\'s own page, two sources agreeing, or your log; medium = a vendor\'s own dyno; low = forum or social posts. Fetched 2026-10-01. CivicX, CivicXI, honda-tech, hondata.com and reddit block crawlers, so those are search snippets only.</p></section>';
   }
 
   // ---------------------------------------------------------------- tour
@@ -221,7 +291,10 @@
     { nav: 'Do it', who: 'The owner', title: 'Start it, then go drive', say: 'Pressing Start stores a small snapshot of this drive in the browser. It survives a reload. Only one action is open at a time, so the next log can prove it.' },
     { nav: 'Honest proof', who: 'The engine refuses to guess', title: 'A cooler drive cannot prove a heat fix', say: 'This is the real Sep 1 morning log. Lugging is lower, but intake air is much cooler, so the app says it cannot tell. It never credits the weather as a tune gain.' },
     { nav: 'It worked', who: 'Like for like', title: 'A hot drive, driven properly', say: 'The same route in the same heat, with revs kept up. This drive is simulated for the demo, built from the real one. The engine compares lugging and the Knock Control climb and says keep.' },
-    { nav: 'What moved', who: 'The loop closes', title: 'Done, and the list moved up', say: 'The proven action is marked done. The list is recomputed from the history, so items that were waiting on it can unlock. Next time: check, one thing, prove it.' }
+    { nav: 'What moved', who: 'The loop closes', title: 'Done, and the list moved up', say: 'The proven action is marked done. The list is recomputed from the history, so items that were waiting on it can unlock. Next time: check, one thing, prove it.' },
+    { nav: 'Simple tune', who: 'Do less, get most', title: 'Air, then fuel, then leave the rest', say: 'What a tuner changes on this car without a dyno. First the AFM curve must match the intake housing: a PRL HVI with the PRL Race preset reads about 1.4 times the real air, which is why that combination turns the check engine light on. Your three drives keep trims inside ±5 %, so your curve is right. E10 needs no hand fueling, and ignition and boost stay with the basemap.' },
+    { nav: 'Build path', who: 'What to buy next', title: 'Mods, ranked by your own log', say: 'The Aug 30 15:29 drive has eight hard pulls. At 19.9 psi the wastegate is almost shut, so the stock turbo is near its limit. That ranks cooler air and a freer exhaust first, locks the 24 psi maps, and rules out a big turbo on this CVT.' },
+    { nav: 'Fact check', who: 'Claims vs sources', title: 'What tuners and forums say', say: 'Yes, TSP Map 3 asks for 24 psi on the non-Si CVT. Most 300 hp turbo results come from manual cars on 93 octane or ethanol. Each claim shows its source and how much to trust it.' }
   ];
 
   function stageFor(s) {
@@ -233,7 +306,10 @@
       case 3: return scrNow(R, true) + scrLoadNext();
       case 4: return scrProveReal() + '<div class="hint-card">Now try the hot drive that is driven the way the action says.</div><div class="act-buttons"><button type="button" class="btn pulse" data-go="sim">Load the simulated hot drive</button></div>';
       case 5: return scrProveSim();
-      default: return scrDone();
+      case 6: return scrDone();
+      case 7: return scrSimple();
+      case 8: return scrBuild();
+      default: return scrClaims();
     }
   }
 
@@ -243,9 +319,10 @@
     h += '<ol class="tour-steps">' + STEPS.map(function (x, k) { return '<li class="' + (k === S.step ? 'is-here' : (k < S.step ? 'is-past' : '')) + '"><button type="button" data-step="' + k + '"><span class="n">' + (k < S.step ? '✓' : k + 1) + '</span>' + esc(x.nav) + '</button></li>'; }).join('') + '</ol>';
     h += '<div class="say" aria-live="polite"><span class="who">' + esc(st.who) + '</span><h2>' + esc(st.title) + '</h2><p>' + esc(st.say) + '</p></div>';
     h += '<div class="tour-nav"><button type="button" class="btn-ghost" data-nav="-1"' + (S.step === 0 ? ' disabled' : '') + '>Back</button><button type="button" class="btn" data-nav="1"' + (S.step === STEPS.length - 1 ? ' disabled' : '') + '>Next</button></div><div class="kbd-hint">Use ← and → keys</div></aside>';
-    h += '<main class="stage" id="main"><div class="stage-top"><h1>' + esc(D.title) + '</h1></div>';
+    var loop = S.step <= 6;
+    h += '<main class="stage" id="main"><div class="stage-top"><h1>' + esc(loop ? D.title : 'Tune and build: what to change next') + '</h1>' + (loop ? '' : '<span class="real-tag">Your map · your logs · sourced</span>') + '</div>';
     if (S.err) h += '<div class="banner stop" role="alert">' + esc(S.err) + '</div>';
-    h += loop3();
+    if (loop) h += loop3();
     h += S.busy ? '<p class="busy" role="status">Reading the log…</p>' : stageFor(S.step);
     root.innerHTML = h + '</main>';
     var m = document.getElementById('main'); if (m) m.scrollIntoView({ block: 'start' });
@@ -256,6 +333,7 @@
     var need = [];
     if (to >= 1) need.push(report(ID));
     if (to >= 4) need.push(report(COOL));
+    if (to >= 7) need.push(report(PULLS));
     S.busy = to >= 1 && !reports[ID] ? ID : ''; if (S.busy) render();
     return Promise.all(need).then(function () {
       var before = reports[ID];

@@ -14,7 +14,7 @@
 
   var state = merge(defaults(), load());
   var slots = {};            // logs live only in this tab: { baseline, afm, wot, cool, hot, gain }
-  var ui = { copied: '', error: '', yaw: -38, pitch: 58, topics: { 'topic-0': true }, explain: {}, driveErr: '', driveBusy: '', aiOpen: false };
+  var ui = { copied: '', error: '', yaw: -38, pitch: 58, topics: { 'topic-0': true }, explain: {}, driveErr: '', driveBusy: '', aiOpen: false, carMsg: '', carErr: '', flashForm: null, flashErr: '', folderBusy: false };
   var drives = { current: null, next: null, proof: null };   // drive-check logs live only in this tab
   var ai = { key: '', models: [], caps: {}, busy: false, result: null, q: '', error: '' };
   try { if (state.ai && state.ai.remember) ai.key = localStorage.getItem(STORE + '-key') || ''; } catch (e) { /* storage blocked */ }
@@ -32,7 +32,7 @@
       review: { name: '', uses: 'KTuner', decision: '', notes: '', logs: false, diff: false, untouched: false, mech: false },
       page: '', mapTable: 'WOT_Enrich_L', mapView: 'grid', mapShow: 'after',
       plan: { active: null, history: [] }, ai: { model: '', remember: false }, seenDrive: false,
-      lastSlot: ''
+      car: null, lastSlot: ''
     };
   }
   function merge(base, extra) {
@@ -92,8 +92,12 @@
   }
   function checkText(c) {
     var d = T().checks[c.id];
-    if (!d) return { label: c.label, display: c.display, fix: c.fix };
     var data = c.data || {};
+    if (data.flat) {
+      var D = T().drive;
+      return { label: d ? d.label : c.label, display: D.unavailableLine(data, F, T()), fix: D.unavailableFix(data, F, T()) };
+    }
+    if (!d) return { label: c.label, display: c.display, fix: c.fix };
     return { label: d.label, display: d.display(data, F), fix: c.status === 'good' || c.status === 'nodata' ? '' : d.fix(data, F) };
   }
   function refText(c) {
@@ -846,17 +850,20 @@
   }
 
   function viewDrivePage() {
-    var t = T(), D = t.drive, cur = drives.current;
+    var t = T(), D = t.drive, C = t.car, cur = drives.current;
     var h = '<main class="main drive" id="main" tabindex="-1">' + pageHead(D.eyebrow, D.title, D.goal);
     h += viewLoop3(D, cur);
+    if (cur && cur.car) h += viewCarBanner(C, D, cur);
     if (ui.driveErr) h += '<div class="banner stop" role="alert">' + esc(ui.driveErr) + '</div>';
     // an action in progress survives a reload: its proof card comes first, even before a drive is loaded
     if (!cur) return h + (state.plan.active ? viewProve(D) : '') + viewDriveStart(D) + '</main>';
     var R = cur.report, I = R.ins;
+    h += viewCarDrive(C, D, cur);
     h += viewSafe(D, R);
     if (state.plan.active) h += viewProve(D);
     h += viewNow(D, R);
     h += viewQueue(D, R);
+    h += viewCarHistory(C);
     h += '<section class="card"><div class="card-row"><h2 class="card-title">' + esc(D.feelTitle) + '</h2></div><p class="lead-sm"><b>' + esc(D.feel(I.accel && I.accel.headline, F)) + '</b></p>' + graphCard('accel', accelSvg(I), D) + '<p class="small-note">' + esc(D.feelNote) + '</p></section>';
     h += '<section class="card"><div class="card-row"><h2 class="card-title">' + esc(D.graphsTitle) + '</h2></div><p class="muted" style="margin:0">' + esc(D.graphsNote) + '</p>';
     h += graphCard('kc', kcSvg(I), D) + graphCard('timing', timingSvg(I), D) + graphCard('afr', afrSvg(I), D) + '</section>';
@@ -879,6 +886,133 @@
       h += '<li class="loop-step' + (s.done ? ' is-done' : '') + (s.active ? ' is-active' : '') + '"><span class="loop-n">' + (s.done ? ICON.check : k + 1) + '</span><span><b>' + esc(D.loop[k].title) + '</b><small>' + esc(s.line) + '</small></span></li>';
     });
     return h + '</ol>';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Car history views: banner (block 0), drive card (block 1), history (block 4)
+  // ---------------------------------------------------------------------------
+  function carVerdictPill(v) {
+    var t = T();
+    return '<span class="pill st-' + v + '">' + sIcon(v, 14) + esc(t.status[v] || v) + '</span>';
+  }
+  function viewCarBanner(C, D, cur) {
+    var c = cur.car, h = '';
+    if (!c || c.tooShort) return '';
+    if (c.flashCause) {
+      h += '<div class="banner stop" role="alert"><b>' + esc(C.flashCauseTitle) + '</b> ' + esc(C.flashCauseWhy) +
+        '<br><span>' + esc(c.flashCause.map) + ' · ' + esc(c.flashCause.advice) + '</span></div>';
+    }
+    if (c.isShakedown && !c.shakedown.passed) {
+      var done = Math.floor(c.shakedown.calmSec / 60), total = Math.round(c.shakedown.needed / 60);
+      h += '<div class="banner warn" role="status"><b>' + esc(C.bannerShakedown(done, total)) + '</b>';
+      if (c.hardDrivingWatch) h += '<br><span>' + esc(C.bannerHard) + '</span>';
+      h += '</div>';
+    } else if (c.isShakedown && c.shakedown.passed) {
+      h += '<div class="banner good" role="status">' + esc(C.bannerPassed) + '</div>';
+    }
+    if (c.unexplained && c.unexplained.state === 'open') {
+      var why = c.unexplained.reasons.map(function (r) { return C['why' + r.charAt(0).toUpperCase() + r.slice(1)] || r; });
+      h += '<div class="banner warn" role="alert"><b>' + esc(C.bannerUnexplained) + '</b> ' + esc(why.join('; ') + '.') +
+        '<div class="act-buttons">' +
+        '<button type="button" class="btn" data-act="carAnswer" data-arg="flashed">' + esc(C.answerFlashed) + '</button>' +
+        '<button type="button" class="btn-ghost" data-act="carAnswer" data-arg="fuel">' + esc(C.answerFuel) + '</button>' +
+        '<button type="button" class="btn-ghost" data-act="carAnswer" data-arg="neither">' + esc(C.answerNeither) + '</button></div>' +
+        '<p class="small-note">' + esc(C.modeHint) + '</p></div>';
+    } else if (c.unexplainedWatch) {
+      h += '<div class="banner warn" role="status">' + esc(C.unexplainedWatch) + '</div>';
+    } else if (c.unexplained && c.unexplained.state === 'answered-fuel') {
+      h += '<div class="banner warn" role="status">' + esc(C.fuelAdvice) + '</div>';
+    }
+    return h;
+  }
+  function viewCarDrive(C, D, cur) {
+    var c = cur.car, R = cur.report, I = R.ins, t = T();
+    var sum = c && !c.tooShort ? c.summary : null;
+    var h = '<section class="card" id="drive-card"><div class="card-row"><h2 class="card-title">' + esc(C.driveTitle) + '</h2>' + carVerdictPill(R.an.verdict) + '</div>';
+    var when = sum && isNum(sum.start) ? fmtCarDate(sum.start) : esc(cur.name || '');
+    var mins = sum ? sum.duration : I.meta.duration;
+    var heat = sum ? (sum.cool ? C.cool : (sum.hot ? C.hot : C.mild)) : (I.heat.cool ? C.cool : (I.heat.hot ? C.hot : C.mild));
+    h += '<p class="body-sm">' + esc(when + ' · ' + F.num(mins / 60, 0) + ' min · ' + heat) + (sum && sum.hotRestart ? ' · ' + esc(C.hotRestart) : '') + '</p>';
+    var mapLine = c && c.map.recorded ? esc(C.mapRecorded(c.map.name, fmtFlashDate(c.map.since))) : esc(C.mapMissing);
+    h += '<p class="body-sm">' + mapLine + ' <button type="button" class="link-btn" data-act="flashNew">' + esc(C.addFlash) + '</button></p>';
+    var tgt = sum ? sum.boostTarget : (I.boost ? I.boost.peakTarget : null);
+    h += '<p class="small-note">' + esc(isNum(tgt) ? C.boostTarget(F.num(tgt, 1)) : C.boostTargetNone) + '</p>';
+    var q = c && c.tooShort ? C.qualityShort : ((I.quality.missing && I.quality.missing.length) ? C.qualityMissing : (((sum && sum.flat.length) ? C.qualityFlat : C.qualityGood)));
+    h += '<p class="small-note">' + esc(C.logQuality(q)) + '</p>';
+    return h + '</section>';
+  }
+  function viewCarHistory(C) {
+    var s = carState(), rows = K.carTableRows(s), base = K.carBaseline(s);
+    var stops = rows.filter(function (r) { return r.verdict === 'stop'; }).length;
+    var since = rows.length ? fmtCarDate(rows[0].start) : '';
+    var mapName = rows.length ? (rows[rows.length - 1].map || null) : null;
+    var h = '<section class="card" id="car-history"><div class="card-row"><h2 class="card-title">' + esc(C.historyTitle) + '</h2></div>';
+    if (!rows.length) {
+      h += '<p class="body-sm"><b>' + esc(C.historyEmpty) + '</b></p>';
+    } else {
+      h += '<p class="body-sm"><b>' + esc(C.historyLine(rows.length, since, C.stops(stops), mapName || C.mapMissing)) + '</b></p>';
+      h += '<p class="small-note">Baseline ' + esc(F.num(base.value, 2)) + (base.n < 3 ? ' · 0.49 ' : '') + '</p>';
+      h += '<div class="table car-table"><div class="row head"><span>' + C.tableHeaders.map(esc).join('</span><span>') + '</span><span></span></div>';
+      rows.forEach(function (r) {
+        h += '<div class="row"><span class="mono">' + esc(fmtCarDate(r.start)) + '</span>' +
+          '<span>' + carVerdictPill(r.verdict) + '</span>' +
+          '<span class="mono">' + esc(isNum(r.kcEnd) ? F.num(r.kcEnd, 2) : '-') + '</span>' +
+          '<span class="mono">' + esc(isNum(r.trimWorst) ? F.signed(r.trimWorst, 1, ' %') : '-') + '</span>' +
+          '<span class="mono">' + esc(isNum(r.iatMoving) ? F.num(r.iatMoving, 0) + ' °C' : '-') + '</span>' +
+          '<span class="mono">' + esc(isNum(r.cvtPeak) ? F.num(r.cvtPeak, 0) + ' °C' : '-') + '</span>' +
+          '<span>' + esc(r.map || '-') + '</span>' +
+          '<span><button type="button" class="link-btn" data-act="carHide" data-arg="' + esc(r.id) + '">' + esc(C.hide) + '</button></span></div>';
+      });
+      h += '</div><p class="small-note">' + esc(C.hideNote) + '</p>';
+    }
+    var hidden = (s.hidden || []).filter(function (id) { return s.drives[id]; });
+    if (hidden.length) {
+      h += '<details><summary>' + esc(C.unhide + ' (' + hidden.length + ')') + '</summary><ul class="dots">';
+      hidden.forEach(function (id) {
+        h += '<li>' + esc(fmtCarDate(s.drives[id].start)) + ' <button type="button" class="link-btn" data-act="carUnhide" data-arg="' + esc(id) + '">' + esc(C.unhide) + '</button></li>';
+      });
+      h += '</ul></details>';
+    }
+    // Flashes
+    h += '<h3 class="sub-title">' + esc(C.flashesTitle) + '</h3>';
+    if (!s.flashes.length) h += '<p class="small-note">' + esc(C.flashesEmpty) + '</p>';
+    else {
+      h += '<ul class="dots">';
+      s.flashes.forEach(function (f) {
+        h += '<li><b>' + esc(f.map) + '</b> · ' + esc(fmtFlashDate(f.time)) + ' · ' + esc(C.changed[f.changed] || f.changed) +
+          (f.note ? ' · ' + esc(f.note) : '') +
+          ' <button type="button" class="link-btn" data-act="flashEdit" data-arg="' + esc(f.id) + '">' + esc(C.flashEdit) + '</button>' +
+          ' <button type="button" class="link-btn" data-act="flashDelete" data-arg="' + esc(f.id) + '">' + esc(C.flashDelete) + '</button></li>';
+      });
+      h += '</ul>';
+    }
+    if (!ui.flashForm) h += '<div class="act-buttons"><button type="button" class="btn-ghost" data-act="flashNew">' + esc(C.flashNew) + '</button></div>';
+    else h += viewFlashForm(C);
+    // Folder, export, import
+    h += '<h3 class="sub-title">' + esc(C.loadFolder) + '</h3>';
+    h += '<div class="loader"><label class="file-btn">' + ICON.upload + esc(C.loadFolder) +
+      '<input type="file" data-folder="1" webkitdirectory multiple aria-label="' + esc(C.loadFolder) + '"></label>';
+    if (ui.folderBusy) h += '<span class="muted" role="status">' + esc(T().drive.reading) + '</span>';
+    h += '</div><p class="small-note">' + esc(C.loadNote) + '</p><p class="small-note">' + esc(C.serveHint) + '</p>';
+    h += '<div class="act-buttons"><button type="button" class="btn-ghost" data-act="carExport">' + esc(C.exportBtn) + '</button>' +
+      '<label class="file-btn btn-ghost">' + esc(C.importBtn) + '<input type="file" data-import="1" accept=".json,application/json" aria-label="' + esc(C.importBtn) + '"></label></div>';
+    if (!STORE_OK) h += '<p class="small-note">' + esc(C.storeBlocked) + '</p>';
+    if (ui.carMsg) h += '<p class="body-sm">' + esc(ui.carMsg) + '</p>';
+    if (ui.carErr) h += '<div class="banner stop" role="alert">' + esc(ui.carErr) + '</div>';
+    return h + '</section>';
+  }
+  function viewFlashForm(C) {
+    var f = ui.flashForm;
+    var h = '<div class="form" id="flash-form"><label>' + esc(C.formTime) + '<input type="datetime-local" data-flash="time" value="' + esc(toLocalInput(f.time)) + '"></label>';
+    h += '<label>' + esc(C.formMap) + '<input type="text" data-flash="map" value="' + esc(f.map || '') + '" placeholder="Starter 21"></label>';
+    h += '<label>' + esc(C.formChanged) + '<select data-flash="changed">' + ['afm', 'boost', 'fuel', 'other'].map(function (k) {
+      return '<option value="' + k + '"' + (f.changed === k ? ' selected' : '') + '>' + esc(C.changed[k]) + '</option>';
+    }).join('') + '</select></label>';
+    h += '<label>' + esc(C.formNote) + '<input type="text" data-flash="note" value="' + esc(f.note || '') + '"></label>';
+    if (ui.flashErr) h += '<p class="small-note" role="alert" style="color:var(--stop-fg)">' + esc(ui.flashErr) + '</p>';
+    h += '<div class="act-buttons"><button type="button" class="btn" data-act="flashSave">' + esc(C.formSave) + '</button>' +
+      '<button type="button" class="btn-ghost" data-act="flashCancel">' + esc(C.formCancel) + '</button></div></div>';
+    return h;
   }
 
   function loaderHtml(D, which, label) {
@@ -912,9 +1046,14 @@
     return h + '</div></section>';
   }
 
+  function shakeOpen() {
+    var cur = drives.current;
+    return !!(cur && cur.car && !cur.car.tooShort && cur.car.isShakedown && !cur.car.shakedown.passed);
+  }
   function viewNow(D, R) {
     var P = R.plan, A = state.plan.active;
     var h = '<section class="card is-key now-card"><div class="card-row"><h2 class="card-title">' + esc(D.nowTitle) + '</h2></div>';
+    if (shakeOpen()) return h + '<p class="lead-sm"><b>' + esc(T().car.finishShakedown) + '</b></p></section>';
     var a = P.now[0];
     if (!a) return h + '<p class="lead-sm"><b>' + esc(D.noActions) + '</b></p></section>';
     var x = actionText(a), isActive = A && A.id === a.id;
@@ -934,6 +1073,7 @@
   function viewQueue(D, R) {
     var P = R.plan, A = state.plan.active;
     var h = '<section class="card"><h2 class="card-title">' + esc(D.nextTitle) + '</h2>';
+    if (shakeOpen()) return h + '<p class="muted" style="margin:0">' + esc(T().car.finishShakedown) + '</p></section>';
     if (!P.next.length) h += '<p class="muted" style="margin:0">-</p>';
     P.next.forEach(function (a, k) {
       var x = actionText(a), isActive = A && A.id === a.id;
@@ -965,6 +1105,10 @@
       h += '<p class="body-sm">' + esc(D.loop[2].ready) + '</p>' + loaderHtml(D, 'next', D.loadNext);
       h += '<h3 class="sub-title">' + esc(D.asNext) + '</h3>' + examplesHtml(D, 'next');
       return h + '</section>';
+    }
+    if (A && A.beforeId && nx && nx.car && !nx.car.tooShort) {
+      var spans = K.carProofSpansFlash(state.car, A.beforeId, nx.car.identity);
+      if (spans.spans) h += '<div class="banner warn" role="status">' + esc(T().car.proofBlocked) + '</div>';
     }
     var vs = { keep: 'good', partial: 'watch', retry: 'watch', inconclusive: 'nodata', undo: 'stop', stop: 'stop' }[P.verdict];
     h += '<div class="prove-verdict tinted st-' + vs + '">' + sIcon(vs, 22) + '<div><b>' + esc(D.verdicts[P.verdict]) + '</b><small>' + esc(D.verdictHelp[P.verdict]) + '</small></div></div>';
@@ -1084,16 +1228,53 @@
     return h + '</section>';
   }
 
+  // ---------------------------------------------------------------------------
+  // Car history (engine/kta-car.js): every checked drive is remembered in the
+  // browser. Pure math in the engine; here only storage, files and screens.
+  // ---------------------------------------------------------------------------
+  var STORE_OK = (function () { try { localStorage.setItem(STORE + '-t', '1'); localStorage.removeItem(STORE + '-t'); return true; } catch (e) { return false; } })();
+  function carState() { if (!state.car) state.car = K.carEmpty(); return state.car; }
+  function refreshCarRec(rec) {
+    if (!rec || !rec.car || rec.car.tooShort) return;
+    var fresh = K.carReport(state.car, rec.car.identity);
+    if (fresh) rec.car = fresh;
+  }
+  function fmtCarDate(ms) {
+    if (!isNum(ms)) return '-';
+    try {
+      var parts = new Intl.DateTimeFormat(state.lang === 'vi' ? 'vi' : 'en-GB', {
+        weekday: 'short', day: 'numeric', month: state.lang === 'vi' ? 'numeric' : 'short',
+        hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Ho_Chi_Minh'
+      }).formatToParts(ms);
+      var p = {};
+      parts.forEach(function (x) { p[x.type] = x.value; });
+      var hm = (p.hour || '00') + ':' + (p.minute || '00');
+      if (state.lang === 'vi') return (p.weekday || '') + ' ' + (p.day || '') + '/' + (p.month || '') + ' · ' + hm;
+      return (p.weekday || '') + ' ' + (p.day || '') + ' ' + (p.month || '') + ' · ' + hm;
+    } catch (e) { return new Date(ms).toLocaleString(); }
+  }
+  function fmtFlashDate(ms) { return fmtCarDate(ms); }
+  function toLocalInput(ms) {
+    if (!isNum(ms)) return '';
+    var d = new Date(ms), pad = function (v) { return String(v).padStart(2, '0'); };
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+  function fromLocalInput(str) {
+    var t = new Date(String(str || '').replace('T', ' ')).getTime();
+    return isNum(t) ? t : NaN;
+  }
+
   // ---- loading drives
   function ingestDrive(text, name, example, which) {
     try {
       var parsed = K.parseCSV(text);
       var log = K.buildLog(parsed, K.detectChannels(parsed.headers, parsed.columns));
-      var report = K.checkDrive(log, { history: state.plan.history });
-      var rec = { name: name || '', example: example || '', log: log, report: report };
+      var out = K.carIngest(carState(), log, { fileName: name || '' }, { history: state.plan.history });
+      state.car = out.state; save();
+      var rec = { name: name || '', example: example || '', log: log, report: out.report.drive, car: out.report };
       if (which === 'next' && state.plan.active) {
         drives.next = rec;
-        drives.proof = K.proveAction(state.plan.active.id, state.plan.active.before, report);
+        drives.proof = K.proveAction(state.plan.active.id, state.plan.active.before, rec.report);
       } else { drives.current = rec; drives.next = null; drives.proof = null; }
       ai.result = null; ai.q = '';
       ui.driveErr = '';
@@ -1111,6 +1292,58 @@
     // let the busy state paint before a big log (7 MB, 50,000 rows) is parsed
     reader.onload = function () { setTimeout(function () { ingestDrive(String(reader.result), file.name, '', which); }, 30); };
     reader.onerror = function () { ui.driveBusy = ''; ui.driveErr = T().errors.read(file.name); render(); };
+    reader.readAsText(file);
+  }
+  function silentIngest(text, name) {
+    var parsed = K.parseCSV(text);
+    var log = K.buildLog(parsed, K.detectChannels(parsed.headers, parsed.columns));
+    var out = K.carIngest(carState(), log, { fileName: name }, { history: state.plan.history });
+    state.car = out.state; save();
+    return out.report;
+  }
+  function reingestCurrent() {
+    var cur = drives.current;
+    if (!cur || !cur.log || !cur.car || cur.car.tooShort || !cur.car.summary) return;
+    var out = K.carIngest(state.car, cur.log, { fileName: cur.car.summary.fileName }, { history: state.plan.history });
+    state.car = out.state; save();
+    cur.report = out.report.drive;
+    cur.car = out.report;
+  }
+  function loadFolder(list) {
+    var files = Array.prototype.filter.call(list || [], function (f) { return /\.csv$/i.test(f.name); })
+      .sort(function (a, b) { return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0); });
+    if (!files.length) { ui.carErr = T().drive.exampleError; render(); return; }
+    ui.folderBusy = true; ui.carMsg = ''; ui.carErr = ''; render();
+    var i = 0, n = 0;
+    (function next() {
+      if (i >= files.length) {
+        ui.folderBusy = false;
+        ui.carMsg = T().car.loaded(n);
+        refreshCarRec(drives.current); refreshCarRec(drives.next);
+        save(); render();
+        return;
+      }
+      var file = files[i], reader = new FileReader();
+      reader.onload = function () { try { silentIngest(String(reader.result), file.name); n++; } catch (e) { /* one bad log never stops the folder */ } i++; setTimeout(next, 0); };
+      reader.onerror = function () { i++; setTimeout(next, 0); };
+      reader.readAsText(file);
+    })();
+  }
+  function importHistory(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var out = K.carImport(carState(), JSON.parse(String(reader.result)));
+        state.car = out.state; save();
+        if (out.error === 'future-version') { ui.carErr = T().car.importFuture(out.futureVersion); ui.carMsg = ''; }
+        else if (out.error) { ui.carErr = T().car.importError; ui.carMsg = ''; }
+        else { ui.carMsg = T().car.imported(out.added.drives, out.added.flashes); ui.carErr = ''; }
+        refreshCarRec(drives.current); refreshCarRec(drives.next);
+      } catch (e) { ui.carErr = T().car.importError; }
+      render();
+    };
+    reader.onerror = function () { ui.carErr = T().errors.read(file.name); render(); };
     reader.readAsText(file);
   }
   function decodeExample(ex) {
@@ -1401,13 +1634,67 @@
     },
     example: function (arg) { var p = String(arg).split(':'); loadExample(p[0], p[1] === 'next' ? 'next' : 'current'); },
     driveReset: function () { drives.current = null; drives.next = null; drives.proof = null; ai.result = null; ui.driveErr = ''; render({ top: true }); },
+    carAnswer: function (arg) {
+      var cur = drives.current, C = T().car;
+      if (!cur || !cur.car || cur.car.tooShort || !cur.car.unexplained || cur.car.unexplained.state !== 'open') return;
+      if (['flashed', 'fuel', 'neither'].indexOf(arg) < 0) return;
+      state.car = K.carAnswer(state.car, cur.car.identity, arg);
+      if (arg === 'flashed') {
+        ui.flashForm = { id: null, timeStr: toLocalInput(cur.car.summary.start - 60000), map: '', changed: 'other', note: '' };
+        ui.flashErr = '';
+      }
+      ui.carMsg = ''; ui.carErr = '';
+      save(); refreshCarRec(cur); render();
+      if (arg === 'flashed') { var f = document.getElementById('flash-form'); if (f) f.scrollIntoView({ block: 'start' }); }
+    },
+    carHide: function (id) { state.car = K.carHide(state.car, id); save(); refreshCarRec(drives.current); refreshCarRec(drives.next); render(); },
+    carUnhide: function (id) { state.car = K.carUnhide(state.car, id); save(); refreshCarRec(drives.current); refreshCarRec(drives.next); render(); },
+    carExport: function () { download('car-history-' + today() + '.json', JSON.stringify(K.carExport(carState()), null, 2), 'application/json;charset=utf-8'); },
+    flashNew: function () {
+      ui.flashForm = { id: null, timeStr: toLocalInput(Date.now()), map: '', changed: 'other', note: '' };
+      ui.flashErr = ''; render();
+      var f = document.getElementById('flash-form'); if (f) f.scrollIntoView({ block: 'start' });
+    },
+    flashEdit: function (id) {
+      var f = carState().flashes.filter(function (x) { return x.id === id; })[0];
+      if (!f) return;
+      ui.flashForm = { id: f.id, timeStr: toLocalInput(f.time), map: f.map, changed: f.changed, note: f.note || '' };
+      ui.flashErr = ''; render();
+      var el = document.getElementById('flash-form'); if (el) el.scrollIntoView({ block: 'start' });
+    },
+    flashDelete: function (id) {
+      var C = T().car, s = carState();
+      var f = s.flashes.filter(function (x) { return x.id === id; })[0];
+      if (!f) return;
+      try {
+        if (!window.confirm(C.flashDeleteAsk(f.map))) return;
+      } catch (e) { return; }
+      state.car = K.carDeleteFlash(s, id);
+      ui.carMsg = ''; ui.carErr = '';
+      save(); refreshCarRec(drives.current); refreshCarRec(drives.next); render();
+    },
+    flashCancel: function () { ui.flashForm = null; ui.flashErr = ''; render(); },
+    flashSave: function () {
+      var C = T().car, f = ui.flashForm;
+      if (!f) return;
+      var ms = fromLocalInput(f.timeStr);
+      if (!isNum(ms)) { ui.flashErr = C.formNeedTime; render(); return; }
+      if (!f.map || !String(f.map).trim()) { ui.flashErr = C.formNeedMap; render(); return; }
+      try {
+        if (f.id) state.car = K.carEditFlash(state.car, f.id, { time: ms, map: String(f.map).trim(), changed: f.changed, note: f.note || '' });
+        else state.car = K.carRecordFlash(state.car, { time: ms, map: String(f.map).trim(), changed: f.changed, note: f.note || '' }).state;
+      } catch (e) { ui.flashErr = String((e && e.message) || e); render(); return; }
+      ui.flashForm = null; ui.flashErr = ''; ui.carMsg = ''; ui.carErr = '';
+      reingestCurrent();
+      save(); render();
+    },
     startAction: function (id) {
       var cur = drives.current;
       if (!cur) return;
       var a = cur.report.plan.all.filter(function (x) { return x.id === id; })[0];
       if (!a) return;
       var c = a.tier === 'safety' ? findCheck(cur.report.an, a.check) : null;
-      state.plan = { active: { id: id, label: c ? checkText(c).label : '', startedAt: today(), beforeName: driveName(cur), before: K.proofSnapshot(cur.report) }, history: state.plan.history || [] };
+      state.plan = { active: { id: id, label: c ? checkText(c).label : '', startedAt: today(), beforeName: driveName(cur), beforeId: cur.car && !cur.car.tooShort ? cur.car.identity : null, before: K.proofSnapshot(cur.report) }, history: state.plan.history || [] };
       drives.next = null; drives.proof = null;
       save(); render();
       var p = document.getElementById('prove');
@@ -1467,6 +1754,8 @@
   document.addEventListener('change', function (e) {
     var el = e.target;
     if (el.hasAttribute('data-drive')) { loadDriveFile(el.files && el.files[0], el.getAttribute('data-drive') === 'next' ? 'next' : 'current'); el.value = ''; return; }
+    if (el.hasAttribute('data-folder')) { loadFolder(el.files); el.value = ''; return; }
+    if (el.hasAttribute('data-import')) { importHistory(el.files && el.files[0]); el.value = ''; return; }
     if (el.hasAttribute('data-file')) { loadFile(el.files && el.files[0]); el.value = ''; return; }
     if (el.hasAttribute('data-map')) {
       var rec = slots[slotFor(state.step)];
@@ -1499,6 +1788,7 @@
   document.addEventListener('input', function (e) {
     var el = e.target;
     if (el.hasAttribute && el.hasAttribute('data-aikey')) { ai.key = el.value.trim(); saveKey(); return; }
+    if (el.hasAttribute && el.hasAttribute('data-flash')) { if (ui.flashForm) ui.flashForm[el.getAttribute('data-flash')] = el.value; return; }
     if (!el.hasAttribute || !el.hasAttribute('data-input')) return;
     setPath(el.getAttribute('data-input'), el.value);
     save();

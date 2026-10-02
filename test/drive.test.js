@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const zlib = require('zlib');
 const K = require('../engine/kta-drive.js');
 
-const IDS = ['aug30-1601', 'aug30-1529', 'sep01-0813'];
+const IDS = ['aug30-1601', 'aug30-1529', 'sep01-0813', 'sep05-0756', 'aug30-1509', 'aug22-0950'];
 IDS.forEach((id) => require('../data/example-' + id + '.js'));
 const csv = (id) => zlib.gunzipSync(Buffer.from(globalThis.KTA_EXAMPLES[id].gz, 'base64')).toString('utf8');
 const cache = {};
@@ -170,7 +170,7 @@ test('reference check: taking boost out below 3,000 rpm is allowed, adding it is
 });
 
 test('graph view models: finite geometry on every example', () => {
-  for (const id of IDS) {
+  for (const id of ['aug30-1601', 'aug30-1529', 'sep01-0813']) {
     const I = drive(id).report.ins;
     const views = [K.view.kcTimeline(I), K.view.timingMap(I), K.view.afrLoad(I), K.view.accelBars(I)];
     for (const v of views) {
@@ -179,5 +179,104 @@ test('graph view models: finite geometry on every example', () => {
     }
     assert.ok(K.view.timingMap(I).cells.length > 20);
   }
+  // Gentle drives have no clean acceleration window, but every other view works.
+  for (const id of ['sep05-0756', 'aug22-0950']) {
+    const I = drive(id).report.ins;
+    for (const v of [K.view.kcTimeline(I), K.view.timingMap(I), K.view.afrLoad(I), K.view.accelBars(I)]) {
+      assert.ok(!/NaN|Infinity|undefined/.test(JSON.stringify(v)), id + ' ' + JSON.stringify(v).slice(0, 120));
+    }
+    assert.ok(K.view.kcTimeline(I).hasData && K.view.timingMap(I).hasData && K.view.afrLoad(I).hasData, id);
+  }
   assert.ok(K.view.timingMap(hot().report.ins).lugBox, 'the lugging zone is outlined');
+  // A 3-second log has no engineering view, but it must still render without NaNs.
+  const tiny = drive('aug30-1509').report.ins;
+  for (const v of [K.view.kcTimeline(tiny), K.view.timingMap(tiny), K.view.afrLoad(tiny), K.view.accelBars(tiny)]) {
+    assert.ok(!/NaN|Infinity|undefined/.test(JSON.stringify(v)), 'too-short ' + JSON.stringify(v).slice(0, 120));
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Issue 01 — log quality gate: flat and missing channels, Too-short drive.
+// Every test goes through the public drive check, and asserts what the owner
+// would see: the Verdict, the line verdicts, and the quality lists.
+// ---------------------------------------------------------------------------
+
+const flatSep = () => drive('sep05-0756');   // Sep 5 07:56, Turbo Pressure flat at -0.3 psi
+const tinyAug = () => drive('aug30-1509');  // Aug 30 15:09, 3.6 s, never moves
+
+function dropColumn(text, headerName) {
+  const lines = text.split('\n');
+  const head = lines[0].split(';');
+  const at = head.findIndex((h) => h.trim() === headerName);
+  assert.ok(at >= 0, 'column present: ' + headerName);
+  return lines.map((l) => { const c = l.split(';'); c.splice(at, 1); return c.join(';'); }).join('\n');
+}
+
+test('issue 01: a flat Turbo Pressure turns only its own lines Can\'t tell', () => {
+  const { report } = flatSep();
+  assert.equal(report.verdict, 'good', 'overall Verdict OK');
+  assert.equal(report.an.verdict, 'good');
+  for (const id of ['overshoot', 'undershoot', 'lowBoost']) {
+    assert.equal(check(report.an, id).status, 'nodata', id + ' is Can\'t tell');
+  }
+  assert.ok(report.ins.quality.flat.includes('boost'), 'Turbo Pressure listed as flat: ' + report.ins.quality.flat);
+  assert.equal(report.ins.boost.peakBoost, null, 'no fake peak boost from a dead channel');
+  assert.equal(report.ins.boost.peakTarget, null);
+});
+
+test('issue 01: a 3.6-second log is Can\'t tell, too short', () => {
+  const { log, report } = tinyAug();
+  assert.ok(report.ins.meta.movingSeconds < 60, 'under 60 s moving: ' + report.ins.meta.movingSeconds);
+  assert.equal(report.verdict, 'nodata');
+  assert.equal(report.an.verdict, 'nodata');
+  assert.equal(report.an.cantTell && report.an.cantTell.reason, 'tooShort');
+  assert.equal(report.plan.now.length, 0, 'no actions on a drive that cannot be judged');
+});
+
+test('issue 01: a missing Safety channel makes the drive Can\'t tell and names it', () => {
+  const full = csv('aug30-1601');
+  const cases = [['O2', 'mixture'], ['Knock Control', 'score'], ['DIFP', 'fuelPressure']];
+  for (const [header, name] of cases) {
+    const r = K.checkDrive(K.readLog(dropColumn(full, header)));
+    assert.equal(r.verdict, 'nodata', header + ' removed');
+    assert.equal(r.an.cantTell && r.an.cantTell.reason, 'safetyChannels');
+    assert.ok(r.an.cantTell.channels.includes(name), name + ' named: ' + r.an.cantTell.channels);
+  }
+  const noTrims = K.checkDrive(K.readLog(dropColumn(dropColumn(full, 'STFT B1'), 'LTFT B1')));
+  assert.equal(noTrims.verdict, 'nodata');
+  assert.ok(noTrims.an.cantTell.channels.includes('trims'));
+});
+
+test('issue 01: the engine\'s internal status names never reach the screen', () => {
+  const fs = require('fs');
+  const window = {};
+  const vm = require('vm');
+  vm.createContext(window);
+  window.window = window;
+  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n-drive.js', 'utf8'), window);
+  for (const lang of ['en', 'vi']) {
+    const T = window.KTA_I18N[lang];
+    assert.deepEqual([T.status.good, T.status.watch, T.status.stop, T.status.nodata], lang === 'en' ? ['OK', 'Watch', 'Stop', "Can't tell"] : ['Ổn', 'Theo dõi', 'Dừng', 'Không kết luận được']);
+    assert.equal(T.verdict.good, lang === 'en' ? 'OK' : 'Ổn');
+    assert.ok(T.verdict.nodata.indexOf(lang === 'en' ? "Can't tell" : 'Không kết luận được') === 0, lang + ' verdict nodata: ' + T.verdict.nodata);
+    // Every safety line on every fixture renders a label, a number and a fix in both languages.
+    for (const id of ['aug30-1601', 'sep05-0756', 'aug22-0950']) {
+      const an = drive(id).report.an;
+      for (const g of an.gates) for (const c of g.checks) {
+        const d = T.checks[c.id];
+        assert.ok(d, lang + ' text for check ' + c.id);
+        const s = d.display(c.data || {}, K.fmt) + ' ' + (c.status === 'good' || c.status === 'nodata' ? '' : d.fix(c.data || {}, K.fmt));
+        assert.ok(!/\bgood\b|\bnodata\b/.test(s), lang + ' ' + c.id + ' leaks an engine id: ' + s.slice(0, 80));
+      }
+    }
+    // Block 7: every flat or missing channel gets a TunerView fix step in both languages.
+    const q = flatSep().report.ins.quality;
+    assert.ok(q.flat.length > 0, 'flat channels listed');
+    const lines = T.drive.quality(flatSep().report.ins, K.fmt, T);
+    const blob = lines.join(' ');
+    assert.ok(/Turbo Pressure/.test(blob), lang + ' names the flat channel: ' + blob.slice(0, 120));
+    assert.ok(/TunerView/.test(blob), lang + ' gives the TunerView fix');
+    assert.ok(!/\bgood\b|\bnodata\b/.test(blob), lang + ' leaks an engine id: ' + blob.slice(0, 120));
+  }
 });

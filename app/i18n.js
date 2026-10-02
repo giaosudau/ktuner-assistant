@@ -36,8 +36,8 @@
     chips: { done: 'Done', here: 'You are here', progress: 'In progress', todo: 'To do', optional: 'Optional', after5: 'After Step 5' },
     doneWhen: 'Done when', doneTag: 'Done',
     loop: { title: 'The loop, every time', flow: ['Edit', 'Flash', 'Log', 'Check'], note: 'One change per flash. If a check says Stop, undo the last change before anything else.', tables: 'tables edited (+1 optional)', logs: 'logs to finish Stage A' },
-    status: { good: 'OK', watch: 'Watch', stop: 'Stop', nodata: 'No data' },
-    verdict: { good: 'Pass', watch: 'OK to continue, carefully', stop: 'Fix this before you continue', nodata: 'Not enough data in this log' },
+    status: { good: 'OK', watch: 'Watch', stop: 'Stop', nodata: 'Can\'t tell' },
+    verdict: { good: 'OK', watch: 'OK to continue, carefully', stop: 'Fix this before you continue', nodata: 'Can\'t tell: not enough in this log to judge' },
     gates: { fuel: 'Fuel', air: 'Air', spark: 'Spark', heat: 'Heat', cvt: 'CVT' },
     checks: {
       trims: { label: 'Fuel trims (cruise)', display: function (d, F) { return isNum(d.value) ? F.signed(d.value, 1, ' %') + (isNum(d.hz) ? ' at ' + F.hz(d.hz) : '') : 'No steady cruise found'; }, fix: function () { return 'Step 3: correct the AFM Flow table with the values this app computes.'; } },
@@ -312,8 +312,8 @@
     chips: { done: 'Xong', here: 'Bạn đang ở đây', progress: 'Đang làm', todo: 'Chưa làm', optional: 'Tuỳ chọn', after5: 'Sau Bước 5' },
     doneWhen: 'Xong khi', doneTag: 'Xong',
     loop: { title: 'Vòng lặp, lần nào cũng vậy', flow: ['Sửa', 'Nạp', 'Log', 'Kiểm tra'], note: 'Mỗi lần nạp chỉ một thay đổi. Nếu có mục Dừng, hoàn tác thay đổi vừa rồi trước đã.', tables: 'bảng cần sửa (+1 tuỳ chọn)', logs: 'log để xong giai đoạn A' },
-    status: { good: 'Ổn', watch: 'Theo dõi', stop: 'Dừng', nodata: 'Không có dữ liệu' },
-    verdict: { good: 'Đạt', watch: 'Có thể tiếp tục, cẩn thận', stop: 'Sửa trước khi làm tiếp', nodata: 'Log chưa đủ dữ liệu' },
+    status: { good: 'Ổn', watch: 'Theo dõi', stop: 'Dừng', nodata: 'Không kết luận được' },
+    verdict: { good: 'Ổn', watch: 'Có thể tiếp tục, cẩn thận', stop: 'Sửa trước khi làm tiếp', nodata: 'Không kết luận được: log này chưa đủ để chấm' },
     gates: { fuel: 'Nhiên liệu', air: 'Khí nạp', spark: 'Đánh lửa', heat: 'Nhiệt', cvt: 'Hộp số CVT' },
     checks: {
       trims: { label: 'Fuel trim (chạy đều)', display: function (d, F) { return isNum(d.value) ? F.signed(d.value, 1, ' %') + (isNum(d.hz) ? ' tại ' + F.hz(d.hz) : '') : 'Không có đoạn chạy đều'; }, fix: function () { return 'Bước 3: sửa bảng AFM Flow bằng giá trị app tính ra.'; } },

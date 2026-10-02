@@ -41,5 +41,16 @@
 .ex-card.is-off { opacity: 0.5; cursor: default; }
 .ex-card .tagline { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-text); }
 .busy { color: var(--ink-3); font-size: 14px; padding: 40px 0; }
-@media (max-width: 1100px) { .demo { grid-template-columns: 1fr; } .tour { position: static; height: auto; } .two { grid-template-columns: 1fr; } .stage { padding: 20px; } }
+.build-card { border-left: 4px solid var(--s-ic); display: flex; flex-direction: column; gap: 10px; }
+.map-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ink-2); }
+.map-list li.miss { color: var(--stop-fg); }
+.lock-why { padding: 10px 12px; border-radius: 10px; background: var(--s-bg); color: var(--s-fg); font-size: 13.5px; }
+.lock-why .dots { margin: 4px 0 0; }
+.claims { display: flex; flex-direction: column; gap: 12px; }
+.claim { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; align-items: start; }
+.claim .pill { justify-content: center; background: var(--s-bg); color: var(--s-fg); }
+.claim p { margin: 4px 0; }
+.small-note a, .claim a { color: var(--accent-text); }
+@media (max-width: 1100px) { .demo { grid-template-columns: 1fr; } .tour { position: static; height: auto; } .two { grid-template-columns: 1fr; } .stage { padding: 20px; } .claim { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+.table.l4 .row { grid-template-columns: repeat(5, minmax(0, 1fr)); }

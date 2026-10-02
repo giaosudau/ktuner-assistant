@@ -305,7 +305,9 @@ test('knock control: RON95-level is fine, a high level is a Watch', () => {
   assert.equal(status(an, 'spark', 'kControl'), 'good');
   const lines = K.sampleCsv('after').split('\n');
   const col = lines[0].split(',').indexOf('Knock Control');
-  const hi = K.readLog(lines.map((l, i) => { if (i === 0 || !l) return l; const f = l.split(','); f[col] = '0.78'; return f.join(','); }).join('\n'));
+  // A real Knock Control channel steps in 0.01 moves; a frozen value is a dead
+  // channel (issue 01), so the synthetic high level wobbles like the real one.
+  const hi = K.readLog(lines.map((l, i) => { if (i === 0 || !l) return l; const f = l.split(','); f[col] = i % 7 < 2 ? '0.79' : '0.78'; return f.join(','); }).join('\n'));
   assert.ok(hi.has.kControl);
   const an2 = K.analyze(hi, {});
   assert.equal(status(an2, 'spark', 'kControl'), 'watch');

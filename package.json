@@ -4,7 +4,7 @@
   "private": true,
   "description": "Civic FE Tune Assist: a guided AFR tuning companion for the Honda Civic FE 1.5T CVT on Vietnam E10, for KTuner and Hondata users.",
   "scripts": {
-    "test": "node --test test/engine.test.js test/drive.test.js test/ask.test.js",
+    "test": "node --test test/engine.test.js test/drive.test.js test/ask.test.js test/build.test.js test/car.test.js",
     "e2e": "node e2e/app.e2e.js",
     "sync-ref": "node tools/sync-ref.js",
     "examples": "node tools/build-examples.js"

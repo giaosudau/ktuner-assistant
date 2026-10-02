@@ -174,7 +174,7 @@
   };
 
   var RANK = { nodata: 0, good: 1, watch: 2, stop: 3 };
-  KTA.STATUS_LABEL = { good: 'OK', watch: 'Watch', stop: 'Stop', nodata: 'No data' };
+  KTA.STATUS_LABEL = { good: 'OK', watch: 'Watch', stop: 'Stop', nodata: 'Can\'t tell' };
   KTA.VERDICT_LABEL = {
     good: 'Pass',
     watch: 'OK to continue, carefully',
@@ -958,6 +958,72 @@
       lowBoost = lb.length ? quantile(lb, 0.75) : NaN;
     }
 
+    // ---- log quality gate: flat or missing channels, too-short drive.
+    // A channel is flat when its value does not change across the moving part of the
+    // drive while engine rpm does (a dead logger channel, not a real reading).
+    // Turbo Pressure is also flat when it stays within 0.5 psi while MAP rises above
+    // 4 psi. Knock retard is never gated: frozen at 0 is its normal state.
+    var movingM = new Uint8Array(n), movingSecs = 0;
+    for (i = 0; i < n; i++) {
+      var isMoving = has.vss ? log.vss[i] >= 3 : (has.rpm ? log.rpm[i] >= 900 : true);
+      if (isMoving) { movingM[i] = 1; movingSecs += log.w[i]; }
+    }
+    function movingRange(a) {
+      var lo = Infinity, hi = -Infinity;
+      for (var ri = 0; ri < n; ri++) if (movingM[ri] && isNum(a[ri])) { if (a[ri] < lo) lo = a[ri]; if (a[ri] > hi) hi = a[ri]; }
+      return lo === Infinity ? null : hi - lo;
+    }
+    var rpmRange = has.rpm ? movingRange(log.rpm) : null;
+    var rpmMoves = rpmRange != null && rpmRange >= 200;
+    function chanFlat(a) {
+      if (!a || !rpmMoves) return false;
+      var r = movingRange(a);
+      return r != null && r < 1e-9;
+    }
+    var flatCh = {};
+    if (chanFlat(log.lam)) flatCh.lam = true;
+    if (has.stft || has.ltft) {
+      var stF = has.stft ? chanFlat(log.stft) : true, ltF = has.ltft ? chanFlat(log.ltft) : true;
+      if (stF && ltF) { if (has.stft) flatCh.stft = true; if (has.ltft) flatCh.ltft = true; }
+    }
+    if (chanFlat(log.kControl)) flatCh.kControl = true;
+    if (chanFlat(log.fp)) flatCh.fp = true;
+    if (chanFlat(log.iat)) flatCh.iat = true;
+    if (chanFlat(log.ect)) flatCh.ect = true;
+    if (chanFlat(log.cvt)) flatCh.cvt = true;
+    if (chanFlat(log.boost)) flatCh.boost = true;
+    else if (has.boost && has.load && rpmMoves) {
+      var bRange = movingRange(log.boost), peakLoad = -Infinity;
+      for (var li = 0; li < n; li++) if (movingM[li] && isNum(log.load[li]) && log.load[li] > peakLoad) peakLoad = log.load[li];
+      if (bRange != null && bRange <= 0.5 && peakLoad > 4) flatCh.boost = true;
+    }
+    if (chanFlat(log.boostTarget)) flatCh.boostTarget = true;
+    var flatList = Object.keys(flatCh);
+    // Safety channels: mixture, fuel trims, Fuel-quality score, fuel pressure.
+    // Fuel pressure is judged under boost, so a flat fuel pressure only sinks the
+    // verdict when the drive has settled full-throttle samples to judge it by;
+    // on a gentle drive its line is Can't tell either way and Block 7 says why.
+    var settledN = 0;
+    for (i = 0; i < n; i++) if (settled[i]) settledN++;
+    var safety = [
+      { name: 'mixture', present: has.lam, flat: !!flatCh.lam },
+      { name: 'trims', present: has.stft || has.ltft, flat: !!(flatCh.stft || flatCh.ltft) },
+      { name: 'score', present: has.kControl, flat: !!flatCh.kControl },
+      { name: 'fuelPressure', present: has.fp && has.fpTarget, flat: !!flatCh.fp && settledN > 0 }
+    ];
+    var missingSafety = safety.filter(function (s) { return !s.present; }).map(function (s) { return s.name; });
+    var flatSafety = safety.filter(function (s) { return s.present && s.flat; }).map(function (s) { return s.name; });
+    var tooShort = movingSecs < 60;
+    var cantTell = null;
+    if (tooShort) cantTell = { reason: 'tooShort', movingSeconds: round(movingSecs, 1) };
+    else if (missingSafety.length || flatSafety.length) {
+      cantTell = {
+        reason: 'safetyChannels',
+        channels: missingSafety.length ? missingSafety : flatSafety,
+        missing: missingSafety.slice(), flat: flatSafety.slice()
+      };
+    }
+
     // ---- gates
     var F = KTA.fmt;
     var trimWorst = NaN, trimWorstHz = NaN, binsWithData = 0;
@@ -1053,6 +1119,27 @@
         { value: lowBoost, hint: 'cvtbelt', data: { value: lowBoost } })
     ];
 
+    // A flat channel poisons only the lines read from it: they become Can't tell
+    // instead of grading a dead value. (A flat Safety channel additionally sinks the
+    // whole drive; see cantTell above.)
+    function flatOut(checks, ids, channel) {
+      checks.forEach(function (c) {
+        if (ids.indexOf(c.id) >= 0 && c.status !== 'nodata') {
+          c.status = 'nodata';
+          c.data = c.data || {}; c.data.flat = channel;
+        }
+      });
+    }
+    if (flatCh.stft || flatCh.ltft) flatOut(fuelChecks, ['trims'], 'trims');
+    if (flatCh.lam) flatOut(fuelChecks, ['wotAfr'], 'mixture');
+    if (flatCh.fp && settledN > 0) flatOut(fuelChecks, ['fuelPress'], 'fuelPressure');
+    if (flatCh.boost || flatCh.boostTarget) flatOut(airChecks, ['overshoot', 'undershoot'], flatCh.boost ? 'boost' : 'boostTarget');
+    if (flatCh.boost) flatOut(cvtChecks, ['lowBoost'], 'boost');
+    if (flatCh.kControl) flatOut(sparkChecks, ['kControl'], 'score');
+    if (flatCh.iat) flatOut(heatChecks, ['iat'], 'iat');
+    if (flatCh.ect) flatOut(heatChecks, ['ect'], 'ect');
+    if (flatCh.cvt) flatOut(cvtChecks, ['cvtTemp'], 'cvt');
+
     var gates = [
       { id: 'fuel', label: 'Fuel', checks: fuelChecks },
       { id: 'air', label: 'Air', checks: airChecks },
@@ -1068,6 +1155,7 @@
     var all = [];
     gates.forEach(function (g) { g.checks.forEach(function (c) { all.push(c.status); }); });
     var verdict = worst(all);
+    if (cantTell) verdict = 'nodata';
 
     var readiness = [], readinessCodes = [];
     function ready(code, text, extra) { readiness.push(text); var r = { code: code }; if (extra) for (var k in extra) r[k] = extra[k]; readinessCodes.push(r); }
@@ -1080,6 +1168,10 @@
 
     return {
       meta: { rows: n, duration: log.duration, dt: dt, found: log.found, missing: log.missing, units: log.units, notes: log.notes },
+      movingSeconds: round(movingSecs, 1),
+      tooShort: tooShort,
+      cantTell: cantTell,
+      flatChannels: flatList.slice(),
       events: events.map(function (e) { return { t0: e.t0, t1: e.t1, duration: e.duration, rpm0: e.rpm0, rpm1: e.rpm1 }; }),
       closedLoopSeconds: round(clSeconds, 1),
       maf: { axis: axis, cl: clBins, wot: wotBins, binsWithData: binsWithData, fpLimitedSeconds: round(fpLimited * dt, 1) },
@@ -1645,7 +1737,10 @@
         out.push([
           t.toFixed(1), Math.round(rpm), Math.round(vss), tps.toFixed(1), mapK.toFixed(1), boost.toFixed(1), (isNum(target) ? target : boost).toFixed(1),
           Math.round(hz), ecuAir.toFixed(2), (st.lam * GAS).toFixed(2), (lamCmd * GAS).toFixed(2), stft.toFixed(1), st.ltft.toFixed(1), ign.toFixed(1),
-          st.kr[0].toFixed(1), st.kr[1].toFixed(1), st.kr[2].toFixed(1), st.kr[3].toFixed(1), st.kc.toFixed(2),
+          st.kr[0].toFixed(1), st.kr[1].toFixed(1), st.kr[2].toFixed(1), st.kr[3].toFixed(1),
+          // A real Knock Control channel steps in 0.01 moves even on a happy drive; a frozen
+          // value for minutes is a dead channel, and the quality gate reads it as one.
+          (st.kc + (Math.floor(t * 10) % 41 < 6 ? 0.01 : 0)).toFixed(2),
           Math.round(st.iat), Math.round(st.ect), Math.round(st.cvt), Math.round(fpT * fpR), Math.round(fpT)
         ].join(','));
         t += dt;

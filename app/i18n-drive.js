@@ -253,6 +253,8 @@
       richWot: function (I, F) { return I.mix && isNum(I.mix.fullLoadAfr) ? 'Full-load mixture ' + n1(F, I.mix.fullLoadAfr) + ' AFR against the map\'s ' + n1(F, I.mix.mapAfr) + ': close enough.' : 'Not enough full-load time to judge the mixture.'; },
       lowBoost: function () { return 'No Knock Control rise while lugging.'; }
     },
+    unavailableLine: function (d, F, T) { var nm = ((T.drive.qualityChannels || {})[d.flat] || d.flat); return 'Can\'t tell: ' + nm + ' was flat for the whole drive.'; },
+    unavailableFix: function (d, F, T) { var nm = ((T.drive.qualityChannels || {})[d.flat] || d.flat); return T.drive.channelFix(nm); },
     feelTitle: 'The feel, in numbers',
     feel: function (h, F) { return h ? 'Best ' + h.from + '→' + h.to + ' km/h: ' + F.num(h.seconds, 2) + ' s' + (h.full ? ' with your foot down' : ' (pedal ' + h.pedalMin + ' % or more)') + ', boost up to ' + n1(F, h.mapMax) + ' psi, intake ' + n0(F, h.iat) + ' °C.' : 'No clean acceleration run in this drive (pedal held at 60 % or more through a speed window).'; },
     feelNote: 'Compare runs only at a similar intake temperature (±8 °C): heat alone changes these by a few tenths.',
@@ -300,8 +302,27 @@
       }
     },
     qualityTitle: 'What this log has',
+    qualityChannels: {
+      mixture: 'Mixture (the O2 sensor)', trims: 'Fuel trims', score: 'Fuel-quality score (Knock Control)', fuelPressure: 'Fuel pressure',
+      boost: 'Turbo Pressure', boostTarget: 'Turbo Pressure target', iat: 'Intake air temp', ect: 'Coolant temp', cvt: 'CVT fluid temp',
+      lam: 'Mixture (the O2 sensor)', stft: 'Fuel trims', ltft: 'Fuel trims', kControl: 'Fuel-quality score (Knock Control)', fp: 'Fuel pressure'
+    },
+    cantTell: {
+      tooShort: function (c) { return 'Can\'t tell: too short. Only ' + c.movingSeconds + ' s of moving in this log; a drive needs 60 s before it can be judged, and this one stays out of your car history.'; },
+      safety: function (c, names) { return 'Can\'t tell: ' + names.join(', ') + (c.missing && c.missing.length ? ' missing from this log' : ' flat for the whole drive') + '. Safety cannot be judged without it.'; }
+    },
+    channelFlat: function (name) { return name + ' was flat for the whole drive: the logger wrote one value while the engine moved.'; },
+    channelMissing: function (name) { return name + ' is not in this log.'; },
+    channelFix: function (name) { return 'In TunerView, remove ' + name + ' from the layout and add it again, then log a short drive and check the value moves. Keep every channel you log now.'; },
     quality: function (I, F, T) {
       var q = I.quality, out = [];
+      var names = function (keys) { return keys.map(function (k) { return (T.drive.qualityChannels || {})[k] || k; }); };
+      if (q.cantTell && q.cantTell.reason === 'tooShort') out.push(T.drive.cantTell.tooShort(q.cantTell));
+      else if (q.cantTell) out.push(T.drive.cantTell.safety(q.cantTell, names(q.cantTell.channels)));
+      (q.flat || []).forEach(function (k) {
+        var nm = names([k])[0];
+        out.push(T.drive.channelFlat(nm) + ' ' + T.drive.channelFix(nm));
+      });
       out.push((q.glitchTotal ? F.num(q.glitchTotal, 0) + ' impossible values removed (logger glitches: ' + Object.keys(q.glitches).map(function (k) { return k + ' ' + q.glitches[k]; }).join(', ') + ')' : 'No logger glitches') + '.');
       if (q.fuelCutSamples) out.push(F.num(q.fuelCutSamples, 0) + ' samples with the O2 sensor at its lean stop (fuel cut on lift-off) left out of mixture numbers.');
       if (q.knockScheduled) out.push('Knock Retard here follows Knock Control (the retard the ECU schedules), so the app judges knock by Knock Control.');
@@ -604,6 +625,8 @@
       richWot: function (I, F) { return I.mix && isNum(I.mix.fullLoadAfr) ? 'Hòa khí tải tối đa ' + n1(F, I.mix.fullLoadAfr) + ' AFR so với ' + n1(F, I.mix.mapAfr) + ' của map: đủ gần.' : 'Chưa đủ thời gian tải tối đa để đánh giá hòa khí.'; },
       lowBoost: function () { return 'Knock Control không tăng khi ì máy.'; }
     },
+    unavailableLine: function (d, F, T) { var nm = ((T.drive.qualityChannels || {})[d.flat] || d.flat); return 'Không kết luận được: ' + nm + ' đứng yên suốt chuyến.'; },
+    unavailableFix: function (d, F, T) { var nm = ((T.drive.qualityChannels || {})[d.flat] || d.flat); return T.drive.channelFix(nm); },
     feelTitle: 'Cảm giác, bằng con số',
     feel: function (h, F) { return h ? 'Nhanh nhất ' + h.from + '→' + h.to + ' km/h: ' + F.num(h.seconds, 2) + ' giây' + (h.full ? ' khi đạp lút ga' : ' (chân ga từ ' + h.pedalMin + ' % trở lên)') + ', boost tới ' + n1(F, h.mapMax) + ' psi, khí nạp ' + n0(F, h.iat) + ' °C.' : 'Chuyến này không có lần tăng tốc sạch nào (giữ chân ga từ 60 % trở lên qua một khoảng tốc độ).'; },
     feelNote: 'Chỉ so các lần chạy ở nhiệt độ khí nạp tương tự (±8 °C): riêng nhiệt đã thay đổi các con số này vài phần mười giây.',
@@ -651,8 +674,27 @@
       }
     },
     qualityTitle: 'Log này có gì',
-    quality: function (I, F) {
+    qualityChannels: {
+      mixture: 'Hòa khí (cảm biến O2)', trims: 'Fuel trim', score: 'Điểm chất lượng xăng (Knock Control)', fuelPressure: 'Áp suất xăng',
+      boost: 'Turbo Pressure', boostTarget: 'Turbo Pressure mục tiêu', iat: 'Nhiệt độ khí nạp', ect: 'Nhiệt độ nước làm mát', cvt: 'Nhiệt độ dầu CVT',
+      lam: 'Hòa khí (cảm biến O2)', stft: 'Fuel trim', ltft: 'Fuel trim', kControl: 'Điểm chất lượng xăng (Knock Control)', fp: 'Áp suất xăng'
+    },
+    cantTell: {
+      tooShort: function (c) { return 'Không kết luận được: chuyến quá ngắn. Log này xe chỉ chạy ' + c.movingSeconds + ' giây; một chuyến cần 60 giây xe chạy mới chấm được, và chuyến này không được tính vào lịch sử xe.'; },
+      safety: function (c, names) { return 'Không kết luận được: ' + names.join(', ') + (c.missing && c.missing.length ? ' không có trong log' : ' đứng yên suốt chuyến') + '. Thiếu nó thì không thể chấm an toàn.'; }
+    },
+    channelFlat: function (name) { return name + ' đứng yên suốt chuyến: logger ghi một giá trị trong khi động cơ thay đổi.'; },
+    channelMissing: function (name) { return name + ' không có trong log.'; },
+    channelFix: function (name) { return 'Trong TunerView, gỡ ' + name + ' khỏi layout rồi thêm lại, sau đó log một chuyến ngắn và kiểm tra giá trị có nhảy không. Giữ nguyên mọi kênh đang log.'; },
+    quality: function (I, F, T) {
       var q = I.quality, out = [];
+      var names = function (keys) { return keys.map(function (k) { return (T.drive.qualityChannels || {})[k] || k; }); };
+      if (q.cantTell && q.cantTell.reason === 'tooShort') out.push(T.drive.cantTell.tooShort(q.cantTell));
+      else if (q.cantTell) out.push(T.drive.cantTell.safety(q.cantTell, names(q.cantTell.channels)));
+      (q.flat || []).forEach(function (k) {
+        var nm = names([k])[0];
+        out.push(T.drive.channelFlat(nm) + ' ' + T.drive.channelFix(nm));
+      });
       out.push((q.glitchTotal ? 'Đã bỏ ' + F.num(q.glitchTotal, 0) + ' giá trị không thể có (lỗi ghi log: ' + Object.keys(q.glitches).map(function (k) { return k + ' ' + q.glitches[k]; }).join(', ') + ')' : 'Không có lỗi ghi log') + '.');
       if (q.fuelCutSamples) out.push(F.num(q.fuelCutSamples, 0) + ' mẫu cảm biến O2 ở mức loãng tối đa (cắt xăng khi nhả ga) được loại khỏi số liệu hòa khí.');
       if (q.knockScheduled) out.push('Knock Retard ở đây đi theo Knock Control (lùi lửa ECU lên lịch), nên app đánh giá kích nổ bằng Knock Control.');
@@ -718,4 +760,116 @@
     note: 'Riêng 5° đều đặn khi có boost không phải là vấn đề. Knock Control tăng dần mới là vấn đề.'
   };
   I18N.vi.terms.push(['lugging', 'Ì máy'], ['kcsched', 'Lùi lửa theo lịch']);
+
+  // ---------------------------------------------------------------------------
+  // Car history, Flashes, Shakedown drive, Unexplained change, History file
+  // ---------------------------------------------------------------------------
+  I18N.en.car = {
+    bannerShakedown: function (done, total) { return 'Shakedown drive: drive calmly. ' + done + ' of ' + total + ' calm minutes done.'; },
+    bannerPassed: 'Shakedown passed: the new Map measures air and fuel correctly.',
+    bannerHard: 'You drove hard before the check finished.',
+    bannerUnexplained: 'Something changed since your last drive.',
+    whyTrim: 'worst trim moved more than 5 points',
+    whyBoost: 'highest boost target moved more than 2 psi',
+    whyScore: 'the score started high',
+    answerFlashed: 'I flashed',
+    answerFuel: 'New tank of fuel',
+    answerNeither: 'Neither',
+    fuelAdvice: 'New fuel needs 10–15 calm minutes before you judge it.',
+    unexplainedWatch: 'Unexplained change.',
+    flashCauseTitle: 'Stop right after a Flash.',
+    flashCauseWhy: 'Fuel trims are far off from the first second, which usually means the Map’s AFM preset, not the engine.',
+    driveTitle: 'This drive',
+    mapRecorded: function (name, date) { return 'Map: ' + name + ' · since Flash ' + date; },
+    mapMissing: 'Map: not recorded',
+    addFlash: 'Add Flash',
+    boostTarget: function (v) { return 'Highest boost target ' + v + ' psi.'; },
+    boostTargetNone: 'No boost target logged on this drive.',
+    logQuality: function (q) { return 'Log quality: ' + q + '.'; },
+    qualityGood: 'Good', qualityMissing: 'Missing channels', qualityFlat: 'Flat channel', qualityShort: 'Too short',
+    cool: 'Cool', hot: 'Hot', mild: 'Mild',
+    historyTitle: 'Your car over time',
+    historyLine: function (n, since, stops, map) { return n + ' drives since ' + since + ' · ' + stops + ' · ' + map; },
+    historyEmpty: 'Your history starts with this drive.',
+    stops: function (n) { return n === 1 ? '1 Stop' : n + ' Stops'; },
+    tableHeaders: ['Drive', 'Verdict', 'Score end', 'Trim', 'IAT', 'CVT', 'Map'],
+    hide: 'Hide', unhide: 'Unhide',
+    hideNote: 'Hidden drives leave the charts and never set the Baseline. The log stays untouched.',
+    loadFolder: 'Load log folder',
+    loadNote: 'Reads every TunerView CSV in the folder, oldest first. Nothing leaves this browser.',
+    serveHint: 'If your browser will not open the folder, serve it instead: in the log folder run python3 -m http.server, then open http://localhost:8000.',
+    loaded: function (n) { return n + ' drives read.'; },
+    storeBlocked: 'Browser storage is blocked: the history lasts until you close this tab. Export a History file to keep it.',
+    exportBtn: 'Export History file', importBtn: 'Import History file',
+    imported: function (d, f) { return 'Merged: ' + d + ' new drives, ' + f + ' new Flashes. Nothing was deleted.'; },
+    importError: 'That file is not a History file.',
+    importFuture: function (v) { return 'This History file is from a newer app (version ' + v + '). Update the app first — nothing was imported.'; },
+    hotRestart: 'Hot restart',
+    flashesTitle: 'Flashes',
+    flashesEmpty: 'No Flash recorded yet. Old drives show “Map: not recorded” until you add one.',
+    flashWhen: 'Flash',
+    changed: { afm: 'AFM preset', boost: 'Boost', fuel: 'Fuel', other: 'Other' },
+    flashNew: 'Record a Flash', flashEdit: 'Edit', flashDelete: 'Delete',
+    flashDeleteAsk: function (name) { return 'Delete the Flash “' + name + '”? The drives stay; their Map becomes “not recorded” again.'; },
+    formTime: 'Date and time', formMap: 'Map name', formChanged: 'What changed', formNote: 'Note (optional)',
+    formSave: 'Save Flash', formCancel: 'Cancel',
+    formNeedTime: 'A Flash needs a date and time.', formNeedMap: 'A Flash needs a Map name.',
+    finishShakedown: 'Finish the Shakedown drive: 10 calm minutes, then the rest unlocks.',
+    proofBlocked: 'Can’t tell: the Map changed in between.',
+    modeHint: 'Switched ECO / Normal? That moves boost targets with no Flash: choose Neither.'
+  };
+  I18N.vi.car = {
+    bannerShakedown: function (done, total) { return 'Chuyến chạy rà (Shakedown): chạy nhẹ nhàng. Đã được ' + done + ' trên ' + total + ' phút êm.'; },
+    bannerPassed: 'Chạy rà xong: Map mới đo gió và xăng đúng.',
+    bannerHard: 'Bạn đã chạy mạnh trước khi kiểm tra xong.',
+    bannerUnexplained: 'Có gì đó đã đổi từ chuyến trước.',
+    whyTrim: 'trim tệ nhất lệch hơn 5 điểm',
+    whyBoost: 'mục tiêu boost cao nhất lệch hơn 2 psi',
+    whyScore: 'điểm số lúc khởi hành đã cao',
+    answerFlashed: 'Tôi đã nạp map',
+    answerFuel: 'Vừa đổ xăng mới',
+    answerNeither: 'Không phải hai cái trên',
+    fuelAdvice: 'Xăng mới cần 10–15 phút chạy êm rồi hãy đánh giá.',
+    unexplainedWatch: 'Thay đổi chưa rõ nguyên nhân.',
+    flashCauseTitle: 'Stop ngay sau khi nạp Map.',
+    flashCauseWhy: 'Trim xăng lệch nhiều ngay từ giây đầu, thường là do preset AFM của Map chứ không phải động cơ.',
+    driveTitle: 'Chuyến này',
+    mapRecorded: function (name, date) { return 'Map: ' + name + ' · từ lần Flash ' + date; },
+    mapMissing: 'Map: chưa ghi nhận',
+    addFlash: 'Thêm Flash',
+    boostTarget: function (v) { return 'Mục tiêu boost cao nhất ' + v + ' psi.'; },
+    boostTargetNone: 'Chuyến này không log mục tiêu boost.',
+    logQuality: function (q) { return 'Chất lượng log: ' + q + '.'; },
+    qualityGood: 'Tốt', qualityMissing: 'Thiếu kênh', qualityFlat: 'Kênh đứng yên', qualityShort: 'Quá ngắn',
+    cool: 'Mát', hot: 'Nóng', mild: 'Ấm',
+    historyTitle: 'Xe của bạn theo thời gian',
+    historyLine: function (n, since, stops, map) { return n + ' chuyến từ ' + since + ' · ' + stops + ' · ' + map; },
+    historyEmpty: 'Lịch sử của bạn bắt đầu từ chuyến này.',
+    stops: function (n) { return n + ' lần Stop'; },
+    tableHeaders: ['Chuyến', 'Kết luận', 'Điểm cuối', 'Trim', 'IAT', 'CVT', 'Map'],
+    hide: 'Ẩn', unhide: 'Hiện lại',
+    hideNote: 'Chuyến bị ẩn không lên biểu đồ và không đặt Baseline. Log gốc giữ nguyên.',
+    loadFolder: 'Nạp cả thư mục log',
+    loadNote: 'Đọc mọi file CSV TunerView trong thư mục, chuyến cũ trước. Không có gì rời khỏi trình duyệt này.',
+    serveHint: 'Nếu trình duyệt không mở được thư mục, hãy serve nó: trong thư mục log chạy python3 -m http.server, rồi mở http://localhost:8000.',
+    loaded: function (n) { return 'Đã đọc ' + n + ' chuyến.'; },
+    storeBlocked: 'Bộ nhớ trình duyệt bị chặn: lịch sử chỉ giữ tới khi bạn đóng tab. Hãy xuất History file để giữ lại.',
+    exportBtn: 'Xuất History file', importBtn: 'Nhập History file',
+    imported: function (d, f) { return 'Đã gộp: ' + d + ' chuyến mới, ' + f + ' Flash mới. Không xóa gì cả.'; },
+    importError: 'File đó không phải History file.',
+    importFuture: function (v) { return 'History file này từ app bản mới hơn (bản ' + v + '). Hãy cập nhật app trước — chưa nhập gì cả.'; },
+    hotRestart: 'Khởi động nóng',
+    flashesTitle: 'Các lần Flash',
+    flashesEmpty: 'Chưa ghi nhận lần Flash nào. Các chuyến cũ sẽ hiện “Map: chưa ghi nhận” cho tới khi bạn thêm.',
+    flashWhen: 'Flash',
+    changed: { afm: 'Preset AFM', boost: 'Boost', fuel: 'Xăng', other: 'Khác' },
+    flashNew: 'Ghi nhận Flash', flashEdit: 'Sửa', flashDelete: 'Xóa',
+    flashDeleteAsk: function (name) { return 'Xóa lần Flash “' + name + '”? Các chuyến đi vẫn giữ; Map của chúng lại thành “chưa ghi nhận”.'; },
+    formTime: 'Ngày giờ', formMap: 'Tên Map', formChanged: 'Thứ đã đổi', formNote: 'Ghi chú (tùy chọn)',
+    formSave: 'Lưu Flash', formCancel: 'Hủy',
+    formNeedTime: 'Flash cần có ngày giờ.', formNeedMap: 'Flash cần có tên Map.',
+    finishShakedown: 'Chạy nốt chuyến Shakedown: 10 phút êm, rồi các mục còn lại mới mở.',
+    proofBlocked: 'Không kết luận được: Map đã đổi ở giữa.',
+    modeHint: 'Bạn có đổi ECO / Normal? Nó làm mục tiêu boost đổi mà không cần Flash: hãy chọn Không phải.'
+  };
 })();

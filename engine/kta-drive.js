@@ -108,7 +108,9 @@
       glitches: log.glitches || {}, glitchTotal: log.glitchTotal || 0, fuelCutSamples: (log.capped && log.capped.afr) || 0,
       hasAfrCmd: !!has.lamCmd, hasAfm: !!(has.mafHz || has.mafGs), hasKnockControl: !!has.kControl, hasLoad: !!load,
       knockScheduled: !!an.knockScheduled,
-      missing: ['afrCmd', 'mafHz'].filter(function (k) { return k === 'afrCmd' ? !has.lamCmd : !(has.mafHz || has.mafGs); })
+      missing: ['afrCmd', 'mafHz'].filter(function (k) { return k === 'afrCmd' ? !has.lamCmd : !(has.mafHz || has.mafGs); }),
+      flat: (an.flatChannels || []).slice(),
+      cantTell: an.cantTell || null, movingSeconds: isNum(an.movingSeconds) ? an.movingSeconds : null
     };
 
     // ---- lugging: low rpm with real load. The CVT in D holds 1,300-1,700 rpm when you press gently.
@@ -242,6 +244,10 @@
         overshoot: r1(an.numbers.overshoot)
       };
       ['peakMap', 'peakBoost', 'peakTarget'].forEach(function (key) { if (!isNum(I.boost[key])) I.boost[key] = null; });
+      // A flat Turbo Pressure channel reads as a fake peak (Sep 5: -0.3 psi): never show it.
+      var flatHere = an.flatChannels || [];
+      if (flatHere.indexOf('boost') >= 0) I.boost.peakBoost = null;
+      if (flatHere.indexOf('boostTarget') >= 0) I.boost.peakTarget = null;
       if (!isNum(I.boost.pullIatMax)) I.boost.pullIatMax = null;
       I._boostMask = inBoost;
     }
@@ -278,7 +284,7 @@
         trim[ti] = isNum(s1) && isNum(l1) ? ((1 + s1 / 100) * (1 + l1 / 100) - 1) * 100 : NaN;
       }
       var inB = I._boostMask;
-      var cl = mask(n, function (i) { return warm[i] && isNum(log.lam[i]) && log.lam[i] >= 0.925 && log.lam[i] <= 1.06 && !(inB && inB[i]); });
+      var cl = mask(n, function (i) { return warm[i] && (!has.lam || (isNum(log.lam[i]) && log.lam[i] >= 0.925 && log.lam[i] <= 1.06)) && !(inB && inB[i]); });
       var tb = [[-12, -8], [-8, -5], [-5, -2], [-2, 1], [1, 4], [4, 8]].map(function (bd) {
         var m = mask(n, function (i) { return cl[i] && moving[i] && load[i] >= bd[0] && load[i] < bd[1]; });
         return { from: bd[0], to: bd[1], seconds: r0(secs(log, m)), trim: r1(q(trim, 0.5, m)), lo: r1(q(trim, 0.1, m)), hi: r1(q(trim, 0.9, m)) };
@@ -510,6 +516,8 @@
    */
   KTA.planActions = function (report, history) {
     var an = report.an, I = report.ins, hist = history || [], items = [], fine = [];
+    // A drive that cannot be judged gets no actions: Block 7 says how to fix the log.
+    if (an.cantTell) return { now: [], next: [], later: [], fine: [], all: items, cantTell: an.cantTell };
     // safety: every Stop check becomes an action of its own, first in line
     an.gates.forEach(function (g) {
       g.checks.forEach(function (c) {

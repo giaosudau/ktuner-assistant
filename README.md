@@ -6,7 +6,16 @@ It starts from a normal drive. Load a KTuner TunerView log and the app checks sa
 
 ## Guided demo
 
-Open `demo/index.html` for a 7-step click-through (← and → keys work): open a drive, safety verdict, your #1, start it, an honest "cannot tell" proof, a "keep" proof, and the list moving up. It runs the real engine on your real logs. The one simulated piece, the next hot drive, is labelled. If your browser blocks reading the logs from `file://`, run `python3 -m http.server` in the project folder.
+Open `demo/index.html` for a 10-step click-through (← and → keys work): open a drive, safety verdict, your #1, start it, an honest "cannot tell" proof, a "keep" proof, the list moving up, then the **simple tune**, the **build path** and the **fact check**. It runs the real engine on your real logs. The one simulated piece, the next hot drive, is labelled. If your browser blocks reading the logs from `file://`, run `python3 -m http.server` in the project folder.
+
+**Build path** (`engine/kta-build.js`, `KTA.build.plan`): which mods to do next on this car, ranked the same way as the Drive check and locked by your own log and map. On the Aug 30 15:29 pulls:
+1. Do now: a front-mount intercooler.
+2. Do now: a high-flow catted downpipe with the front pipe.
+3. Locked: the 24 psi maps. The wastegate is 2.7 % open at 19.9 psi, so the turbo is near its limit, and Final Boost Target tops out at 23.4 psi.
+4. Ruled out: a big turbo for 300 hp, since there is no published CVT result and E10 RON95 is about US 91.
+5. Ruled out: a catless downpipe (P0420, đăng kiểm).
+
+Each item names the tables it touches. `test/build.test.js` checks that each one exists in `data/ktuner-maps-digitized.json`. **Fact check** lists eleven claims, each with its source and a confidence level, including "TSP Map 3 is 24 psi" (true). Research notes are in `docs/research/`.
 
 ## Open it
 
