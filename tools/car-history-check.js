@@ -5,16 +5,19 @@
  * the app shows in the Car history.
  *
  *   node tools/car-history-check.js "/path/to/logs"
+ *   npm run car-check -- "/path/to/logs"
+ *   npm run car-check            # checks ~/Desktop
  *
  * Quote the folder: the owner's lives under Mobile Documents/com~apple~CloudDocs.
  */
 'use strict';
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const K = require('../engine/kta-car.js');
 
-const dir = process.argv[2];
-if (!dir) { console.error('usage: node tools/car-history-check.js <folder of TunerView_*.csv>'); process.exit(1); }
+const dir = process.argv[2] || path.join(os.homedir(), 'Desktop');
+if (!process.argv[2]) console.log('no folder given: checking ~/Desktop — pass a folder to check anywhere else');
 const files = fs.readdirSync(dir).filter((f) => /^TunerView_\d{8}_\d{6}\.csv$/.test(f)).sort();
 if (!files.length) { console.error('no TunerView_YYYYMMDD_HHMMSS.csv files in ' + dir); process.exit(1); }
 
