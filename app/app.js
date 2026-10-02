@@ -453,6 +453,7 @@
     var s = t.s6, lean = K.suggestWotLean(), bs = K.suggestBoostStep(state.ceiling);
     var h = '';
     if (!d[5]) h += '<div class="banner warn">' + s.locked + '</div>';
+    h += '<p class="body-sm">' + esc(T().car.flashPlan.seeWhy) + ' <button type="button" class="link-btn" data-act="page" data-arg="drive">' + esc(T().car.flashPlan.see) + '</button></p>';
     h += '<p class="lead">' + fill(esc(s.why(bs.mapPeak)), { why: linkHint('cvtbelt', s.whyLink) }) + '</p>';
     h += '<section class="card"><div class="lever-head"><h2>' + esc(s.l1) + '</h2><span class="badge is-tint">' + esc(s.first) + '</span></div><p style="margin:0;font-size:14px;color:var(--ink-2)">' + s.l1Body + '</p>';
     h += '<div class="table l1"><div class="row head"><span>' + s.l1Head.map(esc).join('</span><span>') + '</span></div>';
@@ -564,9 +565,11 @@
   }
 
   function viewEditPlan(m) {
-    var p = m.plan;
+    var p = m.plan, P = T().car.flashPlan;
     var rows = [['A', ['MAF_Scaling_Custom']], ['B1', ['WOT_Enrich_L', 'WOT_Enrich_H']], ['B2', B2_TABLES]];
-    var h = '<section class="card"><h2 class="card-title">' + esc(p.title) + '</h2><div class="table plan"><div class="row head"><span>' + p.head.map(esc).join('</span><span>') + '</span></div>';
+    var h = '<section class="card"><h2 class="card-title">' + esc(p.title) + '</h2>';
+    h += '<p class="body-sm">' + esc(P.seeWhy) + ' <button type="button" class="link-btn" data-act="page" data-arg="drive">' + esc(P.see) + '</button></p>';
+    h += '<div class="table plan"><div class="row head"><span>' + p.head.map(esc).join('</span><span>') + '</span></div>';
     rows.forEach(function (r) {
       var lab = p[r[0]], e = mapEdits(r[1][0]), n = e ? e.changed.length : 0;
       var cells = r[0] === 'A' ? (e && !e.pending ? m.points(n) : p.pending) : (n ? p.cells(n) : p.none);
@@ -782,7 +785,7 @@
     g.basic.rows.forEach(function (r) {
       h += '<div class="row"><span><b>' + esc(r[0]) + '</b></span><span><span class="pill st-' + r[1] + '">' + esc(r[2]) + '</span></span><span>' + esc(r[3]) + '</span><span class="muted-2">' + esc(r[4]) + '</span></div>';
     });
-    h += '</div></section>';
+    h += '</div><p class="body-sm">' + esc(T().car.flashPlan.seeWhy) + ' <button type="button" class="link-btn" data-act="page" data-arg="drive">' + esc(T().car.flashPlan.see) + '</button></p></section>';
 
     h += '<section class="grid-2"><div class="card"><h2 class="card-title">' + esc(g.e10.title) + '</h2><p class="lead-sm"><b>' + esc(g.e10.lead) + '</b></p>' + list(g.e10.points.map(esc));
     h += '<p class="body-sm">' + esc(g.e10.us) + ' ' + linkHint('e10', termLabel('e10')) + '</p><div class="note"><span class="badge-dark">WOT</span><p>' + esc(g.e10.then) + '</p></div></div>';
@@ -870,6 +873,7 @@
       h += viewPerf(C, D, cur);        // block 5: was it faster (hides with no window)
     }
     h += viewQueue(D, R);              // block 6: up next / later / fine
+    h += viewNextFlash(C);            // Next Flash: after advice, no data-block so 1-8 order holds
     h += viewQualityBlock(D, R, cur, t, I); // block 7: what this drive can't tell
     h += viewEng(D, I);                // block 8: engineering view, collapsed
     h += viewAsk(D, cur);
@@ -881,8 +885,9 @@
   function viewPaused(C) {
     var h = '<section class="card paused" data-block="3-5" id="block-paused"><p class="body-sm"><b>' + esc(C.paused) + '</b></p>';
     h += '<div class="act-buttons"><button type="button" class="btn-ghost" data-act="flashNew">' + esc(C.flashNew) + '</button>' +
-      '<button type="button" class="btn-ghost" data-act="carExport">' + esc(C.exportBtn) + '</button></div>';
-    if (ui.flashForm) h += viewFlashForm(C);
+      '<button type="button" class="btn-ghost" data-act="carExport">' + esc(C.exportBtn) + '</button> ' +
+      '<a class="link-btn" href="#next-flash">' + esc(C.flashPlan.see) + '</a></div>';
+    if (ui.flashForm && !ui.flashFromPlan) h += viewFlashForm(C);
     return h + '</section>';
   }
 
@@ -1220,7 +1225,7 @@
       h += '</ul>';
     }
     if (!ui.flashForm) h += '<div class="act-buttons"><button type="button" class="btn-ghost" data-act="flashNew">' + esc(C.flashNew) + '</button></div>';
-    else h += viewFlashForm(C);
+    else if (!ui.flashFromPlan) h += viewFlashForm(C);
     // Folder, export, import
     h += '<h3 class="sub-title">' + esc(C.loadFolder) + '</h3>';
     h += '<div class="loader"><label class="file-btn">' + ICON.upload + esc(C.loadFolder) +
@@ -1347,6 +1352,7 @@
     h += '<p class="body-sm"><b>' + esc(D.why) + '.</b> ' + esc(x.why) + '</p>';
     h += '<div class="act-steps"><b>' + esc(D.steps) + '</b>' + list(x.steps.map(esc)) + '</div>';
     h += '<div class="pairs act-pairs"><b>' + esc(D.proof) + '</b><span>' + esc(x.proof) + '</span>' + (x.undo ? '<b>' + esc(D.undo) + '</b><span>' + esc(x.undo) + '</span>' : '') + '</div>';
+    if (a.flash) h += '<p class="small-note"><a href="#next-flash">' + esc(T().car.flashPlan.see) + '</a></p>';
     if (x.note) h += '<p class="small-note">' + esc(x.note) + '</p>';
     h += '<div class="act-buttons">';
     if (isActive) h += '<span class="pill st-good">' + ICON.check + esc(D.doing) + '</span><button type="button" class="btn-ghost" data-act="stopAction">' + esc(D.stopDoing) + '</button>';
@@ -1366,6 +1372,7 @@
       var x = actionText(a), isActive = A && A.id === a.id;
       h += '<details class="act-row"><summary><span class="rank">' + (k + 2) + '</span><span class="act-sum"><b>' + esc(x.title) + '</b>' + badgesHtml(a) + '</span>' + (isActive ? '<span class="pill st-good">' + esc(D.doing) + '</span>' : '') + '</summary>';
       h += '<div class="act-body"><p class="body-sm"><b>' + esc(D.why) + '.</b> ' + esc(x.why) + '</p>' + list(x.steps.map(esc)) + '<div class="pairs act-pairs"><b>' + esc(D.proof) + '</b><span>' + esc(x.proof) + '</span>' + (x.undo ? '<b>' + esc(D.undo) + '</b><span>' + esc(x.undo) + '</span>' : '') + '</div>';
+      if (a.flash) h += '<p class="small-note"><a href="#next-flash">' + esc(T().car.flashPlan.see) + '</a></p>';
       if (!A) h += '<div class="act-buttons"><button type="button" class="btn-ghost" data-act="startAction" data-arg="' + esc(a.id) + '">' + esc(D.start) + '</button></div>';
       h += '</div></details>';
     });
@@ -1381,6 +1388,72 @@
       h += '<h3 class="sub-title">' + esc(D.fineTitle) + '</h3><div class="fine-list">';
       P.fine.forEach(function (f) { var fn = D.fine[f.id]; h += '<div class="fine"><span class="tick">' + ICON.check + '</span><span><b>' + esc(D.actions[f.id].title) + '.</b> ' + esc(fn ? fn(R.ins, F) : '') + '</span></div>'; });
       h += '</div>';
+    }
+    return h + '</section>';
+  }
+
+  // Next Flash: the single set of map changes for the next Flash (engine
+  // KTA.carFlashPlan, spec P1-P9). The app never computes a verdict itself:
+  // it renders the plan model. No data-block: the story contract order 1-8
+  // asserted in e2e stays untouched; the card sits right after block 6.
+  function flashPlanModel() {
+    try { return K.carFlashPlan(carState(), MAP, { now: Date.now(), history: (state.plan.history || []) }); }
+    catch (e) { return null; }
+  }
+  function planEvidence(P, plan) {
+    var h = '';
+    (plan.evidence || []).forEach(function (ev) {
+      h += '<div class="pairs act-pairs"><b>' + esc(P.evidence) + '</b><span>' + esc(ev.text) + '</span>' +
+        '<b>' + esc(P.basis) + '</b><span>' + esc(ev.basis || plan.basis || '') + '</span></div>';
+    });
+    return h;
+  }
+  function viewNextFlash(C) {
+    var P = C.flashPlan, plan = flashPlanModel();
+    var h = '<section class="card is-key" id="next-flash"><div class="card-row"><h2 class="card-title story">' + esc(P.title) + '</h2></div>';
+    h += '<p class="body-sm">' + esc(P.sub) + '</p>';
+    if (!plan) return h + '<p class="body-sm"><b>' + esc(P.noMap) + '</b></p></section>';
+    if (plan.kind === 'undo') {
+      h += '<p class="lead-sm"><b>' + esc(plan.headline) + '</b></p>';
+      h += planEvidence(P, plan);
+      h += '<div class="pairs act-pairs">' + (plan.proof ? '<b>' + esc(P.proof) + '</b><span>' + esc(plan.proof) + '</span>' : '') +
+        '<b>' + esc(P.undoIs) + '</b><span>' + esc(plan.undoName) + '</span></div>';
+    } else if (plan.kind === 'no-change') {
+      h += '<p class="lead-sm"><b>' + esc(plan.headline) + '</b></p>';
+      h += '<h3 class="sub-title">' + esc(P.leversTitle) + '</h3>';
+      plan.levers.forEach(function (l) {
+        h += '<div class="lock-row"><span class="lock">' + ICON.lock + '</span><div><b>' + esc(l.title) + '</b> <span class="muted">' + esc(P.status[l.status] || l.status) + '</span>' +
+          '<p class="body-sm" style="margin:4px 0">' + esc(l.reason) + '</p>' +
+          '<small>' + esc(T().drive.unlocksWhen) + ': ' + esc(l.unlocks) + '</small></div></div>';
+      });
+    } else {
+      h += '<p class="lead-sm"><b>' + esc(plan.headline) + '</b></p>';
+      h += planEvidence(P, plan);
+      h += '<div class="pairs act-pairs">' + (plan.proof ? '<b>' + esc(P.proof) + '</b><span>' + esc(plan.proof) + '</span>' : '') +
+        (plan.saveAs ? '<b>' + esc(P.saveAs) + '</b><span class="mono">' + esc(plan.saveAs) + '</span>' : '') +
+        (plan.undoName ? '<b>' + esc(P.undoIs) + '</b><span>' + esc(plan.undoName) + '</span>' : '') + '</div>';
+      h += '<h3 class="sub-title">' + esc(P.inKtuner) + '</h3>';
+      h += '<p class="small-note">' + esc(P.columnsNote) + '</p>';
+      plan.tables.forEach(function (tb) {
+        h += '<h3 class="sub-title mono">' + esc(tableLabel(tb.id)) + ' <small class="mono">' + esc(tb.id) + '</small></h3>';
+        if (tb.kind === 'curve' && tb.pasteRow) {
+          h += '<p class="body-sm">' + esc(P.afmPaste) + '</p><div class="row-out"><div class="card-row"><span></span><span style="display:flex;gap:8px"><button type="button" class="btn" data-act="copyPlanAfm">' + esc(ui.copied === 'planAfm' ? P.copied : P.copy) + '</button></span></div>' +
+            '<textarea id="plan-afm-row" rows="3" readonly>' + esc(tb.pasteRow) + '</textarea></div>';
+        } else {
+          h += '<ul class="dots mono">' + tb.cells.map(function (c) {
+            return '<li>' + esc(P.cellLine(c.rpm, c.col, c.of, F.num(c.before, 1), F.num(c.after, 1), 'psi', F)) + '</li>';
+          }).join('') + '</ul>';
+        }
+      });
+      if (plan.deferred && plan.deferred.length) {
+        h += '<h3 class="sub-title">' + esc(P.deferredTitle) + '</h3><ul class="dots">' + plan.deferred.map(function (d) {
+          return '<li>' + esc(d.id + ' · ' + d.note) + '</li>';
+        }).join('') + '</ul>';
+      }
+    }
+    if (plan.prefill) {
+      h += '<div class="act-buttons"><button type="button" class="btn" data-act="flashFromPlan">' + esc(P.record) + '</button></div>';
+      if (ui.flashForm && ui.flashFromPlan) h += viewFlashForm(C);
     }
     return h + '</section>';
   }
@@ -1986,6 +2059,7 @@
       state.car = K.carAnswer(state.car, cur.car.identity, arg);
       if (arg === 'flashed') {
         ui.flashForm = { id: null, timeStr: toLocalInput(cur.car.summary.start - 60000), map: '', changed: 'other', note: '' };
+        ui.flashFromPlan = false;
         ui.flashErr = '';
       }
       ui.carMsg = ''; ui.carErr = '';
@@ -2025,6 +2099,7 @@
     carExport: function () { download('car-history-' + today() + '.json', JSON.stringify(K.carExport(carState()), null, 2), 'application/json;charset=utf-8'); },
     flashNew: function () {
       ui.flashForm = { id: null, timeStr: toLocalInput(Date.now()), map: '', changed: 'other', note: '' };
+      ui.flashFromPlan = false;
       ui.flashErr = ''; render();
       var f = document.getElementById('flash-form'); if (f) f.scrollIntoView({ block: 'start' });
     },
@@ -2032,6 +2107,7 @@
       var f = carState().flashes.filter(function (x) { return x.id === id; })[0];
       if (!f) return;
       ui.flashForm = { id: f.id, timeStr: toLocalInput(f.time), map: f.map, changed: f.changed, note: f.note || '' };
+      ui.flashFromPlan = false;
       ui.flashErr = ''; render();
       var el = document.getElementById('flash-form'); if (el) el.scrollIntoView({ block: 'start' });
     },
@@ -2046,7 +2122,7 @@
       ui.carMsg = ''; ui.carErr = '';
       save(); refreshCarRec(drives.current); refreshCarRec(drives.next); render();
     },
-    flashCancel: function () { ui.flashForm = null; ui.flashErr = ''; render(); },
+    flashCancel: function () { ui.flashForm = null; ui.flashFromPlan = false; ui.flashErr = ''; render(); },
     flashSave: function () {
       var C = T().car, f = ui.flashForm;
       if (!f) return;
@@ -2057,10 +2133,19 @@
         if (f.id) state.car = K.carEditFlash(state.car, f.id, { time: ms, map: String(f.map).trim(), changed: f.changed, note: f.note || '' });
         else state.car = K.carRecordFlash(state.car, { time: ms, map: String(f.map).trim(), changed: f.changed, note: f.note || '' }).state;
       } catch (e) { ui.flashErr = String((e && e.message) || e); render(); return; }
-      ui.flashForm = null; ui.flashErr = ''; ui.carMsg = ''; ui.carErr = '';
+      ui.flashForm = null; ui.flashFromPlan = false; ui.flashErr = ''; ui.carMsg = ''; ui.carErr = '';
       reingestCurrent();
       save(); render();
     },
+    flashFromPlan: function () {
+      var plan = flashPlanModel();
+      if (!plan || !plan.prefill) return;
+      ui.flashForm = { id: null, timeStr: toLocalInput(plan.prefill.time), map: plan.prefill.map, changed: plan.prefill.changed, note: plan.prefill.note || '' };
+      ui.flashFromPlan = true; ui.flashErr = '';
+      render();
+      var f = document.getElementById('flash-form'); if (f) f.scrollIntoView({ block: 'start' });
+    },
+    copyPlanAfm: function () { var p = flashPlanModel(); if (p && p.afmPasteRow) copyText(p.afmPasteRow, 'planAfm', 'plan-afm-row'); },
     startAction: function (id) {
       var cur = drives.current;
       if (!cur) return;

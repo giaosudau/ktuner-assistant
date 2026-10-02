@@ -940,7 +940,25 @@
     perfNote: 'Only runs within 8 °C of intake count: heat alone moves these by tenths.',
     queueLine: function (a, b, c) { return a + ' up next · ' + b + ' locked · ' + c + ' fine'; },
     qualityOk: 'Nothing missing: every channel the verdict needs is in this log.',
-    qualitySome: function (names) { return 'Watch these channels: ' + names + '.'; }
+    qualitySome: function (names) { return 'Watch these channels: ' + names + '.'; },
+    flashPlan: {
+      title: 'Next Flash',
+      sub: 'The only place that says what to change in your KTuner map: one table family with its evidence and proof — or an honest no-change.',
+      see: 'See Next Flash',
+      seeWhy: 'Map edits live in one place, so two screens can never disagree.',
+      evidence: 'Evidence', basis: 'Basis', proof: 'How the next drive proves it',
+      saveAs: 'Save as', undoIs: 'Undo',
+      record: 'Record this Flash',
+      leversTitle: 'Every lever, and what unlocks it',
+      deferredTitle: 'Waits until the first change is proven',
+      inKtuner: 'In KTuner',
+      afmPaste: 'AFM Flow: a paste-ready row (tab-separated, 103 values)',
+      copy: 'Copy row', copied: 'Copied',
+      columnsNote: 'Cells are rpm row × column N of M, counted from the left as KTuner draws them: the load axis was not captured.',
+      noMap: 'The map file did not load, so there is no table listing. The verdict above still stands.',
+      status: { locked: 'Locked', deferred: 'Waiting', held: 'Waiting', planned: 'Planned', 'not-needed': 'Not needed', 'no-edit': 'No edit' },
+      cellLine: function (rpm, col, of, before, after, unit, F) { return F.num(rpm) + ' rpm · column ' + col + ' of ' + of + ': ' + before + ' → ' + after + (unit ? ' ' + unit : ''); }
+    }
   };
   I18N.vi.car = {
     bannerShakedown: function (done, total) { return 'Chuyến chạy rà (Shakedown): chạy nhẹ nhàng. Đã được ' + done + ' trên ' + total + ' phút êm.'; },
@@ -1026,6 +1044,24 @@
     perfNote: 'Chỉ tính các lần chạy trong 8 °C nhiệt độ khí nạp: riêng nhiệt độ đã làm lệch vài phần mười giây.',
     queueLine: function (a, b, c) { return a + ' việc tiếp · ' + b + ' việc khóa · ' + c + ' việc ổn'; },
     qualityOk: 'Không thiếu gì: mọi kênh cần để kết luận đều có trong log.',
-    qualitySome: function (names) { return 'Chú ý các kênh này: ' + names + '.'; }
+    qualitySome: function (names) { return 'Chú ý các kênh này: ' + names + '.'; },
+    flashPlan: {
+      title: 'Lần Flash tiếp theo',
+      sub: 'Nơi duy nhất nói cần đổi gì trong map KTuner của bạn: một nhóm bảng kèm bằng chứng và cách chứng minh — hoặc một câu trả lời trung thực là chưa cần đổi.',
+      see: 'Xem Lần Flash tiếp theo',
+      seeWhy: 'Mọi chỉnh map nằm ở một chỗ để hai màn hình không bao giờ mâu thuẫn.',
+      evidence: 'Bằng chứng', basis: 'Căn cứ', proof: 'Chuyến sau chứng minh bằng cách nào',
+      saveAs: 'Lưu thành', undoIs: 'Hoàn tác',
+      record: 'Ghi nhận Flash này',
+      leversTitle: 'Mọi đòn bẩy, và điều kiện để mở',
+      deferredTitle: 'Chờ tới khi thay đổi đầu tiên được chứng minh',
+      inKtuner: 'Trong KTuner',
+      afmPaste: 'AFM Flow: hàng sẵn để dán (cách nhau bằng tab, 103 giá trị)',
+      copy: 'Chép hàng', copied: 'Đã chép',
+      columnsNote: 'Ô được ghi theo hàng rpm × cột N trên M, đếm từ trái như KTuner vẽ: trục tải không được ghi lại.',
+      noMap: 'File map chưa tải được nên không liệt kê bảng. Kết luận ở trên vẫn đúng.',
+      status: { locked: 'Đang khóa', deferred: 'Đang chờ', held: 'Đang chờ', planned: 'Đã lên kế hoạch', 'not-needed': 'Chưa cần', 'no-edit': 'Không sửa' },
+      cellLine: function (rpm, col, of, before, after, unit, F) { return F.num(rpm) + ' rpm · cột ' + col + ' trên ' + of + ': ' + before + ' → ' + after + (unit ? ' ' + unit : ''); }
+    }
   };
 })();
