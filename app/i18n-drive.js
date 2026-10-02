@@ -22,6 +22,14 @@
   // English
   // ---------------------------------------------------------------------------
   I18N.en.drive = {
+    whyBtn: 'Why?',
+    limits: {
+      fuel: 'Limits: trims within ±5 %, mixture within 0.5 of the map’s 11.0, fuel pressure at 90 % of target or more.',
+      air: 'Limits: overshoot no more than +2.5 psi, boost on target within ±1.5 psi after spool.',
+      spark: 'Limits: score Watch at 0.56, no hard driving at 0.62 held 60 s, Stop at 0.80 (provisional).',
+      heat: 'Limits: intake Watch at 50 °C in a pull (heat alone never Stops), coolant Stop at 105 °C (provisional).',
+      cvt: 'Limits: CVT Watch at 90 °C, Stop at 100 °C (provisional); slip is Watch only.'
+    },
     nav: { title: 'Drive check', sub: 'Your log, one thing to do' },
     startHere: 'Start here', navFull: 'Full method (AFM calibration)',
     eyebrow: 'Drive check · real TunerView logs',
@@ -53,6 +61,7 @@
       nodata: 'Not enough in this log to say. Log a longer drive with the engine warm.'
     },
     nowTitle: 'Your #1 now', nextTitle: 'Up next, in order', laterTitle: 'Later: locked until', fineTitle: 'Checked and fine',
+    doNow: 'Do now',
     noActions: 'Nothing to fix. Enjoy it, and log a hot afternoon now and then.',
     why: 'Why', steps: 'Do this', proof: 'How the next log proves it', undo: 'Undo', rankWhy: 'How the order is decided',
     rankRules: [
@@ -431,6 +440,14 @@
   // Tiếng Việt
   // ---------------------------------------------------------------------------
   I18N.vi.drive = {
+    whyBtn: 'Vì sao?',
+    limits: {
+      fuel: 'Giới hạn: trim trong ±5 %, hòa khí trong 0.5 so với 11.0 của map, áp suất xăng từ 90 % mục tiêu trở lên.',
+      air: 'Giới hạn: vượt mục tiêu không quá +2.5 psi, boost đúng mục tiêu trong ±1.5 psi sau khi lên boost.',
+      spark: 'Giới hạn: điểm số Theo dõi từ 0.56, không chạy gắt từ 0.62 giữ 60 giây, Dừng từ 0.80 (tạm thời).',
+      heat: 'Giới hạn: khí nạp Theo dõi từ 50 °C khi kéo (nhiệt độ một mình không bao giờ Dừng), nước làm mát Dừng từ 105 °C (tạm thời).',
+      cvt: 'Giới hạn: CVT Theo dõi từ 90 °C, Dừng từ 100 °C (tạm thời); trượt dây đai chỉ Theo dõi.'
+    },
     nav: { title: 'Kiểm tra chuyến đi', sub: 'Log của bạn, một việc cần làm' },
     startHere: 'Bắt đầu ở đây', navFull: 'Quy trình đầy đủ (hiệu chỉnh AFM)',
     eyebrow: 'Kiểm tra chuyến đi · log TunerView thật',
@@ -462,6 +479,7 @@
       nodata: 'Log này chưa đủ để kết luận. Hãy log một chuyến dài hơn khi máy đã nóng.'
     },
     nowTitle: 'Việc số 1 lúc này', nextTitle: 'Tiếp theo, theo thứ tự', laterTitle: 'Để sau: mở khi', fineTitle: 'Đã kiểm tra, ổn',
+    doNow: 'Làm ngay',
     noActions: 'Không có gì cần sửa. Cứ tận hưởng, thỉnh thoảng log một buổi chiều nóng.',
     why: 'Vì sao', steps: 'Làm thế này', proof: 'Log sau chứng minh bằng cách nào', undo: 'Hoàn tác', rankWhy: 'Thứ tự được quyết định thế nào',
     rankRules: [
@@ -863,10 +881,10 @@
     qualityGood: 'Good', qualityMissing: 'Missing channels', qualityFlat: 'Flat channel', qualityShort: 'Too short',
     cool: 'Cool', hot: 'Hot', mild: 'Mild',
     historyTitle: 'Your car over time',
-    historyLine: function (n, since, stops, map) { return n + ' drives since ' + since + ' · ' + stops + ' · ' + map; },
+    historyLine: function (n, since, stops, map) { return (n === 1 ? '1 drive since ' : n + ' drives since ') + since + ' · ' + stops + ' · ' + map; },
     historyEmpty: 'Your history starts with this drive.',
     stops: function (n) { return n === 1 ? '1 Stop' : n + ' Stops'; },
-    tableHeaders: ['Drive', 'Verdict', 'Score end', 'Trim', 'IAT', 'CVT', 'Map'],
+    tableHeaders: ['Drive', 'Verdict', 'Score peak', 'Trim', 'IAT', 'CVT', 'Lug', '50–70', 'Map'],
     hide: 'Hide', unhide: 'Unhide',
     hideNote: 'Hidden drives leave the charts and never set the Baseline. The log stays untouched.',
     loadFolder: 'Load log folder',
@@ -890,7 +908,39 @@
     formNeedTime: 'A Flash needs a date and time.', formNeedMap: 'A Flash needs a Map name.',
     finishShakedown: 'Finish the Shakedown drive: 10 calm minutes, then the rest unlocks.',
     proofBlocked: 'Can’t tell: the Map changed in between.',
-    modeHint: 'Switched ECO / Normal? That moves boost targets with no Flash: choose Neither.'
+    modeHint: 'Switched ECO / Normal? That moves boost targets with no Flash: choose Neither.',
+    traffic: 'Traffic',
+    highway: 'Highway',
+    keyMoments: 'Key moments',
+    momStop: function (t, label) { return 'Stop starts ' + t + ' — ' + label; },
+    momWatch: function (t, label) { return 'Watch ' + t + ' — ' + label; },
+    momPull: function (t, label) { return 'Hard pull ' + t + ' — ' + label; },
+    momLug: function (t, label) { return 'Lugging ' + t + ' — ' + label; },
+    momRestart: function (t) { return 'Hot restart ' + t + ' — intake already hot at start'; },
+    momPullLabel: function (tgt, iat) { return 'target ' + tgt + ' psi, intake ' + iat + ' °C'; },
+    momLugLabel: function (s) { return s + ' % of moving time'; },
+    momWatchLabel: function (a, b) { return 'score ' + a + ' → ' + b; },
+    whyTitle: 'Why this moment',
+    paused: 'Paused until the Stop is fixed.',
+    historyMapNone: 'Map not recorded before today',
+    chartsBtn: 'Charts', tableBtn: 'Table',
+    chartsHint: 'Tap a dot to open that drive.',
+    chScore: 'Fuel-quality score peak', chTrim: 'Worst fuel trim', chIat: 'Intake while moving',
+    chCvt: 'CVT peak', chLug: 'Lugging', chAccel: 'Best 50→70 km/h',
+    yourNormal: function (v) { return 'your normal ' + v; },
+    limitIs: function (v) { return 'limit ' + v; },
+    perfTitle: 'Performance',
+    perfLine: function (s, cmp) { return 'Best 50→70 km/h ' + s + ' s — ' + cmp; },
+    perfBest: function (s) { return 'your best at similar intake (' + s + ' s)'; },
+    perfOff: function (s, d) { return d + ' s off your best at similar intake (' + s + ' s)'; },
+    perfNew: 'your first timed run at this intake — the next similar drive proves it',
+    perfNot: function (why) { return 'not comparable to your best (' + why + ')'; },
+    perfHotter: function (d) { return d + ' °C hotter than your best run'; },
+    perfColder: function (d) { return d + ' °C colder than your best run'; },
+    perfNote: 'Only runs within 8 °C of intake count: heat alone moves these by tenths.',
+    queueLine: function (a, b, c) { return a + ' up next · ' + b + ' locked · ' + c + ' fine'; },
+    qualityOk: 'Nothing missing: every channel the verdict needs is in this log.',
+    qualitySome: function (names) { return 'Watch these channels: ' + names + '.'; }
   };
   I18N.vi.car = {
     bannerShakedown: function (done, total) { return 'Chuyến chạy rà (Shakedown): chạy nhẹ nhàng. Đã được ' + done + ' trên ' + total + ' phút êm.'; },
@@ -917,10 +967,10 @@
     qualityGood: 'Tốt', qualityMissing: 'Thiếu kênh', qualityFlat: 'Kênh đứng yên', qualityShort: 'Quá ngắn',
     cool: 'Mát', hot: 'Nóng', mild: 'Ấm',
     historyTitle: 'Xe của bạn theo thời gian',
-    historyLine: function (n, since, stops, map) { return n + ' chuyến từ ' + since + ' · ' + stops + ' · ' + map; },
+    historyLine: function (n, since, stops, map) { return (n === 1 ? '1 chuyến từ ' : n + ' chuyến từ ') + since + ' · ' + stops + ' · ' + map; },
     historyEmpty: 'Lịch sử của bạn bắt đầu từ chuyến này.',
     stops: function (n) { return n + ' lần Stop'; },
-    tableHeaders: ['Chuyến', 'Kết luận', 'Điểm cuối', 'Trim', 'IAT', 'CVT', 'Map'],
+    tableHeaders: ['Chuyến', 'Kết luận', 'Điểm đỉnh', 'Trim', 'IAT', 'CVT', 'Ì máy', '50–70', 'Map'],
     hide: 'Ẩn', unhide: 'Hiện lại',
     hideNote: 'Chuyến bị ẩn không lên biểu đồ và không đặt Baseline. Log gốc giữ nguyên.',
     loadFolder: 'Nạp cả thư mục log',
@@ -944,6 +994,38 @@
     formNeedTime: 'Flash cần có ngày giờ.', formNeedMap: 'Flash cần có tên Map.',
     finishShakedown: 'Chạy nốt chuyến Shakedown: 10 phút êm, rồi các mục còn lại mới mở.',
     proofBlocked: 'Không kết luận được: Map đã đổi ở giữa.',
-    modeHint: 'Bạn có đổi ECO / Normal? Nó làm mục tiêu boost đổi mà không cần Flash: hãy chọn Không phải.'
+    modeHint: 'Bạn có đổi ECO / Normal? Nó làm mục tiêu boost đổi mà không cần Flash: hãy chọn Không phải.',
+    traffic: 'Kẹt xe',
+    highway: 'Đường trường',
+    keyMoments: 'Điểm đáng chú ý',
+    momStop: function (t, label) { return 'Bắt đầu Dừng ' + t + ' — ' + label; },
+    momWatch: function (t, label) { return 'Theo dõi ' + t + ' — ' + label; },
+    momPull: function (t, label) { return 'Lần kéo mạnh ' + t + ' — ' + label; },
+    momLug: function (t, label) { return 'Ì máy ' + t + ' — ' + label; },
+    momRestart: function (t) { return 'Nổ máy nóng ' + t + ' — khí nạp đã nóng từ đầu'; },
+    momPullLabel: function (tgt, iat) { return 'mục tiêu ' + tgt + ' psi, khí nạp ' + iat + ' °C'; },
+    momLugLabel: function (s) { return s + ' % thời gian xe chạy'; },
+    momWatchLabel: function (a, b) { return 'điểm ' + a + ' → ' + b; },
+    whyTitle: 'Vì sao có điểm này',
+    paused: 'Tạm dừng cho tới khi sửa xong mục Dừng.',
+    historyMapNone: 'Chưa ghi nhận Map nào trước hôm nay',
+    chartsBtn: 'Biểu đồ', tableBtn: 'Bảng',
+    chartsHint: 'Chạm một chấm để mở chuyến đó.',
+    chScore: 'Đỉnh điểm chất lượng xăng', chTrim: 'Trim lệch nhất', chIat: 'Khí nạp khi xe chạy',
+    chCvt: 'Đỉnh nhiệt CVT', chLug: 'Ì máy', chAccel: 'Nhanh nhất 50→70 km/h',
+    yourNormal: function (v) { return 'bình thường của bạn ' + v; },
+    limitIs: function (v) { return 'giới hạn ' + v; },
+    perfTitle: 'Hiệu năng',
+    perfLine: function (s, cmp) { return 'Nhanh nhất 50→70 km/h ' + s + ' giây — ' + cmp; },
+    perfBest: function (s) { return 'ngang với tốt nhất của bạn ở nhiệt độ khí nạp tương tự (' + s + ' giây)'; },
+    perfOff: function (s, d) { return 'chậm hơn ' + d + ' giây so với tốt nhất ở nhiệt độ tương tự (' + s + ' giây)'; },
+    perfNew: 'lần chạy tính giờ đầu tiên ở nhiệt độ này — chuyến tương tự tiếp theo sẽ chứng minh',
+    perfNot: function (why) { return 'không so được với tốt nhất của bạn (' + why + ')'; },
+    perfHotter: function (d) { return 'nóng hơn ' + d + ' °C so với lần chạy tốt nhất'; },
+    perfColder: function (d) { return 'mát hơn ' + d + ' °C so với lần chạy tốt nhất'; },
+    perfNote: 'Chỉ tính các lần chạy trong 8 °C nhiệt độ khí nạp: riêng nhiệt độ đã làm lệch vài phần mười giây.',
+    queueLine: function (a, b, c) { return a + ' việc tiếp · ' + b + ' việc khóa · ' + c + ' việc ổn'; },
+    qualityOk: 'Không thiếu gì: mọi kênh cần để kết luận đều có trong log.',
+    qualitySome: function (names) { return 'Chú ý các kênh này: ' + names + '.'; }
   };
 })();

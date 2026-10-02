@@ -534,6 +534,47 @@ details.columns summary { cursor: pointer; font-weight: 600; font-size: 13.5px; 
   .table.ba .row { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) !important; }
   .gchip-body .check-line { grid-template-columns: 12px minmax(0, 1fr) !important; }
 }
+/* ---------- drive story (blocks 0-8) and car-history charts ---------- */
+.drive .card-title.story { font-family: var(--font-d); text-transform: none; letter-spacing: 0.01em; font-size: 17px; color: var(--ink); }
+.drive .pill { font-family: var(--font-d); letter-spacing: 0.02em; }
+.drive-date { font-family: var(--font-d); letter-spacing: 0.01em; }
+.drive-date b { font-weight: 700; }
+.safety-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.safety-line { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; background: var(--sheet); border: 1px solid var(--line-2); font-size: 13.5px; line-height: 1.5; }
+.safety-line > div { flex: 1; min-width: 0; }
+.safety-line .do-now { display: block; margin-top: 2px; }
+.moments { margin: 4px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.moment { border: 0; background: none; padding: 6px 8px; margin: -6px -8px; text-align: left; font-size: 13.5px; line-height: 1.45; color: var(--ink); border-radius: 8px; min-height: 24px; }
+.moment:hover { background: var(--accent-tint); }
+.why { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 10px; background: var(--sheet-2); border: 1px solid var(--line-2); }
+.why-graphs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+@media (min-width: 760px) { .why-graphs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.paused { border: 1.5px solid var(--stop-ic); }
+.car-charts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 760px) { .car-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.car-chart { margin: 0; padding: 12px; border-radius: 12px; background: var(--sheet-2); border: 1px solid var(--line-2); min-width: 0; }
+.car-chart figcaption { font-size: 12.5px; font-weight: 700; color: var(--ink-2); margin-bottom: 4px; }
+.car-chart .chart svg { width: 100%; height: auto; }
+.car-chart g[data-act] { cursor: pointer; }
+.car-chart g[data-act]:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.car-focus { padding: 10px 12px; border-radius: 10px; background: var(--sheet-2); border: 1px solid var(--accent-line); }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; }
+.table-scroll .table { min-width: 640px; }
+.table.car-table .row { grid-template-columns: 1.5fr 1fr 0.8fr 0.9fr 0.8fr 0.8fr 0.8fr 0.9fr 1fr 0.6fr; }
+.table.car-table .row.is-focus { background: var(--accent-tint); }
+details.card.eng { padding: 0; }
+details.card.eng > summary.eng-sum { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; cursor: pointer; list-style: none; }
+details.card.eng > summary.eng-sum::-webkit-details-marker { display: none; }
+details.card.eng[open] > summary.eng-sum { border-bottom: 1px solid var(--line-2); }
+details.card.eng .graph { padding: 14px 20px; }
+details.card.eng .graph + .graph { border-top: 1px solid var(--line-2); }
+@media (min-width: 1200px) {
+  .main.drive > * { max-width: 720px; width: 100%; }
+}
+@media (max-width: 759px) {
+  .safety-line { flex-wrap: wrap; }
+  .table-scroll { margin: 0 -4px; }
+}
 .rail-major { margin-top: 2px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--ink-2); }
 .rank-rules { padding: 10px 12px; border-radius: 10px; background: var(--sheet-2); }
 .rank-rules summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--ink-2); }

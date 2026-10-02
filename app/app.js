@@ -14,7 +14,7 @@
 
   var state = merge(defaults(), load());
   var slots = {};            // logs live only in this tab: { baseline, afm, wot, cool, hot, gain }
-  var ui = { copied: '', error: '', yaw: -38, pitch: 58, topics: { 'topic-0': true }, explain: {}, driveErr: '', driveBusy: '', aiOpen: false, carMsg: '', carErr: '', flashForm: null, flashErr: '', folderBusy: false };
+  var ui = { copied: '', error: '', yaw: -38, pitch: 58, topics: { 'topic-0': true }, explain: {}, driveErr: '', driveBusy: '', aiOpen: false, carMsg: '', carErr: '', flashForm: null, flashErr: '', folderBusy: false, carView: 'charts', carFocus: null, why: null, engOpen: false, columnsOpen: false };
   var drives = { current: null, next: null, proof: null };   // drive-check logs live only in this tab
   var ai = { key: '', models: [], caps: {}, busy: false, result: null, q: '', error: '' };
   try { if (state.ai && state.ai.remember) ai.key = localStorage.getItem(STORE + '-key') || ''; } catch (e) { /* storage blocked */ }
@@ -858,20 +858,32 @@
     // an action in progress survives a reload: its proof card comes first, even before a drive is loaded
     if (!cur) return h + (state.plan.active ? viewProve(D) : '') + viewDriveStart(D) + '</main>';
     var R = cur.report, I = R.ins;
-    h += viewCarDrive(C, D, cur);
-    h += viewSafe(D, R);
-    if (state.plan.active) h += viewProve(D);
-    h += viewNow(D, R);
-    h += viewQueue(D, R);
-    h += viewCarHistory(C);
-    h += '<section class="card"><div class="card-row"><h2 class="card-title">' + esc(D.feelTitle) + '</h2></div><p class="lead-sm"><b>' + esc(D.feel(I.accel && I.accel.headline, F)) + '</b></p>' + graphCard('accel', accelSvg(I), D) + '<p class="small-note">' + esc(D.feelNote) + '</p></section>';
-    h += '<section class="card"><div class="card-row"><h2 class="card-title">' + esc(D.graphsTitle) + '</h2></div><p class="muted" style="margin:0">' + esc(D.graphsNote) + '</p>';
-    h += graphCard('kc', kcSvg(I), D) + graphCard('timing', timingSvg(I), D) + graphCard('afr', afrSvg(I), D) + '</section>';
+    var stopped = R.an.verdict === 'stop';
+    h += viewCarDrive(C, D, cur);       // block 1: which drive is this
+    h += viewSafe(D, R, cur);          // block 2: can I drive hard
+    if (stopped) {
+      h += viewPaused(C);              // blocks 3-5 collapse into one line
+    } else {
+      h += viewNow(D, R);              // block 3: your one thing
+      if (state.plan.active) h += viewProve(D);
+      h += viewCarHistory(C);          // block 4: your car over time
+      h += viewPerf(C, D, cur);        // block 5: was it faster (hides with no window)
+    }
+    h += viewQueue(D, R);              // block 6: up next / later / fine
+    h += viewQualityBlock(D, R, cur, t, I); // block 7: what this drive can't tell
+    h += viewEng(D, I);                // block 8: engineering view, collapsed
     h += viewAsk(D, cur);
-    h += '<section class="card is-soft"><h2 class="card-title">' + esc(D.qualityTitle) + '</h2><ul class="dots">' + D.quality(I, F, t).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
-    h += '<p class="small-note">' + esc(driveName(cur) + ' · ' + t.drive.source[I.meta.source] + ' · ' + D.facts(I, F)) + '</p></section>';
     h += '<section class="card is-soft"><h2 class="card-title">' + esc(t.guide.sourcesTitle) + '</h2><div class="src-list">' + D.sources.map(function (s) { return '<a href="' + esc(s[0]) + '" target="_blank" rel="noopener">' + esc(s[1]) + '</a>'; }).join('') + '</div></section>';
     return h + '</main>';
+  }
+  // A Stop anywhere collapses blocks 3-5 into a single line so nothing
+  // competes with it. Flash controls stay: Undo is "flash the previous file".
+  function viewPaused(C) {
+    var h = '<section class="card paused" data-block="3-5" id="block-paused"><p class="body-sm"><b>' + esc(C.paused) + '</b></p>';
+    h += '<div class="act-buttons"><button type="button" class="btn-ghost" data-act="flashNew">' + esc(C.flashNew) + '</button>' +
+      '<button type="button" class="btn-ghost" data-act="carExport">' + esc(C.exportBtn) + '</button></div>';
+    if (ui.flashForm) h += viewFlashForm(C);
+    return h + '</section>';
   }
 
   function viewLoop3(D, cur) {
@@ -925,45 +937,266 @@
     }
     return h;
   }
+  // Highway means sustained fast cruising (10 % or more of moving time at
+  // 80 km/h or more); everything else the owner drives is town Traffic.
+  function trafficWord(C, cur, I) {
+    try {
+      var log = cur.log;
+      if (log && log.has && log.has.vss && log.n > 10) {
+        var mv = 0, hi = 0;
+        for (var i = 0; i < log.n; i++) {
+          if (log.vss[i] >= 3) { mv += log.w[i]; if (log.vss[i] >= 80) hi += log.w[i]; }
+        }
+        if (mv > 0) return hi / mv >= 0.10 ? C.highway : C.traffic;
+      }
+    } catch (e) { /* fall back to town share */ }
+    var town = I.meta.townSeconds, moving = I.meta.movingSeconds;
+    if (isNum(town) && isNum(moving) && moving > 0) return town / moving >= 0.5 ? C.traffic : C.highway;
+    return C.traffic;
+  }
+  // Key moments, at most five, in spec order: Stop starts, Watch events
+  // (score steps), hard pulls (coolest first: the fairest pull), the longest
+  // lugging stretch, a hot restart. The engine exposes no key-moment op, so
+  // the screen builds them from the report's timed data (episodes, events).
+  function keyMoments(cur) {
+    var R = cur.report, I = R.ins, out = [];
+    var start = cur.car && !cur.car.tooShort && cur.car.summary ? cur.car.summary.start : null;
+    function clock(t) { return isNum(start) && isNum(t) ? fmtCarDate(start + t * 1000) : fmtCarDate(start); }
+    function findCheck(id) {
+      for (var gi = 0; gi < R.an.gates.length; gi++) {
+        var cs = R.an.gates[gi].checks;
+        for (var ci = 0; ci < cs.length; ci++) if (cs[ci].id === id) return { gate: R.an.gates[gi].id, check: cs[ci] };
+      }
+      return null;
+    }
+    function stopTime(c) {
+      if (c.id === 'kControl' || c.id === 'knock') {
+        var eps = I.kc ? I.kc.episodes.filter(function (e) { return e.kind === 'rise'; }) : [];
+        if (eps.length) return eps[0].t0;
+      }
+      if (c.id === 'slip' && c.data && c.data.at && c.data.at.length) return c.data.at[0].t != null ? c.data.at[0].t : c.data.at[0];
+      if (c.id === 'wotAfr' && c.data && isNum(c.data.leanestT)) return c.data.leanestT;
+      return 0; // trims, fuel pressure, overshoot: wrong from the first second
+    }
+    R.an.gates.forEach(function (g) {
+      g.checks.forEach(function (c) {
+        if (c.status !== 'stop') return;
+        var tx = null;
+        try { tx = checkText(c); } catch (e) { tx = { label: c.id, display: c.display || '' }; }
+        out.push({ kind: 'stop', t: stopTime(c), checkId: c.id, gateId: g.id, title: tx.label + ': ' + tx.display });
+      });
+    });
+    var rises = I.kc ? I.kc.episodes.filter(function (e) { return e.kind === 'rise'; }) : [];
+    rises.forEach(function (e) {
+      out.push({ kind: 'watch', t: e.t0, checkId: 'kControl', gateId: 'spark', from: e.from, to: e.to });
+    });
+    var hard = I.boost ? I.boost.events.filter(function (e) { return e.hard; }) : [];
+    hard.sort(function (a, b) { return (a.iat0 == null ? 999 : a.iat0) - (b.iat0 == null ? 999 : b.iat0); });
+    hard.forEach(function (e) {
+      out.push({ kind: 'pull', t: e.t0, checkId: 'overshoot', gateId: 'air', tgt: e.targetMax, iat: e.iat0 });
+    });
+    var lugRises = rises.filter(function (e) { return e.cause === 'lugging'; });
+    lugRises.sort(function (a, b) { return (b.t1 - b.t0) - (a.t1 - a.t0); });
+    if (lugRises.length && I.lug && isNum(I.lug.share)) {
+      out.push({ kind: 'lug', t: lugRises[0].t0, checkId: 'kControl', gateId: 'spark', share: I.lug.share });
+    }
+    if (I.hotRestart && I.hotRestart.isRestart) out.push({ kind: 'restart', t: 0, checkId: 'iat', gateId: 'heat' });
+    var order = { stop: 0, watch: 1, pull: 2, lug: 3, restart: 4 };
+    out.sort(function (a, b) { return order[a.kind] - order[b.kind]; });
+    return out.slice(0, 5).map(function (m) {
+      m.clock = clock(m.t);
+      var hit = m.checkId ? findCheck(m.checkId) : null;
+      if (hit) { m.checkId = hit.check.id; m.gateId = hit.gate; } else { m.checkId = null; }
+      return m;
+    });
+  }
+  function momentTitle(C, m) {
+    if (m.kind === 'stop') return C.momStop(m.clock, m.title);
+    if (m.kind === 'watch') return C.momWatch(m.clock, C.momWatchLabel(F.num(m.from, 2), F.num(m.to, 2)));
+    if (m.kind === 'pull') return C.momPull(m.clock, C.momPullLabel(F.num(m.tgt, 1), F.num(m.iat, 0)));
+    if (m.kind === 'lug') return C.momLug(m.clock, C.momLugLabel(F.num(m.share, 1)));
+    return C.momRestart(m.clock);
+  }
   function viewCarDrive(C, D, cur) {
     var c = cur.car, R = cur.report, I = R.ins, t = T();
     var sum = c && !c.tooShort ? c.summary : null;
-    var h = '<section class="card" id="drive-card"><div class="card-row"><h2 class="card-title">' + esc(C.driveTitle) + '</h2>' + carVerdictPill(R.an.verdict) + '</div>';
+    var h = '<section class="card" id="drive-card" data-block="1"><div class="card-row"><h2 class="card-title story">' + esc(C.driveTitle) + '</h2>' + carVerdictPill(R.an.verdict) + '</div>';
+    if (c && c.tooShort) {
+      h += '<p class="body-sm"><b>' + esc(D.cantTell.tooShort(I.quality.cantTell)) + '</b></p>';
+      return h + '</section>';
+    }
     var when = sum && isNum(sum.start) ? fmtCarDate(sum.start) : esc(cur.name || '');
     var mins = sum ? sum.duration : I.meta.duration;
     var heat = sum ? (sum.cool ? C.cool : (sum.hot ? C.hot : C.mild)) : (I.heat.cool ? C.cool : (I.heat.hot ? C.hot : C.mild));
-    h += '<p class="body-sm">' + esc(when + ' · ' + F.num(mins / 60, 0) + ' min · ' + heat) + (sum && sum.hotRestart ? ' · ' + esc(C.hotRestart) : '') + '</p>';
+    h += '<p class="body-sm drive-date"><b>' + esc(when + ' · ' + F.num(mins / 60, 0) + ' min · ' + heat + ' · ' + trafficWord(C, cur, I)) + '</b>' + (sum && sum.hotRestart ? ' · ' + esc(C.hotRestart) : '') + '</p>';
     var mapLine = c && c.map.recorded ? esc(C.mapRecorded(c.map.name, fmtFlashDate(c.map.since))) : esc(C.mapMissing);
     h += '<p class="body-sm">' + mapLine + ' <button type="button" class="link-btn" data-act="flashNew">' + esc(C.addFlash) + '</button></p>';
     var tgt = sum ? sum.boostTarget : (I.boost ? I.boost.peakTarget : null);
     h += '<p class="small-note">' + esc(isNum(tgt) ? C.boostTarget(F.num(tgt, 1)) : C.boostTargetNone) + '</p>';
-    var q = c && c.tooShort ? C.qualityShort : ((I.quality.missing && I.quality.missing.length) ? C.qualityMissing : (((sum && sum.flat.length) ? C.qualityFlat : C.qualityGood)));
+    var q = (I.quality.missing && I.quality.missing.length) ? C.qualityMissing : (((sum && sum.flat.length) ? C.qualityFlat : C.qualityGood));
     h += '<p class="small-note">' + esc(C.logQuality(q)) + '</p>';
+    var moms = keyMoments(cur);
+    if (moms.length) {
+      h += '<h3 class="sub-title">' + esc(C.keyMoments) + '</h3><ol class="moments">';
+      moms.forEach(function (m, k) {
+        h += '<li><button type="button" class="moment" data-act="why" data-arg="m:' + k + '">' + esc(momentTitle(C, m)) + '</button></li>';
+      });
+      h += '</ol>';
+    }
     return h + '</section>';
+  }
+  function shortDay(ms) {
+    if (!isNum(ms)) return '';
+    try {
+      if (state.lang === 'vi') {
+        var d = new Date(ms);
+        return d.getDate() + '/' + (d.getMonth() + 1);
+      }
+      return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'Asia/Ho_Chi_Minh' }).format(ms);
+    } catch (e) { return ''; }
+  }
+  // Six small multiples, one dot per drive, newest right, evenly spaced.
+  // One hue (--meas) for every chart; shape, not colour, for Cool vs hot;
+  // the only status colour inside is the Stop ring. No dual axes, ever.
+  var CAR_CHARTS = [
+    { key: 'kcPeak', title: 'chScore', unit: '', dec: 2, base: true, limits: [0.80] },
+    { key: 'trimWorst', title: 'chTrim', unit: ' %', signed: 1, limits: [5, -5] },
+    { key: 'iatMoving', title: 'chIat', unit: ' °C', dec: 0, limits: [50] },
+    { key: 'cvtPeak', title: 'chCvt', unit: ' °C', dec: 0, limits: [100] },
+    { key: 'lugShare', title: 'chLug', unit: ' %', dec: 1, limits: [] },
+    { key: 'accel5070', title: 'chAccel', unit: ' s', dec: 2, limits: [] }
+  ];
+  function chartVal(p) { return p.value; }
+  function chartFmt(def, v) {
+    if (!isNum(v)) return '-';
+    if (def.signed) return F.signed(v, def.signed, def.unit);
+    return F.num(v, def.dec) + def.unit;
+  }
+  function faultName(row) {
+    var t = T(), stop = t.status.stop;
+    if (isNum(row.trimWorst) && Math.abs(row.trimWorst) > 10) return stop + ': trims ' + F.signed(row.trimWorst, 1, ' %');
+    if (isNum(row.kcPeak) && row.kcPeak >= 0.80) return stop + ': score ' + F.num(row.kcPeak, 2);
+    if (isNum(row.cvtPeak) && row.cvtPeak >= 100) return stop + ': CVT ' + F.num(row.cvtPeak, 0) + ' °C';
+    return stop;
+  }
+  function carChartSvg(C, def, pts, rows, flashes, baseline) {
+    var W = 300, H = 132, padL = 34, padR = 52, padT = 18, padB = 18;
+    var n = pts.length;
+    function X(i) { return n < 2 ? (padL + (W - padL - padR) / 2) : padL + i * (W - padL - padR) / (n - 1); }
+    var lo = Infinity, hi = -Infinity;
+    pts.forEach(function (p) { var v = chartVal(p); if (isNum(v)) { if (v < lo) lo = v; if (v > hi) hi = v; } });
+    if (def.base && isNum(baseline.value)) { lo = Math.min(lo, baseline.value); hi = Math.max(hi, baseline.value); }
+    (def.limits || []).forEach(function (v) { lo = Math.min(lo, v); hi = Math.max(hi, v); });
+    if (!isFinite(lo)) { lo = 0; hi = 1; }
+    if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+    var pad = (hi - lo) * 0.12; lo -= pad; hi += pad;
+    function Y(v) { return padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB); }
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(C[def.title]) + '">';
+    // at most 3 gridlines
+    [lo + (hi - lo) * 0.08, (lo + hi) / 2, hi - (hi - lo) * 0.08].forEach(function (v) {
+      s += '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '" style="stroke:var(--grid);stroke-width:1"/>';
+      s += '<text x="' + (padL - 4) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="end">' + esc(chartFmt(def, v)) + '</text>';
+    });
+    // Flash markers: one labelled vertical line at the first drive after it
+    (flashes || []).forEach(function (f) {
+      var k = -1;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].start != null && rows[i].start >= f.time) { k = i; break; }
+      }
+      if (k < 0) return;
+      var x = X(k);
+      s += '<line x1="' + x.toFixed(1) + '" x2="' + x.toFixed(1) + '" y1="' + (padT - 4) + '" y2="' + (H - padB) + '" style="stroke:var(--ink-3);stroke-width:1"/>';
+      var tx = Math.max(34, Math.min(W - 34, x));
+      s += '<text x="' + tx.toFixed(1) + '" y="' + (padT - 7) + '" text-anchor="middle">' + esc(String(f.map || '').slice(0, 12)) + '</text>';
+    });
+    // Baseline: dashed, labelled your-normal. Limits: solid, numbered.
+    if (def.base && isNum(baseline.value)) {
+      s += '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + Y(baseline.value).toFixed(1) + '" y2="' + Y(baseline.value).toFixed(1) + '" style="stroke:var(--axis);stroke-width:1.2;stroke-dasharray:5 4"/>';
+      s += '<text x="' + (W - padR + 4) + '" y="' + (Y(baseline.value) - 3).toFixed(1) + '">' + esc(C.yourNormal(F.num(baseline.value, 2))) + '</text>';
+    }
+    (def.limits || []).forEach(function (v, li) {
+      s += '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '" style="stroke:var(--line-3);stroke-width:1.5"/>';
+      s += '<text x="' + (W - padR + 4) + '" y="' + (Y(v) + (li % 2 ? -4 : 9)).toFixed(1) + '">' + esc(C.limitIs(chartFmt(def, v))) + '</text>';
+    });
+    // x: first and last drive only, to stay quiet
+    if (n) {
+      s += '<text x="' + padL + '" y="' + (H - 4) + '" text-anchor="start">' + esc(shortDay(rows[0].start)) + '</text>';
+      if (n > 1) s += '<text x="' + (W - padR) + '" y="' + (H - 4) + '" text-anchor="end">' + esc(shortDay(rows[n - 1].start)) + '</text>';
+    }
+    var t = T();
+    pts.forEach(function (p, i) {
+      var v = chartVal(p), x = X(i);
+      var row = rows[i] || {};
+      var coolHot = p.cool ? C.cool : C.hot;
+      var verdictWord = (t.status[p.verdict] || p.verdict);
+      var tip = fmtCarDate(p.date) + ' · ' + (isNum(v) ? chartFmt(def, v) : '-') + ' · ' + coolHot + ' · ' + verdictWord + ' · ' + (p.map || C.mapMissing);
+      if (p.verdict === 'stop') tip += ' · ' + faultName(row);
+      if (!isNum(v)) {
+        s += '<circle cx="' + x.toFixed(1) + '" cy="' + Y((lo + hi) / 2).toFixed(1) + '" r="12" style="fill:transparent" data-tip="' + esc(tip) + '"/>';
+        return;
+      }
+      var y = Y(v);
+      s += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="7" style="fill:none;stroke:var(--sheet);stroke-width:2"/>';
+      if (p.cool) s += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5" style="fill:var(--meas);stroke:var(--sheet);stroke-width:1.5"/>';
+      else s += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5" style="fill:var(--sheet);stroke:var(--meas);stroke-width:2"/>';
+      if (p.verdict === 'stop') {
+        s += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="8.5" style="fill:none;stroke:var(--stop-ic);stroke-width:2"/>';
+        s += '<path d="M' + (x - 3.2).toFixed(1) + ' ' + (y - 3.2).toFixed(1) + ' L' + (x + 3.2).toFixed(1) + ' ' + (y + 3.2).toFixed(1) + ' M' + (x + 3.2).toFixed(1) + ' ' + (y - 3.2).toFixed(1) + ' L' + (x - 3.2).toFixed(1) + ' ' + (y + 3.2).toFixed(1) + '" style="fill:none;stroke:var(--stop-ic);stroke-width:2;stroke-linecap:round"/>';
+      }
+      s += '<g data-act="carOpen" data-arg="' + esc(p.x) + '" tabindex="0" role="button" aria-label="' + esc(tip) + '"><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="12" style="fill:transparent" data-tip="' + esc(tip) + '"/></g>';
+    });
+    return s + '</svg>';
   }
   function viewCarHistory(C) {
     var s = carState(), rows = K.carTableRows(s), base = K.carBaseline(s);
     var stops = rows.filter(function (r) { return r.verdict === 'stop'; }).length;
     var since = rows.length ? fmtCarDate(rows[0].start) : '';
-    var mapName = rows.length ? (rows[rows.length - 1].map || null) : null;
-    var h = '<section class="card" id="car-history"><div class="card-row"><h2 class="card-title">' + esc(C.historyTitle) + '</h2></div>';
+    var lastMap = rows.length ? (rows[rows.length - 1].map || null) : null;
+    var h = '<section class="card" id="car-history" data-block="4"><div class="card-row"><h2 class="card-title story">' + esc(C.historyTitle) + '</h2>';
+    h += '<div class="tabs" role="group" aria-label="' + esc(C.historyTitle) + '"><button type="button" data-act="carView" data-arg="charts" aria-pressed="' + (ui.carView !== 'table') + '">' + esc(C.chartsBtn) + '</button><button type="button" data-act="carView" data-arg="table" aria-pressed="' + (ui.carView === 'table') + '">' + esc(C.tableBtn) + '</button></div></div>';
     if (!rows.length) {
       h += '<p class="body-sm"><b>' + esc(C.historyEmpty) + '</b></p>';
     } else {
-      h += '<p class="body-sm"><b>' + esc(C.historyLine(rows.length, since, C.stops(stops), mapName || C.mapMissing)) + '</b></p>';
-      h += '<p class="small-note">Baseline ' + esc(F.num(base.value, 2)) + (base.n < 3 ? ' · 0.49 ' : '') + '</p>';
-      h += '<div class="table car-table"><div class="row head"><span>' + C.tableHeaders.map(esc).join('</span><span>') + '</span><span></span></div>';
-      rows.forEach(function (r) {
-        h += '<div class="row"><span class="mono">' + esc(fmtCarDate(r.start)) + '</span>' +
-          '<span>' + carVerdictPill(r.verdict) + '</span>' +
-          '<span class="mono">' + esc(isNum(r.kcEnd) ? F.num(r.kcEnd, 2) : '-') + '</span>' +
-          '<span class="mono">' + esc(isNum(r.trimWorst) ? F.signed(r.trimWorst, 1, ' %') : '-') + '</span>' +
-          '<span class="mono">' + esc(isNum(r.iatMoving) ? F.num(r.iatMoving, 0) + ' °C' : '-') + '</span>' +
-          '<span class="mono">' + esc(isNum(r.cvtPeak) ? F.num(r.cvtPeak, 0) + ' °C' : '-') + '</span>' +
-          '<span>' + esc(r.map || '-') + '</span>' +
-          '<span><button type="button" class="link-btn" data-act="carHide" data-arg="' + esc(r.id) + '">' + esc(C.hide) + '</button></span></div>';
-      });
-      h += '</div><p class="small-note">' + esc(C.hideNote) + '</p>';
+      h += '<p class="body-sm"><b>' + esc(C.historyLine(rows.length, since, C.stops(stops), lastMap || C.historyMapNone)) + '</b></p>';
+      if (ui.carView === 'table') {
+        h += '<div class="table-scroll"><div class="table car-table"><div class="row head"><span>' + C.tableHeaders.map(esc).join('</span><span>') + '</span><span></span></div>';
+        rows.forEach(function (r) {
+          h += '<div class="row' + (ui.carFocus === r.id ? ' is-focus' : '') + '"><span class="mono">' + esc(fmtCarDate(r.start)) + '</span>' +
+            '<span>' + carVerdictPill(r.verdict) + '</span>' +
+            '<span class="mono">' + esc(isNum(r.kcPeak) ? F.num(r.kcPeak, 2) : '-') + '</span>' +
+            '<span class="mono">' + esc(isNum(r.trimWorst) ? F.signed(r.trimWorst, 1, ' %') : '-') + '</span>' +
+            '<span class="mono">' + esc(isNum(r.iatMoving) ? F.num(r.iatMoving, 0) + ' °C' : '-') + '</span>' +
+            '<span class="mono">' + esc(isNum(r.cvtPeak) ? F.num(r.cvtPeak, 0) + ' °C' : '-') + '</span>' +
+            '<span class="mono">' + esc(isNum(r.lugShare) ? F.num(r.lugShare, 1) + ' %' : '-') + '</span>' +
+            '<span class="mono">' + esc(r.accel5070 ? F.num(r.accel5070.seconds, 2) + ' s' : '-') + '</span>' +
+            '<span>' + esc(r.map || '-') + '</span>' +
+            '<span><button type="button" class="link-btn" data-act="carHide" data-arg="' + esc(r.id) + '">' + esc(C.hide) + '</button></span></div>';
+        });
+        h += '</div></div>';
+      } else {
+        var series = null;
+        try { series = K.carChartSeries(s); } catch (e) { series = null; }
+        var byKey = {};
+        if (series && series.series) series.series.forEach(function (x) { byKey[x.key] = x.points; });
+        h += '<div class="car-charts">';
+        CAR_CHARTS.forEach(function (def) {
+          var pts = byKey[def.key] || rows.map(function (r) {
+            return { x: r.id, date: r.start, value: def.key === 'accel5070' ? (r.accel5070 ? r.accel5070.seconds : null) : r[def.key], cool: r.cool, verdict: r.verdict, map: r.map };
+          });
+          h += '<figure class="car-chart" data-chart="' + def.key + '"><figcaption>' + esc(C[def.title]) + '</figcaption><div class="chart">' + carChartSvg(C, def, pts, rows, s.flashes, base) + '</div></figure>';
+        });
+        h += '</div><p class="small-note">' + esc(C.chartsHint) + '</p>';
+        if (ui.carFocus) {
+          var foc = rows.filter(function (r) { return r.id === ui.carFocus; })[0];
+          if (foc) {
+            h += '<div class="car-focus" id="car-focus"><div class="card-row"><b>' + esc(fmtCarDate(foc.start)) + '</b>' + carVerdictPill(foc.verdict) + '</div>' +
+              '<p class="small-note mono">' +
+              esc(F.num(foc.kcPeak, 2) + ' · ' + F.signed(foc.trimWorst, 1, ' %') + ' · ' + F.num(foc.iatMoving, 0) + ' °C · ' + F.num(foc.cvtPeak, 0) + ' °C · ' + (foc.map || C.mapMissing)) +
+              '</p></div>';
+          }
+        }
+      }
+      h += '<p class="small-note">' + esc(C.hideNote) + '</p>';
     }
     var hidden = (s.hidden || []).filter(function (id) { return s.drives[id]; });
     if (hidden.length) {
@@ -1003,7 +1236,7 @@
   }
   function viewFlashForm(C) {
     var f = ui.flashForm;
-    var h = '<div class="form" id="flash-form"><label>' + esc(C.formTime) + '<input type="datetime-local" data-flash="time" value="' + esc(toLocalInput(f.time)) + '"></label>';
+    var h = '<div class="form" id="flash-form"><label>' + esc(C.formTime) + '<input type="datetime-local" data-flash="time" value="' + esc(f.time || f.timeStr || '') + '"></label>';
     h += '<label>' + esc(C.formMap) + '<input type="text" data-flash="map" value="' + esc(f.map || '') + '" placeholder="Starter 21"></label>';
     h += '<label>' + esc(C.formChanged) + '<select data-flash="changed">' + ['afm', 'boost', 'fuel', 'other'].map(function (k) {
       return '<option value="' + k + '"' + (f.changed === k ? ' selected' : '') + '>' + esc(C.changed[k]) + '</option>';
@@ -1029,21 +1262,73 @@
     return h + '</div>';
   }
   function viewDriveStart(D) {
+    var C = T().car;
     var h = '<section class="card is-key"><h2 class="card-title">' + esc(D.loop[0].title) + '</h2>' + loaderHtml(D, 'current', D.load);
-    h += '<h3 class="sub-title">' + esc(D.examplesTitle) + '</h3>' + examplesHtml(D, 'current') + '<p class="small-note">' + esc(D.exampleNote) + '</p></section>';
-    return h;
+    h += '<h3 class="sub-title">' + esc(D.examplesTitle) + '</h3>' + examplesHtml(D, 'current') + '<p class="small-note">' + esc(D.exampleNote) + '</p>';
+    h += '<div class="act-buttons"><button type="button" class="btn-ghost" data-act="carExport">' + esc(C.exportBtn) + '</button>' +
+      '<label class="file-btn btn-ghost">' + esc(C.importBtn) + '<input type="file" data-import="1" accept=".json,application/json" aria-label="' + esc(C.importBtn) + '"></label></div>';
+    if (ui.carMsg) h += '<p class="body-sm">' + esc(ui.carMsg) + '</p>';
+    if (ui.carErr) h += '<div class="banner stop" role="alert">' + esc(ui.carErr) + '</div>';
+    return h + '</section>';
   }
 
-  function viewSafe(D, R) {
+  function findAnCheck(R, id) {
+    for (var gi = 0; gi < R.an.gates.length; gi++) {
+      var cs = R.an.gates[gi].checks;
+      for (var ci = 0; ci < cs.length; ci++) if (cs[ci].id === id) return { gate: R.an.gates[gi], check: cs[ci] };
+    }
+    return null;
+  }
+  function worstCheck(g) {
+    var rank = { stop: 0, watch: 1, nodata: 2, good: 3 }, best = null;
+    g.checks.forEach(function (c) { if (!best || rank[c.status] < rank[best.status]) best = c; });
+    return best;
+  }
+  function viewSafe(D, R, cur) {
     var t = T(), an = R.an;
-    var h = '<section class="card safe-card tinted st-' + an.verdict + '"><div class="safe-head">' + sIcon(an.verdict, 26) + '<div><div class="eyebrow">' + esc(D.safeTitle) + '</div><p class="safe-line">' + esc(D.safe[an.verdict]) + '</p></div>';
-    h += '<button type="button" class="btn-ghost" data-act="driveReset">' + esc(D.another) + '</button></div><div class="gchips">';
+    var h = '<section class="card safe-card tinted st-' + an.verdict + '" data-block="2" id="block-safety"><div class="safe-head">' + sIcon(an.verdict, 26) + '<div><div class="eyebrow">' + esc(D.safeTitle) + '</div><p class="safe-line"><b>' + esc(D.safe[an.verdict]) + '</b></p></div>';
+    h += '<button type="button" class="btn-ghost" data-act="driveReset">' + esc(D.another) + '</button></div><ol class="safety-lines">';
+    an.gates.forEach(function (g) {
+      var c = worstCheck(g);
+      if (!c) return;
+      var tx = checkText(c);
+      h += '<li class="safety-line st-' + c.status + '"><span class="pill st-' + c.status + '">' + sIcon(c.status, 14) + esc(t.status[c.status]) + '</span><div><b>' + esc(t.gates[g.id]) + ' · ' + esc(t.status[c.status]) + '</b> ' +
+        '<span>' + esc(tx.label) + '.</span> <span class="mono">' + esc(tx.display) + '</span> ' +
+        '<span class="small-note">' + esc(D.limits[g.id] || '') + '</span>' +
+        (tx.fix ? '<span class="do-now"><b>' + esc(D.doNow) + ':</b> ' + esc(tx.fix) + '</span>' : '') + '</div>' +
+        '<button type="button" class="link-btn" data-act="why" data-arg="g:' + g.id + ':' + c.id + '">' + esc(D.whyBtn) + '</button></li>';
+    });
+    h += '</ol><div class="gchips">';
     an.gates.forEach(function (g) {
       h += '<details class="gchip st-' + g.status + '"><summary>' + sIcon(g.status, 16) + '<b>' + esc(t.gates[g.id]) + '</b><span>' + esc(t.status[g.status]) + '</span></summary><div class="gchip-body">';
       g.checks.forEach(function (c) { var tx = checkText(c); h += '<div class="check-line st-' + c.status + '"><span class="dot"></span><span class="lbl">' + esc(tx.label) + '</span><span class="val">' + esc(tx.display) + '</span></div>'; });
       h += '</div></details>';
     });
-    return h + '</div></section>';
+    h += '</div>' + whyPanel(D, R, cur) + '</section>';
+    return h;
+  }
+  // One Why? picture: when (the moment on the drive's timeline) and where
+  // (the same moment on the small revs x boost grid), plus the limit's basis
+  // in one line. Rendered inline so it works on the phone with block 8 shut.
+  function whyPanel(D, R, cur) {
+    if (!ui.why) return '';
+    var w = ui.why, hit = w.checkId ? findAnCheck(R, w.checkId) : null;
+    var I = R.ins, C = T().car;
+    var h = '<div class="why" id="why"><div class="card-row"><h3 class="sub-title" style="margin:0">' + esc(C.whyTitle) + '</h3><button type="button" class="link-btn" data-act="why" data-arg="off">✕</button></div>';
+    if (w.moment) h += '<p class="body-sm"><b>' + esc(w.moment) + '</b></p>';
+    else if (hit) { var tx = checkText(hit.check); h += '<p class="body-sm"><b>' + esc(tx.label + ': ' + tx.display) + '</b></p>'; }
+    if (hit && hit.check.basis) {
+      try { h += '<p class="small-note">' + esc(D.basisLine.call(D, hit.check.basis)) + '</p>'; }
+      catch (e) { h += '<p class="small-note">' + esc(String(hit.check.basis.t) + ' · ' + String(hit.check.basis.k)) + '</p>'; }
+    }
+    var kc = kcSvg(I), tm = timingSvg(I);
+    if (kc || tm) {
+      h += '<div class="why-graphs">';
+      if (kc) h += '<div class="chart">' + kc + '</div>';
+      if (tm) h += '<div class="chart">' + tm + '</div>';
+      h += '</div>';
+    }
+    return h + '</div>';
   }
 
   function shakeOpen() {
@@ -1051,8 +1336,9 @@
     return !!(cur && cur.car && !cur.car.tooShort && cur.car.isShakedown && !cur.car.shakedown.passed);
   }
   function viewNow(D, R) {
-    var P = R.plan, A = state.plan.active;
-    var h = '<section class="card is-key now-card"><div class="card-row"><h2 class="card-title">' + esc(D.nowTitle) + '</h2></div>';
+    var P = R.plan || { now: [], next: [], later: [], fine: [] }, A = state.plan.active;
+    var h = '<section class="card is-key now-card" data-block="3"><div class="card-row"><h2 class="card-title story">' + esc(D.nowTitle) + '</h2></div>';
+    if (R.ins.quality.cantTell && R.ins.quality.cantTell.reason === 'tooShort') return h + '<p class="lead-sm"><b>' + esc(D.cantTell.tooShort(R.ins.quality.cantTell)) + '</b></p></section>';
     if (shakeOpen()) return h + '<p class="lead-sm"><b>' + esc(T().car.finishShakedown) + '</b></p></section>';
     var a = P.now[0];
     if (!a) return h + '<p class="lead-sm"><b>' + esc(D.noActions) + '</b></p></section>';
@@ -1071,8 +1357,9 @@
   }
 
   function viewQueue(D, R) {
-    var P = R.plan, A = state.plan.active;
-    var h = '<section class="card"><h2 class="card-title">' + esc(D.nextTitle) + '</h2>';
+    var P = R.plan || { now: [], next: [], later: [], fine: [] }, A = state.plan.active;
+    var h = '<section class="card" data-block="6"><div class="card-row"><h2 class="card-title story">' + esc(D.nextTitle) + '</h2></div>';
+    h += '<p class="lead-sm"><b>' + esc(T().car.queueLine(P.next.length, P.later.length, P.fine.length)) + '</b></p>';
     if (shakeOpen()) return h + '<p class="muted" style="margin:0">' + esc(T().car.finishShakedown) + '</p></section>';
     if (!P.next.length) h += '<p class="muted" style="margin:0">-</p>';
     P.next.forEach(function (a, k) {
@@ -1096,6 +1383,66 @@
       h += '</div>';
     }
     return h + '</section>';
+  }
+
+  // Block 5: was it faster? Today's best 50→70 km/h against the best at an
+  // intake within 8 °C from the Car history — or an honest "not comparable".
+  // Hides when the drive has no acceleration window.
+  function viewPerf(C, D, cur) {
+    var I = cur.report.ins;
+    var today = I.accel && (I.accel.best['50-70'] || I.accel.headline);
+    if (!today || !isNum(today.seconds)) return '';
+    var rows = K.carTableRows(carState()).filter(function (r) {
+      return r.accel5070 && isNum(r.accel5070.seconds) && cur.car && !cur.car.tooShort && r.id !== cur.car.identity;
+    });
+    var h = '<section class="card" data-block="5" id="block-perf"><div class="card-row"><h2 class="card-title story">' + esc(C.perfTitle) + '</h2></div>';
+    var cmp;
+    if (!rows.length) {
+      cmp = C.perfNew;
+    } else {
+      var near = rows.filter(function (r) { return isNum(r.accel5070.iat) && isNum(today.iat) && Math.abs(r.accel5070.iat - today.iat) <= 8; });
+      var best = rows.slice().sort(function (a, b) { return a.accel5070.seconds - b.accel5070.seconds; })[0];
+      if (!near.length) {
+        var why = '';
+        if (best && isNum(best.accel5070.iat) && isNum(today.iat)) {
+          var d = Math.round(today.iat - best.accel5070.iat);
+          why = d >= 0 ? C.perfHotter(d) : C.perfColder(-d);
+        }
+        cmp = C.perfNot(why);
+      } else {
+        var nb = near.slice().sort(function (a, b) { return a.accel5070.seconds - b.accel5070.seconds; })[0].accel5070.seconds;
+        cmp = today.seconds <= nb + 0.05 ? C.perfBest(F.num(nb, 2)) : C.perfOff(F.num(nb, 2), F.num(today.seconds - nb, 2));
+      }
+    }
+    h += '<p class="lead-sm"><b>' + esc(C.perfLine(F.num(today.seconds, 2), cmp)) + '</b></p>';
+    h += '<p class="body-sm">' + esc(D.feel(I.accel.headline, F)) + '</p>';
+    h += '<p class="small-note">' + esc(C.perfNote) + '</p>';
+    return h + '</section>';
+  }
+
+  // Block 7: what this drive can't tell. First line names what's missing —
+  // or says nothing is — instead of disappearing.
+  function viewQualityBlock(D, R, cur, t, I) {
+    var lines = D.quality(I, F, t);
+    var first;
+    if (I.quality.cantTell) first = lines.length ? lines[0] : t.status.nodata;
+    else {
+      var names = (I.quality.flat || []).map(function (k) { return (D.qualityChannels || {})[k] || k; })
+        .concat((I.quality.missing || []).map(function (k) { return { afrCmd: 'AFR command', mafHz: 'AFM flow' }[k] || k; }));
+      first = names.length ? T().car.qualitySome(names.join(', ')) : T().car.qualityOk;
+    }
+    var h = '<section class="card is-soft" data-block="7" id="block-canttell"><div class="card-row"><h2 class="card-title story">' + esc(D.qualityTitle) + '</h2></div>';
+    h += '<p class="body-sm"><b>' + esc(first) + '</b></p><ul class="dots">' + lines.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+    h += '<p class="small-note">' + esc(driveName(cur) + ' · ' + t.drive.source[I.meta.source] + ' · ' + D.facts(I, F)) + '</p>';
+    return h + '</section>';
+  }
+
+  // Block 8: engineering view, collapsed — the graphs, on the phone too.
+  function viewEng(D, I) {
+    var open = ui.engOpen ? ' open' : '';
+    var h = '<details class="card eng" data-block="8" id="block-eng"' + open + '><summary class="eng-sum"><span class="card-title story">' + esc(D.graphsTitle) + '</span><span class="small-note">' + esc(D.graphsNote) + '</span></summary>';
+    h += graphCard('kc', kcSvg(I), D) + graphCard('timing', timingSvg(I), D) + graphCard('afr', afrSvg(I), D) + graphCard('accel', accelSvg(I), D);
+    return h + '</details>';
   }
 
   function viewProve(D) {
@@ -1277,7 +1624,7 @@
         drives.proof = K.proveAction(state.plan.active.id, state.plan.active.before, rec.report);
       } else { drives.current = rec; drives.next = null; drives.proof = null; }
       ai.result = null; ai.q = '';
-      ui.driveErr = '';
+      ui.driveErr = ''; ui.why = null; ui.carFocus = null;
     } catch (e) {
       ui.driveErr = (name ? name + ': ' : '') + ((e && e.message) || e);
     }
@@ -1631,7 +1978,7 @@
       render({ top: true });
     },
     example: function (arg) { var p = String(arg).split(':'); loadExample(p[0], p[1] === 'next' ? 'next' : 'current'); },
-    driveReset: function () { drives.current = null; drives.next = null; drives.proof = null; ai.result = null; ui.driveErr = ''; render({ top: true }); },
+    driveReset: function () { drives.current = null; drives.next = null; drives.proof = null; ai.result = null; ui.driveErr = ''; ui.why = null; ui.carFocus = null; render({ top: true }); },
     carAnswer: function (arg) {
       var cur = drives.current, C = T().car;
       if (!cur || !cur.car || cur.car.tooShort || !cur.car.unexplained || cur.car.unexplained.state !== 'open') return;
@@ -1647,6 +1994,34 @@
     },
     carHide: function (id) { state.car = K.carHide(state.car, id); save(); refreshCarRec(drives.current); refreshCarRec(drives.next); render(); },
     carUnhide: function (id) { state.car = K.carUnhide(state.car, id); save(); refreshCarRec(drives.current); refreshCarRec(drives.next); render(); },
+    carView: function (arg) { ui.carView = arg === 'table' ? 'table' : 'charts'; render(); },
+    carOpen: function (id) {
+      ui.carView = 'charts';
+      ui.carFocus = ui.carFocus === id ? null : id;
+      render();
+      var f = document.getElementById('car-focus');
+      if (f) f.scrollIntoView({ block: 'nearest' });
+    },
+    why: function (arg) {
+      var cur = drives.current;
+      if (arg === 'off' || !cur) { ui.why = null; render(); return; }
+      var key = String(arg || '');
+      if (ui.why && ui.why.key === key) { ui.why = null; render(); return; }
+      var C = T().car;
+      if (key.indexOf('m:') === 0) {
+        var moms = keyMoments(cur), m = moms[parseInt(key.slice(2), 10)];
+        if (!m) return;
+        ui.why = { key: key, checkId: m.checkId, gateId: m.gateId, t: m.t, moment: momentTitle(C, m) };
+      } else if (key.indexOf('g:') === 0) {
+        var parts = key.split(':');
+        var hit = findAnCheck(cur.report, parts[2]);
+        var tx = hit ? checkText(hit.check) : null;
+        ui.why = { key: key, checkId: parts[2], gateId: parts[1], moment: tx ? tx.label + ': ' + tx.display : parts[2] };
+      } else return;
+      render();
+      var w = document.getElementById('why');
+      if (w) w.scrollIntoView({ block: 'start' });
+    },
     carExport: function () { download('car-history-' + today() + '.json', JSON.stringify(K.carExport(carState()), null, 2), 'application/json;charset=utf-8'); },
     flashNew: function () {
       ui.flashForm = { id: null, timeStr: toLocalInput(Date.now()), map: '', changed: 'other', note: '' };
@@ -1675,7 +2050,7 @@
     flashSave: function () {
       var C = T().car, f = ui.flashForm;
       if (!f) return;
-      var ms = fromLocalInput(f.timeStr);
+      var ms = fromLocalInput(f.time != null && f.time !== '' ? f.time : f.timeStr);
       if (!isNum(ms)) { ui.flashErr = C.formNeedTime; render(); return; }
       if (!f.map || !String(f.map).trim()) { ui.flashErr = C.formNeedMap; render(); return; }
       try {
@@ -1801,9 +2176,10 @@
     runAsk(q ? q.value : '');
   });
 
-  // keep the column-mapping panel open across re-renders
+  // keep the column-mapping and engineering panels open across re-renders
   document.addEventListener('toggle', function (e) {
     if (e.target && e.target.id === 'columns') ui.columnsOpen = e.target.open;
+    if (e.target && e.target.id === 'block-eng') ui.engOpen = e.target.open;
     if (e.target && e.target.id === 'ai-settings') ui.aiOpen = e.target.open;
     if (e.target && e.target.classList && e.target.classList.contains('topic')) ui.topics[e.target.id] = e.target.open;
   }, true);
@@ -1861,6 +2237,15 @@
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);
   document.addEventListener('keydown', function (e) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.getAttribute) {
+      var g = e.target.closest ? e.target.closest('g[data-act]') : null;
+      if (g) {
+        e.preventDefault();
+        var gfn = ACTIONS[g.getAttribute('data-act')];
+        if (gfn) gfn(g.getAttribute('data-arg'), g);
+        return;
+      }
+    }
     if (!e.target || e.target.id !== 'surface') return;
     var k = e.key;
     if (k === 'ArrowLeft') ui.yaw -= 10;
@@ -1905,6 +2290,7 @@
     var keep = { main: q('.main') ? q('.main').scrollTop : 0, aside: q('.aside') ? q('.aside').scrollTop : 0, rail: q('.rail') ? q('.rail').scrollTop : 0, win: window.scrollY };
     // open/closed panels: read them now; the 'toggle' event arrives asynchronously and can be late
     if (q('#columns')) ui.columnsOpen = q('#columns').open;
+    if (q('#block-eng')) ui.engOpen = q('#block-eng').open;
     if (q('#ai-settings')) ui.aiOpen = q('#ai-settings').open;
     Array.prototype.forEach.call(root.querySelectorAll('details.topic'), function (d) { ui.topics[d.id] = d.open; });
     applyTheme();

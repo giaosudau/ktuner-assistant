@@ -44,6 +44,7 @@ async function run() {
   });
 
   await step('Drive check: engineering graphs draw with finite geometry, and explain themselves', async () => {
+    await dp.click('#block-eng > summary');
     for (const id of ['kc', 'timing', 'afr', 'accel']) {
       const svg = await dp.innerHTML('#graph-' + id + ' svg');
       assert.ok(svg.length > 500 && !/NaN|Infinity|undefined/.test(svg), id);
@@ -136,6 +137,213 @@ async function run() {
     await noOverflow(phone);
     await phone.close();
   });
+
+  // ---------------------------------------------------------------- Car history story (blocks 0-8) and charts
+  const car = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  car.on('pageerror', (e) => errors.push('car: ' + e.message));
+  await car.goto(APP);
+  await car.evaluate(() => { try { localStorage.clear(); } catch (e) { /* ignore */ } });
+  await car.reload();
+  await car.waitForSelector('.step-head h1');
+  const carExample = async (id) => {
+    await car.click('[data-act="driveReset"]').catch(() => {});
+    await car.click('[data-act="example"][data-arg="' + id + ':current"]');
+    await car.waitForSelector('.now-card', { timeout: 30000 });
+  };
+  const carUpload = async (id, name, stop) => {
+    const ex = {};
+    new Function('root', fs.readFileSync(path.join(__dirname, '..', 'data', 'example-' + id + '.js'), 'utf8').replace('typeof globalThis !== \'undefined\' ? globalThis : this', 'root'))(ex);
+    const file = path.join(os.tmpdir(), name);
+    fs.writeFileSync(file, zlib.gunzipSync(Buffer.from(ex.KTA_EXAMPLES[id].gz, 'base64')));
+    await car.click('[data-act="driveReset"]').catch(() => {});
+    await car.setInputFiles('input[data-drive="current"]', file);
+    await car.waitForSelector(stop ? '#block-paused' : '.now-card', { timeout: 30000 });
+  };
+  const blockOrder = () => car.evaluate(() => Array.from(document.querySelectorAll('main [data-block]')).map((e) => e.getAttribute('data-block')));
+
+  await step('Car story: blocks arrive in contract order with answering first lines (Aug 30 16:01)', async () => {
+    await carExample('aug30-1601');
+    assert.deepEqual(await blockOrder(), ['1', '2', '3', '4', '5', '6', '7', '8']);
+    assert.match(await car.textContent('#drive-card .drive-date'), /30 Aug · 16:01 · 5\d min · Hot · Traffic/);
+    assert.match(await car.textContent('#block-safety .safe-line'), /Yes, with things to watch/);
+    assert.equal(await car.textContent('.act-title'), 'Keep the revs up in hot traffic');
+    assert.match(await car.textContent('#car-history .body-sm b'), /1 drive since .* · 0 Stops · Map not recorded before today/);
+    assert.match(await car.textContent('#block-perf .lead-sm b'), /Best 50→70 km\/h \d+\.\d\d s/);
+    assert.match(await car.textContent('[data-block="6"] .lead-sm b'), /up next · .* locked · .* fine/);
+    assert.match(await car.textContent('#block-canttell .body-sm b'), /AFR command|Nothing missing/);
+    assert.match(await car.textContent('#block-eng > summary'), /Engineering view/);
+    assert.match(await car.textContent('.safety-line >> nth=2'), /costs about 1\.5° of timing/);
+  });
+
+  await step('Car story: at most 5 key moments with clock times, each opens its Why', async () => {
+    const moms = await car.locator('.moment').count();
+    assert.ok(moms >= 1 && moms <= 5, 'moments: ' + moms);
+    const texts = await car.evaluate(() => Array.from(document.querySelectorAll('.moment')).map((e) => e.textContent));
+    for (const m of texts) assert.match(m, /· \d/);
+    assert.ok(texts.some((m) => /Hard pull/.test(m)), 'hard pulls first-ish: ' + texts.join(' | '));
+    await car.click('.moment >> nth=0');
+    await car.waitForSelector('#why');
+    assert.match(await car.textContent('#why'), /Basis:/);
+    assert.equal(await car.locator('#why .chart svg').count(), 2);
+    await car.click('.moment >> nth=0');
+  });
+
+  await step('Car story: every verdict is icon + word, never colour alone', async () => {
+    const pills = await car.evaluate(() => Array.from(document.querySelectorAll('#drive-card .pill, .safety-line .pill, #car-history .pill')).map((e) => ({
+      svg: !!e.querySelector('svg.sicon'), text: e.textContent.trim(),
+    })));
+    assert.ok(pills.length > 5, 'pills: ' + pills.length);
+    for (const p of pills) {
+      assert.ok(p.svg, 'icon missing: ' + p.text);
+      assert.match(p.text, /OK|Watch|Stop|Can't tell/);
+    }
+  });
+
+  await step('Car charts: cool filled, hot hollow, dashed baseline, solid limits, stop ring', async () => {
+    await carUpload('aug23-2038', 'TunerView_20260823_203853.csv', true);
+    await car.click('[data-act="driveReset"]').catch(() => {});
+    await carUpload('sep01-0813', 'TunerView_20260901_081358.csv');
+    const enc = await car.evaluate(() => {
+      const q = (sel) => Array.from(document.querySelectorAll(sel));
+      const styleHas = (el, s) => (el.getAttribute('style') || '').includes(s);
+      return {
+        filled: q('[data-chart="kcPeak"] circle').filter((e) => styleHas(e, 'fill:var(--meas)')).length,
+        hollow: q('.car-chart circle').filter((e) => styleHas(e, 'fill:var(--sheet);stroke:var(--meas)')).length,
+        baseline: q('[data-chart="kcPeak"] line').filter((e) => styleHas(e, 'stroke:var(--axis)')).length,
+        limits: q('.car-chart line').filter((e) => styleHas(e, 'stroke:var(--line-3)')).length,
+        stopRing: q('[data-chart="trimWorst"] circle').filter((e) => styleHas(e, 'stroke:var(--stop-ic)')).length,
+        stopCross: q('[data-chart="trimWorst"] path[style*="--stop-ic"]').length,
+        grid: q('[data-chart="kcPeak"] line').filter((e) => styleHas(e, 'stroke:var(--grid)')).length,
+        normal: document.body.textContent.includes('your normal 0.49'),
+      };
+    });
+    assert.ok(enc.filled >= 1, 'cool filled dot: ' + JSON.stringify(enc));
+    assert.ok(enc.hollow >= 1, 'hot hollow dot');
+    assert.ok(enc.baseline >= 1, 'dashed baseline');
+    assert.ok(enc.limits >= 4, 'solid limits');
+    assert.ok(enc.stopRing >= 1 && enc.stopCross >= 1, 'stop ring + cross');
+    assert.ok(enc.grid <= 3, 'at most 3 gridlines: ' + enc.grid);
+    assert.ok(enc.normal, 'baseline labelled your normal');
+    const tip = await car.evaluate(() => document.querySelector('[data-chart="trimWorst"] g[data-act="carOpen"] circle[data-tip]').getAttribute('data-tip'));
+    assert.match(tip, /20:38|2038/);
+    assert.match(tip, /Stop: trims/);
+  });
+
+  await step('Car charts: a flash draws one labelled line on all six charts', async () => {
+    await car.click('#car-history [data-act="flashNew"]');
+    await car.fill('#flash-form [data-flash="map"]', 'Starter 21');
+    await car.fill('#flash-form [data-flash="time"]', '2026-08-23T12:00');
+    await car.click('[data-act="flashSave"]');
+    await car.waitForSelector('#car-history');
+    const per = await car.evaluate(() => Array.from(document.querySelectorAll('.car-chart')).map((f) => ({
+      c: f.getAttribute('data-chart'),
+      n: Array.from(f.querySelectorAll('line')).filter((e) => (e.getAttribute('style') || '').includes('--ink-3')).length,
+      label: Array.from(f.querySelectorAll('text')).some((t) => t.textContent.includes('Starter')),
+    })));
+    for (const p of per) assert.ok(p.n === 1 && p.label, p.c + ': ' + JSON.stringify(p));
+  });
+
+  await step('Car charts: tap a dot opens that drive; the table agrees', async () => {
+    await car.locator('[data-chart="kcPeak"] g[data-act="carOpen"]').first().click();
+    await car.waitForSelector('#car-focus');
+    assert.match(await car.textContent('#car-focus'), /Aug/);
+    const tip = await car.evaluate(() => document.querySelector('[data-chart="trimWorst"] g[data-act="carOpen"] circle[data-tip]').getAttribute('data-tip'));
+    await car.click('[data-act="carView"][data-arg="table"]');
+    const rows = await car.locator('.car-table .row:not(.head)').count();
+    assert.ok(rows >= 3, 'table lists every drive: ' + rows);
+    const trimCell = (await car.textContent('.car-table .row:not(.head) >> nth=0')).match(/[+-]\d+\.\d %/);
+    assert.ok(trimCell && tip.includes(trimCell[0]), 'table/chart agree: ' + trimCell + ' vs ' + tip);
+    await car.click('[data-act="carView"][data-arg="charts"]');
+  });
+
+  await step('Car story: a stop collapses blocks 3-5, keeps safety and moments', async () => {
+    await carUpload('aug23-2038', 'TunerView_20260823_203853.csv', true);
+    assert.match(await car.textContent('#block-paused'), /Paused until the Stop is fixed/);
+    assert.equal(await car.locator('.now-card').count(), 0);
+    assert.equal(await car.locator('#car-history').count(), 0);
+    assert.equal(await car.locator('#block-perf').count(), 0);
+    assert.ok(await car.locator('.moment').count() >= 1, 'key moments still show');
+    assert.equal(await car.locator('.safety-line').count(), 5);
+  });
+
+  await step('Car story: too-short, flat and hot drives read honestly', async () => {
+    await carUpload('aug30-1509', 'TunerView_20260830_150925.csv');
+    assert.match(await car.textContent('#drive-card'), /Can't tell: too short/);
+    assert.equal(await car.locator('#block-perf').count(), 0);
+    await carUpload('aug30-1529', 'TunerView_20260830_152931.csv');
+    const pulls = await car.evaluate(() => Array.from(document.querySelectorAll('.moment')).map((e) => e.textContent));
+    assert.ok(pulls.length <= 5, 'at most 5 moments: ' + pulls.length);
+    assert.ok(pulls.length === 5 && pulls.every((m) => /Hard pull/.test(m)), 'hard pulls first: ' + pulls.join(' | '));
+    await car.click('.moment >> nth=0');
+    await car.waitForSelector('#why');
+    await car.click('.moment >> nth=0');
+    await carUpload('sep05-0756', 'TunerView_20260905_075634.csv');
+    assert.match(await car.textContent('#block-canttell'), /Turbo Pressure/);
+    assert.match(await car.textContent('#block-safety'), /Can't tell/);
+    await carUpload('aug22-0950', 'TunerView_20260822_095021.csv');
+    assert.match(await car.textContent('#drive-card .pill'), /Watch/);
+    assert.match(await car.textContent('.safety-line >> nth=3'), /Heat · Watch/);
+  });
+
+  await step('Car history: hide/unhide and export/import round-trip', async () => {
+    await car.click('[data-act="carView"][data-arg="table"]');
+    const before = await car.locator('.car-table .row:not(.head)').count();
+    await car.click('.car-table [data-act="carHide"]');
+    assert.equal(await car.locator('.car-table .row:not(.head)').count(), before - 1);
+    await car.click('#car-history details summary');
+    await car.click('[data-act="carUnhide"]');
+    assert.equal(await car.locator('.car-table .row:not(.head)').count(), before);
+    const [dl] = await Promise.all([car.waitForEvent('download'), car.click('[data-act="carExport"]')]);
+    const tmp = path.join(os.tmpdir(), 'kta-car-history-e2e.json');
+    await dl.saveAs(tmp);
+    const doc = JSON.parse(fs.readFileSync(tmp, 'utf8'));
+    assert.ok(Object.keys(doc.drives).length >= 3 && doc.flashes.length >= 1, 'history file holds drives and flashes');
+    await car.evaluate(() => { try { localStorage.clear(); } catch (e) { /* ignore */ } });
+    await car.reload();
+    await car.waitForSelector('.step-head h1');
+    await car.setInputFiles('input[data-import="1"]', tmp);
+    await car.waitForFunction(() => document.body.textContent.includes('Merged'));
+    assert.match(await car.textContent('main'), /Nothing was deleted/);
+  });
+
+  await step('Car story in Vietnamese and dark mode', async () => {
+    await carExample('aug30-1601');
+    await car.click('[data-act="lang"]');
+    assert.match(await car.textContent('#car-history .story'), /Xe của bạn theo thời gian/);
+    assert.match(await car.textContent('#block-paused, #drive-card'), /Chuyến này|Tạm dừng/);
+    await car.click('[data-act="lang"]');
+    await car.click('[data-act="theme"]');
+    assert.equal(await car.locator('.car-chart').count(), 6);
+    assert.equal(await car.evaluate(() => document.documentElement.getAttribute('data-theme')), 'dark');
+    await car.click('[data-act="theme"]');
+  });
+
+  await step('car width: 375 px stacks the charts, laptop shows the 2x3 grid, no sideways scroll', async () => {
+    const phone = await browser.newPage({ viewport: { width: 375, height: 844 } });
+    phone.on('pageerror', (e) => errors.push('phone car: ' + e.message));
+    await phone.goto(APP);
+    await phone.evaluate(() => { try { localStorage.clear(); } catch (e) { /* ignore */ } });
+    await phone.goto(APP + '?drive=aug30-1601#drive');
+    await phone.waitForSelector('.now-card', { timeout: 30000 });
+    assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0);
+    const cols = await phone.evaluate(() => getComputedStyle(document.querySelector('.car-charts')).gridTemplateColumns.split(' ').filter(Boolean).length);
+    assert.equal(cols, 1);
+    const order = await phone.evaluate(() => Array.from(document.querySelectorAll('main [data-block]')).map((e) => e.getAttribute('data-block')).filter((b) => b !== '0'));
+    assert.deepEqual(order.slice(0, 3), ['1', '2', '3']);
+    const tops = await phone.evaluate(() => ['1', '2', '3'].map((b) => document.querySelector('[data-block="' + b + '"]').getBoundingClientRect().top));
+    assert.ok(tops[0] < 844, 'block 1 starts on the first screen: ' + JSON.stringify(tops));
+    await phone.close();
+    const wide = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    wide.on('pageerror', (e) => errors.push('wide car: ' + e.message));
+    await wide.goto(APP);
+    await wide.evaluate(() => { try { localStorage.clear(); } catch (e) { /* ignore */ } });
+    await wide.goto(APP + '?drive=aug30-1601#drive');
+    await wide.waitForSelector('.now-card', { timeout: 30000 });
+    assert.equal(await wide.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0);
+    assert.equal(await wide.evaluate(() => getComputedStyle(document.querySelector('.car-charts')).gridTemplateColumns.split(' ').filter(Boolean).length), 2);
+    await wide.close();
+  });
+  await car.close();
   await dp.close();
 
   // ---------------------------------------------------------------- Full method (steps 1-7)
