@@ -24,19 +24,43 @@ server/
 ## Run it
 
 ```bash
-python3 -m pip install -r requirements.txt
-cd server && python3 -m uvicorn kta_server.app:app --reload --port 8000
+cd server && uv sync
+cd server && uv run uvicorn kta_server.app:app --reload --port 8000
 ```
 
 With no key in the repo-root `.env` every reply is the built-in one. `GET /healthz`
 answers `ok` once the Node worker is up.
 
+`pyproject.toml` + `uv.lock` are the one source of truth for Python deps
+(`requirements.txt` was removed deliberately; `uv` is the primary runner).
+
 ## Test it
 
 ```bash
-cd server && python3 -m pytest tests/seam1 -q     # no key, no network
-python3 tests/seam1/replay.py                     # read all nine real Drives end to end
+cd server && uv run pytest tests -q     # no key, no network
+uv run python tests/seam1/replay.py     # read all nine real Drives end to end
 ```
+
+The suite runs parallel by default (`-n auto` in `pyproject.toml`: every test
+gets a fresh SQLite file and its own Node worker, so distribution is safe;
+override per run with `-n0`). Every run prints its slowest 10 phases
+(`--durations=10`) and the total wall time against a recorded 90 s budget
+(`tests/conftest.py` fails the run if it trips — fix the fixture, don't raise
+the number).
+
+Fixture pattern — **replay once, assert many** (`tests/seam1/conftest.py`):
+
+- The owner's nine real Drives replay exactly once per test process (the
+  session `_replay_template`: one Loop, nine uploads, then the worker closes).
+- Each replay test takes the `replayed` fixture instead: a fresh Loop over its
+  **own copy** of that database, with its own worker, reading the replies with
+  `template_replies(replayed)`. Uploads or answers after the replay touch only
+  that copy, so tests stay independent and order-free.
+- Tests that need a different history (a fresh car, one drive, an interleaved
+  sequence) keep taking the plain `loop` fixture, which replays nothing.
+- The Node worker is never shared between tests: one long-lived process per
+  Loop, started and closed with the fixture. Share the replay, never the worker.
+
 
 ## The worker protocol
 

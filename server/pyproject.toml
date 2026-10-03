@@ -1,0 +1,47 @@
+# Civic FE Tune Assist — the tuning loop server (ADR 0002, ADR 0004).
+# Canonical setup: `cd server && uv sync` (reads this file + uv.lock).
+# Canonical test: `cd server && uv run pytest tests -q`.
+# (requirements.txt was removed deliberately: this file + uv.lock are the one
+# source of truth. `uv run` provisions the same pinned environment.)
+
+[project]
+name = "ktuner-assistant-server"
+version = "0.1.0"
+description = "The tuning loop's server: Python with LangGraph runs the loop; the tuning math stays in the JavaScript engine, reached over one long-lived Node worker."
+requires-python = ">=3.13"
+dependencies = [
+    # With no key in ../.env every reply is the built-in one; the loop still works.
+    "fastapi==0.142.2",
+    "uvicorn==0.54.0",
+    # The engine is called through server/kta_worker/worker.js; nothing else touches it.
+    "langgraph==1.2.12",
+    "langchain-openai==1.6.7",
+    "ag-ui-langgraph==0.0.46",
+    "pydantic==2.13.5",
+    "python-dotenv==1.2.4",
+    # POST /upload is multipart.
+    "python-multipart==0.0.32",
+    "httpx==0.28.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "pytest-xdist>=3.6.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Importability: `kta_server` lives beside `tests/`, not on sys.path, so
+# declare it instead of relying on each conftest's sys.path side effect.
+pythonpath = ["."]
+# -n auto: the suite is isolation-safe (each test gets a fresh SQLite file and
+# its own Node worker; the nine-drive replay is shared read-only, see
+# tests/seam1/conftest.py "replay once, assert many"), so parallelize by
+# default. Override per run with `-n0`.
+# --durations=10: every run prints its slowest phases; a new slow test shows up
+# here before it becomes the next 50-second suite.
+addopts = ["-n", "auto", "--durations=10"]
+
+[tool.uv]
+package = false

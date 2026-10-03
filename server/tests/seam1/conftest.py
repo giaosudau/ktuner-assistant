@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import copy
 import json
 import re
+import shutil
+import sqlite3
 import sys
 import uuid
 import zlib
@@ -292,3 +295,75 @@ def loop(tmp_path: Path):
         yield running
     finally:
         running.close()
+
+
+# ---------------------------------------------------------------------------
+# Replay once, assert many: the owner's nine Drives replayed a single time per
+# test process, then copied per test. (Exante-style fixture discipline: the
+# suite's top cost was ~30 full nine-drive replays at ~3 s each.)
+#
+# Pattern for replay tests: take the `replayed` fixture (a fresh Loop over its
+# own copy of the replayed DB, with its own Node worker) and read the replies
+# with `template_replies(replayed)`. Each test still gets an independent,
+# order-free database — uploads and answers after the replay touch only its
+# own copy — but the nine uploads happen once, not once per test. Tests that
+# need a different history (a fresh car, a single drive, an interleaved
+# sequence) keep taking the `loop` fixture above, which replays nothing.
+# ---------------------------------------------------------------------------
+@pytest.fixture(scope="session")
+def _replay_template(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
+    """The nine owner Drives replayed exactly once; the DB file is the template.
+
+    The Loop (worker, event loop, HTTP client) is closed before returning, so
+    only plain data crosses the fixture boundary: the template DB files, the
+    thread the replay ran under, and each reply's events. Every test then gets
+    its own copy (`replayed` below) plus deep copies of the replies.
+    """
+    home = tmp_path_factory.mktemp("replay-template")
+    running = Loop(home).start()
+    try:
+        replies = dict(running.run(running.reply_to_all_owner_drives()))
+        events = {example_id: copy.deepcopy(reply.events) for example_id, reply in replies.items()}
+        thread_id = running.thread_id
+    finally:
+        running.close()
+    # WAL mode keeps the last pages in -wal until checkpoint; flush them into
+    # the DB file so copying the one file is a complete database.
+    with sqlite3.connect(home / "ktuner.db", timeout=30) as c:
+        c.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    return {"db": home / "ktuner.db", "thread_id": thread_id, "events": events}
+
+
+@pytest.fixture
+def replayed(tmp_path: Path, _replay_template: dict[str, Any]):
+    """A fresh Loop over a private copy of the nine-drive replay.
+
+    Independent per test (own SQLite file, own worker, own event loop), so
+    tests stay order-free and xdist-safe; the nine uploads themselves are the
+    one shared cost, paid once per test process by `_replay_template`.
+    """
+    for suffix in ("", "-wal", "-shm", "-journal"):
+        source = Path(str(_replay_template["db"]) + suffix)
+        if source.exists():
+            shutil.copy(source, Path(str(tmp_path / "ktuner.db") + suffix))
+    running = Loop(tmp_path).start()
+    # The replay ran under this thread; keep it so a test that uploads or
+    # answers after the replay continues the same conversation.
+    running.thread_id = _replay_template["thread_id"]
+    running._template_events = _replay_template["events"]
+    try:
+        yield running
+    finally:
+        running.close()
+
+
+def template_replies(loop: Loop) -> dict[str, Reply]:
+    """The nine replayed replies for a `replayed` loop, as fresh Reply objects.
+
+    Deep copies: asserting on one test's replies can never leak into another's.
+    (The DB rows behind them are already per-test copies; this covers the
+    in-memory half.)
+    """
+    events = getattr(loop, "_template_events", None)
+    assert events is not None, "template_replies needs the `replayed` fixture, not `loop`"
+    return {example_id: Reply(copy.deepcopy(evts)) for example_id, evts in events.items()}
