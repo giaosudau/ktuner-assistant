@@ -11,6 +11,7 @@
  */
 import type { OwnerQuestion, ReplyCard as ReplyCardType, Turn } from "../lib/types";
 
+import { CitedSay } from "./Citations";
 import { HarnessSteps } from "./HarnessSteps";
 import { MapVersionLine } from "./MapVersionLine";
 import { NextStepCard } from "./NextStepCard";
@@ -45,7 +46,7 @@ export function ReplyCard({
 
       {say ? (
         <div className="say" data-testid="say">
-          {say}
+          <CitedSay say={say} citations={card?.agent?.citations} />
         </div>
       ) : null}
       {card?.cause ? (

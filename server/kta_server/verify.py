@@ -20,6 +20,8 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping, Sequence
 
+from .knowledge import card_numbers as _card_numbers
+
 #: Numbers any owner may say: the car (1.5 litre, RON 95/92, E10, 14.7 stoich).
 FREE = (1.5, 14.7, 95.0, 92.0, 10.0)
 
@@ -174,6 +176,20 @@ def _advised(text: str, start: int) -> bool:
     return bool(_ADVICE_VERB.search(window)) and not _negated(text, start)
 
 
+# ---------------------------------------------------------------------------
+# Citations. Claims about this Drive come from tool results; everything else —
+# what is normal on this car, what owners report, where things live in KTuner —
+# must cite a knowledge card the run read, as a quiet footnote ref [kc-ranges].
+# A claim citing neither is rejected, so "based on facts" holds past the tools.
+# ---------------------------------------------------------------------------
+_CITATION = re.compile(r"\[([a-z0-9]+(?:-[a-z0-9]+)+)\]")
+
+
+def citation_ids(prose: str) -> set[str]:
+    """Card ids the reply cites, e.g. `[kc-ranges]`. List markers (`[1]`) are not cards."""
+    return set(_CITATION.findall(str(prose or "")))
+
+
 def plan_cells(plan: Mapping[str, Any] | None) -> list[dict[str, Any]]:
     if not plan:
         return []
@@ -273,10 +289,14 @@ def verify(
     facts: Sequence[float],
     plan: Mapping[str, Any] | None = None,
     cells: Sequence[Mapping[str, Any]] | None = None,
+    knowledge: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Judge one draft reply. Returns `{"ok": bool, "issues": [...]}`.
 
     * every number in `prose` must be in `facts` (rounding is fine);
+    * when `knowledge` holds the cards this run read, a number may instead
+      come from a cited card's numbers — citing `[id]` — and an unknown `[id]`
+      fails;
     * `action_key` must be the decided Next step's key — the agent may not add,
       remove or change the Next step;
     * every submitted cell must match a Flash plan cell exactly;
@@ -288,12 +308,32 @@ def verify(
     if not text.strip():
         issues.append("The reply is empty.")
 
-    bad = [f"{v:g}" for v in numbers_in(text) if not number_allowed(v, facts)]
+    cited_numbers: list[float] = []
+    if knowledge is not None:
+        known = {str(card.get("id")): card for card in knowledge}
+        unknown = sorted(citation_ids(text) - set(known))
+        if unknown:
+            issues.append(
+                "The reply cites " + ", ".join(f"[{card_id}]" for card_id in unknown[:4]) + ", "
+                "which is not a card this run read. Call search_knowledge and cite one of its ids, "
+                "for example [kc-ranges]."
+            )
+        cited_numbers = _card_numbers([known[card_id] for card_id in citation_ids(text) & set(known)])
+
+    bad = [
+        f"{v:g}"
+        for v in numbers_in(text)
+        if not number_allowed(v, facts) and not number_allowed(v, cited_numbers)
+    ]
     if bad:
-        issues.append(
-            "These numbers are not in any tool result: " + ", ".join(bad[:8]) + ". "
+        hint = (
             "Quote tool numbers exactly (rounding is fine) and do not compute new ones."
+            if knowledge is None
+            else "Quote tool numbers exactly (rounding is fine) and do not compute new ones. "
+            "When a number comes from general knowledge rather than this Drive, "
+            "call search_knowledge and cite the card, for example [kc-ranges]."
         )
+        issues.append("These numbers are not in any tool result: " + ", ".join(bad[:8]) + ". " + hint)
 
     if action_key != decided_key:
         issues.append(
@@ -336,6 +376,7 @@ def verify(
 __all__ = [
     "FREE",
     "banned_issues",
+    "citation_ids",
     "collect_numbers",
     "number_allowed",
     "numbers_in",

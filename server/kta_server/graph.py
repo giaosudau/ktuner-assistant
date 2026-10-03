@@ -311,6 +311,7 @@ async def _agent(
         "issues": list(result.get("issues") or []),
         "thinking": result.get("thinking"),
         "llmCalls": result.get("llm_calls", 0),
+        "citations": list(result.get("citations") or []),
     }
     return {"agent": merged["agent"], "reply": merged}
 

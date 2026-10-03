@@ -1,0 +1,3213 @@
+{
+ "cards": [
+  {
+   "id": "kc-after-flash",
+   "title": "The after-flash pattern is reassurance, not an alarm",
+   "kind": "fact",
+   "topics": [
+    "knock",
+    "flash",
+    "shakedown"
+   ],
+   "applies-when": "A Drive starts with a Fuel-quality score above the Baseline after a Flash.",
+   "numbers": [
+    {
+     "name": "flash-start-max",
+     "value": 0.6,
+     "unit": "score"
+    },
+    {
+     "name": "flash-start",
+     "value": 0.58,
+     "unit": "score"
+    },
+    {
+     "name": "kc-floor",
+     "value": 0.49,
+     "unit": "score"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/owner-voices.md",
+    "section": "§3"
+   },
+   "status": "current",
+   "body": "After every new Flash the Fuel-quality score starts high, around 0.58, and falls back to the Baseline with calm driving. A start at or below 0.60 that settles toward 0.49 is what a fresh flash does. It is never an Unexplained change, and it never sets a Verdict on its own. Give it ten to fifteen calm minutes before judging fuel or heat, because the score needs that long to relearn. If the score does not settle, or if it climbs again in traffic, that later rise is the finding, judged on its own. The Shakedown drive exists for exactly this pattern."
+  },
+  {
+   "id": "kc-cvt",
+   "title": "CVT care is heat management, not a torque number",
+   "kind": "rule",
+   "topics": [
+    "cvt",
+    "heat"
+   ],
+   "applies-when": "Any reply that judges CVT fluid temperature, slip, or hard driving in heat.",
+   "numbers": [
+    {
+     "name": "cvt-fluid-watch",
+     "value": 90.0,
+     "unit": "°C"
+    },
+    {
+     "name": "cvt-fluid-stop",
+     "value": 100.0,
+     "unit": "°C"
+    },
+    {
+     "name": "cvt-peak",
+     "value": 95.0,
+     "unit": "°C"
+    },
+    {
+     "name": "slip-events",
+     "value": 0.0,
+     "unit": "count"
+    },
+    {
+     "name": "hcf-spec",
+     "value": 2.0,
+     "unit": "spec"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/fact-check.md",
+    "section": "§3"
+   },
+   "status": "current",
+   "body": "The old keep-torque-under-a-number warning is removed; no torque limit is used for this car. What the logs can judge is fluid heat and slip. Watch starts at 90 °C of fluid temperature, and Stop at 100 °C is provisional, not yet seen on this car, whose peak is 95 °C. No pulls with the fluid at or above 90 °C, and never brake-launch: failures owners report come from launching and heavy low-end torque, not from steady pulls. Slip shows as revs jumping without speed, with zero such events across all drives here. The fluid is the Honda HCF-2 grade, changed on the severe schedule on a tuned car in hot traffic."
+  },
+  {
+   "id": "kc-e10",
+   "title": "E10 needs no extra fuel and no trim offset",
+   "kind": "fact",
+   "topics": [
+    "fuel",
+    "e10"
+   ],
+   "applies-when": "The owner asks about E10, fuel quality, or adding fuel for ethanol.",
+   "numbers": [
+    {
+     "name": "gasoline-stoich",
+     "value": 14.7,
+     "unit": "AFR"
+    },
+    {
+     "name": "ethanol-stoich",
+     "value": 9.0,
+     "unit": "AFR"
+    },
+    {
+     "name": "e10-stoich",
+     "value": 14.1,
+     "unit": "AFR"
+    },
+    {
+     "name": "e10-extra-fuel",
+     "value": 4.3,
+     "unit": "%"
+    },
+    {
+     "name": "e10-less-energy",
+     "value": 3.4,
+     "unit": "%"
+    },
+    {
+     "name": "vn95-us-aki",
+     "value": 91.0,
+     "unit": "AKI"
+    },
+    {
+     "name": "cruise-trim-median",
+     "value": -0.8,
+     "unit": "%"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/fact-check.md",
+    "section": "§1"
+   },
+   "status": "current",
+   "body": "Pure gasoline burns at 14.7 and ethanol at 9.0, so E10 lands at 14.1 and needs about 4.3 percent more fuel by mass for the same lambda. The ECU delivers that itself: the front sensor and the trims in closed loop, the fuel model in open loop. E10 carries about 3.4 percent less energy per litre, so economy drops a little and nothing else changes. Vietnam RON95 is about US 91 by estimate, the floor KTuner asks for with its 91-and-up maps. Cruise trims sit near 0.8 percent negative on E10, so no E10 offset is ever written into the airflow curve, and WOT stays judged against the map's own target."
+  },
+  {
+   "id": "kc-expectations",
+   "title": "The turbo has no headroom left on this map",
+   "kind": "fact",
+   "topics": [
+    "boost",
+    "turbo",
+    "power"
+   ],
+   "applies-when": "The owner asks for more boost or more power, or a reply explains a flat pull.",
+   "numbers": [
+    {
+     "name": "starter21-psi",
+     "value": 21.0,
+     "unit": "psi"
+    },
+    {
+     "name": "eco-psi",
+     "value": 18.0,
+     "unit": "psi"
+    },
+    {
+     "name": "normal-psi",
+     "value": 21.0,
+     "unit": "psi"
+    },
+    {
+     "name": "final-target-top",
+     "value": 23.4,
+     "unit": "psi"
+    },
+    {
+     "name": "ewg-at-boost",
+     "value": 2.5,
+     "unit": "%"
+    },
+    {
+     "name": "ewg-idle",
+     "value": 8.0,
+     "unit": "%"
+    },
+    {
+     "name": "ewg-max",
+     "value": 65.5,
+     "unit": "%"
+    },
+    {
+     "name": "starter21-added-lbft",
+     "value": 58.0,
+     "unit": "lb-ft"
+    },
+    {
+     "name": "starter21-added-nm",
+     "value": 79.0,
+     "unit": "Nm"
+    },
+    {
+     "name": "stock-torque",
+     "value": 240.0,
+     "unit": "Nm"
+    },
+    {
+     "name": "stock-power",
+     "value": 176.0,
+     "unit": "hp"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/fact-check.md",
+    "section": "§4"
+   },
+   "status": "current",
+   "body": "The Starter 21 map asks 18 psi in ECO and 21 psi in Normal and Sport, and the file tops out at 23.4 psi of final target. At high boost the wastegate sits about 2.5 percent open, against 8.0 percent at idle and cruise and 65.5 percent at its most open: nearly all exhaust already drives the turbine, so more boost means more heat, not more power. The map adds up to 58 lb-ft, or 79 Nm, over a stock car rated 240 Nm and 176 hp. Gains from here come from cooler air and good habits, never from typing a higher target. Most drives end with no map change, and that is an answer, not a gap."
+  },
+  {
+   "id": "kc-heat-soak",
+   "title": "Heat soak, not the tune, costs this car performance",
+   "kind": "fact",
+   "topics": [
+    "heat",
+    "boost",
+    "performance"
+   ],
+   "applies-when": "A Drive runs hot, pulls start with hot intake air, or boost falls on a hot afternoon.",
+   "numbers": [
+    {
+     "name": "hot-restart-lo",
+     "value": 57.0,
+     "unit": "°C"
+    },
+    {
+     "name": "hot-restart-hi",
+     "value": 64.0,
+     "unit": "°C"
+    },
+    {
+     "name": "pull-iat-good",
+     "value": 48.0,
+     "unit": "°C"
+    },
+    {
+     "name": "cool-moving-lo",
+     "value": 35.0,
+     "unit": "°C"
+    },
+    {
+     "name": "cool-moving-hi",
+     "value": 39.0,
+     "unit": "°C"
+    },
+    {
+     "name": "ic-added-lo",
+     "value": 2.0,
+     "unit": "°C"
+    },
+    {
+     "name": "ic-added-hi",
+     "value": 6.0,
+     "unit": "°C"
+    },
+    {
+     "name": "soak-pair-cool",
+     "value": 49.0,
+     "unit": "°C"
+    },
+    {
+     "name": "soak-pair-hot",
+     "value": 60.0,
+     "unit": "°C"
+    },
+    {
+     "name": "soak-boost-cool",
+     "value": 19.9,
+     "unit": "psi"
+    },
+    {
+     "name": "soak-boost-hot",
+     "value": 16.7,
+     "unit": "psi"
+    },
+    {
+     "name": "soak-time-cool",
+     "value": 1.77,
+     "unit": "s"
+    },
+    {
+     "name": "soak-time-hot",
+     "value": 2.23,
+     "unit": "s"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/owner-voices.md",
+    "section": "§2"
+   },
+   "status": "current",
+   "body": "Every drive started soon after another one begins with 57 to 64 °C in the manifold. Cool drives read 35 to 39 °C while moving, and a pull should start at or below 48 °C. The intercooler is not the problem: under boost it adds only 2 to 6 °C over the inlet air. Two drives half an hour apart prove it: pull-start intake 49 °C against 60 °C, peak boost 19.9 psi against 16.7 psi, and the timed run 1.77 s against 2.23 s. After a hot stop, drive three to five calm minutes before any hard acceleration, and judge power only between drives at similar intake temperatures."
+  },
+  {
+   "id": "kc-high-rpm",
+   "title": "Score rises above 5,200 rpm do not count",
+   "kind": "fact",
+   "topics": [
+    "knock",
+    "rpm"
+   ],
+   "applies-when": "A Drive shows Fuel-quality score rises at high revs.",
+   "numbers": [
+    {
+     "name": "high-rpm-from",
+     "value": 5200.0,
+     "unit": "rpm"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/owner-voices.md",
+    "section": "§3"
+   },
+   "status": "current",
+   "body": "Non-Si ECUs raise Knock Control on purpose above about 5,200 rpm. Starter and base maps can switch this off with a checkbox, while some locked tunes keep it. Those rises say nothing about fuel quality or heat, so they are excluded from fuel and heat verdicts. This owner rarely revs past 5,200 rpm, with only two rises on one drive up there. A rise at high revs alone never opens a step and never changes a Verdict. Judge the tank by what the score does in normal driving and in traffic, where heat and lugging are the real movers."
+  },
+  {
+   "id": "kc-maf-housing",
+   "title": "MAF Scaling follows the housing, never the brand",
+   "kind": "ktuner-howto",
+   "topics": [
+    "intake",
+    "housing",
+    "ktuner"
+   ],
+   "applies-when": "An intake is fitted, trims sit far off after a Flash, or the owner asks which MAF preset to pick.",
+   "numbers": [
+    {
+     "name": "race-air-lo",
+     "value": 1.29,
+     "unit": "ratio"
+    },
+    {
+     "name": "race-air-hi",
+     "value": 1.43,
+     "unit": "ratio"
+    },
+    {
+     "name": "trim-stop",
+     "value": 10.0,
+     "unit": "%"
+    },
+    {
+     "name": "trim-ok",
+     "value": 5.0,
+     "unit": "%"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/afr-tuning-research.md",
+    "section": "§1"
+   },
+   "status": "current",
+   "body": "Ask which housing is fitted before touching anything: factory airbox, a street housing, or a larger Race housing. The street housings read near stock, so they keep the Factory curve. The Race curves read 1.29 to 1.43 times the air at the same sensor frequency, so a Race preset on a street housing runs about forty percent rich and the trims clamp trying to pull it back. After any airflow Flash, drive calm first and make no pull until trims sit within 5 percent. Trims beyond 10 percent across most of the range mean the curve is wrong for the hardware: revert, do not tune around it. Never infer the housing from the brand."
+  },
+  {
+   "id": "kc-oil",
+   "title": "Oil grade and keeping the revs up",
+   "kind": "rule",
+   "topics": [
+    "oil",
+    "lugging",
+    "maintenance"
+   ],
+   "applies-when": "A Drive shows lugging, or the owner asks about oil for a tuned car.",
+   "numbers": [
+    {
+     "name": "oil-winter-grade",
+     "value": 0.0,
+     "unit": "W"
+    },
+    {
+     "name": "oil-hot-grade",
+     "value": 20.0,
+     "unit": "W"
+    },
+    {
+     "name": "seq9-avg-max",
+     "value": 5.0,
+     "unit": "events"
+    },
+    {
+     "name": "seq9-iter-max",
+     "value": 8.0,
+     "unit": "events"
+    },
+    {
+     "name": "lugging-lo",
+     "value": 900.0,
+     "unit": "rpm"
+    },
+    {
+     "name": "lugging-hi",
+     "value": 1700.0,
+     "unit": "rpm"
+    },
+    {
+     "name": "rises-lugging",
+     "value": 31.0,
+     "unit": "count"
+    },
+    {
+     "name": "rises-total",
+     "value": 41.0,
+     "unit": "count"
+    },
+    {
+     "name": "town-speed",
+     "value": 60.0,
+     "unit": "km/h"
+    },
+    {
+     "name": "lug-safe-rpm",
+     "value": 2000.0,
+     "unit": "rpm"
+    },
+    {
+     "name": "lspi-lo",
+     "value": 1500.0,
+     "unit": "rpm"
+    },
+    {
+     "name": "lspi-hi",
+     "value": 2500.0,
+     "unit": "rpm"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/fact-check.md",
+    "section": "§5"
+   },
+   "status": "current",
+   "body": "Use the Honda manual grade 0W-20, rated API SP or newer: those ratings pass an engine test that averages five or fewer early-ignition events per run and never more than eight, while plain older grades require no such test. Lugging means 900 to 1,700 rpm with the foot down, and 31 of all 41 score rises on this car happened there, so the case against it is data, not theory. Below 60 km/h in traffic, use S or a paddle before pressing past a third of the pedal, and let it rev to 2000 rpm or more first. Its top end touches the 1,500 to 2,500 rpm low-speed early-ignition band, which is a second reason to stay out of it."
+  },
+  {
+   "id": "kc-p0420",
+   "title": "P0420 after a downpipe, and the inspection risk",
+   "kind": "ktuner-howto",
+   "topics": [
+    "downpipe",
+    "inspection",
+    "cel"
+   ],
+   "applies-when": "A downpipe is fitted, P0420 appears, or the owner asks about switching the code off.",
+   "numbers": [],
+   "source": {
+    "doc": "docs/research/owner-voices.md",
+    "section": "§2"
+   },
+   "status": "current",
+   "body": "A downpipe moves the front oxygen sensor into a new pipe, and the catalyst code often follows a few drives later. In KTuner the switch lives under Main Parameters, then Disables and Monitors, at the P0420 catalyst efficiency entry. Switching it off is an inspection risk, not a tuning step: an OBD inspection can see the disabled monitor, and the car fails đăng kiểm emissions testing with it off. Prefer a high-cell-count catted pipe or an oxygen sensor spacer first, check both flanges for leaks with the engine cold, and keep the monitor switched on wherever the car must pass inspection."
+  },
+  {
+   "id": "kc-ranges",
+   "title": "Knock Control ranges and what each level costs",
+   "kind": "fact",
+   "topics": [
+    "knock",
+    "timing",
+    "limits"
+   ],
+   "applies-when": "Any reply that names a Knock Control level or a timing cost.",
+   "numbers": [
+    {
+     "name": "kc-floor",
+     "value": 0.49,
+     "unit": "score"
+    },
+    {
+     "name": "kc-watch",
+     "value": 0.56,
+     "unit": "score"
+    },
+    {
+     "name": "kc-nohard",
+     "value": 0.62,
+     "unit": "score"
+    },
+    {
+     "name": "kc-nohard-hold",
+     "value": 60.0,
+     "unit": "s"
+    },
+    {
+     "name": "kc-stop",
+     "value": 0.8,
+     "unit": "score"
+    },
+    {
+     "name": "kc-table-boost",
+     "value": 10.2,
+     "unit": "°"
+    },
+    {
+     "name": "cost-at-056",
+     "value": 0.7,
+     "unit": "°"
+    },
+    {
+     "name": "cost-at-062",
+     "value": 1.3,
+     "unit": "°"
+    },
+    {
+     "name": "cost-score-065",
+     "value": 0.65,
+     "unit": "score"
+    },
+    {
+     "name": "cost-at-065",
+     "value": 1.6,
+     "unit": "°"
+    },
+    {
+     "name": "cost-at-080",
+     "value": 3.2,
+     "unit": "°"
+    },
+    {
+     "name": "retard-at-floor",
+     "value": 5.0,
+     "unit": "°"
+    },
+    {
+     "name": "cool-end-lo",
+     "value": 0.49,
+     "unit": "score"
+    },
+    {
+     "name": "cool-end-hi",
+     "value": 0.53,
+     "unit": "score"
+    },
+    {
+     "name": "hot-peak-max",
+     "value": 0.66,
+     "unit": "score"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/fact-check.md",
+    "section": "§2"
+   },
+   "status": "current",
+   "body": "The Fuel-quality score reads 0.49 at its best, and higher means timing is pulled everywhere. Watch starts at 0.56. No hard driving starts at 0.62 held over 60 seconds. Stop starts at 0.80, which this car has never reached. Under boost each point above the floor costs 10.2 degrees, so 0.56 costs about 0.7 degrees, 0.62 costs about 1.3 degrees, 0.65 costs about 1.6 degrees, and 0.80 would cost about 3.2 degrees. The 5.0 degrees of retard logged under boost at 0.49 is scheduled from the score, not knock events. Cool drives end at 0.49 to 0.53, and the hottest traffic drive stayed below the 0.66 maximum seen on this car. The cut points are judgement, labelled as such, not measured limits."
+  },
+  {
+   "id": "kc-rich-wot",
+   "title": "My full-throttle mixture reads richer than the map asks",
+   "kind": "owner-question",
+   "topics": [
+    "mixture",
+    "fuel",
+    "e10"
+   ],
+   "applies-when": "The owner asks whether a rich full-throttle reading is a fault, or blames E10.",
+   "numbers": [
+    {
+     "name": "map-target-afr",
+     "value": 11.0,
+     "unit": "AFR"
+    },
+    {
+     "name": "map-target-lambda",
+     "value": 0.75,
+     "unit": "lambda"
+    },
+    {
+     "name": "wot-afr-lo",
+     "value": 10.1,
+     "unit": "AFR"
+    },
+    {
+     "name": "wot-afr-hi",
+     "value": 10.7,
+     "unit": "AFR"
+    },
+    {
+     "name": "wot-lambda-lo",
+     "value": 0.69,
+     "unit": "lambda"
+    },
+    {
+     "name": "wot-lambda-hi",
+     "value": 0.73,
+     "unit": "lambda"
+    },
+    {
+     "name": "wot-lambda-target",
+     "value": 0.75,
+     "unit": "lambda"
+    },
+    {
+     "name": "mix-watch",
+     "value": 0.5,
+     "unit": "AFR"
+    },
+    {
+     "name": "mix-stop",
+     "value": 1.0,
+     "unit": "AFR"
+    },
+    {
+     "name": "mix-danger",
+     "value": 12.0,
+     "unit": "AFR"
+    },
+    {
+     "name": "mixture-rule-psi",
+     "value": 12.0,
+     "unit": "psi"
+    },
+    {
+     "name": "boosted-readings-max",
+     "value": 11.3,
+     "unit": "AFR"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/drive-check-tuner-analysis.md",
+    "section": "§4"
+   },
+   "status": "current",
+   "body": "The map asks 11.0 at full load, which is 0.75 in lambda, and this car reads 10.1 to 10.7 there, or 0.69 to 0.73 against the 0.75 asked. Richer than asked is the safe side, not a fault, and every logged reading sits at 11.3 or richer. E10 does not make it lean: the sensor measures lambda whatever the fuel, and no fuel is added for E10. The mixture is judged at 12 psi and above, where the full-load target applies. Watch starts half an AFR leaner than asked, and danger starts at 12.0, a full AFR leaner. Without the live lambda command channel, lower-load cells with leaner targets stay out of the verdict."
+  },
+  {
+   "id": "kc-shakedown",
+   "title": "The Shakedown drive after any Flash",
+   "kind": "play",
+   "topics": [
+    "flash",
+    "shakedown",
+    "trims"
+   ],
+   "applies-when": "A Flash was just recorded, or the Next step asks for a calm proving drive.",
+   "numbers": [
+    {
+     "name": "trim-ok",
+     "value": 5.0,
+     "unit": "%"
+    },
+    {
+     "name": "calm-minutes",
+     "value": 10.0,
+     "unit": "min"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/drive-check-tuner-analysis.md",
+    "section": "§6"
+   },
+   "status": "current",
+   "body": "After any Flash, drive calm for 10 minutes before any hard acceleration: steady speeds, no pulls, engine fully warm. Watch the trims first and the score second. Hard driving waits until a calm stretch shows trims within 5 percent; that is what proves the new map measures air correctly. Save the earlier file under its own name before flashing, so Undo is one flash back. If the trims never settle, or a new Stop appears on the Shakedown itself, flash back and say so: the Flash is not credited until a drive proves it."
+  },
+  {
+   "id": "kc-trim-cause",
+   "title": "The trim pattern names one cause",
+   "kind": "play",
+   "topics": [
+    "trims",
+    "install",
+    "housing"
+   ],
+   "applies-when": "Trims are off and the owner changed something, or a Stop names trims.",
+   "numbers": [
+    {
+     "name": "trim-stop",
+     "value": 10.0,
+     "unit": "%"
+    },
+    {
+     "name": "trim-ok",
+     "value": 5.0,
+     "unit": "%"
+    },
+    {
+     "name": "undo-trim",
+     "value": 15.0,
+     "unit": "%"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/tuner-play-panel.md",
+    "section": "Round 5"
+   },
+   "status": "current",
+   "body": "Trims beyond 10 percent in every load band, from the first minute, right after a Flash or a fitted part, usually mean the airflow preset does not match the intake housing. Trims 15 percent or worse everywhere after a change mean Undo first: flash back the earlier file, then pick the preset for the housing. Trims wrong only at idle and low airflow, fine higher up, usually mean unmetered air, a leak after the sensor: check clamps and flanges with the engine cold, no map change. Never bend the airflow curve to cancel a preset mismatch, and never touch full-throttle targets for a trim fault. Prove it with a calm drive and trims within 5 percent."
+  },
+  {
+   "id": "kc-trims",
+   "title": "Trims within 5 percent are fine, beyond 10 is a Stop",
+   "kind": "rule",
+   "topics": [
+    "trims",
+    "mixture"
+   ],
+   "applies-when": "Any reply that judges fuel trims or air measurement.",
+   "numbers": [
+    {
+     "name": "trim-ok",
+     "value": 5.0,
+     "unit": "%"
+    },
+    {
+     "name": "trim-stop",
+     "value": 10.0,
+     "unit": "%"
+    },
+    {
+     "name": "cruise-trim-median",
+     "value": -0.8,
+     "unit": "%"
+    },
+    {
+     "name": "cruise-trim-p10",
+     "value": -3.1,
+     "unit": "%"
+    },
+    {
+     "name": "cruise-trim-p90",
+     "value": 1.6,
+     "unit": "%"
+    },
+    {
+     "name": "fault-trim-median",
+     "value": -28.0,
+     "unit": "%"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/fact-check.md",
+    "section": "§6"
+   },
+   "status": "current",
+   "body": "Trims within 5 percent either way are fine, and beyond 10 percent either way is a Stop. On this car warm cruise trims sit at a median of 0.8 percent negative, with the middle band from 3.1 percent negative to 1.6 percent positive, all on E10, so there is no E10 offset to subtract. The one fault drive sat at 28 percent negative median total trim, far outside anything healthy. A Stop here means the ECU cannot measure air correctly, so hard driving waits until a calm drive shows trims back within 5 percent. The cause comes from the trim pattern, never from the size of the number alone."
+  }
+ ],
+ "postings": {
+  "0": [
+   "kc-after-flash",
+   "kc-e10",
+   "kc-expectations",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-trims"
+  ],
+  "0w": [
+   "kc-oil"
+  ],
+  "1": [
+   "kc-e10",
+   "kc-heat-soak",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-trims"
+  ],
+  "10": [
+   "kc-maf-housing",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "100": [
+   "kc-cvt"
+  ],
+  "11": [
+   "kc-rich-wot"
+  ],
+  "12": [
+   "kc-rich-wot"
+  ],
+  "14": [
+   "kc-e10"
+  ],
+  "15": [
+   "kc-trim-cause"
+  ],
+  "16": [
+   "kc-heat-soak"
+  ],
+  "176": [
+   "kc-expectations"
+  ],
+  "18": [
+   "kc-expectations"
+  ],
+  "19": [
+   "kc-heat-soak"
+  ],
+  "2": [
+   "kc-cvt",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-oil",
+   "kc-ranges"
+  ],
+  "20": [
+   "kc-oil"
+  ],
+  "200": [
+   "kc-high-rpm"
+  ],
+  "2000": [
+   "kc-oil"
+  ],
+  "21": [
+   "kc-expectations"
+  ],
+  "23": [
+   "kc-expectations",
+   "kc-heat-soak"
+  ],
+  "240": [
+   "kc-expectations"
+  ],
+  "28": [
+   "kc-trims"
+  ],
+  "29": [
+   "kc-maf-housing"
+  ],
+  "3": [
+   "kc-e10",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-trims"
+  ],
+  "31": [
+   "kc-oil"
+  ],
+  "35": [
+   "kc-heat-soak"
+  ],
+  "39": [
+   "kc-heat-soak"
+  ],
+  "4": [
+   "kc-e10",
+   "kc-expectations"
+  ],
+  "41": [
+   "kc-oil"
+  ],
+  "43": [
+   "kc-maf-housing"
+  ],
+  "48": [
+   "kc-heat-soak"
+  ],
+  "49": [
+   "kc-after-flash",
+   "kc-heat-soak",
+   "kc-ranges"
+  ],
+  "5": [
+   "kc-expectations",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-ranges",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "500": [
+   "kc-oil"
+  ],
+  "53": [
+   "kc-ranges"
+  ],
+  "56": [
+   "kc-ranges"
+  ],
+  "57": [
+   "kc-heat-soak"
+  ],
+  "58": [
+   "kc-after-flash",
+   "kc-expectations"
+  ],
+  "6": [
+   "kc-heat-soak",
+   "kc-ranges",
+   "kc-trims"
+  ],
+  "60": [
+   "kc-after-flash",
+   "kc-heat-soak",
+   "kc-oil",
+   "kc-ranges"
+  ],
+  "62": [
+   "kc-ranges"
+  ],
+  "64": [
+   "kc-heat-soak"
+  ],
+  "65": [
+   "kc-expectations",
+   "kc-ranges"
+  ],
+  "66": [
+   "kc-ranges"
+  ],
+  "69": [
+   "kc-rich-wot"
+  ],
+  "7": [
+   "kc-e10",
+   "kc-heat-soak",
+   "kc-ranges",
+   "kc-rich-wot"
+  ],
+  "700": [
+   "kc-oil"
+  ],
+  "73": [
+   "kc-rich-wot"
+  ],
+  "75": [
+   "kc-rich-wot"
+  ],
+  "77": [
+   "kc-heat-soak"
+  ],
+  "79": [
+   "kc-expectations"
+  ],
+  "8": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-trims"
+  ],
+  "80": [
+   "kc-ranges"
+  ],
+  "9": [
+   "kc-e10",
+   "kc-heat-soak"
+  ],
+  "90": [
+   "kc-cvt"
+  ],
+  "900": [
+   "kc-oil"
+  ],
+  "91": [
+   "kc-e10"
+  ],
+  "95": [
+   "kc-cvt"
+  ],
+  "a": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "about": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-ranges"
+  ],
+  "above": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-high-rpm",
+   "kc-ranges",
+   "kc-rich-wot"
+  ],
+  "acceleration": [
+   "kc-heat-soak",
+   "kc-shakedown"
+  ],
+  "across": [
+   "kc-cvt",
+   "kc-maf-housing"
+  ],
+  "added": [
+   "kc-rich-wot"
+  ],
+  "adding": [
+   "kc-e10"
+  ],
+  "adds": [
+   "kc-expectations",
+   "kc-heat-soak"
+  ],
+  "afr": [
+   "kc-rich-wot"
+  ],
+  "after": [
+   "kc-after-flash",
+   "kc-heat-soak",
+   "kc-maf-housing",
+   "kc-p0420",
+   "kc-shakedown",
+   "kc-trim-cause"
+  ],
+  "afternoon": [
+   "kc-heat-soak"
+  ],
+  "again": [
+   "kc-after-flash"
+  ],
+  "against": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-oil",
+   "kc-rich-wot"
+  ],
+  "air": [
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-maf-housing",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "airbox": [
+   "kc-maf-housing"
+  ],
+  "airflow": [
+   "kc-e10",
+   "kc-maf-housing",
+   "kc-trim-cause"
+  ],
+  "alarm": [
+   "kc-after-flash"
+  ],
+  "all": [
+   "kc-cvt",
+   "kc-expectations",
+   "kc-oil",
+   "kc-trims"
+  ],
+  "alone": [
+   "kc-high-rpm",
+   "kc-trims"
+  ],
+  "already": [
+   "kc-expectations"
+  ],
+  "an": [
+   "kc-after-flash",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-rich-wot"
+  ],
+  "and": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "another": [
+   "kc-heat-soak"
+  ],
+  "answer": [
+   "kc-expectations"
+  ],
+  "any": [
+   "kc-cvt",
+   "kc-heat-soak",
+   "kc-maf-housing",
+   "kc-ranges",
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "anything": [
+   "kc-maf-housing",
+   "kc-trims"
+  ],
+  "apart": [
+   "kc-heat-soak"
+  ],
+  "api": [
+   "kc-oil"
+  ],
+  "appears": [
+   "kc-p0420",
+   "kc-shakedown"
+  ],
+  "applies": [
+   "kc-rich-wot"
+  ],
+  "are": [
+   "kc-high-rpm",
+   "kc-ranges",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "around": [
+   "kc-after-flash",
+   "kc-maf-housing"
+  ],
+  "as": [
+   "kc-cvt",
+   "kc-ranges"
+  ],
+  "ask": [
+   "kc-maf-housing"
+  ],
+  "asked": [
+   "kc-rich-wot"
+  ],
+  "asks": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-rich-wot",
+   "kc-shakedown"
+  ],
+  "at": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-p0420",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "averages": [
+   "kc-oil"
+  ],
+  "back": [
+   "kc-after-flash",
+   "kc-maf-housing",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "band": [
+   "kc-oil",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "base": [
+   "kc-high-rpm"
+  ],
+  "baseline": [
+   "kc-after-flash"
+  ],
+  "because": [
+   "kc-after-flash"
+  ],
+  "before": [
+   "kc-after-flash",
+   "kc-heat-soak",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-shakedown"
+  ],
+  "begins": [
+   "kc-heat-soak"
+  ],
+  "below": [
+   "kc-after-flash",
+   "kc-heat-soak",
+   "kc-oil",
+   "kc-ranges"
+  ],
+  "bend": [
+   "kc-trim-cause"
+  ],
+  "best": [
+   "kc-ranges"
+  ],
+  "between": [
+   "kc-heat-soak"
+  ],
+  "beyond": [
+   "kc-maf-housing",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "blames": [
+   "kc-rich-wot"
+  ],
+  "boost": [
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-ranges"
+  ],
+  "both": [
+   "kc-p0420"
+  ],
+  "brake": [
+   "kc-cvt"
+  ],
+  "brand": [
+   "kc-maf-housing"
+  ],
+  "burns": [
+   "kc-e10"
+  ],
+  "by": [
+   "kc-e10",
+   "kc-high-rpm"
+  ],
+  "c": [
+   "kc-cvt",
+   "kc-heat-soak"
+  ],
+  "calm": [
+   "kc-after-flash",
+   "kc-heat-soak",
+   "kc-maf-housing",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "can": [
+   "kc-cvt",
+   "kc-high-rpm",
+   "kc-p0420"
+  ],
+  "cancel": [
+   "kc-trim-cause"
+  ],
+  "cannot": [
+   "kc-trims"
+  ],
+  "car": [
+   "kc-cvt",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-oil",
+   "kc-p0420",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-trims"
+  ],
+  "care": [
+   "kc-cvt"
+  ],
+  "carries": [
+   "kc-e10"
+  ],
+  "case": [
+   "kc-oil"
+  ],
+  "catalyst": [
+   "kc-p0420"
+  ],
+  "catted": [
+   "kc-p0420"
+  ],
+  "cause": [
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "cel": [
+   "kc-p0420"
+  ],
+  "cell": [
+   "kc-p0420"
+  ],
+  "cells": [
+   "kc-rich-wot"
+  ],
+  "change": [
+   "kc-after-flash",
+   "kc-expectations",
+   "kc-trim-cause"
+  ],
+  "changed": [
+   "kc-cvt",
+   "kc-trim-cause"
+  ],
+  "changes": [
+   "kc-e10",
+   "kc-high-rpm"
+  ],
+  "channel": [
+   "kc-rich-wot"
+  ],
+  "check": [
+   "kc-p0420",
+   "kc-trim-cause"
+  ],
+  "checkbox": [
+   "kc-high-rpm"
+  ],
+  "clamp": [
+   "kc-maf-housing"
+  ],
+  "clamps": [
+   "kc-trim-cause"
+  ],
+  "climbs": [
+   "kc-after-flash"
+  ],
+  "closed": [
+   "kc-e10"
+  ],
+  "code": [
+   "kc-p0420"
+  ],
+  "cold": [
+   "kc-p0420",
+   "kc-trim-cause"
+  ],
+  "come": [
+   "kc-cvt",
+   "kc-expectations"
+  ],
+  "comes": [
+   "kc-trims"
+  ],
+  "command": [
+   "kc-rich-wot"
+  ],
+  "control": [
+   "kc-high-rpm",
+   "kc-ranges"
+  ],
+  "cool": [
+   "kc-heat-soak",
+   "kc-ranges"
+  ],
+  "cooler": [
+   "kc-expectations"
+  ],
+  "correctly": [
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "cost": [
+   "kc-ranges"
+  ],
+  "costs": [
+   "kc-heat-soak",
+   "kc-ranges"
+  ],
+  "count": [
+   "kc-high-rpm",
+   "kc-p0420"
+  ],
+  "credited": [
+   "kc-shakedown"
+  ],
+  "cruise": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-trims"
+  ],
+  "curve": [
+   "kc-e10",
+   "kc-maf-housing",
+   "kc-trim-cause"
+  ],
+  "curves": [
+   "kc-maf-housing"
+  ],
+  "cut": [
+   "kc-ranges"
+  ],
+  "cvt": [
+   "kc-cvt"
+  ],
+  "danger": [
+   "kc-rich-wot"
+  ],
+  "data": [
+   "kc-oil"
+  ],
+  "degrees": [
+   "kc-ranges"
+  ],
+  "delivers": [
+   "kc-e10"
+  ],
+  "disabled": [
+   "kc-p0420"
+  ],
+  "disables": [
+   "kc-p0420"
+  ],
+  "do": [
+   "kc-high-rpm",
+   "kc-maf-housing"
+  ],
+  "does": [
+   "kc-after-flash",
+   "kc-high-rpm",
+   "kc-rich-wot",
+   "kc-trim-cause"
+  ],
+  "down": [
+   "kc-oil"
+  ],
+  "downpipe": [
+   "kc-p0420"
+  ],
+  "drive": [
+   "kc-after-flash",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-ranges",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "drives": [
+   "kc-cvt",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-p0420",
+   "kc-ranges"
+  ],
+  "driving": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-high-rpm",
+   "kc-ranges",
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "drops": [
+   "kc-e10"
+  ],
+  "e10": [
+   "kc-e10",
+   "kc-rich-wot",
+   "kc-trims"
+  ],
+  "each": [
+   "kc-ranges"
+  ],
+  "earlier": [
+   "kc-shakedown",
+   "kc-trim-cause"
+  ],
+  "early": [
+   "kc-oil"
+  ],
+  "eco": [
+   "kc-expectations"
+  ],
+  "economy": [
+   "kc-e10"
+  ],
+  "ecu": [
+   "kc-e10",
+   "kc-trims"
+  ],
+  "ecus": [
+   "kc-high-rpm"
+  ],
+  "efficiency": [
+   "kc-p0420"
+  ],
+  "eight": [
+   "kc-oil"
+  ],
+  "either": [
+   "kc-trims"
+  ],
+  "else": [
+   "kc-e10"
+  ],
+  "emissions": [
+   "kc-p0420"
+  ],
+  "end": [
+   "kc-cvt",
+   "kc-expectations",
+   "kc-oil",
+   "kc-ranges"
+  ],
+  "energy": [
+   "kc-e10"
+  ],
+  "engine": [
+   "kc-oil",
+   "kc-p0420",
+   "kc-shakedown",
+   "kc-trim-cause"
+  ],
+  "entry": [
+   "kc-p0420"
+  ],
+  "estimate": [
+   "kc-e10"
+  ],
+  "ethanol": [
+   "kc-e10"
+  ],
+  "events": [
+   "kc-cvt",
+   "kc-oil",
+   "kc-ranges"
+  ],
+  "ever": [
+   "kc-e10"
+  ],
+  "every": [
+   "kc-after-flash",
+   "kc-heat-soak",
+   "kc-rich-wot",
+   "kc-trim-cause"
+  ],
+  "everywhere": [
+   "kc-ranges",
+   "kc-trim-cause"
+  ],
+  "exactly": [
+   "kc-after-flash"
+  ],
+  "excluded": [
+   "kc-high-rpm"
+  ],
+  "exhaust": [
+   "kc-expectations"
+  ],
+  "exists": [
+   "kc-after-flash"
+  ],
+  "expectations": [
+   "kc-expectations"
+  ],
+  "explains": [
+   "kc-expectations"
+  ],
+  "extra": [
+   "kc-e10"
+  ],
+  "factory": [
+   "kc-maf-housing"
+  ],
+  "fails": [
+   "kc-p0420"
+  ],
+  "failures": [
+   "kc-cvt"
+  ],
+  "falls": [
+   "kc-after-flash",
+   "kc-heat-soak"
+  ],
+  "far": [
+   "kc-maf-housing",
+   "kc-trims"
+  ],
+  "fault": [
+   "kc-rich-wot",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "few": [
+   "kc-p0420"
+  ],
+  "fewer": [
+   "kc-oil"
+  ],
+  "fifteen": [
+   "kc-after-flash"
+  ],
+  "file": [
+   "kc-expectations",
+   "kc-shakedown",
+   "kc-trim-cause"
+  ],
+  "final": [
+   "kc-expectations"
+  ],
+  "finding": [
+   "kc-after-flash"
+  ],
+  "fine": [
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "first": [
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-shakedown",
+   "kc-trim-cause"
+  ],
+  "fitted": [
+   "kc-maf-housing",
+   "kc-p0420",
+   "kc-trim-cause"
+  ],
+  "five": [
+   "kc-heat-soak",
+   "kc-oil"
+  ],
+  "flanges": [
+   "kc-p0420",
+   "kc-trim-cause"
+  ],
+  "flash": [
+   "kc-after-flash",
+   "kc-maf-housing",
+   "kc-shakedown",
+   "kc-trim-cause"
+  ],
+  "flashing": [
+   "kc-shakedown"
+  ],
+  "flat": [
+   "kc-expectations"
+  ],
+  "floor": [
+   "kc-e10",
+   "kc-ranges"
+  ],
+  "fluid": [
+   "kc-cvt"
+  ],
+  "follows": [
+   "kc-maf-housing",
+   "kc-p0420"
+  ],
+  "foot": [
+   "kc-oil"
+  ],
+  "for": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trim-cause"
+  ],
+  "forty": [
+   "kc-maf-housing"
+  ],
+  "frequency": [
+   "kc-maf-housing"
+  ],
+  "fresh": [
+   "kc-after-flash"
+  ],
+  "from": [
+   "kc-cvt",
+   "kc-expectations",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-ranges",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "front": [
+   "kc-e10",
+   "kc-p0420"
+  ],
+  "ft": [
+   "kc-expectations"
+  ],
+  "fuel": [
+   "kc-after-flash",
+   "kc-e10",
+   "kc-high-rpm",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-trims"
+  ],
+  "full": [
+   "kc-rich-wot",
+   "kc-trim-cause"
+  ],
+  "fully": [
+   "kc-shakedown"
+  ],
+  "gains": [
+   "kc-expectations"
+  ],
+  "gap": [
+   "kc-expectations"
+  ],
+  "gasoline": [
+   "kc-e10"
+  ],
+  "give": [
+   "kc-after-flash"
+  ],
+  "good": [
+   "kc-expectations"
+  ],
+  "grade": [
+   "kc-cvt",
+   "kc-oil"
+  ],
+  "grades": [
+   "kc-oil"
+  ],
+  "h": [
+   "kc-oil"
+  ],
+  "habits": [
+   "kc-expectations"
+  ],
+  "half": [
+   "kc-heat-soak",
+   "kc-rich-wot"
+  ],
+  "happened": [
+   "kc-oil"
+  ],
+  "hard": [
+   "kc-cvt",
+   "kc-heat-soak",
+   "kc-ranges",
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "hardware": [
+   "kc-maf-housing"
+  ],
+  "has": [
+   "kc-expectations",
+   "kc-ranges"
+  ],
+  "hcf": [
+   "kc-cvt"
+  ],
+  "headroom": [
+   "kc-expectations"
+  ],
+  "healthy": [
+   "kc-trims"
+  ],
+  "heat": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm"
+  ],
+  "heavy": [
+   "kc-cvt"
+  ],
+  "held": [
+   "kc-ranges"
+  ],
+  "here": [
+   "kc-cvt",
+   "kc-expectations",
+   "kc-trims"
+  ],
+  "high": [
+   "kc-after-flash",
+   "kc-expectations",
+   "kc-high-rpm",
+   "kc-p0420"
+  ],
+  "higher": [
+   "kc-expectations",
+   "kc-ranges",
+   "kc-trim-cause"
+  ],
+  "honda": [
+   "kc-cvt",
+   "kc-oil"
+  ],
+  "hot": [
+   "kc-cvt",
+   "kc-heat-soak"
+  ],
+  "hottest": [
+   "kc-ranges"
+  ],
+  "hour": [
+   "kc-heat-soak"
+  ],
+  "housing": [
+   "kc-maf-housing",
+   "kc-trim-cause"
+  ],
+  "housings": [
+   "kc-maf-housing"
+  ],
+  "hp": [
+   "kc-expectations"
+  ],
+  "idle": [
+   "kc-expectations",
+   "kc-trim-cause"
+  ],
+  "if": [
+   "kc-after-flash",
+   "kc-shakedown"
+  ],
+  "ignition": [
+   "kc-oil"
+  ],
+  "in": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-oil",
+   "kc-p0420",
+   "kc-rich-wot",
+   "kc-trim-cause"
+  ],
+  "infer": [
+   "kc-maf-housing"
+  ],
+  "inlet": [
+   "kc-heat-soak"
+  ],
+  "inspection": [
+   "kc-p0420"
+  ],
+  "install": [
+   "kc-trim-cause"
+  ],
+  "intake": [
+   "kc-heat-soak",
+   "kc-maf-housing",
+   "kc-trim-cause"
+  ],
+  "intercooler": [
+   "kc-heat-soak"
+  ],
+  "into": [
+   "kc-e10",
+   "kc-p0420"
+  ],
+  "is": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "it": [
+   "kc-after-flash",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trim-cause"
+  ],
+  "its": [
+   "kc-after-flash",
+   "kc-e10",
+   "kc-expectations",
+   "kc-oil",
+   "kc-ranges",
+   "kc-shakedown"
+  ],
+  "itself": [
+   "kc-e10",
+   "kc-shakedown"
+  ],
+  "judge": [
+   "kc-cvt",
+   "kc-heat-soak",
+   "kc-high-rpm"
+  ],
+  "judged": [
+   "kc-after-flash",
+   "kc-e10",
+   "kc-rich-wot"
+  ],
+  "judgement": [
+   "kc-ranges"
+  ],
+  "judges": [
+   "kc-cvt",
+   "kc-trims"
+  ],
+  "judging": [
+   "kc-after-flash"
+  ],
+  "jumping": [
+   "kc-cvt"
+  ],
+  "just": [
+   "kc-shakedown"
+  ],
+  "kc": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "keep": [
+   "kc-cvt",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-p0420"
+  ],
+  "keeping": [
+   "kc-oil"
+  ],
+  "kiểm": [
+   "kc-p0420"
+  ],
+  "km": [
+   "kc-oil"
+  ],
+  "knock": [
+   "kc-after-flash",
+   "kc-high-rpm",
+   "kc-ranges"
+  ],
+  "ktuner": [
+   "kc-e10",
+   "kc-maf-housing",
+   "kc-p0420"
+  ],
+  "labelled": [
+   "kc-ranges"
+  ],
+  "lambda": [
+   "kc-e10",
+   "kc-rich-wot"
+  ],
+  "lands": [
+   "kc-e10"
+  ],
+  "larger": [
+   "kc-maf-housing"
+  ],
+  "later": [
+   "kc-after-flash",
+   "kc-p0420"
+  ],
+  "launch": [
+   "kc-cvt"
+  ],
+  "launching": [
+   "kc-cvt"
+  ],
+  "lb": [
+   "kc-expectations"
+  ],
+  "leak": [
+   "kc-trim-cause"
+  ],
+  "leaks": [
+   "kc-p0420"
+  ],
+  "lean": [
+   "kc-rich-wot"
+  ],
+  "leaner": [
+   "kc-rich-wot"
+  ],
+  "left": [
+   "kc-expectations"
+  ],
+  "less": [
+   "kc-e10"
+  ],
+  "let": [
+   "kc-oil"
+  ],
+  "level": [
+   "kc-ranges"
+  ],
+  "limit": [
+   "kc-cvt"
+  ],
+  "limits": [
+   "kc-ranges"
+  ],
+  "litre": [
+   "kc-e10"
+  ],
+  "little": [
+   "kc-e10"
+  ],
+  "live": [
+   "kc-rich-wot"
+  ],
+  "lives": [
+   "kc-p0420"
+  ],
+  "load": [
+   "kc-rich-wot",
+   "kc-trim-cause"
+  ],
+  "locked": [
+   "kc-high-rpm"
+  ],
+  "logged": [
+   "kc-ranges",
+   "kc-rich-wot"
+  ],
+  "logs": [
+   "kc-cvt"
+  ],
+  "long": [
+   "kc-after-flash"
+  ],
+  "loop": [
+   "kc-e10"
+  ],
+  "low": [
+   "kc-cvt",
+   "kc-oil",
+   "kc-trim-cause"
+  ],
+  "lower": [
+   "kc-rich-wot"
+  ],
+  "lugging": [
+   "kc-high-rpm",
+   "kc-oil"
+  ],
+  "maf": [
+   "kc-maf-housing"
+  ],
+  "main": [
+   "kc-p0420"
+  ],
+  "maintenance": [
+   "kc-oil"
+  ],
+  "make": [
+   "kc-maf-housing",
+   "kc-rich-wot"
+  ],
+  "management": [
+   "kc-cvt"
+  ],
+  "manifold": [
+   "kc-heat-soak"
+  ],
+  "manual": [
+   "kc-oil"
+  ],
+  "map": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trim-cause"
+  ],
+  "maps": [
+   "kc-e10",
+   "kc-high-rpm"
+  ],
+  "mass": [
+   "kc-e10"
+  ],
+  "match": [
+   "kc-trim-cause"
+  ],
+  "maximum": [
+   "kc-ranges"
+  ],
+  "mean": [
+   "kc-maf-housing",
+   "kc-trim-cause"
+  ],
+  "means": [
+   "kc-expectations",
+   "kc-oil",
+   "kc-ranges",
+   "kc-trims"
+  ],
+  "measure": [
+   "kc-trims"
+  ],
+  "measured": [
+   "kc-ranges"
+  ],
+  "measurement": [
+   "kc-trims"
+  ],
+  "measures": [
+   "kc-rich-wot",
+   "kc-shakedown"
+  ],
+  "median": [
+   "kc-trims"
+  ],
+  "middle": [
+   "kc-trims"
+  ],
+  "minute": [
+   "kc-trim-cause"
+  ],
+  "minutes": [
+   "kc-after-flash",
+   "kc-heat-soak",
+   "kc-shakedown"
+  ],
+  "mismatch": [
+   "kc-trim-cause"
+  ],
+  "mixture": [
+   "kc-rich-wot",
+   "kc-trims"
+  ],
+  "model": [
+   "kc-e10"
+  ],
+  "monitor": [
+   "kc-p0420"
+  ],
+  "monitors": [
+   "kc-p0420"
+  ],
+  "more": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-oil"
+  ],
+  "most": [
+   "kc-expectations",
+   "kc-maf-housing"
+  ],
+  "movers": [
+   "kc-high-rpm"
+  ],
+  "moves": [
+   "kc-p0420"
+  ],
+  "moving": [
+   "kc-heat-soak"
+  ],
+  "must": [
+   "kc-p0420"
+  ],
+  "my": [
+   "kc-rich-wot"
+  ],
+  "name": [
+   "kc-shakedown"
+  ],
+  "names": [
+   "kc-ranges",
+   "kc-trim-cause"
+  ],
+  "near": [
+   "kc-e10",
+   "kc-maf-housing"
+  ],
+  "nearly": [
+   "kc-expectations"
+  ],
+  "needs": [
+   "kc-after-flash",
+   "kc-e10"
+  ],
+  "negative": [
+   "kc-e10",
+   "kc-trims"
+  ],
+  "never": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-expectations",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-ranges",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "new": [
+   "kc-after-flash",
+   "kc-p0420",
+   "kc-shakedown"
+  ],
+  "newer": [
+   "kc-oil"
+  ],
+  "next": [
+   "kc-shakedown"
+  ],
+  "nm": [
+   "kc-expectations"
+  ],
+  "no": [
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "non": [
+   "kc-high-rpm"
+  ],
+  "normal": [
+   "kc-expectations",
+   "kc-high-rpm"
+  ],
+  "not": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trim-cause"
+  ],
+  "nothing": [
+   "kc-e10",
+   "kc-high-rpm"
+  ],
+  "number": [
+   "kc-cvt",
+   "kc-trims"
+  ],
+  "obd": [
+   "kc-p0420"
+  ],
+  "of": [
+   "kc-cvt",
+   "kc-expectations",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-trims"
+  ],
+  "off": [
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-p0420",
+   "kc-trim-cause"
+  ],
+  "offset": [
+   "kc-e10",
+   "kc-trims"
+  ],
+  "often": [
+   "kc-p0420"
+  ],
+  "oil": [
+   "kc-oil"
+  ],
+  "old": [
+   "kc-cvt"
+  ],
+  "older": [
+   "kc-oil"
+  ],
+  "on": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-ranges",
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "one": [
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "only": [
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-trim-cause"
+  ],
+  "open": [
+   "kc-e10",
+   "kc-expectations"
+  ],
+  "opens": [
+   "kc-high-rpm"
+  ],
+  "or": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "out": [
+   "kc-expectations",
+   "kc-oil",
+   "kc-rich-wot"
+  ],
+  "outside": [
+   "kc-trims"
+  ],
+  "over": [
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-ranges"
+  ],
+  "own": [
+   "kc-after-flash",
+   "kc-e10",
+   "kc-shakedown"
+  ],
+  "owner": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-rich-wot",
+   "kc-trim-cause"
+  ],
+  "owners": [
+   "kc-cvt"
+  ],
+  "oxygen": [
+   "kc-p0420"
+  ],
+  "p0420": [
+   "kc-p0420"
+  ],
+  "paddle": [
+   "kc-oil"
+  ],
+  "parameters": [
+   "kc-p0420"
+  ],
+  "part": [
+   "kc-trim-cause"
+  ],
+  "pass": [
+   "kc-oil",
+   "kc-p0420"
+  ],
+  "past": [
+   "kc-high-rpm",
+   "kc-oil"
+  ],
+  "pattern": [
+   "kc-after-flash",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "peak": [
+   "kc-cvt",
+   "kc-heat-soak"
+  ],
+  "pedal": [
+   "kc-oil"
+  ],
+  "per": [
+   "kc-e10",
+   "kc-oil"
+  ],
+  "percent": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-maf-housing",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "performance": [
+   "kc-heat-soak"
+  ],
+  "pick": [
+   "kc-maf-housing",
+   "kc-trim-cause"
+  ],
+  "pipe": [
+   "kc-p0420"
+  ],
+  "plain": [
+   "kc-oil"
+  ],
+  "point": [
+   "kc-ranges"
+  ],
+  "points": [
+   "kc-ranges"
+  ],
+  "positive": [
+   "kc-trims"
+  ],
+  "power": [
+   "kc-expectations",
+   "kc-heat-soak"
+  ],
+  "prefer": [
+   "kc-p0420"
+  ],
+  "preset": [
+   "kc-maf-housing",
+   "kc-trim-cause"
+  ],
+  "pressing": [
+   "kc-oil"
+  ],
+  "problem": [
+   "kc-heat-soak"
+  ],
+  "prove": [
+   "kc-heat-soak",
+   "kc-trim-cause"
+  ],
+  "proves": [
+   "kc-shakedown"
+  ],
+  "proving": [
+   "kc-shakedown"
+  ],
+  "provisional": [
+   "kc-cvt"
+  ],
+  "psi": [
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-rich-wot"
+  ],
+  "pull": [
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-maf-housing"
+  ],
+  "pulled": [
+   "kc-ranges"
+  ],
+  "pulls": [
+   "kc-cvt",
+   "kc-heat-soak",
+   "kc-shakedown"
+  ],
+  "pure": [
+   "kc-e10"
+  ],
+  "purpose": [
+   "kc-high-rpm"
+  ],
+  "quality": [
+   "kc-after-flash",
+   "kc-e10",
+   "kc-high-rpm",
+   "kc-ranges"
+  ],
+  "race": [
+   "kc-maf-housing"
+  ],
+  "raise": [
+   "kc-high-rpm"
+  ],
+  "range": [
+   "kc-maf-housing"
+  ],
+  "ranges": [
+   "kc-ranges"
+  ],
+  "rarely": [
+   "kc-high-rpm"
+  ],
+  "rated": [
+   "kc-expectations",
+   "kc-oil"
+  ],
+  "ratings": [
+   "kc-oil"
+  ],
+  "reached": [
+   "kc-ranges"
+  ],
+  "read": [
+   "kc-heat-soak",
+   "kc-maf-housing"
+  ],
+  "reading": [
+   "kc-rich-wot"
+  ],
+  "reads": [
+   "kc-ranges",
+   "kc-rich-wot"
+  ],
+  "real": [
+   "kc-high-rpm"
+  ],
+  "reason": [
+   "kc-oil"
+  ],
+  "reassurance": [
+   "kc-after-flash"
+  ],
+  "recorded": [
+   "kc-shakedown"
+  ],
+  "relearn": [
+   "kc-after-flash"
+  ],
+  "removed": [
+   "kc-cvt"
+  ],
+  "reply": [
+   "kc-cvt",
+   "kc-expectations",
+   "kc-ranges",
+   "kc-trims"
+  ],
+  "report": [
+   "kc-cvt"
+  ],
+  "require": [
+   "kc-oil"
+  ],
+  "retard": [
+   "kc-ranges"
+  ],
+  "rev": [
+   "kc-oil"
+  ],
+  "revert": [
+   "kc-maf-housing"
+  ],
+  "revs": [
+   "kc-cvt",
+   "kc-high-rpm",
+   "kc-oil"
+  ],
+  "rich": [
+   "kc-maf-housing",
+   "kc-rich-wot"
+  ],
+  "richer": [
+   "kc-rich-wot"
+  ],
+  "right": [
+   "kc-trim-cause"
+  ],
+  "rise": [
+   "kc-after-flash",
+   "kc-high-rpm"
+  ],
+  "rises": [
+   "kc-high-rpm",
+   "kc-oil"
+  ],
+  "risk": [
+   "kc-p0420"
+  ],
+  "ron95": [
+   "kc-e10"
+  ],
+  "rpm": [
+   "kc-high-rpm",
+   "kc-oil"
+  ],
+  "run": [
+   "kc-heat-soak",
+   "kc-oil"
+  ],
+  "runs": [
+   "kc-heat-soak",
+   "kc-maf-housing"
+  ],
+  "s": [
+   "kc-e10",
+   "kc-heat-soak",
+   "kc-oil"
+  ],
+  "safe": [
+   "kc-rich-wot"
+  ],
+  "same": [
+   "kc-e10",
+   "kc-maf-housing"
+  ],
+  "sat": [
+   "kc-trims"
+  ],
+  "save": [
+   "kc-shakedown"
+  ],
+  "say": [
+   "kc-high-rpm",
+   "kc-shakedown"
+  ],
+  "scaling": [
+   "kc-maf-housing"
+  ],
+  "schedule": [
+   "kc-cvt"
+  ],
+  "scheduled": [
+   "kc-ranges"
+  ],
+  "score": [
+   "kc-after-flash",
+   "kc-high-rpm",
+   "kc-oil",
+   "kc-ranges",
+   "kc-shakedown"
+  ],
+  "second": [
+   "kc-oil",
+   "kc-shakedown"
+  ],
+  "seconds": [
+   "kc-ranges"
+  ],
+  "see": [
+   "kc-p0420"
+  ],
+  "seen": [
+   "kc-cvt",
+   "kc-ranges"
+  ],
+  "sensor": [
+   "kc-e10",
+   "kc-maf-housing",
+   "kc-p0420",
+   "kc-rich-wot",
+   "kc-trim-cause"
+  ],
+  "sets": [
+   "kc-after-flash"
+  ],
+  "settle": [
+   "kc-after-flash",
+   "kc-shakedown"
+  ],
+  "settles": [
+   "kc-after-flash"
+  ],
+  "severe": [
+   "kc-cvt"
+  ],
+  "shakedown": [
+   "kc-after-flash",
+   "kc-shakedown"
+  ],
+  "should": [
+   "kc-heat-soak"
+  ],
+  "shows": [
+   "kc-cvt",
+   "kc-high-rpm",
+   "kc-oil",
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "si": [
+   "kc-high-rpm"
+  ],
+  "side": [
+   "kc-rich-wot"
+  ],
+  "similar": [
+   "kc-heat-soak"
+  ],
+  "sit": [
+   "kc-e10",
+   "kc-maf-housing",
+   "kc-trims"
+  ],
+  "sits": [
+   "kc-expectations",
+   "kc-rich-wot"
+  ],
+  "size": [
+   "kc-trims"
+  ],
+  "slip": [
+   "kc-cvt"
+  ],
+  "so": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-ranges",
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "soak": [
+   "kc-heat-soak"
+  ],
+  "some": [
+   "kc-high-rpm"
+  ],
+  "something": [
+   "kc-trim-cause"
+  ],
+  "soon": [
+   "kc-heat-soak"
+  ],
+  "sp": [
+   "kc-oil"
+  ],
+  "spacer": [
+   "kc-p0420"
+  ],
+  "speed": [
+   "kc-cvt",
+   "kc-oil"
+  ],
+  "speeds": [
+   "kc-shakedown"
+  ],
+  "sport": [
+   "kc-expectations"
+  ],
+  "start": [
+   "kc-after-flash",
+   "kc-heat-soak"
+  ],
+  "started": [
+   "kc-heat-soak"
+  ],
+  "starter": [
+   "kc-expectations",
+   "kc-high-rpm"
+  ],
+  "starts": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-ranges",
+   "kc-rich-wot"
+  ],
+  "stay": [
+   "kc-oil",
+   "kc-rich-wot"
+  ],
+  "stayed": [
+   "kc-ranges"
+  ],
+  "stays": [
+   "kc-e10"
+  ],
+  "steady": [
+   "kc-cvt",
+   "kc-shakedown"
+  ],
+  "step": [
+   "kc-high-rpm",
+   "kc-p0420",
+   "kc-shakedown"
+  ],
+  "stock": [
+   "kc-expectations",
+   "kc-maf-housing"
+  ],
+  "stop": [
+   "kc-cvt",
+   "kc-heat-soak",
+   "kc-ranges",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "street": [
+   "kc-maf-housing"
+  ],
+  "stretch": [
+   "kc-shakedown"
+  ],
+  "subtract": [
+   "kc-trims"
+  ],
+  "such": [
+   "kc-cvt",
+   "kc-oil",
+   "kc-ranges"
+  ],
+  "switch": [
+   "kc-high-rpm",
+   "kc-p0420"
+  ],
+  "switched": [
+   "kc-p0420"
+  ],
+  "switching": [
+   "kc-p0420"
+  ],
+  "tank": [
+   "kc-high-rpm"
+  ],
+  "target": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-rich-wot"
+  ],
+  "targets": [
+   "kc-rich-wot",
+   "kc-trim-cause"
+  ],
+  "temperature": [
+   "kc-cvt"
+  ],
+  "temperatures": [
+   "kc-heat-soak"
+  ],
+  "ten": [
+   "kc-after-flash"
+  ],
+  "test": [
+   "kc-oil"
+  ],
+  "testing": [
+   "kc-p0420"
+  ],
+  "than": [
+   "kc-oil",
+   "kc-rich-wot"
+  ],
+  "that": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-oil",
+   "kc-ranges",
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "the": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-p0420",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "then": [
+   "kc-p0420",
+   "kc-trim-cause"
+  ],
+  "theory": [
+   "kc-oil"
+  ],
+  "there": [
+   "kc-high-rpm",
+   "kc-oil",
+   "kc-rich-wot",
+   "kc-trims"
+  ],
+  "they": [
+   "kc-high-rpm",
+   "kc-maf-housing"
+  ],
+  "third": [
+   "kc-oil"
+  ],
+  "this": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-oil",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-trims"
+  ],
+  "those": [
+   "kc-high-rpm",
+   "kc-oil"
+  ],
+  "three": [
+   "kc-heat-soak"
+  ],
+  "throttle": [
+   "kc-rich-wot",
+   "kc-trim-cause"
+  ],
+  "timed": [
+   "kc-heat-soak"
+  ],
+  "times": [
+   "kc-maf-housing"
+  ],
+  "timing": [
+   "kc-ranges"
+  ],
+  "to": [
+   "kc-after-flash",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "top": [
+   "kc-oil"
+  ],
+  "tops": [
+   "kc-expectations"
+  ],
+  "torque": [
+   "kc-cvt"
+  ],
+  "total": [
+   "kc-trims"
+  ],
+  "touch": [
+   "kc-trim-cause"
+  ],
+  "touches": [
+   "kc-oil"
+  ],
+  "touching": [
+   "kc-maf-housing"
+  ],
+  "toward": [
+   "kc-after-flash"
+  ],
+  "traffic": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-high-rpm",
+   "kc-oil",
+   "kc-ranges"
+  ],
+  "trim": [
+   "kc-e10",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "trims": [
+   "kc-e10",
+   "kc-maf-housing",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "trying": [
+   "kc-maf-housing"
+  ],
+  "tune": [
+   "kc-heat-soak",
+   "kc-maf-housing"
+  ],
+  "tuned": [
+   "kc-cvt",
+   "kc-oil"
+  ],
+  "tunes": [
+   "kc-high-rpm"
+  ],
+  "tuning": [
+   "kc-p0420"
+  ],
+  "turbine": [
+   "kc-expectations"
+  ],
+  "turbo": [
+   "kc-expectations"
+  ],
+  "two": [
+   "kc-heat-soak",
+   "kc-high-rpm"
+  ],
+  "typing": [
+   "kc-expectations"
+  ],
+  "under": [
+   "kc-cvt",
+   "kc-heat-soak",
+   "kc-p0420",
+   "kc-ranges",
+   "kc-shakedown"
+  ],
+  "undo": [
+   "kc-shakedown",
+   "kc-trim-cause"
+  ],
+  "unexplained": [
+   "kc-after-flash"
+  ],
+  "unmetered": [
+   "kc-trim-cause"
+  ],
+  "until": [
+   "kc-maf-housing",
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "up": [
+   "kc-e10",
+   "kc-expectations",
+   "kc-high-rpm",
+   "kc-oil",
+   "kc-trim-cause"
+  ],
+  "us": [
+   "kc-e10"
+  ],
+  "use": [
+   "kc-oil"
+  ],
+  "used": [
+   "kc-cvt"
+  ],
+  "usually": [
+   "kc-trim-cause"
+  ],
+  "verdict": [
+   "kc-after-flash",
+   "kc-high-rpm",
+   "kc-rich-wot"
+  ],
+  "verdicts": [
+   "kc-high-rpm"
+  ],
+  "vietnam": [
+   "kc-e10"
+  ],
+  "waits": [
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "warm": [
+   "kc-shakedown",
+   "kc-trims"
+  ],
+  "warning": [
+   "kc-cvt"
+  ],
+  "was": [
+   "kc-shakedown"
+  ],
+  "wastegate": [
+   "kc-expectations"
+  ],
+  "watch": [
+   "kc-cvt",
+   "kc-ranges",
+   "kc-rich-wot",
+   "kc-shakedown"
+  ],
+  "way": [
+   "kc-trims"
+  ],
+  "what": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-high-rpm",
+   "kc-ranges",
+   "kc-shakedown"
+  ],
+  "whatever": [
+   "kc-rich-wot"
+  ],
+  "where": [
+   "kc-high-rpm",
+   "kc-rich-wot"
+  ],
+  "wherever": [
+   "kc-p0420"
+  ],
+  "whether": [
+   "kc-rich-wot"
+  ],
+  "which": [
+   "kc-maf-housing",
+   "kc-oil",
+   "kc-ranges",
+   "kc-rich-wot"
+  ],
+  "while": [
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-oil"
+  ],
+  "whose": [
+   "kc-cvt"
+  ],
+  "with": [
+   "kc-after-flash",
+   "kc-cvt",
+   "kc-e10",
+   "kc-expectations",
+   "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-oil",
+   "kc-p0420",
+   "kc-rich-wot",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "within": [
+   "kc-maf-housing",
+   "kc-shakedown",
+   "kc-trim-cause",
+   "kc-trims"
+  ],
+  "without": [
+   "kc-cvt",
+   "kc-rich-wot"
+  ],
+  "worse": [
+   "kc-trim-cause"
+  ],
+  "wot": [
+   "kc-e10",
+   "kc-rich-wot"
+  ],
+  "would": [
+   "kc-ranges"
+  ],
+  "written": [
+   "kc-e10"
+  ],
+  "wrong": [
+   "kc-maf-housing",
+   "kc-trim-cause"
+  ],
+  "yet": [
+   "kc-cvt"
+  ],
+  "zero": [
+   "kc-cvt"
+  ],
+  "đăng": [
+   "kc-p0420"
+  ]
+ }
+}

@@ -266,6 +266,20 @@ h3 {
   overflow-wrap: anywhere;
 }
 
+/* Citations: quiet footnote-style refs under the sentence, never prose clutter. */
+.reply .say .cite-ref {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+
+.reply .say .cites {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-3);
+  margin-top: 4px;
+}
+
 .reply .window {
   color: var(--ink-3);
   font-size: 13px;

@@ -2,10 +2,10 @@
 
 The reply's decisions — the Verdict, the settled Open steps, the one Next step
 and the Flash plan — are the engine's, made before this node runs. The model
-only chooses what to look at and how to explain it, through fixed tools that
-read the Node worker (`server/kta_worker/worker.js`): the drive tools reused
-from the in-browser ask module (`engine/kta-ask.js`), the Car history window,
-the Open steps, the decided Next step, the Flash plan and map cells. It cannot
+only chooses what to look at and how to explain it, through fixed tools: the
+drive tools read the Node worker (`server/kta_worker/worker.js`), and
+`search_knowledge` reads the knowledge cards (`knowledge/cards/`). Claims the
+drive tools do not say must cite a card id, checked by `verify.py`. It cannot
 add, remove or change the Next step.
 
 Provider: any OpenAI-compatible endpoint from `.env` (base URL, key, model;
@@ -33,6 +33,7 @@ from typing import Any, Awaitable, Callable, Mapping
 import httpx
 
 from . import verify as V
+from . import knowledge as K
 from .harness import Harness
 
 #: How many provider calls one run may spend, tools and repair included.
@@ -126,6 +127,17 @@ def TOOLS() -> list[dict[str, Any]]:
             ["table", "row", "col"],
         ),
         fn(
+            "search_knowledge",
+            "General knowledge about this car: what is normal, what owners report, where things live in KTuner. "
+            "Cite the card id in brackets for any claim the Drive tools do not say.",
+            {
+                "query": {"type": "string", "description": "What to look up, for example knock control timing cost."},
+                "topics": {"type": "array", "items": {"type": "string"}, "description": "Optional topics, for example heat."},
+                "kind": {"type": "string", "description": "Optional kind: fact, rule, play, owner-question or ktuner-howto."},
+            },
+            ["query"],
+        ),
+        fn(
             "submit_reply",
             "Call once, last, with the final reply. The app checks every number, the step, every cell and every advice line.",
             {
@@ -178,6 +190,9 @@ def system_prompt(drive: Mapping[str, Any], reply: Mapping[str, Any]) -> str:
             f"The Flash plan: {plan_line}",
             "6. Finish by calling submit_reply once with your prose and the decided step's key. "
             "The app checks every number, the step, every cell and every advice line before the owner sees them.",
+            "7. For anything the tools do not say — what is normal on this car, what owners report, where things "
+            "live in KTuner — call search_knowledge first and cite the card id in brackets at the end of the "
+            "sentence, for example [kc-ranges]. The brackets are quiet footnote refs; never explain them.",
         ]
     )
 
@@ -278,6 +293,20 @@ async def _run_tool(
             config, "mapCell", "Explain: one map value",
             {"table": args.get("table"), "row": args.get("row"), "col": args.get("col")},
             _wrap(_map_cell(map_tables, args)),
+        )
+    if name == "search_knowledge":
+        query = str(args.get("query") or "")
+        topics = args.get("topics")
+        kind = args.get("kind")
+        shown: dict[str, Any] = {"query": query}
+        if topics:
+            shown["topics"] = topics
+        if kind:
+            shown["kind"] = kind
+        return await harness.step(
+            config, "knowledge", "Explain: what is normal on this car",
+            shown,
+            _wrap(K.search(query, topics if isinstance(topics, list) else None, kind if isinstance(kind, str) else None)),
         )
     raise KeyError(f"Unknown tool {name}")
 
@@ -411,6 +440,7 @@ async def run_agent(
     thinking: list[str] = []
     calls = 0
     repairs = 0
+    seen_cards: dict[str, Any] = {}
 
     def fail(reason: str, issues: list[str]) -> dict[str, Any]:
         return {
@@ -421,6 +451,7 @@ async def run_agent(
             "fallback": reason,
             "issues": issues,
             "llm_calls": calls,
+            "citations": [],
         }
 
     while True:
@@ -448,7 +479,12 @@ async def run_agent(
                 continue
             try:
                 output = await _run_tool(harness, config, worker, store, drive_id, map_tables, decided, plan, call["name"], call["args"])
-                facts.extend(V.collect_numbers(output))
+                if call["name"] == "search_knowledge":
+                    for card in output if isinstance(output, list) else []:
+                        if isinstance(card, Mapping) and card.get("id"):
+                            seen_cards[str(card["id"])] = card
+                else:
+                    facts.extend(V.collect_numbers(output))
                 results.append({"tool_call_id": call["id"], "role": "tool", "name": call["name"], "content": _slim_json(output)})
             except KeyError:
                 results.append({"tool_call_id": call["id"], "role": "tool", "name": call["name"], "content": f"Unknown tool {call['name']}"})
@@ -463,6 +499,7 @@ async def run_agent(
                 facts,
                 plan,
                 args.get("cells") or [],
+                knowledge=list(seen_cards.values()),
             )
             messages.append(
                 {
@@ -474,14 +511,20 @@ async def run_agent(
                 }
             )
             if verdict["ok"]:
+                prose = str(args.get("prose") or "")
                 return {
-                    "prose": str(args.get("prose") or ""),
+                    "prose": prose,
                     "thinking": "\n\n".join(thinking) or None,
                     "verified": True,
                     "repaired": repairs > 0,
                     "fallback": None,
                     "issues": [],
                     "llm_calls": calls,
+                    "citations": [
+                        {"id": cid, "title": str((seen_cards.get(cid) or {}).get("title") or cid)}
+                        for cid in sorted(V.citation_ids(prose))
+                        if cid in seen_cards
+                    ],
                 }
             if repairs >= 1:
                 return fail("unverified", verdict["issues"])
@@ -494,7 +537,7 @@ async def run_agent(
         text = (strip_thinking(message.get("content")) or "").strip()
         if not text:
             return fail("empty", ["The model returned no text and no tool calls."])
-        verdict = V.verify(text, None, decided.get("key"), facts, plan, [])
+        verdict = V.verify(text, None, decided.get("key"), facts, plan, [], knowledge=list(seen_cards.values()))
         if verdict["ok"]:  # pragma: no cover - plain text never names the step key
             return {
                 "prose": text,

@@ -137,6 +137,17 @@ export type HarnessSummary = {
   steps: HarnessStep[];
 };
 
+/** One knowledge card the reply leans on: a quiet footnote ref, not prose. */
+export type Citation = { id: string; title: string };
+
+/** What the explainer did: checked, repaired once, or the built-in fallback. */
+export type AgentInfo = {
+  verified: boolean;
+  repaired: boolean;
+  fallback: string | null;
+  citations: Citation[];
+};
+
 /** The typed reply card, read from the AG-UI STATE_SNAPSHOT. */
 export type ReplyCard = {
   say: string;
@@ -159,6 +170,8 @@ export type ReplyCard = {
   /** The Open steps as they stand after this reply. */
   openSteps: OpenStep[];
   harness: HarnessSummary | null;
+  /** The explainer's record, when a model wrote the sentence above. */
+  agent?: AgentInfo | null;
   error?: { message: string; code: string };
 };
 
