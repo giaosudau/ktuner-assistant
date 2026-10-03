@@ -201,11 +201,14 @@ async def _decide(
         ),
     )
 
-    # 2. Decide the one Next step, and which Open steps it opens.
+    # 2. Decide the one Next step, and which Open steps it opens. Diagnose runs
+    #    inside the engine before the decision; the Install list rides along so
+    #    a symptom right after a fitted part reads as one cause.
     decided = await harness.step(
         config, "nextStep", "Decide the Next step", shown,
         lambda: worker.call(
             "nextStep", state=car_state, driveId=drive_id, openSteps=settled["openSteps"],
+            installs=store.list_installs(),
         ),
     )
     store.save_open_steps(decided["openSteps"])
@@ -219,6 +222,7 @@ async def _decide(
             "settled": C.settled_rows(settled["settled"]),
             "wasted": C.wasted_line(settled["wasted"]),
             "nextStep": step,
+            "cause": C.cause_line(decided.get("diagnose")),
             "openSteps": decided["openSteps"],
             "harness": merge_harness(
                 [reply.get("harness"), {**harness.summary(), "steps": harness.as_list()}]

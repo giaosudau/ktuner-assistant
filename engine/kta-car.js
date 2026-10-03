@@ -22,6 +22,7 @@
  *   KTA.carFlashPlan(state, map, opts)       the Next Flash card model (spec P1–P9)
  *   KTA.carOpenSteps(list)                   the Open steps as they are stored, one per key
  *   KTA.carSettle(state, driveId, steps)     judge every Open step against one Drive
+ *   KTA.carDiagnose(state, driveId, opts)    one cause per symptom pattern, before deciding
  *   KTA.carNextStep(state, driveId, steps)   exactly one Next step, and the Open step it opens
  *
  * Vocabulary is CONTEXT.md: Drive, Car history, Flash, Map, Map version, KTuner
@@ -260,6 +261,8 @@
   function summarize(log, rep, ident, meta, verdict) {
     var I = rep.ins;
     var acc = I.accel && I.accel.best['50-70'] ? { seconds: I.accel.best['50-70'].seconds, iat: I.accel.best['50-70'].iat } : null;
+    var firstMin = firstMinuteTrim(log);
+    var krPeak = rep.an && rep.an.numbers ? rep.an.numbers.knockMax : NaN;
     return {
       id: ident.id,
       start: ident.start,
@@ -275,6 +278,20 @@
       kcEnd: I.kc ? I.kc.end : null,
       kcPeak: I.kc ? I.kc.peak : null,
       trimWorst: I.trims ? I.trims.worst : null,
+      // What the trims looked like per load band, at idle, and in the first
+      // minute: the shapes Diagnose reads (a housing mismatch pulls every band
+      // from the first second; unmetered air only the idle and low bands).
+      trimBands: I.trims && I.trims.bands ? I.trims.bands.map(function (b) {
+        return { from: b.from, to: b.to, seconds: b.seconds, trim: b.trim };
+      }) : [],
+      trimIdle: I.trims ? I.trims.idle : null,
+      trimFirstMin: firstMin.trim,
+      trimFirstSec: firstMin.sec,
+      // The worst knock retard in the log, and whether the engine already calls
+      // it scheduled from the Fuel-quality score (fact-check §2). Diagnose
+      // needs both to tell scheduled retard apart from a finding.
+      krPeak: isNum(krPeak) ? Math.round(krPeak * 10) / 10 : null,
+      krScheduled: !!(rep.an && rep.an.knockScheduled),
       iatMoving: I.heat.iatMoving,
       cvtPeak: I.heat.cvtMax,
       lugShare: I.lug ? I.lug.share : null,
@@ -303,6 +320,19 @@
   // ---------------------------------------------------------------------------
   // Baseline: this car's own normal Fuel-quality score
   // ---------------------------------------------------------------------------
+  /** Median total trim over the first 60 s of the log: "from the first minute". */
+  function firstMinuteTrim(log) {
+    var vals = [], sec = 0, i;
+    if (!(log.has.stft || log.has.ltft)) return { trim: null, sec: 0 };
+    for (i = 0; i < log.n && log.t[i] <= 60; i++) {
+      var s1 = log.has.stft ? log.stft[i] : 0, l1 = log.has.ltft ? log.ltft[i] : 0;
+      if (!isNum(s1) || !isNum(l1)) continue;
+      vals.push(((1 + s1 / 100) * (1 + l1 / 100) - 1) * 100);
+      sec += log.w[i];
+    }
+    if (!vals.length) return { trim: null, sec: 0 };
+    return { trim: Math.round(median(vals) * 10) / 10, sec: Math.round(sec) };
+  }
   KTA.carBaseline = function (state) {
     var s = normalize(state), hidden = {};
     s.hidden.forEach(function (id) { hidden[id] = true; });
@@ -1412,6 +1442,7 @@
   //
   //   KTA.carOpenSteps(list)            the steps as they are stored, one per key
   //   KTA.carSettle(state, id, steps)   judge every Open step against one Drive
+  //   KTA.carDiagnose(state, id, opts)  one cause per symptom pattern, before deciding
   //   KTA.carNextStep(state, id, steps) exactly one Next step, and what it opens
   //
   // Settling runs first and the decision second, so the step a Drive is given is
@@ -1421,14 +1452,17 @@
   // verdict on the owner.
   //
   // The order the Next step is decided in (prototypes/next-step/, amended: the
-  // Baseline before the habit) never reorders:
+  // Baseline before the habit) never reorders. Diagnose runs before all of it:
+  // a cause seen today goes to the step its pattern names.
   //
   //   open Stop            → Flash: Undo (the only step)
   //   Too-short Drive      → nothing read; the previous step stands
   //   logger fault         → watch in TunerView: fix the dead gauges
   //   no Baseline yet      → drive: one Cool drive with 2 pulls
   //                          (+ a cause seen today is opened as a free habit)
-  //   cause seen today     → its step
+  //   cause seen today     → its step: lugging → habit, unmetered air or a lean
+  //                          mixture → check the install, faster spool → the
+  //                          downpipe boost trim, housing mismatch → Undo
   //   Open step still open → its step, compact "same step as last time"
   //   otherwise            → nothing: upload after a Flash, Install, new fuel,
   //                          or Knock Control over the upload score
@@ -1555,10 +1589,47 @@
         if ((s.flat || []).length) return judged('fail', 'Still flat: ' + logChannelList(s.flat) + '.');
         return judged('done', 'Every gauge moves again.');
       }
+    },
+    install: {
+      key: 'install', title: 'Check the install: clamps and flanges', short: 'the install check',
+      would: 'a drive after checking the clamps and flanges', needs: ['stft', 'ltft'],
+      judge: function (s) {
+        if (!s) return judged('wait', 'Too short: the check shows on a drive of 10 minutes or more.', 'it was too short');
+        var dead = deadOf(s, ['stft', 'ltft']);
+        if (dead) return judged('wait', 'The fuel trims were dead in this log (' + dead + '), so nothing could be read.', 'the logger lost ' + dead);
+        var lean = isNum(s.mixLeanest) && isNum(s.mixTarget) && s.mixLeanest >= s.mixTarget + LEAN_WATCH;
+        if (isNum(s.trimWorst) && Math.abs(s.trimWorst) <= TRIM_OK && !lean) {
+          return judged('done', 'Trims ' + sg1(s.trimWorst) + ' %' +
+            (isNum(s.mixLeanest) ? ' and full-throttle mixture ' + n1(s.mixLeanest) + ' against ' + n1(s.mixTarget) + ' asked' : '') +
+            ': the install reads right.');
+        }
+        return judged('open', 'Trims ' + sg1(s.trimWorst) + ' %' +
+          (lean ? ', mixture ' + n1(s.mixLeanest) + ' against ' + n1(s.mixTarget) + ' asked' : '') + ': not yet.',
+          'the trims were still ' + sg1(s.trimWorst) + ' %');
+      }
+    },
+    downpipe: {
+      key: 'downpipe', title: 'Flash the downpipe trim, then two pulls', short: 'the downpipe trim',
+      would: 'two pulls on a cool morning', needs: ['boost', 'boostTarget'],
+      judge: function (s) {
+        if (!s) return judged('wait', 'Too short: the trim shows on pulls, and this drive had none to read.', 'it was too short');
+        var dead = deadOf(s, ['boost', 'boostTarget']);
+        if (dead) return judged('wait', 'Boost was dead in this log (' + dead + '), so the overshoot could not be read.', 'the logger lost ' + dead);
+        var pulls = s.hardPulls || 0;
+        var lean = isNum(s.mixLeanest) && isNum(s.mixTarget) && s.mixLeanest >= s.mixTarget + LEAN_WATCH;
+        if (pulls > 0 && isNum(s.overshoot) && s.overshoot <= KTA.LIMITS.overshoot.watch && !lean) {
+          return judged('done', 'Overshoot +' + n1(s.overshoot) + ' psi on ' + pulls + ' pull' + (pulls === 1 ? '' : 's') + ': the trim holds.');
+        }
+        if (pulls > 0 && isNum(s.overshoot) && s.overshoot > KTA.LIMITS.overshoot.watch) {
+          return judged('fail', 'Overshoot still +' + n1(s.overshoot) + ' psi on ' + pulls + ' pull' + (pulls === 1 ? '' : 's') + '.');
+        }
+        return judged('open', pulls ? 'Mixture ' + n1(s.mixLeanest) + ' against ' + n1(s.mixTarget) + ' asked: not yet.' : 'No pulls yet: the trim shows on pulls.',
+          pulls ? 'the mixture was still ' + n1(s.mixLeanest) : 'it had no pulls');
+      }
     }
   };
   /** The steps that can be the one Next step, in the order they are re-asked. */
-  var STEP_ORDER = ['undo', 'logger', 'habit', 'channels', 'baseline'];
+  var STEP_ORDER = ['undo', 'logger', 'habit', 'channels', 'baseline', 'install', 'downpipe'];
   KTA.STEP_KEYS = STEP_ORDER.slice();
 
   function stepOf(key) { return STEP_JUDGES[key]; }
@@ -1656,7 +1727,7 @@
    * Drive that lost gauges is told that first, because that is the reason nothing
    * on it could be trusted.
    */
-  var WOULD_PRIORITY = ['undo', 'logger', 'habit', 'baseline', 'channels'];
+  var WOULD_PRIORITY = ['undo', 'logger', 'habit', 'baseline', 'channels', 'install', 'downpipe'];
   function wastedFor(considered, sum, settledRows) {
     if (!considered.length) return NOT_WASTED;
     var pick = null;
@@ -1716,16 +1787,179 @@
   }
 
   /**
+   * Diagnose before ranking (tuner-play-panel T7): read this Drive's symptom
+   * pattern like a tuner — one cause, one step — instead of fixing the worst
+   * check first. Runs before the Next step decision; the decision and the reply
+   * sentence both read it.
+   *
+   * Returns null when nothing matches, or { id, cause, step, sentence } where
+   * `cause` is the tuner's vocabulary (ticket 07's questions and 09's cards
+   * reuse it) and `sentence` is the one plain-words owner sentence with its
+   * evidence. `opts.installs` is the app's Install list
+   * [{ part, installed_at }] — without it only Flashes, answers and the logs'
+   * own jump count as "a change".
+   *
+   * | Pattern | Cause | Step |
+   * | Trims beyond ±10 % in every band from the first minute, after a change | MAF Scaling / housing mismatch | undo |
+   * | Trims ≥ +8 % at idle/low airflow only, after a change | Unmetered air | install |
+   * | Leaner than target under boost, after a change | Exhaust leak ahead of the A/F sensor, or real lean | install |
+   * | High retard with a flat score | Scheduled retard | never a finding (null) |
+   * | Score rising mostly while lugging, hot | Lugging on hot E10 | habit |
+   * | Boost overshoot above +2.5 psi held, after a change | Faster spool | downpipe |
+   *
+   * Row 1's second half ("then MAF Scaling for the housing") is ticket 07's
+   * question, not a curve edit: on a Stop drive the step stays Undo and the
+   * Flash plan stays kind undo with zero cells.
+   */
+  var DIAG_TRIM_ALL = 10;   // every load band beyond ±10 %: the air reading is off
+  var DIAG_IDLE_LEAK = 8;   // +8 % at idle/low airflow with high airflow fine: unmetered air
+  var DIAG_KR_HIGH = 5;     // scheduled retard under boost sits near 5° (fact-check §2)
+
+  /** The change this Drive came right after, if the app can see one. */
+  function diagChange(s, sum, opts) {
+    var prev = null;
+    orderedSummaries(s).forEach(function (d) {
+      if (d.id === sum.id) return;
+      if (d.start != null && sum.start != null && !(d.start < sum.start)) return;
+      if (!prev || (isNum(d.start) && isNum(prev.start) ? d.start > prev.start : true)) prev = d;
+    });
+    function afterPrev(t) {
+      return isNum(t) && isNum(sum.start) && t <= sum.start &&
+        (!prev || !isNum(prev.start) || t > prev.start);
+    }
+    var inst = null, dp = null;
+    ((opts && Array.isArray(opts.installs)) ? opts.installs : []).forEach(function (r) {
+      if (!r || typeof r !== 'object') return;
+      var t = isNum(r.installed_at) ? r.installed_at
+        : (isNum(r.installedAt) ? r.installedAt : (isNum(r.time) ? r.time : null));
+      if (!afterPrev(t)) return;
+      var part = r.part ? String(r.part) : 'a part';
+      if (!inst) inst = { kind: 'install', part: part, downpipe: false };
+      if (!dp && /downpipe/i.test(part)) dp = { kind: 'install', part: part, downpipe: true };
+    });
+    if (dp) return dp;
+    if (inst) return inst;
+    var fl = null;
+    (s.flashes || []).forEach(function (f) { if (f && afterPrev(f.time)) fl = f; });
+    if (fl) return { kind: 'flash', part: fl.map, downpipe: false };
+    if (s.answers && s.answers[sum.id] === 'flashed') return { kind: 'answer', part: '', downpipe: false };
+    // Nothing recorded — but the logs may show the change anyway: the trims
+    // jumped more than 5 points against this car's own median, which is the
+    // app's own Unexplained-change rule, not a guess.
+    var baseline = KTA.carBaseline(s);
+    var u = unexplainedFor(s, sum, baseline);
+    if (u && u.reasons.indexOf('trim') >= 0) return { kind: 'jump', part: '', downpipe: false };
+    return null;
+  }
+  /** ", right after a change" — or the downpipe by name when it is known. */
+  function changeBit(ch) {
+    if (ch.kind === 'install' && ch.downpipe) return ', after the downpipe went on';
+    return ', right after a change';
+  }
+
+  KTA.carDiagnose = function (state, driveId, opts) {
+    var s = normalize(state);
+    var sum = s.drives[driveId] || null;
+    if (!sum) return null;
+    var baseline = KTA.carBaseline(s);
+    var base = isNum(baseline.value) ? baseline.value : KTA.LIMITS.score.baseline;
+    var ch = diagChange(s, sum, opts);
+    var bands = Array.isArray(sum.trimBands) ? sum.trimBands : [];
+    var withData = bands.filter(function (b) { return b && isNum(b.trim) && (b.seconds || 0) >= 20; });
+
+    // 1. Every load band off by the same sign from the first minute, after a
+    //    change: the sensor reads through the wrong curve or housing. Undo (or
+    //    the right preset) — never a curve edit, never a knock fix.
+    if (ch && withData.length >= 2 &&
+        withData.every(function (b) { return Math.abs(b.trim) > DIAG_TRIM_ALL; }) &&
+        (withData[0].trim < 0
+          ? withData.every(function (b) { return b.trim < 0; })
+          : withData.every(function (b) { return b.trim > 0; })) &&
+        isNum(sum.trimFirstMin) && Math.abs(sum.trimFirstMin) > DIAG_TRIM_ALL) {
+      return {
+        id: 'maf-preset', cause: 'MAF Scaling / housing mismatch', step: 'undo', change: ch.kind,
+        sentence: 'Trims pulled ' + sg1(sum.trimWorst) + ' % in every band from the first minute' +
+          changeBit(ch) + ': the airflow reading is off, not the fuel.'
+      };
+    }
+
+    // 2. Idle and low airflow rich with trims while high airflow reads fine,
+    //    after a change: air getting in past the sensor. A spanner check.
+    var low = withData.filter(function (b) { return b.from < 1; });
+    var high = withData.filter(function (b) { return b.from >= 1; });
+    var idleBad = isNum(sum.trimIdle) && sum.trimIdle >= DIAG_IDLE_LEAK;
+    var lowBad = low.some(function (b) { return b.trim >= DIAG_IDLE_LEAK; });
+    if (ch && (idleBad || lowBad) && high.length > 0 &&
+        high.every(function (b) { return Math.abs(b.trim) <= TRIM_OK; })) {
+      var leakTrim = idleBad ? sum.trimIdle
+        : low.reduce(function (m, b) { return b.trim > m ? b.trim : m; }, -Infinity);
+      return {
+        id: 'unmetered-air', cause: 'Unmetered air (leak after the sensor)', step: 'install', change: ch.kind,
+        sentence: 'Trims add +' + n1(leakTrim) + ' % at idle and low airflow but read fine higher up' +
+          changeBit(ch) + ': air is getting in past the sensor, so no map change.'
+      };
+    }
+
+    // 3. Leaner than the map asks under boost, after a change: a leak ahead of
+    //    the A/F sensor reads lean, or the mixture really is lean. Flanges first.
+    if (ch && (sum.hardPulls || 0) > 0 && isNum(sum.mixLeanest) && isNum(sum.mixTarget) &&
+        sum.mixLeanest >= sum.mixTarget + LEAN_WATCH) {
+      return {
+        id: 'exhaust-lean', cause: 'Exhaust leak ahead of the A/F sensor, or real lean', step: 'install', change: ch.kind,
+        sentence: 'Full-throttle mixture read ' + n1(sum.mixLeanest) + ' against ' + n1(sum.mixTarget) +
+          ' asked' + changeBit(ch) + ': check the flanges first, then the mixture.'
+      };
+    }
+
+    // 5. The score climbing mostly while lugging on a hot drive: the habit.
+    //    (Row 4 sits after row 6: scheduled retard returns null, so it must not
+    //    run before a real cause — on 20:38 the trims win over the retard.)
+    var hab = habitCause(sum, base);
+    if (hab) {
+      return {
+        id: 'lugging', cause: 'Lugging on hot E10', step: 'habit', change: ch ? ch.kind : null,
+        habit: hab,
+        sentence: 'Knock Control rose ' + n2(sum.kcStart) + ' → ' + n2(sum.kcPeak) +
+          ' mostly while lugging in ' + n0(sum.iatMoving) + ' °C air: keep the revs up.'
+      };
+    }
+
+    // 6. A held overshoot past +2.5 psi on pulls, after a change: the new pipe
+    //    spools faster. The Flash plan carries the trim; this names the cause.
+    if (ch && (sum.hardPulls || 0) > 0 && isNum(sum.overshoot) &&
+        sum.overshoot > KTA.LIMITS.overshoot.watch) {
+      return {
+        id: 'spool', cause: 'Faster spool after the downpipe', step: 'downpipe', change: ch.kind,
+        sentence: 'Boost held +' + n1(sum.overshoot) + ' psi over target on pulls' +
+          changeBit(ch) + ': it spools faster now, so the plan asks for less boost where it spools early.'
+      };
+    }
+
+    // 4. High retard with a flat score is scheduled retard (fact-check §2) —
+    //    explicitly never a finding. It returns null like any unmatched drive,
+    //    and this row exists so a future knock cause cannot sneak past it: the
+    //    fixture pins high retard + flat score to null. It runs last so a real
+    //    cause on the same drive (on 20:38, the trims) always wins over it.
+    var krHigh = (isNum(sum.krPeak) && sum.krPeak >= DIAG_KR_HIGH) || !!sum.krScheduled;
+    var krRise = (isNum(sum.kcPeak) && isNum(sum.kcStart)) ? sum.kcPeak - sum.kcStart : null;
+    if (krHigh && krRise != null && krRise <= LUG_RISE_OK) return null;
+    return null;
+  };
+
+  /**
    * Exactly one Next step, in the fixed order above, plus the Open steps as they
    * stand after it: the step it opens, and the one added beside it as a free
-   * habit when a cause was seen today before the Baseline exists.
+   * habit when a cause was seen today before the Baseline exists. Diagnose runs
+   * first (`KTA.carDiagnose`): the cause seen today goes to the step its
+   * pattern names, and the reply sentence reads it. `opts.installs` rides
+   * through to Diagnose.
    */
-  KTA.carNextStep = function (state, driveId, openSteps) {
+  KTA.carNextStep = function (state, driveId, openSteps, opts) {
     var s = normalize(state);
     var steps = KTA.carOpenSteps(openSteps);
     var sum = s.drives[driveId] || null;   // a Drive not in the Car history is a Too-short Drive
     var prevRead = previousReadId(s, driveId);
-    var baseline = KTA.carBaseline(s);
+    var dg = KTA.carDiagnose(s, driveId, opts);
 
     /** The step, the Open steps as they now stand, and the keys the app stores. */
     function answer(step, keys, alsoKeys) {
@@ -1737,6 +1971,9 @@
         var prev = stepByKey(steps, asked[0]);
         step.same = !!step.same && !step.also && !!prevRead && !!prev && prev.lastAskedOn === prevRead;
       }
+      // Every step carries the diagnosis it was decided with (or null): the
+      // reply sentence and the install step's body read it.
+      step.diagnose = dg || null;
       opened.forEach(function (k) {
         var st = stepByKey(steps, k);
         if (st) {
@@ -1751,7 +1988,7 @@
           });
         }
       });
-      return { state: s, step: step, openSteps: steps, opened: opened };
+      return { state: s, step: step, openSteps: steps, opened: opened, diagnose: dg || null };
     }
     function base(key, kind, title, gauges, proves, settlesOn, opens, also) {
       return {
@@ -1769,12 +2006,28 @@
         return k === 'afrCmd' || k === 'mafHz' || k === 'mafGs' || k === 'lamCmd';
       }) && !openOf(steps, 'channels');
     }
+    /** Undo: the only step a Stop drive gets, and the housing-mismatch route. */
+    function undoStep() {
+      return base('undo', 'flash', 'Put the map from before back on the car', ['trims', 'kc'],
+        'trims back within ±' + TRIM_OK + ' % over ' + (SHAKEDOWN_CALM / 60) + ' calm minutes',
+        'after the first calm drive on the old file', 'undo');
+    }
+    /** A leak or a flange to check under the bonnet: no map change. */
+    function installStep() {
+      return base('install', 'watch', 'Check the install: clamps and flanges', ['trims', 'afr'],
+        'trims back within ±' + TRIM_OK + ' % and the mixture on target',
+        'after your next drive, any kind', 'install');
+    }
+    /** Faster spool after the downpipe: the Flash plan carries the trim. */
+    function downpipeStep() {
+      return base('downpipe', 'flash', 'Flash the downpipe trim, then two pulls', ['boost', 'afr'],
+        'overshoot under +' + KTA.LIMITS.overshoot.watch.toFixed(1) + ' psi on pulls with the mixture on target',
+        'after two pulls on a cool morning', 'downpipe');
+    }
 
     // 1. An open Stop: Undo is the only step, exactly as the Flash plan's P1.
     if (sum && sum.verdict === 'stop') {
-      return answer(base('undo', 'flash', 'Put the map from before back on the car', ['trims', 'kc'],
-        'trims back within ±' + TRIM_OK + ' % over ' + (SHAKEDOWN_CALM / 60) + ' calm minutes',
-        'after the first calm drive on the old file', 'undo'), ['undo'],
+      return answer(undoStep(), ['undo'],
         missingChannels() ? ['channels'] : []);
     }
 
@@ -1800,7 +2053,7 @@
     //    opened beside it as a free habit (the Baseline stays the step: the habit
     //    is scored against it).
     var baselineStep = stepByKey(steps, 'baseline');
-    var cause = habitCause(sum, baseline.value);
+    var cause = (dg && dg.id === 'lugging') ? dg.habit : null;
     // Opened beside the step, never instead of it: the free habit, and the two
     // channels to add in TunerView while the owner is there anyway.
     var beside = [];
@@ -1816,28 +2069,47 @@
       return cool;
     }
 
-    // 5. A cause seen today: its step.
-    if (cause) {
+    // 5. A cause seen today: its step. Diagnose ran before this decision, so
+    //    each pattern goes to the step its row names: lugging to the habit
+    //    (the loop's existing step, unchanged), unmetered air or a lean mixture
+    //    to the install check, faster spool to the downpipe trim, and a housing
+    //    mismatch to Undo.
+    var lugging = (dg && dg.id === 'lugging') ? dg.habit : null;
+    if (lugging) {
       var habit = answer(base('habit', 'drive', 'Keep the revs up in hot traffic (free, no Flash)',
         ['rpm', 'kc', 'iat'],
         'lugging under ' + LUG_OK + ' % of moving time and Knock Control not rising (today ' +
-        n1(sum.lugShare) + ' %, +' + n2(cause.rise) + ')',
+        n1(sum.lugShare) + ' %, +' + n2(lugging.rise) + ')',
         'after your next hot-afternoon Drive', 'habit'), ['habit'],
         missingChannels() ? ['channels'] : []);
-      habit.step.cause = cause;
+      habit.step.cause = lugging;
       return habit;
+    }
+    if (dg && dg.id === 'maf-preset') {
+      return answer(undoStep(), ['undo'],
+        missingChannels() ? ['channels'] : []);
+    }
+    if (dg && (dg.id === 'unmetered-air' || dg.id === 'exhaust-lean')) {
+      return answer(installStep(), ['install'],
+        missingChannels() ? ['channels'] : []);
+    }
+    if (dg && dg.id === 'spool') {
+      return answer(downpipeStep(), ['downpipe'],
+        missingChannels() ? ['channels'] : []);
     }
 
     // 6. An Open step still open: its step again, compact — "same step as last time".
-    var again = held('undo') || held('logger') || held('habit');
+    var again = held('undo') || held('logger') || held('downpipe') || held('install') || held('habit');
     if (again) {
-      var titles = { undo: 'Undo: put the map from before back on the car', logger: 'Fix the logger: the dead gauges', habit: 'Habit test: log your next hot-afternoon Drive' };
-      var kinds = { undo: 'flash', logger: 'watch', habit: 'drive' };
-      var gauges = { undo: ['trims', 'kc'], logger: ['live'], habit: ['rpm', 'kc', 'iat'] };
-      var when = { undo: 'after the first calm drive on the old file', logger: 'your next drive, any kind', habit: 'after your next hot-afternoon Drive' };
+      var titles = { undo: 'Undo: put the map from before back on the car', logger: 'Fix the logger: the dead gauges', downpipe: 'Flash the downpipe trim, then two pulls', install: 'Check the install: clamps and flanges', habit: 'Habit test: log your next hot-afternoon Drive' };
+      var kinds = { undo: 'flash', logger: 'watch', downpipe: 'flash', install: 'watch', habit: 'drive' };
+      var gauges = { undo: ['trims', 'kc'], logger: ['live'], downpipe: ['boost', 'afr'], install: ['trims', 'afr'], habit: ['rpm', 'kc', 'iat'] };
+      var when = { undo: 'after the first calm drive on the old file', logger: 'your next drive, any kind', downpipe: 'after two pulls on a cool morning', install: 'after your next drive, any kind', habit: 'after your next hot-afternoon Drive' };
       var proves = {
         undo: 'trims back within ±' + TRIM_OK + ' % over ' + (SHAKEDOWN_CALM / 60) + ' calm minutes',
         logger: 'that every gauge moves again',
+        downpipe: 'overshoot under +' + KTA.LIMITS.overshoot.watch.toFixed(1) + ' psi on pulls with the mixture on target',
+        install: 'trims back within ±' + TRIM_OK + ' % and the mixture on target',
         habit: 'lugging under ' + LUG_OK + ' % of moving time and Knock Control not rising'
       };
       return answer(base(again.key, kinds[again.key], titles[again.key], gauges[again.key],

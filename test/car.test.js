@@ -689,6 +689,9 @@ function synth(drives, extra) {
       id: d.id, start: (i + 1) * 100000, fileName: '', duration: 1800, moving: 1500,
       cool: true, hot: false, hotRestart: false, tooShort: false, verdict: 'good',
       kcStart: 0.49, kcEnd: 0.49, kcPeak: 0.49, trimWorst: -1, iatMoving: 36,
+      trimBands: [], trimIdle: null, trimFirstMin: null, trimFirstSec: 0,
+      krPeak: null, krScheduled: false,
+      kcUpSteps: null, lugUpSteps: null, lugRpm: null,
       cvtPeak: 80, lugShare: 1, accel5070: null, boostTarget: 16,
       overshoot: 1, wgAtPeak: 2.5, mixLeanest: 10.5, mixTarget: 11,
       missing: [], flat: [], calmSec: 700, hardPulls: 2,
@@ -1137,4 +1140,185 @@ test('the Open steps read as the loop\'s own vocabulary: keys, statuses and reas
   for (const step of open) assert.match(step.title, /^(Undo|Baseline|Habit test|Log AFR|Fix the logger)/);
   // A hand-made step key is dropped rather than guessed at.
   assert.deepEqual(K.carOpenSteps([{ key: 'invented', status: 'open' }]), []);
+});
+
+// ---------------------------------------------------------------------------
+// 06 — Diagnose: one cause per symptom pattern, before the Next step
+// ---------------------------------------------------------------------------
+
+/** One sentence, owner-tone: no second sentence hiding behind the first. */
+function oneSentence(s) {
+  assert.ok(s && s.length > 20, 'a sentence, not a fragment: ' + s);
+  assert.ok(!/\.\s+[A-Z]/.test(s), 'one sentence, no second one: ' + s);
+  assert.ok(/\.$/.test(s), 'it ends with a period: ' + s);
+}
+/** A Baseline already proven: the cause step is reachable past branch 4. */
+function doneBaseline() {
+  return [{ key: 'baseline', title: 'Baseline: one Cool drive with 2 pulls', status: 'done', why: 'Intake 37 °C, 2 pulls.', askedOn: 'before', askedAt: 1, lastAskedOn: 'before', settledBy: 'before', settledAt: 1 }];
+}
+
+test('diagnose reads 20:38 like a tuner: housing mismatch, Undo, one sentence', () => {
+  let s = K.carEmpty();
+  s = ingest(s, 'aug23-1959').state;
+  s = ingest(s, 'aug23-2038').state;
+  const dg = K.carDiagnose(s, '20260823-203853');
+  assert.equal(dg.id, 'maf-preset');
+  assert.equal(dg.cause, 'MAF Scaling / housing mismatch');
+  assert.equal(dg.step, 'undo');
+  assert.match(dg.sentence, /every band/);
+  assert.match(dg.sentence, /first minute/);
+  assert.match(dg.sentence, /right after a change/);
+  assert.match(dg.sentence, /airflow reading is off/);
+  oneSentence(dg.sentence);
+  // And the Next step is still Undo: diagnose explains the step, never moves it.
+  const decided = K.carNextStep(s, '20260823-203853', []);
+  assert.equal(decided.step.key, 'undo');
+  assert.equal(decided.step.kind, 'flash');
+  assert.deepEqual(decided.diagnose, dg);
+});
+
+test('20:38 flash plan is Undo with zero cells: never a knock fix or curve edit', () => {
+  let s = K.carEmpty();
+  s = ingest(s, 'aug23-1959').state;
+  s = ingest(s, 'aug23-2038').state;
+  const plan = K.carFlashPlan(s, MAP, { now: NOW });
+  assert.equal(plan.kind, 'undo');
+  assert.deepEqual(plan.tables, []);
+  assert.deepEqual(plan.cells, []);
+  assert.equal(plan.cells.length, 0);
+  assert.equal(plan.afmPasteRow, null);
+  const blob = JSON.stringify(plan.tables.concat(plan.cells)).toLowerCase();
+  assert.ok(!blob.includes('knock') && !blob.includes('maf'), 'no knock fix, no curve edit: ' + blob);
+  const afm = plan.levers.filter((l) => l.id === 'afm')[0];
+  assert.equal(afm.status, 'locked');
+  assert.match(afm.reason, /never a curve edit/);
+});
+
+test('unmetered air: idle and low airflow only, after a flash — check the install, no map change', () => {
+  const low = [
+    { from: -12, to: -8, seconds: 120, trim: 8.6 }, { from: -8, to: -5, seconds: 200, trim: 9.1 },
+    { from: -5, to: -2, seconds: 180, trim: 8.8 }, { from: -2, to: 1, seconds: 150, trim: 8.2 },
+  ];
+  const high = [{ from: 1, to: 4, seconds: 90, trim: 1.1 }, { from: 4, to: 8, seconds: 60, trim: -0.8 }];
+  let s = synth([
+    { id: 'before', trimWorst: 0.8 },
+    {
+      id: 'leak', trimWorst: 9.1, trimBands: low.concat(high), trimIdle: 9.4,
+      trimFirstMin: 9.0, trimFirstSec: 55, verdict: 'watch',
+    },
+  ]);
+  s = K.carRecordFlash(s, { time: 150000, map: 'intake fitted', changed: 'other', note: '' }, { now: NOW }).state;
+  const dg = K.carDiagnose(s, 'leak');
+  assert.equal(dg.id, 'unmetered-air');
+  assert.equal(dg.step, 'install');
+  assert.match(dg.sentence, /idle and low airflow/);
+  assert.match(dg.sentence, /no map change/);
+  oneSentence(dg.sentence);
+  const decided = K.carNextStep(s, 'leak', doneBaseline());
+  assert.equal(decided.step.key, 'install');
+  assert.equal(decided.step.kind, 'watch');
+  assert.match(decided.step.title, /Check the install/);
+  // A later drive with the trims back proves the check.
+  const later = synth([
+    { id: 'before', trimWorst: 0.8 },
+    {
+      id: 'leak', trimWorst: 9.1, trimBands: low.concat(high), trimIdle: 9.4,
+      trimFirstMin: 9.0, trimFirstSec: 55, verdict: 'watch',
+    },
+    { id: 'fixed', trimWorst: 1.2, trimIdle: 0.9, mixLeanest: 10.6, mixTarget: 11, hardPulls: 2 },
+  ]);
+  const settled = K.carSettle(later, 'fixed', decided.openSteps);
+  assert.equal(settled.settled.filter((x) => x.key === 'install')[0].status, 'done');
+});
+
+test('lean under boost after a downpipe install — check the flanges, then the mixture', () => {
+  const s = synth(
+    [{ id: 'before', trimWorst: 0.5 }, { id: 'dp', trimWorst: 1.0, mixLeanest: 12.3, mixTarget: 11, hardPulls: 2, verdict: 'watch' }],
+  );
+  const installs = [{ part: 'TSP catted downpipe', installed_at: 150000 }];
+  const dg = K.carDiagnose(s, 'dp', { installs });
+  assert.equal(dg.id, 'exhaust-lean');
+  assert.equal(dg.step, 'install');
+  assert.match(dg.sentence, /12\.3 against 11\.0 asked/);
+  assert.match(dg.sentence, /after the downpipe went on/);
+  assert.match(dg.sentence, /check the flanges first/);
+  oneSentence(dg.sentence);
+  assert.equal(K.carNextStep(s, 'dp', doneBaseline(), { installs }).step.key, 'install');
+});
+
+test('scheduled retard with a flat score is never a finding', () => {
+  const s = synth([
+    { id: 'before', trimWorst: 0.5 },
+    {
+      id: 'kr', trimWorst: 1.0, kcStart: 0.5, kcEnd: 0.5, kcPeak: 0.5,
+      krPeak: 6.0, krScheduled: true, hardPulls: 2, verdict: 'watch',
+    },
+  ]);
+  assert.equal(K.carDiagnose(s, 'kr'), null, 'high retard, flat score: scheduled, not a finding');
+  // And 20:38 — 6° of retard on a flat score — still reads air first, not knock.
+  let r = K.carEmpty();
+  r = ingest(r, 'aug23-1959').state;
+  r = ingest(r, 'aug23-2038').state;
+  const dg = K.carDiagnose(r, '20260823-203853');
+  assert.equal(dg.id, 'maf-preset', 'the trims win over the retard');
+});
+
+test('lugging on 16:01 — keep the revs up, the Baseline stays the step', () => {
+  let s = K.carEmpty();
+  for (const id of OWNER_NINE.slice(0, 7)) s = ingest(s, id).state;
+  const dg = K.carDiagnose(s, '20260830-160151');
+  assert.equal(dg.id, 'lugging');
+  assert.equal(dg.step, 'habit');
+  assert.match(dg.sentence, /0\.49 → 0\.65/);
+  assert.match(dg.sentence, /keep the revs up/);
+  oneSentence(dg.sentence);
+});
+
+test('held overshoot after a downpipe — faster spool, the downpipe boost trim', () => {
+  const s = synth([
+    { id: 'before', trimWorst: 0.5 },
+    { id: 'spool', trimWorst: 1.0, overshoot: 3.0, hardPulls: 2, boostTarget: 16, verdict: 'watch' },
+  ]);
+  const installs = [{ part: '27WON catted downpipe', installed_at: 150000 }];
+  const dg = K.carDiagnose(s, 'spool', { installs });
+  assert.equal(dg.id, 'spool');
+  assert.equal(dg.step, 'downpipe');
+  assert.match(dg.sentence, /\+3\.0 psi over target/);
+  assert.match(dg.sentence, /spools faster/);
+  oneSentence(dg.sentence);
+  const decided = K.carNextStep(s, 'spool', doneBaseline(), { installs });
+  assert.equal(decided.step.key, 'downpipe');
+  assert.equal(decided.step.kind, 'flash');
+});
+
+test('the nine drives keep their steps: only 20:38 and 16:01 carry a cause', () => {
+  const rows = loop();
+  assert.deepEqual(
+    rows.map((r) => r.step.key + '/' + r.step.kind),
+    [
+      'baseline/drive', 'baseline/drive', 'baseline/drive', 'undo/flash', 'tooShort/none',
+      'baseline/drive', 'baseline/drive', 'habit/drive', 'logger/watch',
+    ],
+    'diagnose explains the same steps better; it moves none of them',
+  );
+  let s = K.carEmpty();
+  for (const id of OWNER_NINE) {
+    const r = ingest(s, id);
+    s = r.state;
+  }
+  const ids = {};
+  for (const id of Object.keys(s.drives)) {
+    const dg = K.carDiagnose(s, id);
+    ids[id] = dg ? dg.id : null;
+  }
+  assert.deepEqual(ids, {
+    '20260822-090322': null,
+    '20260822-095021': null,
+    '20260823-195901': null,
+    '20260823-203853': 'maf-preset',
+    '20260830-152931': null,
+    '20260830-160151': 'lugging',
+    '20260901-081358': null,
+    '20260905-075634': null,
+  });
 });

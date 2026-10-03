@@ -4,6 +4,7 @@ One person, in a car park, on a phone, afraid they have broken something. So:
 
 * **The first sentence answers "am I hurting it?"** with *this* Drive's own
   numbers, in the same sentence. Never a summary, never a list.
+* The **one diagnosed cause** in one sentence with its evidence, or nothing.
 * Then, in this order and nothing else: the four numbers as a compact row
   (intake air while moving, Knock Control start → peak, worst fuel trim, hard
   pulls), the **Map version** this Drive ran on as one quiet line
@@ -506,7 +507,31 @@ def drive_recipe(
                 "If one is stuck: remove it from the gauge list, add it back, restart logging.",
             ],
         }
+    if key == "install":
+        return {
+            "intro": "No map change: this is a physical check, not a flash.",
+            "steps": [
+                "With the engine cold, check every clamp between the sensor and the engine is tight.",
+                "Check both flanges for black soot or a loose nut — a leak ahead of the sensor reads lean.",
+                "Log your next drive, any kind, with the same gauges.",
+            ],
+        }
     return None
+
+
+# ---------------------------------------------------------------------------
+# The diagnosed cause: one plain-words sentence with its evidence
+#
+# Diagnose (`KTA.carDiagnose`) runs in the engine before the Next step decision;
+# this only says its sentence. A drive with no diagnosed cause carries None,
+# and the chat draws nothing.
+# ---------------------------------------------------------------------------
+def cause_line(diagnose: Mapping[str, Any] | None) -> str | None:
+    """The one cause in one sentence, or None when nothing was diagnosed."""
+    if not isinstance(diagnose, Mapping):
+        return None
+    sentence = (diagnose.get("sentence") or "").strip()
+    return sentence or None
 
 
 # ---------------------------------------------------------------------------
@@ -546,9 +571,15 @@ def next_step_card(
 
     if kind == "flash":
         # A Flash Next step's cells come only from the Flash plan (ticket 13 draws
-        # the card): the plan's own headline, the Map version to flash back to, and
-        # the Shakedown drive that proves it.
-        body = f"{headline} {undo_sentence(plan)} Then drive a Shakedown drive: 10 calm minutes, no hard driving."
+        # the card): the plan's own headline, the Map version to flash back to for
+        # an Undo (or the save-as name for a forward change), and the Shakedown
+        # drive that proves it.
+        if key == "undo" or (plan or {}).get("kind") == "undo":
+            body = f"{headline} {undo_sentence(plan)} Then drive a Shakedown drive: 10 calm minutes, no hard driving."
+        else:
+            save_as = (plan or {}).get("saveAs")
+            body = headline + (f" Save as {save_as}." if save_as else "")
+            body += " Then drive a Shakedown drive: 10 calm minutes, no hard driving."
         flash_plan = plan or None
     elif key == "tooShort":
         body = "Under a minute moving. I keep your Car history clean and I don't judge it."
@@ -569,6 +600,11 @@ def next_step_card(
             body = (
                 cause.get("why")
                 or "The Baseline is in. Keep the habit going: the next hot afternoon scores it."
+            )
+        if key == "install":
+            diagnose = step.get("diagnose") or {}
+            body = (diagnose.get("sentence") or "").strip() or (
+                "No map change: this is a physical check, not a flash."
             )
         recipe = drive_recipe(key, limits, channels_open, {"summary": {"flat": dead}})
         gauges = gauge_table(step.get("gauges"), limits, dead)
@@ -634,6 +670,7 @@ def build_reply(
         "settled": [],
         "wasted": None,
         "flashPlan": None if drive.get("tooShort") else plan,
+        "cause": None,
         "nextStep": None,
         "harness": dict(harness) if harness else None,
     }
@@ -647,6 +684,7 @@ __all__ = [
     "VERDICT_WORDS",
     "VERDICT_LEAD",
     "build_reply",
+    "cause_line",
     "channel_name",
     "drive_recipe",
     "drive_stamp",

@@ -3,9 +3,9 @@
 /**
  * One reply, in the order the owner reads it:
  *
- *   the sentence that answers "am I hurting it?" · the window it read ·
- *   the four numbers · the Map version this Drive ran on · what I asked last
- *   time (settled, with the reason) · whether this Drive was a Wasted one ·
+ *   the sentence that answers "am I hurting it?" · the one diagnosed cause ·
+ *   the window it read · the four numbers · the Map version this Drive ran on ·
+ *   what I asked last time (settled, with the reason) · whether this Drive was a Wasted one ·
  *   the Verdict word · the Flash plan headline · the collapsed harness steps ·
  *   exactly one Next step with its recipe or gauge table.
  */
@@ -34,6 +34,11 @@ export function ReplyCard({ turn }: { turn: Turn }) {
       {say ? (
         <div className="say" data-testid="say">
           {say}
+        </div>
+      ) : null}
+      {card?.cause ? (
+        <div className="cause" data-testid="cause">
+          {card.cause}
         </div>
       ) : null}
       {window ? <div className="window">{window}</div> : null}

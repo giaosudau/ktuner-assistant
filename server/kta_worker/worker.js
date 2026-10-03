@@ -466,19 +466,23 @@ var OPS = {
   /**
    * Exactly one Next step, in the order the app always uses: an open Stop first,
    * then "this log cannot be read", the dead gauges, the Baseline, a cause seen
-   * today, an Open step still open (compactly), and otherwise nothing. The step
-   * names the Drive whose upload will settle it.
+   * today (Diagnose runs before the decision: housing mismatch, unmetered air,
+   * a lean mixture, lugging, faster spool), an Open step still open (compactly),
+   * and otherwise nothing. The step names the Drive whose upload will settle it,
+   * and `diagnose` carries the one cause and its reply sentence (or null).
+   * `installs` is the app's Install list, so a symptom right after a fitted
+   * part reads as one.
    */
   nextStep: function (args) {
     var state = stateOf(args);
     var driveId = need(args, 'driveId', 'string');
     var out;
     try {
-      out = KTA.carNextStep(state, driveId, args.openSteps);
+      out = KTA.carNextStep(state, driveId, args.openSteps, { installs: args.installs });
     } catch (e) {
       fail('engine-error', 'The Next step could not be decided after ' + driveId + ': ' + (e && e.message));
     }
-    return { step: out.step, openSteps: out.openSteps, opened: out.opened };
+    return { step: out.step, openSteps: out.openSteps, opened: out.opened, diagnose: out.diagnose || null };
   },
 
   /**

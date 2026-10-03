@@ -84,7 +84,7 @@ export type AlsoStep = { key: string; title: string; why: string; steps: string[
 
 export type NextStep = {
   kind: "flash" | "watch" | "drive" | "none";
-  /** Which step this is, so the chat can style it: undo, baseline, habit, logger… */
+  /** Which step this is, so the chat can style it: undo, baseline, habit, logger, install, downpipe… */
   key: string;
   title: string;
   body: string;
@@ -130,6 +130,8 @@ export type ReplyCard = {
   wasted: string | null;
   flashPlan: FlashPlan | null;
   nextStep: NextStep | null;
+  /** The one diagnosed cause, in one plain-words sentence — null when none. */
+  cause: string | null;
   /** The Open steps as they stand after this reply. */
   openSteps: OpenStep[];
   harness: HarnessSummary | null;
