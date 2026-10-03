@@ -1,8 +1,9 @@
-"""The graph one upload runs through: ingest → decide → built-in reply.
+"""The graph one upload runs through: ingest → decide → agent → built-in reply.
 
-No LLM in this ticket (spec: "the reply is the built-in one, templated from
-engine facts"). Every node is deterministic: the same Drive against the same
-Car history always gives the same reply.
+The LLM node (`agent`) slots in between `decide` and `reply` (spec): it may not
+change the Next step. Every node is deterministic except the agent's prose, and
+even that is checked: with no key configured the agent is a no-op and the reply
+is the built-in one, templated from engine facts.
 
 What each node owns:
 
@@ -12,10 +13,10 @@ What each node owns:
   version travels with the Drive, so the reply can name it.
 * `decide`  — settle every Open step against the new Drive, then exactly one
   Next step and the Open steps it opens.
+* `agent`   — the model explains the decided reply through read-only engine
+  tools; verify judges every draft (numbers, the one action, Flash plan cells,
+  banned advice EN+VI); one repair turn, then the built-in reply stands.
 * `reply`   — the typed reply card, streamed as prose and left in state.
-
-The LLM node (agent → verify → repair/fallback) is a later ticket; it slots in
-between `decide` and `reply` and may not change the Next step.
 """
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 
+from . import agent as agent_node
 from . import copy as C
 from .harness import Harness, merge as merge_harness
 from .worker import Worker, WorkerError
@@ -41,14 +43,17 @@ class LoopState(TypedDict, total=False):
     thread_id: str
     drive: dict
     reply: dict
+    agent: dict
     error: dict
 
 
-def build_graph(worker: Worker, store, settings, checkpointer=None):
-    """Wire the three nodes around the injected worker, store and settings.
+def build_graph(worker: Worker, store, settings, checkpointer=None, llm_caller=None):
+    """Wire the four nodes around the injected worker, store and settings.
 
     Nothing here is a global: a test builds its own graph over a temp SQLite
-    file and its own worker, and gets the same three nodes.
+    file and its own worker, and gets the same four nodes. `llm_caller` is the
+    seam-1 fake model hook: a scripted async `(messages, tools) -> response`
+    used instead of the network, so tests never need a key.
     """
 
     async def ingest(state: LoopState, config: RunnableConfig) -> dict[str, Any]:
@@ -57,16 +62,21 @@ def build_graph(worker: Worker, store, settings, checkpointer=None):
     async def decide(state: LoopState, config: RunnableConfig) -> dict[str, Any]:
         return await _decide(state, config, worker, store, settings)
 
+    async def agent(state: LoopState, config: RunnableConfig) -> dict[str, Any]:
+        return await _agent(state, config, worker, store, settings, llm_caller)
+
     async def reply(state: LoopState, config: RunnableConfig) -> dict[str, Any]:
         return await _reply(state, config, store)
 
     graph = StateGraph(LoopState)
     graph.add_node("ingest", ingest)
     graph.add_node("decide", decide)
+    graph.add_node("agent", agent)
     graph.add_node("reply", reply)
     graph.add_edge(START, "ingest")
     graph.add_edge("ingest", "decide")
-    graph.add_edge("decide", "reply")
+    graph.add_edge("decide", "agent")
+    graph.add_edge("agent", "reply")
     graph.add_edge("reply", END)
     return graph.compile(checkpointer=checkpointer or MemorySaver())
 
@@ -218,6 +228,57 @@ async def _decide(
 
 
 # ---------------------------------------------------------------------------
+# agent: the model explains the decided reply, checked, repaired once, else out
+#
+# The decisions are already made (`decide`): the Verdict, the settled Open
+# steps, the one Next step and the Flash plan. The model only chooses what to
+# look at (read-only engine tools through the worker) and how to explain it.
+# `verify.py` judges every draft; a failed draft gets one repair turn; a second
+# failure keeps the built-in reply. With no key this node returns nothing and
+# the loop is byte-identical to the built-in path. A Too-short drive has no
+# numbers to explain, so the built-in line stands there too.
+# ---------------------------------------------------------------------------
+async def _agent(
+    state: LoopState, config: RunnableConfig, worker: Worker, store, settings, llm_caller=None
+) -> dict[str, Any]:
+    if state.get("error"):
+        return {}
+    if not settings.has_llm:
+        return {}
+    drive = state.get("drive") or {}
+    reply = state.get("reply") or {}
+    if not drive or not reply:
+        return {}
+    if drive.get("tooShort"):
+        return {"agent": {"skipped": "too-short", "verified": False, "repaired": False, "llm_calls": 0}}
+
+    harness = Harness()
+    try:
+        result = await agent_node.run_agent(drive, reply, worker, store, settings, harness, config, llm_caller)
+    except Exception as exc:  # noqa: BLE001 - the explainer never breaks the loop
+        result = {
+            "prose": None, "thinking": None, "verified": False, "repaired": False,
+            "fallback": "error", "issues": [f"The explainer failed: {exc}"], "llm_calls": 0,
+        }
+
+    merged = dict(reply)
+    merged["harness"] = merge_harness(
+        [reply.get("harness"), {**harness.summary(), "steps": harness.as_list()}]
+    )
+    if result.get("verified") and result.get("prose"):
+        merged["say"] = result["prose"]
+    merged["agent"] = {
+        "verified": bool(result.get("verified")),
+        "repaired": bool(result.get("repaired")),
+        "fallback": result.get("fallback"),
+        "issues": list(result.get("issues") or []),
+        "thinking": result.get("thinking"),
+        "llmCalls": result.get("llm_calls", 0),
+    }
+    return {"agent": merged["agent"], "reply": merged}
+
+
+# ---------------------------------------------------------------------------
 # reply: stream the prose, leave the typed card in state
 # ---------------------------------------------------------------------------
 async def _reply(state: LoopState, config: RunnableConfig, store) -> dict[str, Any]:
@@ -232,6 +293,9 @@ async def _reply(state: LoopState, config: RunnableConfig, store) -> dict[str, A
     reply = state["reply"]
     await harness.say(config, base, reply["say"])
     await harness.say(config, f"{base}-window", reply["window"])
+    agent = state.get("agent") or {}
+    if agent.get("thinking"):
+        await harness.think(config, f"{base}-thinking", agent["thinking"])
     await harness.summary_event(config, reply["harness"])
 
     if thread_id := state.get("thread_id"):

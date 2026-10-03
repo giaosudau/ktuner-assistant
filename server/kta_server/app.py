@@ -74,6 +74,7 @@ def create_app(
     settings: Settings | None = None,
     store: Store | None = None,
     worker: Worker | None = None,
+    llm_caller=None,
 ) -> FastAPI:
     settings = settings or load_settings()
     store = store or Store(settings.db_path)
@@ -179,8 +180,9 @@ def create_app(
 
     # --------------------------------------------------------------- the AG-UI
     # One graph per app, cloned per request by the library. The checkpointer
-    # keeps each chat thread's messages between turns.
-    graph = build_graph(worker, store, settings)
+    # keeps each chat thread's messages between turns. `llm_caller` is the
+    # scripted fake model the seam-1 tests use instead of the network.
+    graph = build_graph(worker, store, settings, llm_caller=llm_caller)
     agent = LangGraphAgent(name=AGENT_NAME, graph=graph, emit_raw_events=False)
     add_langgraph_fastapi_endpoint(app, agent, path="/agent")
 

@@ -109,6 +109,15 @@ class Harness:
         cm = _manager(config)
         await cm.on_custom_event(MANUALLY_EMIT_MESSAGE, {"message_id": message_id, "message": text})
 
+    async def think(self, config: RunnableConfig | None, message_id: str, text: str) -> None:
+        """Stream the model's own thinking as its own collapsed block.
+
+        Labelled "unchecked" and never mixed into the harness steps: it is what
+        the model said to itself, not a checked fact (ADR 0004 §AG-UI).
+        """
+        cm = _manager(config)
+        await cm.on_custom_event("thinking", {"message_id": message_id, "thinking": text, "label": "unchecked"})
+
     async def summary_event(self, config: RunnableConfig | None, summary: Mapping[str, Any] | None = None) -> None:
         """The collapsed harness line, once every step is in."""
         cm = _manager(config)

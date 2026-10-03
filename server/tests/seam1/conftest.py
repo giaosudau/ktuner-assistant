@@ -158,6 +158,10 @@ class Reply:
             )
         return steps
 
+    def thinking(self) -> list[dict[str, Any]]:
+        """The model's own thinking blocks, each labelled unchecked."""
+        return [e["value"] for e in self.events if e["type"] == "CUSTOM" and e.get("name") == "thinking"]
+
     # -- the typed card ----------------------------------------------------
     def snapshot(self) -> dict[str, Any]:
         for event in reversed(self.events):
@@ -174,13 +178,24 @@ class Reply:
 # The loop under test: one app over a temp SQLite file and the real worker
 # ---------------------------------------------------------------------------
 class Loop:
-    """Posts uploads to one app and reads the replies back."""
+    """Posts uploads to one app and reads the replies back.
 
-    def __init__(self, tmp_path: Path) -> None:
-        self.settings = Settings(db_path=tmp_path / "ktuner.db", now=NOW)
+    `llm` configures a key the way `.env` would (`{"base_url": ..., "api_key":
+    ..., "model": ...}`) and `llm_caller` is the scripted fake model answering
+    instead of the network. Both default to off: the reply is the built-in one.
+    """
+
+    def __init__(self, tmp_path: Path, llm: dict[str, str] | None = None, llm_caller=None) -> None:
+        settings_kwargs: dict[str, Any] = {"db_path": tmp_path / "ktuner.db", "now": NOW}
+        if llm:
+            settings_kwargs.update(
+                llm_base_url=llm.get("base_url"), llm_api_key=llm.get("api_key"), llm_model=llm.get("model")
+            )
+        self.settings = Settings(**settings_kwargs)
         self.store = Store(self.settings.db_path)
         self.worker = Worker(self.settings.worker_script, self.settings.node_exe)
-        self.app = create_app(self.settings, self.store, self.worker)
+        self.llm_caller = llm_caller
+        self.app = create_app(self.settings, self.store, self.worker, llm_caller=llm_caller)
         self.thread_id = uuid.uuid4().hex
         self._loop = asyncio.new_event_loop()
         self._client = httpx.AsyncClient(
@@ -257,7 +272,8 @@ class Loop:
         fresh.thread_id = self.thread_id
         fresh.store = Store(self.settings.db_path)
         fresh.worker = Worker(self.settings.worker_script, self.settings.node_exe)
-        fresh.app = create_app(fresh.settings, fresh.store, fresh.worker)
+        fresh.llm_caller = self.llm_caller
+        fresh.app = create_app(fresh.settings, fresh.store, fresh.worker, llm_caller=fresh.llm_caller)
         fresh._loop = asyncio.new_event_loop()
         fresh._client = httpx.AsyncClient(
             transport=httpx.ASGITransport(app=fresh.app), base_url="http://kta", timeout=180
