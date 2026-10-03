@@ -25,7 +25,7 @@ engine) and `docs/adr/0003` (two map checks) still bind. Vocabulary is `CONTEXT.
 | 13 | Flash step: KTuner card to a new Map version (and the History file) | 07, 10, 12 | ready (after 07, 10, 12) |
 | 14 | Flash readback | 13 | ready (after 13) |
 | 15 | Pictures in the chat | 08, 13 | ready (after 08, 13) |
-| 16 | Model scorecard and clarity judge | 09 | ready (after 09) |
+| 16 | Model scorecard and clarity judge | 09 | done |
 
 ## Gates every ticket must pass before it is called done
 

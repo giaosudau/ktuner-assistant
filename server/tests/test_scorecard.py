@@ -220,6 +220,14 @@ def test_the_table_names_the_model_and_the_five_classes():
         assert name[:7] in table
 
 
+def test_results_are_saved_under_the_date_and_model(tmp_path: Path):
+    path = S.save_results(tmp_path, "2026-10-03", {"model": "qwen3.8-flash:free", "totals": {"judged": 1}})
+    assert path.parent.name == "2026-10-03" and path.suffix == ".json"
+    assert path.name == "qwen3_8_flash_free.json"
+    saved = json.loads(path.read_text())
+    assert saved["date"] == "2026-10-03" and saved["model"] == "qwen3.8-flash:free"
+
+
 # -- the transcript recorder (locks the ticket-08 formats it reads) ------------
 def _submit_msg(call_id: str, prose: str, action: str) -> dict:
     return {
