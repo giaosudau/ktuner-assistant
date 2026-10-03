@@ -34,11 +34,13 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from .ask import answer_question
 from .config import Settings, load_settings
 from .db import Store
+from .screenshot import IMAGE_TYPES, MAX_BYTES, answer_screenshot
 from .flash_routes import register_flash_routes
 from .graph import build_graph
 from .mapdata import KTUNER_BASEMAP_SOURCE, basemap_tables
 from . import copy as C
 from . import flash as FL
+from . import readback as RB
 from . import profile as P
 from . import questions as Q
 from . import window as W
@@ -292,6 +294,9 @@ def create_app(
         housing_saved = saved.get(f"housing:{drive_id}", {})
         housing_choice = housing_saved.get("choice") if isinstance(housing_saved, dict) else None
         step = C.next_step_card(decided["step"], plan, worker.limits, decided["openSteps"])
+        read_back = await RB.for_drive(worker, store, state, drive_id)
+        if read_back and read_back["state"] == "mismatch":
+            step = RB.recheck_step(read_back)
         return {
             "ok": True,
             "questionId": question_id,
@@ -301,6 +306,7 @@ def create_app(
             "questions": questions,
             "housing": C.housing_line(housing_choice),
             "nextStep": step,
+            "readback": read_back,
             "cause": C.cause_line(decided.get("diagnose")),
             "settled": C.settled_rows(settled["settled"]),
             "unansweredQuestions": await _unanswered_questions(store, worker, settings),
@@ -413,6 +419,16 @@ def create_app(
             raise HTTPException(status_code=400, detail="Ask me in words first.")
         state = store.car_state(None) or {}
         return await answer_question(text, worker, store, settings, _latest_drive(state), llm_caller)
+
+    @app.post("/api/screenshot")
+    async def api_screenshot(file: UploadFile = File(...), text: str = Form(default="")) -> dict[str, Any]:
+        """A KTuner screenshot, read only by the checked agent (ticket 15); no model, no reading."""
+        mime = (file.content_type or "").lower()
+        raw = await file.read()
+        if mime not in IMAGE_TYPES or not raw or len(raw) > MAX_BYTES:
+            raise HTTPException(status_code=400, detail="Attach a PNG, JPEG or WebP picture under 6 MB.")
+        state = store.car_state(None) or {}
+        return await answer_screenshot(raw, mime, text.strip(), worker, store, settings, _latest_drive(state), llm_caller)
 
     # The Flash step and the History file (ticket 13).
     register_flash_routes(app, store, worker, settings)

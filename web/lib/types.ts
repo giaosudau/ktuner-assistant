@@ -63,6 +63,8 @@ export type KTunerCard = {
   undo: { known: boolean; version: number | null; line: string | null };
   proof: string | null;
   afterFlash: string;
+  /** Can the log read this change back? Said per table family. */
+  readback: { possible: boolean; line: string };
   checked: string;
 };
 
@@ -219,6 +221,8 @@ export type ReplyCard = {
   wasted: string | null;
   flashPlan: FlashPlan | null;
   nextStep: NextStep | null;
+  /** Flash readback on a Drive after a Flash; null when no Flash is being read back. */
+  readback?: { state: "credited" | "mismatch" | "open" | "not-possible"; credited: boolean | null; line: string } | null;
   /** The one diagnosed cause, in one plain-words sentence — null when none. */
   cause: string | null;
   /** What only the owner knows, as tap-to-answer choices — never the model. */

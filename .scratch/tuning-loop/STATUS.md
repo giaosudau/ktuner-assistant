@@ -23,7 +23,7 @@ engine) and `docs/adr/0003` (two map checks) still bind. Vocabulary is `CONTEXT.
 | 11 | Ask without uploading | 09, 10 | done |
 | 12 | Thresholds file and the independent Python map change check | 03 | ready (after 03) |
 | 13 | Flash step: KTuner card to a new Map version (and the History file) | 07, 10, 12 | done |
-| 14 | Flash readback | 13 | ready (after 13) |
+| 14 | Flash readback | 13 | done |
 | 15 | Pictures in the chat | 08, 13 | ready (after 08, 13) |
 | 16 | Model scorecard and clarity judge | 09 | done |
 

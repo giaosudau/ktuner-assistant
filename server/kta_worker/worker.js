@@ -43,6 +43,7 @@ require(path.join(__dirname, '..', '..', 'app', 'i18n-map.js'));
 
 var KTA = require(path.join(__dirname, '..', '..', 'engine', 'kta-car.js'));
 require(path.join(__dirname, '..', '..', 'engine', 'kta-ask.js')); // adds KTA.ask
+var PICTURE = require(path.join(__dirname, '..', '..', 'engine', 'kta-picture.js')); // chart data (ticket 15)
 var MAP_DEFAULT = require(path.join(__dirname, '..', '..', 'data', 'ktuner-maps-digitized.json'));
 var TEXTS = globalThis.window.KTA_I18N.en;
 
@@ -668,6 +669,33 @@ var OPS = {
     return { driveId: args.driveId, facts: KTA.driveFacts(entry.report) };
   },
 
+  /**
+   * Flash readback (ticket 14): the Turbo Pressure Target this Drive logged at
+   * each asked rpm (within `tol` rpm), as a tally of distinct targets to 0.1 psi.
+   * A summary only: never the rows.
+   */
+  logTargets: function (args) {
+    var entry = cacheGet(need(args, 'driveId', 'string'));
+    var log = entry.log;
+    var tol = isNum(args.tol) ? args.tol : 30;
+    var rpms = Array.isArray(args.rpms) ? args.rpms : bad('rpms must be a list.');
+    var out = rpms.map(function (rpm) {
+      var tally = {}, samples = 0;
+      if (log.rpm && log.boostTarget) {
+        for (var i = 0; i < log.n; i++) {
+          var r = log.rpm[i], t = log.boostTarget[i];
+          if (isNum(r) && isNum(t) && Math.abs(r - rpm) <= tol) {
+            samples++;
+            var k = (Math.round(t * 10) / 10).toFixed(1);
+            tally[k] = (tally[k] || 0) + 1;
+          }
+        }
+      }
+      return { rpm: rpm, samples: samples, targets: Object.keys(tally).map(function (k) { return { psi: parseFloat(k), n: tally[k] }; }) };
+    });
+    return { driveId: args.driveId, readable: !!(log.rpm && log.boostTarget), rows: out };
+  },
+
   // ---- engine/kta-ask.js tool handlers, unchanged, over the same cache ------
   overview: function (args) { return askRun(need(args, 'driveId', 'string'), 'get_overview', {}); },
   insight: function (args) { return askRun(need(args, 'driveId', 'string'), 'get_insight', { topic: need(args, 'topic', 'string') }); },
@@ -681,6 +709,20 @@ var OPS = {
   pull: function (args) {
     if (!isNum(args.index)) bad('index must be a number.');
     return askRun(need(args, 'driveId', 'string'), 'get_pull', { index: Math.round(args.index) });
+  },
+
+  /** Chart data for one picture kind (ticket 15): engine/kta-picture.js, never rows. */
+  picture: function (args) {
+    var kind = need(args, 'kind', 'string');
+    if (kind === 'proof') {
+      var drives = stateOf(args).drives || {};
+      return PICTURE.proof(drives[args.beforeId] || null, drives[need(args, 'driveId', 'string')] || null, str(args, 'key'));
+    }
+    var entry = cacheGet(need(args, 'driveId', 'string'));
+    if (!entry.report) fail('no-report', 'Drive ' + args.driveId + ' has no drive report loaded.');
+    if (kind === 'trace') return PICTURE.trace(entry.report, entry.log, args.moment);
+    if (kind === 'driven') return { rpm: PICTURE.drivenRpm(entry.report) };
+    bad('Unknown picture kind: ' + kind);
   }
 };
 

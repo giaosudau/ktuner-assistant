@@ -867,6 +867,7 @@ def build_reply(
         "flashPlan": None if drive.get("tooShort") else plan,
         "cause": None,
         "nextStep": None,
+        "readback": None,
         "questions": [],
         "housing": None,
         "harness": dict(harness) if harness else None,

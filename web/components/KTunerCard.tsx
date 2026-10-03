@@ -205,6 +205,7 @@ export function KTunerCard({ card }: { card: Card }) {
           </p>
         ) : null}
         <p className="muted">{card.afterFlash}</p>
+        <p className="muted" data-testid="readback-possible">{card.readback.line}</p>
         <p className="muted">{card.checked}</p>
       </div>
 

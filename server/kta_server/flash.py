@@ -26,7 +26,7 @@ import json
 import logging
 from typing import Any, Mapping
 
-from . import mapcheck
+from . import mapcheck, readback
 
 log = logging.getLogger("kta.flash")
 
@@ -255,6 +255,7 @@ def build_card(
         },
         "proof": plan.get("proof"),
         "afterFlash": "Then drive a Shakedown drive: 10 calm minutes, no hard driving.",
+        "readback": readback.card_line(family),
         "checked": "Checked twice, and both checks agree: the engine's rules and a separate check against "
         f"{version['label']}.",
     }

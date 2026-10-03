@@ -68,6 +68,11 @@ export function ReplyCard({
       {card?.mapVersion ? <MapVersionLine card={card.mapVersion} /> : null}
       {card?.settled ? <SettledSteps rows={card.settled} /> : null}
       <WastedLine line={card?.wasted ?? null} />
+      {card?.readback ? (
+        <p className={`readback ${card.readback.state}`} data-testid="readback">
+          {card.readback.line}
+        </p>
+      ) : null}
       {card?.flashPlan ? <PlanCard plan={card.flashPlan} housing={card.housing ?? null} /> : null}
       {card?.questions?.map((question) => (
         <QuestionCard key={question.id} question={question} onAnswered={onAnswered} />
