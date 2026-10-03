@@ -164,115 +164,6 @@ function timingCostDeg(score) {
   return rnd(Math.max(0, S.tableDeg * (score - S.baseline)), 1);
 }
 
-function shakedownOut(sh) {
-  if (!sh) return null;
-  return {
-    role: sh.role, status: sh.status, passed: !!sh.passed,
-    calmSec: sh.calmSec || 0, neededSec: sh.needed || KTA.CAR_RULES.shakedownCalm,
-    calmMin: Math.round((sh.calmSec || 0) / 60)
-  };
-}
-
-/** The Map version a Drive ran on, as the reply reads it. */
-function mapOut(m) {
-  if (!m || !m.recorded) return null;
-  return {
-    recorded: true,
-    version: m.version,
-    label: m.label || 'Map version ' + m.version,
-    name: m.name,
-    since: m.since == null ? null : m.since,
-    kind: m.kind || null,
-    flashId: m.flashId || null,
-    changed: m.changed || null
-  };
-}
-
-/** Compact: no rows, no timelines, no cells. This is what crosses the boundary. */
-function driveOut(report) {
-  if (!report) return null;
-  var out = {
-    id: report.identity,
-    tooShort: !!report.tooShort,
-    replaced: !!report.replaced,
-    firstDrive: !!report.firstDrive,
-    verdict: report.verdict,
-    verdictWord: KTA.STATUS_LABEL[report.verdict] || "Can't tell",
-    baseline: report.baseline || null,
-    // Which Map version this Drive ran on, in the owner's words: the version
-    // active at its start, never guessed from the log, never "not recorded".
-    map: mapOut(report.map),
-    isShakedown: !!report.isShakedown,
-    shakedown: shakedownOut(report.shakedown),
-    flashCause: report.flashCause || null,
-    hardDrivingWatch: !!report.hardDrivingWatch,
-    unexplained: report.unexplained || null,
-    afterFlash: report.afterFlash || null,
-    unexplainedWatch: !!report.unexplainedWatch,
-    hotRestart: !!report.hotRestart,
-    summary: null,
-    numbers: null
-  };
-  var s = report.summary;
-  if (s) {
-    out.summary = {
-      id: s.id, start: s.start, fileName: s.fileName || '',
-      durationSec: s.duration, movingSec: s.moving,
-      iatMoving: s.iatMoving, cool: !!s.cool, hot: !!s.hot, hotRestart: !!s.hotRestart,
-      kcStart: s.kcStart, kcEnd: s.kcEnd, kcPeak: s.kcPeak,
-      timingCostDeg: timingCostDeg(s.kcPeak),
-      trimWorst: s.trimWorst,
-      hardPulls: s.hardPulls,
-      mixLeanest: s.mixLeanest, mixTarget: s.mixTarget,
-      boostTarget: s.boostTarget, overshoot: s.overshoot, wgAtPeak: s.wgAtPeak,
-      cvtPeak: s.cvtPeak, lugShare: s.lugShare,
-      // Why the score moved while the car was lugging: the facts the habit cause
-      // is diagnosed from (and the Diagnose node reads next).
-      kcUpSteps: s.kcUpSteps == null ? null : s.kcUpSteps,
-      lugUpSteps: s.lugUpSteps == null ? null : s.lugUpSteps,
-      lugRpm: s.lugRpm == null ? null : s.lugRpm,
-      accel5070: s.accel5070 ? rnd(s.accel5070.seconds, 2) : null,
-      flat: (s.flat || []).slice(), missing: (s.missing || []).slice(),
-      calmSec: s.calmSec, shakedown: s.shakedown
-    };
-    // The four numbers of the reply, named as CONTEXT.md names them.
-    out.numbers = {
-      iatMoving: s.iatMoving,
-      kcStart: s.kcStart,
-      kcPeak: s.kcPeak,
-      timingCostDeg: timingCostDeg(s.kcPeak),
-      trimWorst: s.trimWorst,
-      hardPulls: s.hardPulls
-    };
-  }
-  return out;
-}
-
-function planOut(plan) {
-  if (!plan) return null;
-  return {
-    kind: plan.kind, changeId: plan.changeId || null, family: plan.family || null,
-    headline: plan.headline, route: plan.route || null, basis: plan.basis || null,
-    proof: plan.proof || null,
-    saveAs: plan.saveAs || null, undoName: plan.undoName || null,
-    undo: plan.undo || null,
-    mapVersion: plan.mapVersion || null,
-    ceilingPsi: plan.ceiling != null ? plan.ceiling : null,
-    tables: (plan.tables || []).map(function (t) {
-      return { id: t.id, kind: t.kind, cellCount: (t.cells || []).length, pasteRow: t.pasteRow || null };
-    }),
-    cellCount: (plan.cells || []).length,
-    cells: (plan.cells || []).map(function (c) {
-      return { table: c.table, rpm: c.rpm, rpmRow: c.rpmRow, col: c.col, of: c.of, before: c.before, after: c.after };
-    }),
-    afmPasteRow: plan.afmPasteRow || null,
-    evidence: plan.evidence || [],
-    deferred: plan.deferred || [],
-    levers: (plan.levers || []).map(function (l) { return { id: l.id, family: l.family, title: l.title, status: l.status, reason: l.reason, unlocks: l.unlocks }; }),
-    openIssues: plan.openIssues || null
-  };
-}
-
 /**
  * Map versions as the engine holds them, plus the tables a named version is held
  * with. A Map version never borrows another version's tables: `mapVersion` (what
@@ -322,17 +213,134 @@ function tablesToCheck(v) {
   }
   return tablesFor(v);
 }
-function versionOut(v) {
-  if (!v) return null;
-  return {
-    n: v.n, label: v.label, name: v.name, kind: v.kind, tablesFrom: v.tablesFrom || null,
-    tablesPending: !!v.tablesPending,
-    tablesHeld: !!(v.tablesFrom && TABLE_SOURCES[v.tablesFrom] && !v.tablesPending),
-    from: v.from == null ? null : v.from, flashId: v.flashId || null, changed: v.changed || null,
-    note: v.note || '', updatedAt: v.updatedAt == null ? null : v.updatedAt,
-    tableCount: tableCount(v)
-  };
-}
+/**
+ * What crosses the process boundary, defined once (ADR 0004: summaries only).
+ * Every op that returns an engine object returns it through summarize(kind, x):
+ * a fixed set of named fields, never raw rows, a log, a CSV or a whole table.
+ * `mapVersion` is the one deliberate exception: it hands the tables themselves
+ * to a map check (ADR 0003), and says so in its own comment.
+ */
+var SUMMARIES = {
+  shakedown: function (sh) {
+    if (!sh) return null;
+    return {
+      role: sh.role, status: sh.status, passed: !!sh.passed,
+      calmSec: sh.calmSec || 0, neededSec: sh.needed || KTA.CAR_RULES.shakedownCalm,
+      calmMin: Math.round((sh.calmSec || 0) / 60)
+    };
+  },
+
+  map: function (m) {
+    if (!m || !m.recorded) return null;
+    return {
+      recorded: true,
+      version: m.version,
+      label: m.label || 'Map version ' + m.version,
+      name: m.name,
+      since: m.since == null ? null : m.since,
+      kind: m.kind || null,
+      flashId: m.flashId || null,
+      changed: m.changed || null
+    };
+  },
+
+  drive: function (report) {
+    if (!report) return null;
+    var out = {
+      id: report.identity,
+      tooShort: !!report.tooShort,
+      replaced: !!report.replaced,
+      firstDrive: !!report.firstDrive,
+      verdict: report.verdict,
+      verdictWord: KTA.STATUS_LABEL[report.verdict] || "Can't tell",
+      baseline: report.baseline || null,
+      // Which Map version this Drive ran on, in the owner's words: the version
+      // active at its start, never guessed from the log, never "not recorded".
+      map: summarize("map", report.map),
+      isShakedown: !!report.isShakedown,
+      shakedown: summarize("shakedown", report.shakedown),
+      flashCause: report.flashCause || null,
+      hardDrivingWatch: !!report.hardDrivingWatch,
+      unexplained: report.unexplained || null,
+      afterFlash: report.afterFlash || null,
+      unexplainedWatch: !!report.unexplainedWatch,
+      hotRestart: !!report.hotRestart,
+      summary: null,
+      numbers: null
+    };
+    var s = report.summary;
+    if (s) {
+      out.summary = {
+        id: s.id, start: s.start, fileName: s.fileName || '',
+        durationSec: s.duration, movingSec: s.moving,
+        iatMoving: s.iatMoving, cool: !!s.cool, hot: !!s.hot, hotRestart: !!s.hotRestart,
+        kcStart: s.kcStart, kcEnd: s.kcEnd, kcPeak: s.kcPeak,
+        timingCostDeg: timingCostDeg(s.kcPeak),
+        trimWorst: s.trimWorst,
+        hardPulls: s.hardPulls,
+        mixLeanest: s.mixLeanest, mixTarget: s.mixTarget,
+        boostTarget: s.boostTarget, overshoot: s.overshoot, wgAtPeak: s.wgAtPeak,
+        cvtPeak: s.cvtPeak, lugShare: s.lugShare,
+        // Why the score moved while the car was lugging: the facts the habit cause
+        // is diagnosed from (and the Diagnose node reads next).
+        kcUpSteps: s.kcUpSteps == null ? null : s.kcUpSteps,
+        lugUpSteps: s.lugUpSteps == null ? null : s.lugUpSteps,
+        lugRpm: s.lugRpm == null ? null : s.lugRpm,
+        accel5070: s.accel5070 ? rnd(s.accel5070.seconds, 2) : null,
+        flat: (s.flat || []).slice(), missing: (s.missing || []).slice(),
+        calmSec: s.calmSec, shakedown: s.shakedown
+      };
+      // The four numbers of the reply, named as CONTEXT.md names them.
+      out.numbers = {
+        iatMoving: s.iatMoving,
+        kcStart: s.kcStart,
+        kcPeak: s.kcPeak,
+        timingCostDeg: timingCostDeg(s.kcPeak),
+        trimWorst: s.trimWorst,
+        hardPulls: s.hardPulls
+      };
+    }
+    return out;
+  },
+
+  plan: function (plan) {
+    if (!plan) return null;
+    return {
+      kind: plan.kind, changeId: plan.changeId || null, family: plan.family || null,
+      headline: plan.headline, route: plan.route || null, basis: plan.basis || null,
+      proof: plan.proof || null,
+      saveAs: plan.saveAs || null, undoName: plan.undoName || null,
+      undo: plan.undo || null,
+      mapVersion: plan.mapVersion || null,
+      ceilingPsi: plan.ceiling != null ? plan.ceiling : null,
+      tables: (plan.tables || []).map(function (t) {
+        return { id: t.id, kind: t.kind, cellCount: (t.cells || []).length, pasteRow: t.pasteRow || null };
+      }),
+      cellCount: (plan.cells || []).length,
+      cells: (plan.cells || []).map(function (c) {
+        return { table: c.table, rpm: c.rpm, rpmRow: c.rpmRow, col: c.col, of: c.of, before: c.before, after: c.after };
+      }),
+      afmPasteRow: plan.afmPasteRow || null,
+      evidence: plan.evidence || [],
+      deferred: plan.deferred || [],
+      levers: (plan.levers || []).map(function (l) { return { id: l.id, family: l.family, title: l.title, status: l.status, reason: l.reason, unlocks: l.unlocks }; }),
+      openIssues: plan.openIssues || null
+    };
+  },
+
+  version: function (v) {
+    if (!v) return null;
+    return {
+      n: v.n, label: v.label, name: v.name, kind: v.kind, tablesFrom: v.tablesFrom || null,
+      tablesPending: !!v.tablesPending,
+      tablesHeld: !!(v.tablesFrom && TABLE_SOURCES[v.tablesFrom] && !v.tablesPending),
+      from: v.from == null ? null : v.from, flashId: v.flashId || null, changed: v.changed || null,
+      note: v.note || '', updatedAt: v.updatedAt == null ? null : v.updatedAt,
+      tableCount: tableCount(v)
+    };
+  }
+};
+function summarize(kind, x) { return SUMMARIES[kind](x); }
 
 function stateOf(args) {
   var s = args.state;
@@ -365,8 +373,8 @@ var OPS = {
   mapVersions: function (args) {
     var vs = versionsOf(stateOf(args));
     return {
-      versions: vs.map(versionOut),
-      active: vs.length ? versionOut(vs[vs.length - 1]) : null
+      versions: vs.map(function (v) { return summarize("version", v); }),
+      active: vs.length ? summarize("version", vs[vs.length - 1]) : null
     };
   },
 
@@ -382,7 +390,7 @@ var OPS = {
     var ref = args.version == null ? null : args.version;
     var v = ref == null ? versionsOf(state).slice(-1)[0] : versionByNumber(state, ref);
     if (!v) fail('no-map-version', 'This car has no Map version yet.');
-    return { version: versionOut(v), tables: tablesToCheck(v) };
+    return { version: summarize("version", v), tables: tablesToCheck(v) };
   },
 
   /** Map version 1: the KTuner basemap the owner gave the app. Idempotent. */
@@ -396,7 +404,7 @@ var OPS = {
     } catch (e) {
       fail('engine-error', 'The KTuner basemap could not be recorded: ' + (e && e.message));
     }
-    return { state: out.state, version: versionOut(out.version), created: !!out.created };
+    return { state: out.state, version: summarize("version", out.version), created: !!out.created };
   },
 
   /** The raw CSV again: parse it and put the log back in the cache (after a restart). */
@@ -421,7 +429,7 @@ var OPS = {
     }
     var report = out.report;
     cachePut(report.identity, { log: p.log, report: report.drive, id: report.identity, carReport: report });
-    return { drive: driveOut(report), state: out.state, replaced: !!out.replaced };
+    return { drive: summarize("drive", report), state: out.state, replaced: !!out.replaced };
   },
 
   /** The remembered Car history, as the Car history screen reads it. */
@@ -439,8 +447,8 @@ var OPS = {
       hidden: (state.hidden || []).slice(),
       answers: Object.assign({}, state.answers || {}),
       shakedown: state.shakedown || null,
-      mapVersions: vs.map(versionOut),
-      activeMapVersion: vs.length ? versionOut(vs[vs.length - 1]) : null,
+      mapVersions: vs.map(function (v) { return summarize("version", v); }),
+      activeMapVersion: vs.length ? summarize("version", vs[vs.length - 1]) : null,
       driveCount: KTA.carTableRows(state).length
     };
   },
@@ -534,7 +542,7 @@ var OPS = {
     } catch (e) {
       fail('engine-error', 'The Flash plan could not be built: ' + (e && e.message));
     }
-    return planOut(plan);
+    return summarize("plan", plan);
   },
 
   /** Record a Flash the owner says they wrote to the ECU. It becomes the next Map version. */
@@ -550,7 +558,7 @@ var OPS = {
     }
     return {
       state: out.state, flash: out.flash,
-      version: out.version ? versionOut(out.version) : null
+      version: out.version ? summarize("version", out.version) : null
     };
   },
 
@@ -565,7 +573,7 @@ var OPS = {
     } catch (e) {
       fail('engine-error', 'That answer was not accepted: ' + (e && e.message));
     }
-    return { state: out, driveId: driveId, answer: answer, report: driveOut(KTA.carReport(out, driveId)) };
+    return { state: out, driveId: driveId, answer: answer, report: summarize("drive", KTA.carReport(out, driveId)) };
   },
 
   /** The History file: every Drive, Flash and answer, no raw CSV. */

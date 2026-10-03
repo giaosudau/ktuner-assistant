@@ -51,5 +51,5 @@ Each row is committed as "Refactor A<n> — …"; tests stay green; run `uv run 
 | A4 | Banned-advice policy: shared case list, JS + Python both tested against it | done |
 | A2 | Reply wording: stop spelling stamp/channel/status words in 3 places | done |
 | A3 | Worker passes engine limits through, no renamed copy | done |
-| A5 | Worker op surface collapse (speculative, only if A1–A3 confirm the pattern) | ready (after A3) |
+| A5 | Worker op surface collapse (speculative, only if A1–A3 confirm the pattern) | done — worker shaping in one `summarize(kind, x)` table. NOT collapsed: the 7 ask pass-throughs (op names are the agent tool names in agent.py, each validates its own args; merging adds a dispatcher, no saving) and the car/map state-changing ops |
 | T  | Slow tests: `npm test` 63 s, pytest 43 s — find and fix the cause | done — pytest 48s→39s (replay shared across xdist workers); node bound by car.test.js; T2: car.test.js 87s→22s, npm test 83s→23s (memoized readLog+carIngest in test; engine hot: rollingMedian/finite/toNum) |
