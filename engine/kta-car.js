@@ -1515,14 +1515,25 @@
   /** Only `done` proves the step. A step that came back "Still off" is asked again. */
   function doneStatus(status) { return status === 'done'; }
 
-  // Each step: what the owner was told to do (title), what settling it settles
-  // (`short`), and the Drive that would settle it (`would`) — the three words
-  // the Wasted drive line is made of. The judge reads only the summary of the new
-  // Drive, so a Drive this car never logged can never settle anything.
+  // One entry per step, read by every part of the lifecycle: what the owner was
+  // told to do (title), what settling it settles (`short`), and the Drive that
+  // would settle it (`would`) — the three words the Wasted drive line is made of.
+  // `reask` and `wasted` rank the step: the order Open steps are re-asked, and the
+  // order the Wasted drive line names one (lowest first). `ask` is how the Next
+  // step tells it: `first` the opening words (when they are fixed), `title` the
+  // compact words when it is asked again, then its kind, gauges, when it settles
+  // and what proves it. The judge reads only the summary of the new Drive, so a
+  // Drive this car never logged can never settle anything.
   var STEP_JUDGES = {
     undo: {
       key: 'undo', title: 'Undo: trims back within ±' + TRIM_OK + ' %', short: 'the Undo',
       would: 'a drive of ' + (SHAKEDOWN_CALM / 60) + ' calm minutes', needs: ['stft', 'ltft'],
+      reask: 1, wasted: 1,
+      ask: {
+        first: 'Put the map from before back on the car', title: 'Undo: put the map from before back on the car',
+        kind: 'flash', gauges: ['trims', 'kc'], when: 'after the first calm drive on the old file',
+        proves: 'trims back within ±' + TRIM_OK + ' % over ' + (SHAKEDOWN_CALM / 60) + ' calm minutes'
+      },
       judge: function (s, step, ctx) {
         if (!s) return judged('wait', 'Too short to judge: it needs ' + (SHAKEDOWN_CALM / 60) + ' calm minutes.', 'it was too short');
         var dead = deadOf(s, ['stft', 'ltft']);
@@ -1541,6 +1552,12 @@
     baseline: {
       key: 'baseline', title: 'Baseline: one Cool drive with 2 pulls', short: 'the Baseline',
       would: 'a Cool Drive with 2 pulls', needs: [],
+      // Asked only while there is no Baseline, never as a held step: no compact words.
+      reask: 5, wasted: 4,
+      ask: {
+        first: 'Log one Cool-morning drive with 2 pulls', kind: 'drive', gauges: ['iat', 'kc', 'afr', 'boost'],
+        when: 'after that morning Drive', proves: 'a Cool Drive with 2 pulls to measure every later Drive against'
+      },
       judge: function (s) {
         var pulls = s && s.hardPulls ? s.hardPulls : 0;
         if (!s) return judged('wait', 'Too short: a Baseline Drive is ' + (SHAKEDOWN_CALM / 60) + ' minutes with 2 pulls.', 'it was too short');
@@ -1556,6 +1573,12 @@
     habit: {
       key: 'habit', title: 'Habit test: revs up in hot traffic', short: 'the habit test',
       would: 'a hot-afternoon drive', needs: ['kControl'],
+      reask: 3, wasted: 3,
+      ask: {
+        first: 'Keep the revs up in hot traffic (free, no Flash)', title: 'Habit test: log your next hot-afternoon Drive',
+        kind: 'drive', gauges: ['rpm', 'kc', 'iat'], when: 'after your next hot-afternoon Drive',
+        proves: 'lugging under ' + LUG_OK + ' % of moving time and Knock Control not rising'
+      },
       judge: function (s) {
         if (!s) return judged('wait', 'Too short: the habit shows on a drive of 10 minutes or more.', 'it was too short');
         var dead = deadOf(s, ['kControl']);
@@ -1573,6 +1596,9 @@
     channels: {
       key: 'channels', title: 'Log AFR Command and MAF Hz', short: 'the AFR Command / MAF Hz step',
       would: 'a log with AFR Command and MAF Hz in the list', needs: [],
+      // Re-asked before the Baseline (it is free, two channels to add); on a Wasted
+      // drive the Baseline comes first, because every later Drive is compared to it.
+      reask: 4, wasted: 5,
       judge: function (s) {
         if (!s) return judged('wait', 'Too short: nothing could be read out of it.', 'it was too short');
         var missing = (s.missing || []).filter(function (k) { return k === 'afrCmd' || k === 'mafHz' || k === 'mafGs' || k === 'lamCmd'; });
@@ -1586,6 +1612,11 @@
     logger: {
       key: 'logger', title: 'Fix the logger: dead gauges', short: 'the logger fix',
       would: 'a drive with every gauge moving', needs: [],
+      reask: 2, wasted: 2,
+      ask: {
+        title: 'Fix the logger: the dead gauges', kind: 'watch', gauges: ['live'],
+        when: 'your next drive, any kind', proves: 'that every gauge moves again'
+      },
       judge: function (s) {
         if (!s) return judged('wait', 'Too short: a Drive has to be read to see whether the gauges moved.', 'it was too short');
         if ((s.flat || []).length) return judged('fail', 'Still flat: ' + logChannelList(s.flat) + '.');
@@ -1595,6 +1626,12 @@
     install: {
       key: 'install', title: 'Check the install: clamps and flanges', short: 'the install check',
       would: 'a drive after checking the clamps and flanges', needs: ['stft', 'ltft'],
+      reask: 6, wasted: 6,
+      ask: {
+        first: 'Check the install: clamps and flanges', title: 'Check the install: clamps and flanges',
+        kind: 'watch', gauges: ['trims', 'afr'], when: 'after your next drive, any kind',
+        proves: 'trims back within ±' + TRIM_OK + ' % and the mixture on target'
+      },
       judge: function (s) {
         if (!s) return judged('wait', 'Too short: the check shows on a drive of 10 minutes or more.', 'it was too short');
         var dead = deadOf(s, ['stft', 'ltft']);
@@ -1613,6 +1650,12 @@
     downpipe: {
       key: 'downpipe', title: 'Flash the downpipe trim, then two pulls', short: 'the downpipe trim',
       would: 'two pulls on a cool morning', needs: ['boost', 'boostTarget'],
+      reask: 7, wasted: 7,
+      ask: {
+        first: 'Flash the downpipe trim, then two pulls', title: 'Flash the downpipe trim, then two pulls',
+        kind: 'flash', gauges: ['boost', 'afr'], when: 'after two pulls on a cool morning',
+        proves: 'overshoot under +' + KTA.LIMITS.overshoot.watch.toFixed(1) + ' psi on pulls with the mixture on target'
+      },
       judge: function (s) {
         if (!s) return judged('wait', 'Too short: the trim shows on pulls, and this drive had none to read.', 'it was too short');
         var dead = deadOf(s, ['boost', 'boostTarget']);
@@ -1630,8 +1673,11 @@
       }
     }
   };
+  function stepsRankedBy(field) {
+    return Object.keys(STEP_JUDGES).sort(function (a, b) { return STEP_JUDGES[a][field] - STEP_JUDGES[b][field]; });
+  }
   /** The steps that can be the one Next step, in the order they are re-asked. */
-  var STEP_ORDER = ['undo', 'logger', 'habit', 'channels', 'baseline', 'install', 'downpipe'];
+  var STEP_ORDER = stepsRankedBy('reask');
   KTA.STEP_KEYS = STEP_ORDER.slice();
 
   function stepOf(key) { return STEP_JUDGES[key]; }
@@ -1729,7 +1775,7 @@
    * Drive that lost gauges is told that first, because that is the reason nothing
    * on it could be trusted.
    */
-  var WOULD_PRIORITY = ['undo', 'logger', 'habit', 'baseline', 'channels', 'install', 'downpipe'];
+  var WOULD_PRIORITY = stepsRankedBy('wasted');
   function wastedFor(considered, sum, settledRows) {
     if (!considered.length) return NOT_WASTED;
     var pick = null;
@@ -2008,24 +2054,17 @@
         return k === 'afrCmd' || k === 'mafHz' || k === 'mafGs' || k === 'lamCmd';
       }) && !openOf(steps, 'channels');
     }
+    /** A step as the Next step tells it, read from the step's own entry: the opening words unless `title` is given. */
+    function asking(key, title, proves, opens, also) {
+      var a = stepOf(key).ask;
+      return base(key, a.kind, title || a.first, a.gauges.slice(), proves || a.proves, a.when, opens, also);
+    }
     /** Undo: the only step a Stop drive gets, and the housing-mismatch route. */
-    function undoStep() {
-      return base('undo', 'flash', 'Put the map from before back on the car', ['trims', 'kc'],
-        'trims back within ±' + TRIM_OK + ' % over ' + (SHAKEDOWN_CALM / 60) + ' calm minutes',
-        'after the first calm drive on the old file', 'undo');
-    }
+    function undoStep() { return asking('undo', null, null, 'undo'); }
     /** A leak or a flange to check under the bonnet: no map change. */
-    function installStep() {
-      return base('install', 'watch', 'Check the install: clamps and flanges', ['trims', 'afr'],
-        'trims back within ±' + TRIM_OK + ' % and the mixture on target',
-        'after your next drive, any kind', 'install');
-    }
+    function installStep() { return asking('install', null, null, 'install'); }
     /** Faster spool after the downpipe: the Flash plan carries the trim. */
-    function downpipeStep() {
-      return base('downpipe', 'flash', 'Flash the downpipe trim, then two pulls', ['boost', 'afr'],
-        'overshoot under +' + KTA.LIMITS.overshoot.watch.toFixed(1) + ' psi on pulls with the mixture on target',
-        'after two pulls on a cool morning', 'downpipe');
-    }
+    function downpipeStep() { return asking('downpipe', null, null, 'downpipe'); }
 
     // 1. An open Stop: Undo is the only step, exactly as the Flash plan's P1.
     if (sum && sum.verdict === 'stop') {
@@ -2046,9 +2085,8 @@
 
     // 3. A logger fault: the log, not the car.
     if ((sum.flat || []).length) {
-      return answer(base('logger', 'watch', 'Your logger recorded ' + (sum.flat.length) +
-        ' dead ' + (sum.flat.length === 1 ? 'gauge' : 'gauges'), ['live'],
-        'that every gauge moves again', 'your next drive, any kind', 'logger'), ['logger']);
+      return answer(asking('logger', 'Your logger recorded ' + (sum.flat.length) +
+        ' dead ' + (sum.flat.length === 1 ? 'gauge' : 'gauges'), null, 'logger'), ['logger']);
     }
 
     // 4. No Baseline yet: one Cool Drive with 2 pulls, and a cause seen today is
@@ -2062,10 +2100,7 @@
     if (cause) beside.push('habit');
     if (missingChannels()) beside.push('channels');
     if (!baselineStep || !doneStatus(baselineStep.status)) {
-      var cool = answer(base('baseline', 'drive', 'Log one Cool-morning drive with 2 pulls',
-        ['iat', 'kc', 'afr', 'boost'],
-        'a Cool Drive with 2 pulls to measure every later Drive against',
-        'after that morning Drive', 'baseline', cause ? 'habit' : null),
+      var cool = answer(asking('baseline', null, null, 'baseline', cause ? 'habit' : null),
         ['baseline'], beside);
       cool.step.cause = cause;
       return cool;
@@ -2078,11 +2113,8 @@
     //    mismatch to Undo.
     var lugging = (dg && dg.id === 'lugging') ? dg.habit : null;
     if (lugging) {
-      var habit = answer(base('habit', 'drive', 'Keep the revs up in hot traffic (free, no Flash)',
-        ['rpm', 'kc', 'iat'],
-        'lugging under ' + LUG_OK + ' % of moving time and Knock Control not rising (today ' +
-        n1(sum.lugShare) + ' %, +' + n2(lugging.rise) + ')',
-        'after your next hot-afternoon Drive', 'habit'), ['habit'],
+      var habit = answer(asking('habit', null,
+        stepOf('habit').ask.proves + ' (today ' + n1(sum.lugShare) + ' %, +' + n2(lugging.rise) + ')', 'habit'), ['habit'],
         missingChannels() ? ['channels'] : []);
       habit.step.cause = lugging;
       return habit;
@@ -2103,19 +2135,7 @@
     // 6. An Open step still open: its step again, compact — "same step as last time".
     var again = held('undo') || held('logger') || held('downpipe') || held('install') || held('habit');
     if (again) {
-      var titles = { undo: 'Undo: put the map from before back on the car', logger: 'Fix the logger: the dead gauges', downpipe: 'Flash the downpipe trim, then two pulls', install: 'Check the install: clamps and flanges', habit: 'Habit test: log your next hot-afternoon Drive' };
-      var kinds = { undo: 'flash', logger: 'watch', downpipe: 'flash', install: 'watch', habit: 'drive' };
-      var gauges = { undo: ['trims', 'kc'], logger: ['live'], downpipe: ['boost', 'afr'], install: ['trims', 'afr'], habit: ['rpm', 'kc', 'iat'] };
-      var when = { undo: 'after the first calm drive on the old file', logger: 'your next drive, any kind', downpipe: 'after two pulls on a cool morning', install: 'after your next drive, any kind', habit: 'after your next hot-afternoon Drive' };
-      var proves = {
-        undo: 'trims back within ±' + TRIM_OK + ' % over ' + (SHAKEDOWN_CALM / 60) + ' calm minutes',
-        logger: 'that every gauge moves again',
-        downpipe: 'overshoot under +' + KTA.LIMITS.overshoot.watch.toFixed(1) + ' psi on pulls with the mixture on target',
-        install: 'trims back within ±' + TRIM_OK + ' % and the mixture on target',
-        habit: 'lugging under ' + LUG_OK + ' % of moving time and Knock Control not rising'
-      };
-      return answer(base(again.key, kinds[again.key], titles[again.key], gauges[again.key],
-        proves[again.key], when[again.key], again.key), [again.key]);
+      return answer(asking(again.key, stepOf(again.key).ask.title, null, again.key), [again.key]);
     }
 
     // 7. Nothing to ask: the app says what it is waiting to hear.

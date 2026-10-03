@@ -1429,3 +1429,97 @@ test('07: questions never name a KTuner table except MAF Scaling in a choice', (
     }
   }
 });
+
+// ---------------------------------------------------------------------------
+// A1 — the Open-step lifecycle: every step reads the same way wherever it is read
+// ---------------------------------------------------------------------------
+
+// What the owner is told for one step, however the step was reached.
+const asked = (d) => ({ key: d.step.key, kind: d.step.kind, title: d.step.title, gauges: d.step.gauges, proves: d.step.proves, settlesOn: d.step.settlesOn });
+const openOne = (key) => [].concat(doneBaseline(), [{ key, title: 'x', status: 'open', why: 'asked', askedOn: 'a', lastAskedOn: 'a', askedAt: 1 }]);
+const reask = (key) => asked(K.carNextStep(synth([{ id: 'a' }, { id: 'b' }]), 'b', openOne(key)));
+const firstAsk = {
+  undo: () => asked(K.carNextStep(synth([{ id: 'a' }, { id: 'b', verdict: 'stop' }]), 'b', [])),
+  logger: () => asked(K.carNextStep(synth([{ id: 'a' }, { id: 'b', flat: ['kControl'] }]), 'b', [])),
+  baseline: () => asked(K.carNextStep(synth([{ id: 'a' }, { id: 'b' }]), 'b', [])),
+  habit: () => {
+    let s = K.carEmpty();
+    for (const id of OWNER_NINE.slice(0, 7)) s = ingest(s, id).state;
+    return asked(K.carNextStep(s, '20260830-160151', doneBaseline()));
+  },
+  install: () => asked(K.carNextStep(synth([{ id: 'a', trimWorst: 0.8 }, { id: 'b', trimWorst: 9.1, trimIdle: 9.4, trimFirstMin: 9.0, trimFirstSec: 55, verdict: 'watch',
+    trimBands: [{ from: -12, to: -8, seconds: 120, trim: 8.6 }, { from: -8, to: -5, seconds: 200, trim: 9.1 }, { from: -5, to: -2, seconds: 180, trim: 8.8 }, { from: -2, to: 1, seconds: 150, trim: 8.2 }, { from: 1, to: 4, seconds: 90, trim: 1.1 }, { from: 4, to: 8, seconds: 60, trim: -0.8 }] }]), 'b', doneBaseline())),
+  downpipe: () => asked(K.carNextStep(synth([{ id: 'a', trimWorst: 0.5 }, { id: 'b', overshoot: 3.0, verdict: 'watch' }]), 'b', doneBaseline(), { installs: [{ part: '27WON catted downpipe', installed_at: 150000 }] })),
+};
+const ASKED = {
+  undo: { kind: 'flash', gauges: ['trims', 'kc'], proves: 'trims back within ±5 % over 10 calm minutes', settlesOn: 'after the first calm drive on the old file' },
+  logger: { kind: 'watch', gauges: ['live'], proves: 'that every gauge moves again', settlesOn: 'your next drive, any kind' },
+  habit: { kind: 'drive', gauges: ['rpm', 'kc', 'iat'], proves: 'lugging under 4 % of moving time and Knock Control not rising', settlesOn: 'after your next hot-afternoon Drive' },
+  baseline: { kind: 'drive', gauges: ['iat', 'kc', 'afr', 'boost'], proves: 'a Cool Drive with 2 pulls to measure every later Drive against', settlesOn: 'after that morning Drive' },
+  install: { kind: 'watch', gauges: ['trims', 'afr'], proves: 'trims back within ±5 % and the mixture on target', settlesOn: 'after your next drive, any kind' },
+  downpipe: { kind: 'flash', gauges: ['boost', 'afr'], proves: 'overshoot under +2.5 psi on pulls with the mixture on target', settlesOn: 'after two pulls on a cool morning' },
+};
+const FIRST_TITLE = {
+  undo: 'Put the map from before back on the car', logger: 'Your logger recorded 1 dead gauge',
+  habit: 'Keep the revs up in hot traffic (free, no Flash)', baseline: 'Log one Cool-morning drive with 2 pulls',
+  install: 'Check the install: clamps and flanges', downpipe: 'Flash the downpipe trim, then two pulls',
+};
+const AGAIN_TITLE = {
+  undo: 'Undo: put the map from before back on the car', logger: 'Fix the logger: the dead gauges',
+  habit: 'Habit test: log your next hot-afternoon Drive', install: 'Check the install: clamps and flanges',
+  downpipe: 'Flash the downpipe trim, then two pulls',
+};
+const STORED_TITLE = {
+  undo: 'Undo: trims back within ±5 %', logger: 'Fix the logger: dead gauges', habit: 'Habit test: revs up in hot traffic',
+  channels: 'Log AFR Command and MAF Hz', baseline: 'Baseline: one Cool drive with 2 pulls',
+  install: 'Check the install: clamps and flanges', downpipe: 'Flash the downpipe trim, then two pulls',
+};
+const SETTLE_WORDS = {
+  undo: ['the Undo', 'a drive of 10 calm minutes'], logger: ['the logger fix', 'a drive with every gauge moving'],
+  habit: ['the habit test', 'a hot-afternoon drive'], channels: ['the AFR Command / MAF Hz step', 'a log with AFR Command and MAF Hz in the list'],
+  baseline: ['the Baseline', 'a Cool Drive with 2 pulls'], install: ['the install check', 'a drive after checking the clamps and flanges'],
+  downpipe: ['the downpipe trim', 'two pulls on a cool morning'],
+};
+const WASTED_ORDER = ['undo', 'logger', 'habit', 'baseline', 'channels', 'install', 'downpipe'];
+const ALL_STEPS = ['undo', 'logger', 'habit', 'channels', 'baseline', 'install', 'downpipe'];
+
+test('A1: every step is re-asked in the order undo, logger, habit, channels, baseline, install, downpipe', () => {
+  assert.deepEqual(K.STEP_KEYS, ALL_STEPS);
+  const stored = K.carOpenSteps(ALL_STEPS.slice().reverse().map((key) => ({ key })));
+  assert.deepEqual(stored.map((s) => s.key), ALL_STEPS, 'steps asked at the same moment read back in that order');
+  assert.deepEqual(stored.map((s) => s.title), ALL_STEPS.map((k) => STORED_TITLE[k]));
+});
+
+test('A1: the first ask tells the owner each step in the same words, whichever way it is reached', () => {
+  for (const key of Object.keys(ASKED)) {
+    const got = firstAsk[key]();
+    assert.deepEqual(got, Object.assign({ key, title: FIRST_TITLE[key] }, ASKED[key],
+      key === 'habit' ? { proves: ASKED.habit.proves + ' (today 6.9 %, +0.16)' } : {}), key);
+  }
+});
+
+test('A1: an Open step still open is re-asked in its compact words', () => {
+  for (const key of Object.keys(AGAIN_TITLE)) {
+    assert.deepEqual(reask(key), Object.assign({ key, title: AGAIN_TITLE[key] }, ASKED[key]), key);
+  }
+});
+
+test('A1: a Too-short Drive names the step the owner waits on, and the words that would settle it', () => {
+  for (const key of ALL_STEPS) {
+    const w = K.carSettle(K.carEmpty(), 'zz', [{ key, status: 'open', askedOn: 'a' }]).wasted;
+    assert.deepEqual([w.key, w.proves, w.would], [key, SETTLE_WORDS[key][0], SETTLE_WORDS[key][1]], key);
+  }
+  for (const a of ALL_STEPS) for (const b of ALL_STEPS) {
+    if (a === b) continue;
+    const w = K.carSettle(K.carEmpty(), 'zz', [a, b].map((key) => ({ key, status: 'open', askedOn: 'a' }))).wasted;
+    assert.equal(w.key, WASTED_ORDER.indexOf(a) < WASTED_ORDER.indexOf(b) ? a : b, a + ' with ' + b);
+  }
+});
+
+test('A1: a judged step reports the same words as the Wasted drive line', () => {
+  const s = synth([{ id: 'a' }, { id: 'b', hot: false, hardPulls: 0 }]);
+  for (const key of ['channels', 'baseline', 'habit']) {
+    const row = K.carSettle(s, 'b', [{ key, status: 'open', askedOn: 'a' }]).settled[0];
+    assert.deepEqual([row.proves, row.would], SETTLE_WORDS[key], key);
+  }
+});

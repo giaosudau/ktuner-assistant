@@ -47,7 +47,7 @@ Each row is committed as "Refactor A<n> — …"; tests stay green; run `uv run 
 
 | # | Candidate | Status |
 |---|---|---|
-| A1 | Open-step lifecycle: one entry per step in `engine/kta-car.js` | ready |
+| A1 | Open-step lifecycle: one entry per step in `engine/kta-car.js` | done |
 | A4 | Banned-advice policy: shared case list, JS + Python both tested against it | done |
 | A2 | Reply wording: stop spelling stamp/channel/status words in 3 places | ready (after A1) |
 | A3 | Worker passes engine limits through, no renamed copy | ready (after A2) |
