@@ -18,9 +18,29 @@ Expected path without owner answers (from the prototype, Baseline-first):
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** done (3 Oct 2026: seam-1 eval `server/tests/seam1/test_loop_eval.py`, 4 tests; full pytest 107/107, `npm test` 155/155)
 
-- [ ] The eval runs in the default test run and fails on any Next step or status change
-- [ ] It prints Drives to proof per settled step and the Wasted drive count
-- [ ] 23 Aug 20:38 never yields a knock fix or an AFM curve edit
-- [ ] A changed expectation needs the table above updated in the same change, with a reason
+- [x] The eval runs in the default test run and fails on any Next step or status change
+- [x] It prints Drives to proof per settled step and the Wasted drive count
+- [x] 23 Aug 20:38 never yields a knock fix or an AFM curve edit
+- [x] A changed expectation needs the table above updated in the same change, with a reason
+
+## PM notes (05 done, 3 Oct 2026)
+
+1. **Actual Drives to proof:** Undo 2 uploads (asked 23 Aug 20:38, proven 30
+   Aug 15:29 — the Too-short 15:09 counts as an upload, proves nothing);
+   Baseline 7 uploads (asked 22 Aug 09:03, proven 1 Sep 08:13). Habit, logger
+   and channels are never Done — still open/wait after all nine Drives.
+2. **Wasted drives: 5 of 9** — 22 Aug 09:50, 23 Aug 19:59, 30 Aug 16:01 (too
+   warm for the Baseline), 30 Aug 15:09 (too short for the Undo), 5 Sep 07:56
+   (dead gauges for the habit). 23 Aug 20:38 is never wasted (a Stop Drive is
+   a fault to fix, not a lesson).
+3. **No table corrections.** Verified row by row against the post-04 engine:
+   the table's shorthand reads as — 09:03 settles nothing; "Stop" on 20:38 is
+   the Drive verdict (flashPlan kind undo, zero tables/cells); "Undo: can't
+   tell" on 15:09 is the Wasted line naming the Undo (Too-short settles
+   nothing); "—" on 16:01 means no Done (Baseline + channels wait, habit
+   opened beside with `lastAskedOn === null`). The eval additionally locks the
+   channels waits the table omits, so a channels regression fails here too.
+4. **Lock sanity-checked:** perturbing one expectation (09:03 `same`) fails
+   `test_loop_eval_locks_the_ticket_table_drive_by_drive`; reverted.
