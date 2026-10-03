@@ -27,7 +27,12 @@ export function PlanCard({ plan, housing }: { plan: FlashPlan | null; housing?: 
           )}
         </div>
       ) : null}
-      {plan.cellCount > 0 ? (
+      {plan.blocked ? (
+        <div className="muted" data-testid="blocked" style={{ marginTop: 4 }}>
+          Checked twice before you saw it: {plan.blocked.disagree ? "the two checks disagreed" : "both checks refused it"}.
+        </div>
+      ) : null}
+      {plan.cellCount > 0 && !plan.ktunerCard ? (
         <div className="muted" style={{ marginTop: 4 }}>
           {plan.cellCount} cell{plan.cellCount === 1 ? "" : "s"} · save as {plan.saveAs ?? "—"}
         </div>

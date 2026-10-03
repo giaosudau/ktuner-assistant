@@ -10,6 +10,8 @@
  */
 import type { GaugeTable, NextStep } from "../lib/types";
 
+import { KTunerCard, UndoFlash } from "./KTunerCard";
+
 const TAG: Record<NextStep["kind"], [string, string]> = {
   change: ["Change in KTuner", ""],
   flash: ["Change in KTuner", ""],
@@ -62,6 +64,13 @@ export function NextStepCard({ step }: { step: NextStep | null }) {
       <h3>{step.title}</h3>
 
       {step.body ? <p>{step.body}</p> : null}
+
+      {step.kind === "flash" && step.flashPlan?.ktunerCard?.kind === "change" ? (
+        <KTunerCard card={step.flashPlan.ktunerCard} />
+      ) : null}
+      {step.kind === "flash" && step.flashPlan?.ktunerCard?.kind === "undo" ? (
+        <UndoFlash card={step.flashPlan.ktunerCard} />
+      ) : null}
 
       {step.recipe && step.recipe.steps.length ? (
         <>

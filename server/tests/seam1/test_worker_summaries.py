@@ -29,7 +29,7 @@ DRIVE = {"id", "tooShort", "replaced", "firstDrive", "verdict", "verdictWord", "
          "unexplainedWatch", "hotRestart", "summary", "numbers"}
 PLAN = {"kind", "changeId", "family", "headline", "route", "basis", "proof", "saveAs", "undoName",
         "undo", "mapVersion", "ceilingPsi", "tables", "cellCount", "cells", "afmPasteRow",
-        "evidence", "deferred", "levers", "openIssues"}
+        "afmAfter", "flashChanged", "evidence", "deferred", "levers", "openIssues"}
 
 
 def test_ops_return_summary_shapes_only():

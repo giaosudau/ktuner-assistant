@@ -175,6 +175,15 @@ function versionsOf(state) {
   if (state && typeof state === 'object' && Array.isArray(state.mapVersions)) s.mapVersions = state.mapVersions;
   return KTA.carMapVersions(s);
 }
+/** The Map version on the car now: the newest, unless an Undo or Revert put an older one back. */
+function activeOf(state) {
+  var s = KTA.carEmpty();
+  if (state && typeof state === 'object') {
+    if (Array.isArray(state.mapVersions)) s.mapVersions = state.mapVersions;
+    if (Array.isArray(state.mapRestores)) s.mapRestores = state.mapRestores;
+  }
+  return KTA.carActiveMapVersion(s);
+}
 function versionByNumber(state, ref) {
   var vs = versionsOf(state);
   if (isNum(ref)) {
@@ -197,7 +206,7 @@ function tablesFor(v) {
  *  still read the map); `mapVersion` is where a check refuses. */
 function mapForVersion(state, ref) {
   if (ref != null) return tablesFor(versionByNumber(state, ref));
-  var active = versionsOf(state).slice(-1)[0];
+  var active = activeOf(state);
   return active ? tablesFor(active) : MAP_DEFAULT;
 }
 function tableCount(v) {
@@ -321,6 +330,8 @@ var SUMMARIES = {
         return { table: c.table, rpm: c.rpm, rpmRow: c.rpmRow, col: c.col, of: c.of, before: c.before, after: c.after };
       }),
       afmPasteRow: plan.afmPasteRow || null,
+      afmAfter: plan.afmAfter || null,
+      flashChanged: plan.prefill ? plan.prefill.changed : null,
       evidence: plan.evidence || [],
       deferred: plan.deferred || [],
       levers: (plan.levers || []).map(function (l) { return { id: l.id, family: l.family, title: l.title, status: l.status, reason: l.reason, unlocks: l.unlocks }; }),
@@ -333,7 +344,7 @@ var SUMMARIES = {
     return {
       n: v.n, label: v.label, name: v.name, kind: v.kind, tablesFrom: v.tablesFrom || null,
       tablesPending: !!v.tablesPending,
-      tablesHeld: !!(v.tablesFrom && TABLE_SOURCES[v.tablesFrom] && !v.tablesPending),
+      tablesHeld: !!(v.tablesFrom && (TABLE_SOURCES[v.tablesFrom] || v.tablesFrom === 'app-store') && !v.tablesPending),
       from: v.from == null ? null : v.from, flashId: v.flashId || null, changed: v.changed || null,
       note: v.note || '', updatedAt: v.updatedAt == null ? null : v.updatedAt,
       tableCount: tableCount(v)
@@ -374,7 +385,7 @@ var OPS = {
     var vs = versionsOf(stateOf(args));
     return {
       versions: vs.map(function (v) { return summarize("version", v); }),
-      active: vs.length ? summarize("version", vs[vs.length - 1]) : null
+      active: summarize("version", activeOf(stateOf(args)))
     };
   },
 
@@ -388,7 +399,7 @@ var OPS = {
   mapVersion: function (args) {
     var state = stateOf(args);
     var ref = args.version == null ? null : args.version;
-    var v = ref == null ? versionsOf(state).slice(-1)[0] : versionByNumber(state, ref);
+    var v = ref == null ? activeOf(state) : versionByNumber(state, ref);
     if (!v) fail('no-map-version', 'This car has no Map version yet.');
     return { version: summarize("version", v), tables: tablesToCheck(v) };
   },
@@ -448,7 +459,7 @@ var OPS = {
       answers: Object.assign({}, state.answers || {}),
       shakedown: state.shakedown || null,
       mapVersions: vs.map(function (v) { return summarize("version", v); }),
-      activeMapVersion: vs.length ? summarize("version", vs[vs.length - 1]) : null,
+      activeMapVersion: summarize("version", activeOf(state)),
       driveCount: KTA.carTableRows(state).length
     };
   },
@@ -560,6 +571,66 @@ var OPS = {
       state: out.state, flash: out.flash,
       version: out.version ? summarize("version", out.version) : null
     };
+  },
+
+  /**
+   * ADR 0003, the engine's side: is this proposed change safe on top of these
+   * tables? The change is `{ mapVersion, tables: { id: [{ row, col, before, after }] } }`
+   * (0-based row and col). Pure: the tables come from the app's own store, so a
+   * Map version flashed from an earlier change is checked against ITS cells.
+   */
+  checkMapChange: function (args) {
+    var out = KTA.checkMapChange(need(args, 'change', 'object'), need(args, 'tables', 'object'));
+    return { ok: !!out.ok, reason: out.reason, detail: out.detail || null };
+  },
+
+  /**
+   * How KTuner names a table and what its numbers are: the label as KTuner draws
+   * it (`Boost Target 1 Normal L`), the unit and decimals it is typed in, and what
+   * the table does in one sentence — all the engine's and the app's own words.
+   */
+  tableMeta: function (args) {
+    var ids = Array.isArray(args.ids) ? args.ids : bad('ids must be a list of table names.');
+    var out = {};
+    ids.forEach(function (id) {
+      var meta = KTA.TABLES[id];
+      if (!meta) fail('unknown-table', 'There is no table ' + id + ' in this map.');
+      var fam = /^Boost_Target_\d_Normal_/.test(id) ? 'Boost_Target_Normal' : id.replace(/_(L|H)$/, '');
+      var info = (TEXTS.tables || {})[fam] || {};
+      var b = /^Boost_Target_(\d)_(Normal|ECO)_(L|H)$/.exec(id);
+      var lh = /_(L|H)$/.exec(id);
+      out[id] = {
+        label: b ? 'Boost Target ' + b[1] + ' ' + b[2] + ' ' + b[3] : (info.name || id) + (lh ? ' ' + lh[1] : ''),
+        unit: meta.unit || '', digits: isNum(meta.digits) ? meta.digits : 1, kind: meta.kind,
+        what: String(info.what || '').split('. ')[0].replace(/\.$/, '') + (info.what ? '.' : '')
+      };
+    });
+    return { tables: out };
+  },
+
+  /** Undo or Revert, confirmed: an earlier Map version is flashed back and becomes active again. */
+  recordRestore: function (args) {
+    var state = stateOf(args);
+    var f = need(args, 'flash', 'object');
+    var now = isNum(args.now) ? args.now : Date.now();
+    var out;
+    try {
+      out = KTA.carRecordRestore(state, need(args, 'version', 'number'), f, { now: now });
+    } catch (e) {
+      fail('engine-error', 'The Flash could not be recorded: ' + (e && e.message));
+    }
+    return { state: out.state, flash: out.flash, version: summarize("version", out.version) };
+  },
+
+  /** The app now holds the tables this Map version was flashed with. */
+  storeMapTables: function (args) {
+    var out;
+    try {
+      out = KTA.carStoreMapTables(stateOf(args), need(args, 'version', 'number'), { now: isNum(args.now) ? args.now : Date.now() });
+    } catch (e) {
+      fail('engine-error', 'The Map version could not be marked: ' + (e && e.message));
+    }
+    return { state: out.state, version: summarize("version", out.version) };
   },
 
   /** Answer an Unexplained change for one Drive. */

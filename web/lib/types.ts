@@ -24,8 +24,64 @@ export type MapVersionCard = {
   note?: string;
 };
 
+/** One cell to type into KTuner: the rpm row, the column "N of 16", before and after as KTuner shows them. */
+export type KTunerCell = {
+  id: string;
+  rpm: number;
+  row: string;
+  col: number;
+  of: number;
+  column: string;
+  before: string;
+  after: string;
+  unit: string;
+};
+
+/** Tables that carry the identical cells (the six Normal boost tables), read as one. */
+export type KTunerGroup = {
+  tables: string[];
+  unit: string;
+  what: string;
+  effect: string;
+  same: boolean;
+  pasteRow: string | null;
+  cells: KTunerCell[];
+};
+
+/** The KTuner card, drawn only from the change both map checks passed. */
+export type KTunerCard = {
+  kind: "change";
+  changeId: string;
+  family: string;
+  headline: string;
+  because: string;
+  writtenOn: string;
+  groups: KTunerGroup[];
+  cellCount: number;
+  tableCount: number;
+  saveAs: string;
+  undo: { known: boolean; version: number | null; line: string | null };
+  proof: string | null;
+  afterFlash: string;
+  checked: string;
+};
+
+/** Undo is a file to load and flash back, not cells to type. */
+export type UndoCard = {
+  kind: "undo";
+  changeId: null;
+  headline: string;
+  restore: { version: number; name: string; line: string };
+  proof: string | null;
+  afterFlash: string;
+};
+
 export type FlashPlan = {
-  kind: "no-change" | "undo" | "one-family";
+  kind: "no-change" | "undo" | "one-family" | "blocked";
+  /** The checked change as a card; null when nothing is offered to type. */
+  ktunerCard?: KTunerCard | UndoCard | null;
+  /** Why a change was refused, in plain words. */
+  blocked?: { reason: string; why: string; disagree: boolean } | null;
   changeId: string | null;
   family: string | null;
   headline: string;

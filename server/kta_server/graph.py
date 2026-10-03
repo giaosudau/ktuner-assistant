@@ -39,6 +39,7 @@ from langgraph.graph.message import add_messages
 
 from . import agent as agent_node
 from . import copy as C
+from . import flash as FL
 from . import window as W
 from .harness import Harness, merge as merge_harness
 from .worker import Worker, WorkerError
@@ -173,10 +174,11 @@ async def _ingest_run(
 
     # 6. The one Flash plan this Car history supports — read against the
     #    window, so a change from before the last Flash or Install never
-    #    proposes a cell for the car as it is now.
+    #    proposes a cell for the car as it is now. Cells reach the reply only
+    #    after both map checks pass (ADR 0003); a refused change says why.
     plan = await harness.step(
         config, "flashPlan", "Work out the Flash plan", {"through": drive_id},
-        lambda: worker.call("flashPlan", state=window_state, now=now),
+        lambda: FL.checked_plan(worker, store, car_state, window_state, now),
     )
 
     drives_read = [r["id"] for r in history["rows"]]
@@ -249,10 +251,7 @@ async def _decide(
     #    model), with the saved answer each holds.
     asked = await harness.step(
         config, "ownerQuestions", "Ask what only you know", shown,
-        lambda: worker.call(
-            "questions", state=window_state, driveId=drive_id,
-            openSteps=pre_settle_open, installs=store.list_installs(),
-        ),
+        lambda: _questions(worker, store, car_state, window_state, drive_id, pre_settle_open),
     )
     saved = store.list_question_answers()
     questions = C.question_cards(asked.get("questions"), saved)
@@ -278,6 +277,14 @@ async def _decide(
             ),
         }
     }
+
+
+async def _questions(worker, store, car_state, window_state, drive_id, open_steps):
+    """The engine's owner questions, read against the cells of the Map version on the car."""
+    return await worker.call(
+        "questions", state=window_state, driveId=drive_id, openSteps=open_steps,
+        installs=store.list_installs(), **await FL.active_map(worker, store, car_state),
+    )
 
 
 # ---------------------------------------------------------------------------

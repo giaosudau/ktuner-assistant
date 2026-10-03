@@ -1536,3 +1536,44 @@ test('A1: a judged step reports the same words as the Wasted drive line', () => 
     assert.deepEqual([row.proves, row.would], SETTLE_WORDS[key], key);
   }
 });
+
+// ---- Undo / Revert: an earlier Map version is flashed back (ticket 13) ----
+test('Undo puts an earlier Map version back without making a new one', () => {
+  let s = K.carEmpty();
+  s = K.carRecordFlash(s, { time: 1000, map: 'Starter 21 r2', changed: 'boost' }, { now: 1000 }).state;
+  assert.equal(K.carActiveMapVersion(s).n, 2);
+  const back = K.carRecordRestore(s, 1, { time: 2000, map: 'Starter 21 Dual Tune 2', changed: 'other', note: 'Undo' }, { now: 2000 });
+  assert.equal(back.version.n, 1);
+  assert.deepEqual(back.state.mapVersions.map((v) => v.n), [1, 2], 'no third version');
+  assert.equal(K.carActiveMapVersion(back.state).n, 1);
+  assert.equal(back.state.shakedown.status, 'pending', 'the next drive is a Shakedown drive');
+  // The Map a Drive ran on is the one on the car at its start.
+  assert.equal(K.carMapAt(back.state, 1500).n, 2);
+  assert.equal(K.carMapAt(back.state, 2500).n, 1);
+  // Flashing forward again is Map version 3, and active.
+  const again = K.carRecordFlash(back.state, { time: 3000, map: 'Starter 21 r3', changed: 'boost' }, { now: 3000 }).state;
+  assert.equal(K.carActiveMapVersion(again).n, 3);
+  assert.throws(() => K.carRecordRestore(s, 9, { time: 2000, map: 'x' }, { now: 2000 }), /no Map version 9/);
+});
+
+test('storing a Map version\'s cells clears its pending flag', () => {
+  let s = K.carRecordFlash(K.carEmpty(), { time: 1000, map: 'r2', changed: 'boost' }, { now: 1000 }).state;
+  assert.equal(K.carMapVersions(s)[1].tablesPending, true);
+  const out = K.carStoreMapTables(s, 2, { now: 1500 });
+  assert.equal(out.version.tablesPending, false);
+  assert.equal(out.version.tablesFrom, 'app-store');
+});
+
+test('the History file carries restores and merges them without a phantom Map version', () => {
+  let s = K.carRecordFlash(K.carEmpty(), { time: 1000, map: 'r2', changed: 'boost' }, { now: 1000 }).state;
+  s = K.carRecordRestore(s, 1, { time: 2000, map: 'Starter 21 Dual Tune 2', changed: 'other' }, { now: 2000 }).state;
+  const doc = K.carExport(s);
+  assert.deepEqual(doc.mapRestores.map((r) => r.n), [1]);
+  const into = K.carImport(K.carEmpty(), doc).state;
+  assert.deepEqual(into.mapVersions.map((v) => v.n), [1, 2], 'the restore Flash is not a new version');
+  assert.equal(K.carActiveMapVersion(into).n, 1);
+  assert.equal(K.carImport(into, doc).state.mapRestores.length, 1, 'importing twice adds nothing');
+  // Deleting the Flash takes its restore with it.
+  const id = s.flashes[s.flashes.length - 1].id;
+  assert.equal(K.carDeleteFlash(s, id).mapRestores.length, 0);
+});

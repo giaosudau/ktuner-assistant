@@ -121,12 +121,12 @@ async def rebuild_history(store, worker, now_ms: int) -> dict[str, Any]:
         if flash["id"] in applied_flash_ids:
             return
         applied_flash_ids.add(flash["id"])
-        out = await worker.call(
-            "recordFlash",
-            state=state,
-            flash={"time": flash["flashed_at"], "map": flash["map"], "changed": flash.get("changed", "other")},
-            now=now_ms,
-        )
+        what = {"time": flash["flashed_at"], "map": flash["map"], "changed": flash.get("changed", "other")}
+        if flash.get("restores"):
+            # Undo / Revert: the earlier Map version is on the car again, no new number.
+            out = await worker.call("recordRestore", state=state, version=flash["restores"], flash=what, now=now_ms)
+        else:
+            out = await worker.call("recordFlash", state=state, flash=what, now=now_ms)
         state = out["state"]
 
     for drive in drives:
@@ -157,6 +157,11 @@ async def rebuild_history(store, worker, now_ms: int) -> dict[str, Any]:
     for flash in flashes:
         await apply_flash(flash)
 
+    # A Map version whose cells the app holds is stored, not pending (ticket 13).
+    for row in store.list_map_versions():
+        engine = next((v for v in state.get("mapVersions") or [] if v.get("n") == row["n"]), None)
+        if row["has_tables"] and engine and engine.get("changePending"):
+            state = (await worker.call("storeMapTables", state=state, version=row["n"], now=now_ms))["state"]
     store.save_car_state(state)
     sync_map_versions(store, state)
     return state

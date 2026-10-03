@@ -34,9 +34,11 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from .ask import answer_question
 from .config import Settings, load_settings
 from .db import Store
+from .flash_routes import register_flash_routes
 from .graph import build_graph
 from .mapdata import KTUNER_BASEMAP_SOURCE, basemap_tables
 from . import copy as C
+from . import flash as FL
 from . import profile as P
 from . import questions as Q
 from . import window as W
@@ -164,7 +166,7 @@ def create_app(
     async def api_state() -> dict[str, Any]:
         # First use counts too: if the worker was down when the app was built,
         # Map version 1 is seeded now, and still before any Drive is read.
-        active = ensure_map_version_one(store, worker.ktuner_basemap)
+        ensure_map_version_one(store, worker.ktuner_basemap)
         car_state = store.car_state(None) or {}
         installs = store.list_installs()
         history = await worker.call("carHistory", state=car_state, installs=installs)
@@ -174,9 +176,13 @@ def create_app(
         rows = history["rows"]
         latest = rows[-1]["id"] if rows else None
         win = W.drive_window(rows, car_state.get("flashes"), installs, latest)
-        plan = await worker.call(
-            "flashPlan", state=W.windowed_state(car_state, win["ids"]), now=settings.now_ms()
+        # Written on the active Map version's own cells and passed by both map
+        # checks (ADR 0003) before it can reach a KTuner card.
+        plan = await FL.checked_plan(
+            worker, store, car_state, W.windowed_state(car_state, win["ids"]), settings.now_ms()
         )
+        active = store.map_version((history.get("activeMapVersion") or {}).get("n") or 1) or {}
+        active.pop("tables", None)
         return {
             "carProfile": store.car_profile(),
             "profileSpec": P.profile_spec(worker.ktuner_basemap),
@@ -270,10 +276,11 @@ def create_app(
                 installs=store.list_installs(),
             )
             store.save_open_steps(decided["openSteps"])
-            plan = await worker.call("flashPlan", state=window_state, now=settings.now_ms())
+            plan = await FL.checked_plan(worker, store, state, window_state, settings.now_ms())
             asked_now = await worker.call(
                 "questions", state=window_state, driveId=drive_id,
                 openSteps=store.list_open_steps(), installs=store.list_installs(),
+                **await FL.active_map(worker, store, state),
             )
         except WorkerError as exc:
             raise HTTPException(status_code=502, detail=exc.message) from exc
@@ -407,21 +414,8 @@ def create_app(
         state = store.car_state(None) or {}
         return await answer_question(text, worker, store, settings, _latest_drive(state), llm_caller)
 
-    @app.get("/api/history")
-    async def api_history() -> JSONResponse:
-        """The History file: every Drive, Flash and answer, no raw CSV."""
-        doc = await worker.call("exportHistory", state=store.car_state(None) or {})
-        return JSONResponse(doc, headers={"content-disposition": 'attachment; filename="ktuner-history.json"'})
-
-    @app.post("/api/history")
-    async def api_history_import(request: Request) -> dict[str, Any]:
-        try:
-            doc = await request.json()
-        except Exception as exc:  # noqa: BLE001 - any bad body is the same message
-            raise HTTPException(status_code=400, detail="That is not a History file.") from exc
-        out = await worker.call("importHistory", state=store.car_state(None) or {}, doc=doc)
-        store.save_car_state(out["state"])
-        return {"added": out["added"]}
+    # The Flash step and the History file (ticket 13).
+    register_flash_routes(app, store, worker, settings)
 
     # ---------------------------------------------------------------- health
     @app.get("/healthz", response_class=PlainTextResponse)

@@ -754,7 +754,12 @@ def next_step_card(
         # drive that proves it.
         if key == "undo" or (plan or {}).get("kind") == "undo":
             body = f"{headline} {undo_sentence(plan)} Then drive a Shakedown drive: 10 calm minutes, no hard driving."
+        elif (plan or {}).get("kind") == "blocked":
+            # Both map checks (ADR 0003) must pass before a cell reaches the owner:
+            # a refused change says why and offers nothing to type.
+            body = headline
         else:
+            # The cells are the KTuner card's (flash.py): this is the one-line brief.
             save_as = (plan or {}).get("saveAs")
             body = headline + (f" Save as {save_as}." if save_as else "")
             body += " Then drive a Shakedown drive: 10 calm minutes, no hard driving."

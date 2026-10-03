@@ -4,6 +4,7 @@ import { useRef } from "react";
 
 import { AskBox } from "../components/AskBox";
 import { CarProfile } from "../components/CarProfile";
+import { MapPanel } from "../components/MapPanel";
 import { OpenStepsPanel } from "../components/OpenStepsPanel";
 import { ReplyCard } from "../components/ReplyCard";
 import { useThread } from "../lib/useThread";
@@ -65,6 +66,7 @@ export default function Page() {
         onSaved={() => void refreshLoop()}
       />
       <AskBox />
+      <MapPanel />
       <div className="layout">
         <OpenStepsPanel steps={openSteps} questions={questions} />
         <main className="thread">

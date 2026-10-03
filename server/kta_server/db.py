@@ -81,7 +81,10 @@ CREATE TABLE IF NOT EXISTS flashes (
   map_name    TEXT    NOT NULL,
   changed     TEXT    NOT NULL,
   note        TEXT    NOT NULL DEFAULT '',
-  recorded_at INTEGER NOT NULL
+  recorded_at INTEGER NOT NULL,
+  -- Undo / Revert (ticket 13): the Map version this Flash put back on the car.
+  -- NULL for a Flash that wrote a new Map version.
+  restores    INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS installs (
@@ -201,6 +204,9 @@ class Store:
             for column, decl in _MAP_VERSION_COLUMNS.items():
                 if column not in have:
                     c.execute(f"ALTER TABLE map_versions ADD COLUMN {column} {decl}")
+        flash_cols = {row["name"] for row in c.execute("PRAGMA table_info(flashes)")}
+        if "restores" not in flash_cols:
+            c.execute("ALTER TABLE flashes ADD COLUMN restores INTEGER")
         steps = {row["name"] for row in c.execute("PRAGMA table_info(open_steps)")}
         for column, decl in _OPEN_STEP_COLUMNS.items():
             if column not in steps:
@@ -453,15 +459,16 @@ class Store:
     # -- Flashes and Installs ----------------------------------------------
     def add_flash(self, flash: dict[str, Any]) -> None:
         self._exec(
-            "INSERT INTO flashes (id, flashed_at, map_name, changed, note, recorded_at) VALUES (?, ?, ?, ?, ?, ?) "
+            "INSERT INTO flashes (id, flashed_at, map_name, changed, note, recorded_at, restores) VALUES (?, ?, ?, ?, ?, ?, ?) "
             "ON CONFLICT(id) DO UPDATE SET flashed_at=excluded.flashed_at, map_name=excluded.map_name, "
-            "changed=excluded.changed, note=excluded.note, recorded_at=excluded.recorded_at",
-            (flash["id"], flash["time"], flash["map"], flash.get("changed", "other"), flash.get("note", ""), _now()),
+            "changed=excluded.changed, note=excluded.note, recorded_at=excluded.recorded_at, restores=excluded.restores",
+            (flash["id"], flash["time"], flash["map"], flash.get("changed", "other"), flash.get("note", ""), _now(), flash.get("restores")),
         )
 
     def list_flashes(self) -> list[dict[str, Any]]:
         return [
-            {"id": r["id"], "flashed_at": r["flashed_at"], "map": r["map_name"], "changed": r["changed"], "note": r["note"]}
+            {"id": r["id"], "flashed_at": r["flashed_at"], "map": r["map_name"], "changed": r["changed"],
+             "note": r["note"], "restores": r["restores"]}
             for r in self._all("SELECT * FROM flashes ORDER BY flashed_at")
         ]
 
@@ -602,6 +609,52 @@ class Store:
             sql += " WHERE status <> 'done'"
         sql += " ORDER BY opened_at, id"
         return [self.open_step_out(r) for r in self._all(sql)]
+
+    # -- History file merge (ticket 13): add what is missing, never overwrite ---
+    def merge_history_rows(
+        self,
+        installs: list[dict[str, Any]],
+        question_answers: dict[str, dict[str, Any]],
+        flashes: list[dict[str, Any]],
+        map_versions: list[dict[str, Any]],
+    ) -> dict[str, int]:
+        """Add the Installs, owner answers, Flashes and Map versions this car lacks.
+
+        A row the car already has wins: importing an old History file never
+        changes what the owner has said or flashed since. Returns what was added.
+        """
+        added = {"installs": 0, "answers": 0, "flashes": 0, "mapVersions": 0}
+        have_installs = {r["id"] for r in self.list_installs()}
+        for row in installs:
+            if row.get("id") and row["id"] not in have_installs:
+                self._exec(
+                    "INSERT INTO installs (id, installed_at, part, action, note, recorded_at) VALUES (?, ?, ?, ?, ?, ?)",
+                    (row["id"], row["installed_at"], row["part"], row.get("action", "fitted"), row.get("note", ""), _now()),
+                )
+                added["installs"] += 1
+        have_answers = set(self.list_question_answers())
+        for qid, row in question_answers.items():
+            if qid not in have_answers:
+                self.save_question_answer(qid, row["drive_id"], row["kind"], row["choice"])
+                added["answers"] += 1
+        have_flashes = {r["id"] for r in self.list_flashes()}
+        for row in flashes:
+            if row.get("id") and row["id"] not in have_flashes:
+                self.add_flash(
+                    {"id": row["id"], "time": row["flashed_at"], "map": row["map"], "changed": row.get("changed", "other"),
+                     "note": row.get("note", ""), "restores": row.get("restores")}
+                )
+                added["flashes"] += 1
+        for row in map_versions:
+            absent = self._one("SELECT id FROM map_versions WHERE id = ?", (row["n"],)) is None
+            # An existing version only ever gains tables it was missing.
+            self.ensure_map_version(
+                row["n"], row["name"], row.get("tables"), source=row.get("source", "history-file"),
+                kind=row.get("kind", "flash"), flashed_at=row.get("flashed_at"), flash_id=row.get("flash_id"),
+                changed=row.get("changed"), note=row.get("note", ""), parent_id=row.get("parent_id"),
+            )
+            added["mapVersions"] += 1 if absent else 0
+        return added
 
     # -- chat threads --------------------------------------------------------
     def touch_thread(self, thread_id: str) -> None:

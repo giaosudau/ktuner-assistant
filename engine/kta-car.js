@@ -150,10 +150,19 @@
     if (!out.length || out[0].n !== 1) out.unshift(basemapVersion());
     return out;
   }
+  // Undo and Revert flash an EARLIER Map version back onto the car. That version
+  // becomes the active one again without a new number: a restore is a dated entry
+  // { n, from, flashId } beside the Map versions, and the version the car is on at
+  // any moment is the latest of the versions and restores up to then.
+  function normRestores(list) {
+    return (Array.isArray(list) ? list : []).filter(function (r) {
+      return r && typeof r === 'object' && isNum(r.n) && isNum(r.from);
+    }).map(function (r) { return { n: r.n, from: r.from, flashId: r.flashId ? String(r.flashId) : null }; });
+  }
   KTA.carEmpty = function () {
     return {
       version: CAR_VERSION, drives: {}, flashes: [], answers: {}, hidden: [],
-      shakedown: emptyShakedown(), mapVersions: normVersions([])
+      shakedown: emptyShakedown(), mapVersions: normVersions([]), mapRestores: []
     };
   };
   function normalize(state) {
@@ -166,6 +175,7 @@
       answers: s.answers && typeof s.answers === 'object' ? s.answers : {},
       hidden: Array.isArray(s.hidden) ? s.hidden : [],
       mapVersions: normVersions(s.mapVersions),
+      mapRestores: normRestores(s.mapRestores),
       shakedown: sh
         ? { status: sh.status || 'none', flashId: sh.flashId || null, calmSec: sh.calmSec || 0, driveIds: Array.isArray(sh.driveIds) ? sh.driveIds : [], shares: sh.shares && typeof sh.shares === 'object' ? sh.shares : {} }
         : emptyShakedown()
@@ -357,11 +367,23 @@
   function versionsOf(s) { return s.mapVersions; }
   /** Every Map version the app holds, oldest first, as callers see them. */
   KTA.carMapVersions = function (state) { return versionsOf(normalize(state)).map(versionOut); };
-  /** The Map version the car is on now: the highest number, as versions only grow. */
-  KTA.carActiveMapVersion = function (state) {
-    var vs = versionsOf(normalize(state));
-    return vs.length ? versionOut(vs[vs.length - 1]) : null;
-  };
+  /** The Map version on the car at a moment: the latest of the versions and the
+   *  restores up to then (Map version 1 is on from the first Drive). */
+  function versionOnAt(s, ms) {
+    var best = null, bestFrom = -Infinity;
+    var all = versionsOf(s).map(function (v) { return { v: v, from: v.from == null ? -Infinity : v.from }; });
+    s.mapRestores.forEach(function (r) {
+      var v = versionsOf(s).filter(function (x) { return x.n === r.n; })[0];
+      if (v) all.push({ v: v, from: r.from });
+    });
+    all.forEach(function (c) {
+      if (ms != null && c.from > ms) return;
+      if (!best || c.from >= bestFrom) { best = c.v; bestFrom = c.from; }
+    });
+    return best ? versionOut(best) : null;
+  }
+  /** The Map version the car is on now. Versions only grow, but an Undo or Revert puts an older one back. */
+  KTA.carActiveMapVersion = function (state) { return versionOnAt(normalize(state), null); };
   /** The Map version before number n — the file Undo names — or null. */
   KTA.carMapVersionBefore = function (state, n) {
     if (!isNum(n)) return null;
@@ -408,14 +430,9 @@
    * in time, so it is only answered when Map version 1 is the only version.
    */
   KTA.carMapAt = function (state, startMs) {
-    var vs = versionsOf(normalize(state));
-    if (!isNum(startMs)) return vs.length === 1 ? versionOut(vs[0]) : null;
-    var best = null;
-    vs.forEach(function (v) {
-      if (v.from != null && v.from > startMs) return;
-      if (!best || v.n > best.n) best = v;
-    });
-    return best ? versionOut(best) : null;
+    var s = normalize(state);
+    if (!isNum(startMs)) return versionsOf(s).length === 1 && !s.mapRestores.length ? versionOut(versionsOf(s)[0]) : null;
+    return versionOnAt(s, startMs);
   };
   /** What the owner reads for a Drive's Map: the name, the number, when it went on. */
   function mapOut(v) {
@@ -517,6 +534,29 @@
     s.shakedown = { status: 'pending', flashId: id, calmSec: 0, driveIds: [] };
     return { state: s, flash: rec, version: versionOut(s.mapVersions[s.mapVersions.length - 1]) };
   };
+  /**
+   * Undo or Revert, confirmed by the owner: an EARLIER Map version is flashed back.
+   * It is a Flash (dated, Shakedown drive next) but not a new Map version: the
+   * version put back is the active one again. `n` is the version flashed.
+   */
+  KTA.carRecordRestore = function (state, n, flash, meta) {
+    var target = normalize(state).mapVersions.filter(function (v) { return v.n === n; })[0];
+    if (!target) throw new Error('There is no Map version ' + n + ' to flash back.');
+    var out = KTA.carRecordFlash(state, flash, meta);
+    out.state.mapVersions.pop(); // carRecordFlash made a new version; a restore makes none.
+    out.state.mapRestores.push({ n: n, from: out.flash.time, flashId: out.flash.id });
+    return { state: out.state, flash: out.flash, version: versionOut(target) };
+  };
+  /** The app now holds the tables this Map version was flashed with (see `changePending`). */
+  KTA.carStoreMapTables = function (state, n, meta) {
+    var s = clone(state);
+    var v = s.mapVersions.filter(function (x) { return x.n === n; })[0];
+    if (!v) throw new Error('There is no Map version ' + n + '.');
+    v.changePending = false;
+    v.tablesFrom = 'app-store';
+    v.updatedAt = nowOf(meta);
+    return { state: s, version: versionOut(v) };
+  };
   KTA.carEditFlash = function (state, id, patch, meta) {
     var s = clone(state), found = false;
     s.flashes.forEach(function (f) {
@@ -544,6 +584,7 @@
     var s = clone(state);
     s.flashes = s.flashes.filter(function (f) { return f.id !== id; });
     if (s.shakedown.flashId === id) s.shakedown = emptyShakedown();
+    s.mapRestores = s.mapRestores.filter(function (r) { return r.flashId !== id; });
     // The Map version that Flash produced goes with it, or Undo would name a
     // version the Car history no longer has a Flash for.
     var kept = s.mapVersions.filter(function (v) { return v.flashId !== id; });
@@ -894,7 +935,8 @@
       flashes: s.flashes,
       hidden: s.hidden,
       answers: s.answers,
-      mapVersions: s.mapVersions.map(function (v) { return versionOut(v); })
+      mapVersions: s.mapVersions.map(function (v) { return versionOut(v); }),
+      mapRestores: s.mapRestores
     };
     if (s.shakedown.status !== 'none') doc.shakedown = s.shakedown;
     return doc;
@@ -942,10 +984,14 @@
       }
     });
     sortFlashes(s);
+    // Restores (Undo, Revert) merge by the Flash that made them, never overwritten.
+    normRestores(doc.mapRestores).forEach(function (inc) {
+      if (!s.mapRestores.some(function (r) { return r.flashId === inc.flashId && r.n === inc.n && r.from === inc.from; })) s.mapRestores.push(inc);
+    });
     // A Flash the incoming file knows but this car does not is the next Map
     // version: the history it names is the map that Flash put on the car.
     s.flashes.forEach(function (f) {
-      if (versionOfFlash(s, f.id)) return;
+      if (versionOfFlash(s, f.id) || s.mapRestores.some(function (r) { return r.flashId === f.id; })) return;
       var last = s.mapVersions[s.mapVersions.length - 1];
       s.mapVersions.push({
         n: (last ? last.n : 0) + 1, name: f.map, kind: 'flash',
