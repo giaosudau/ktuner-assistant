@@ -672,8 +672,7 @@ h3 {
 /* ------------------------------------------------------- owner questions
    What only the owner knows, as tap-to-answer choices inside the reply. One
    question at a time, most decisive first; a saved answer shows with a change
-   option, and unanswered ones sit beside the thread as "Waiting for you". */
-.qbox {
+   option, and unanswered ones sit beside the thread as "Waiting for you". */.qbox {
   margin-top: 12px;
   border: 1px solid var(--accent-line);
   background: var(--accent-tint);
@@ -710,4 +709,102 @@ h3 {
   cursor: pointer;
   font-size: 13px;
   padding: 4px 8px;
+}
+
+/* ---------------------------------------------------------------- car setup
+   First open, the chat asks for the car in the owner's own words and fills a
+   typed card; with no key the same fields show as a plain form. Afterwards a
+   quiet card with the Install form. Everything fits 390 px: fields stack, the
+   part pills wrap, and nothing scrolls sideways. */
+.setup {
+  margin: 12px 0 4px;
+}
+.setup-line {
+  margin: 6px 0;
+  font-size: 14px;
+}
+.setup-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+.setup textarea,
+.setup input[type="text"],
+.setup input[type="date"],
+.setup select {
+  font: inherit;
+  color: inherit;
+  background: var(--sheet-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  max-width: 100%;
+}
+.setup textarea,
+.setup-row input[type="text"] {
+  width: 100%;
+  flex: 1 1 100%;
+}
+.setup textarea {
+  resize: vertical;
+  min-height: 64px;
+}
+.setup .frow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 14px;
+}
+.setup .frow > span {
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.setup .frow input[type="text"] {
+  width: 100%;
+}
+.setup .opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.setup .opt {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.setup .opt[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+.setup label.opt input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+.setup label.opt.on {
+  background: var(--accent-tint);
+}
+.setup .link {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+.setup-install,
+.setup-ask {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-2);
+}
+.setup-install select,
+.setup-install input[type="date"] {
+  max-width: 100%;
 }

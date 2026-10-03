@@ -36,6 +36,8 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from .profile import part_display
+
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 # The gauge names TunerView spells, for the dead-gauge step (KTuner's channel names).
@@ -119,6 +121,20 @@ def stamp_of(stamp: str | None) -> str:
     no timezone lives in this module: one clock, one spelling of a time.
     """
     return drive_stamp(stamp) if stamp else ""
+
+
+def stamp_day(ms: Any) -> str:
+    """An epoch millisecond moment → `30 Aug`, on the owner's wall clock.
+
+    TunerView names are Vietnam wall time, so the day is read +7 h: the same
+    clock `drive_stamp` reads, without the hour and minute.
+    """
+    if isinstance(ms, bool) or not isinstance(ms, (int, float)):
+        return "–"
+    import datetime as _dt
+
+    moment = _dt.datetime.fromtimestamp((ms + 7 * 3600 * 1000) / 1000, tz=_dt.timezone.utc)
+    return f"{moment.day} {MONTHS[moment.month - 1]}"
 
 
 # ---------------------------------------------------------------------------
@@ -313,6 +329,56 @@ def window_line(drives_read: list[str], read: int, too_short: bool = False) -> s
     if first == last:
         return f"based on your {read} {plural(read, 'Drive', 'Drives')} ({last})"
     return f"based on your {read} {plural(read, 'Drive', 'Drives')}, {first} to {last}"
+
+
+def window_line_for(ids: list[str], since: dict[str, Any] | None = None) -> str:
+    """Which Drives an answer is about, in the owner's words.
+
+    The window is the latest Drive plus every Drive since the last Flash or
+    Install, capped at 14 days. A bounded window names its change ("based on
+    your 3 Drives since the Flash on 30 Aug"); an unbounded one reads exactly
+    like `window_line`, so the same reply says the same thing either way.
+    """
+    ids = [i for i in (ids or []) if i]
+    if not ids:
+        return "nothing read yet"
+    if since:
+        kind = since.get("kind")
+        if kind == "flash":
+            change = "the Flash"
+        else:
+            change = f"the {part_display(str(since.get('part') or 'part'))} Install"
+        day = stamp_day(since.get("time"))
+        return f"based on your {len(ids)} {plural(len(ids), 'Drive', 'Drives')} since {change} on {day}"
+    return window_line(ids, len(ids))
+
+
+def window_card(window: dict[str, Any] | None) -> dict[str, Any]:
+    """The window as the chat and `GET /api/state` read it.
+
+    `{ driveIds, count, since: { kind, label, day } | None, line }`: one quiet
+    line for the reply, and the ids behind it for anything that decides.
+    """
+    window = window or {}
+    ids = [i for i in (window.get("ids") or []) if i]
+    since = window.get("since")
+    card: dict[str, Any] = {
+        "driveIds": ids,
+        "count": len(ids),
+        "since": None,
+        "line": window_line_for(ids, since if isinstance(since, dict) else None),
+    }
+    if isinstance(since, dict):
+        card["since"] = {
+            "kind": since.get("kind"),
+            "label": (
+                "the Flash"
+                if since.get("kind") == "flash"
+                else f"the {part_display(str(since.get('part') or 'part'))} Install"
+            ),
+            "day": stamp_day(since.get("time")),
+        }
+    return card
 
 
 # ---------------------------------------------------------------------------
@@ -746,6 +812,7 @@ def build_reply(
     drives_read: list[str],
     harness: Mapping[str, Any] | None = None,
     first_drive: bool = False,
+    window: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """The reply in the order the owner reads it.
 
@@ -756,11 +823,22 @@ def build_reply(
     hurting it?", the window, the four numbers, the Map version, what was asked
     last time, whether this Drive was a Wasted one, the Flash plan, and exactly
     one Next step.
+
+    `window` is the drive window (`window.py`: `{ ids, since }`). A Too-short
+    Drive read nothing, so it keeps its one line; every other reply states the
+    window it was read against, bounded by the last Flash or Install like for
+    like with the Next step Decide reads.
     """
+    card = window_card(dict(window) if window is not None else None)
+    if drive.get("tooShort") or window is None:
+        line = window_line(drives_read, len(drives_read), bool(drive.get("tooShort")))
+        card = {**card, "line": line}
     return {
         "say": first_sentence(drive, limits),
         "afterFlash": after_flash_note(drive),
-        "window": window_line(drives_read, len(drives_read), bool(drive.get("tooShort"))),
+        "window": card["line"],
+        "windowDrives": card["driveIds"],
+        "windowSince": card["since"],
         "numbers": [] if drive.get("tooShort") else four_numbers(drive),
         "mapVersion": map_version_card(drive, first_drive),
         "verdict": verdict_word(drive),
@@ -802,9 +880,12 @@ __all__ = [
     "waiting_for_you",
     "settled_rows",
     "sg",
+    "stamp_day",
     "stamp_of",
     "undo_sentence",
     "verdict_word",
     "wasted_line",
+    "window_card",
     "window_line",
+    "window_line_for",
 ]

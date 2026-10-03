@@ -36,7 +36,9 @@ from .db import Store
 from .graph import build_graph
 from .mapdata import KTUNER_BASEMAP_SOURCE, basemap_tables
 from . import copy as C
+from . import profile as P
 from . import questions as Q
+from . import window as W
 from .worker import Worker, WorkerError
 
 AGENT_NAME = "kta-tune-assist"
@@ -86,6 +88,17 @@ async def _unanswered_questions(store: Store, worker: Worker, settings: Settings
         for q in asked
         if q["id"] not in saved_ids
     ]
+
+
+def _latest_drive(state: dict[str, Any]) -> str | None:
+    """The newest Drive in the Car history, by its start — the window's end."""
+    latest: str | None = None
+    latest_start: float | None = None
+    for drive_id, summary in ((state or {}).get("drives") or {}).items():
+        start = (summary or {}).get("start")
+        if latest is None or (isinstance(start, (int, float)) and (latest_start is None or start > latest_start)):
+            latest, latest_start = drive_id, start if isinstance(start, (int, float)) else latest_start
+    return latest
 
 
 def create_app(
@@ -151,17 +164,27 @@ def create_app(
         # Map version 1 is seeded now, and still before any Drive is read.
         active = ensure_map_version_one(store, worker.ktuner_basemap)
         car_state = store.car_state(None) or {}
-        history = await worker.call("carHistory", state=car_state)
+        installs = store.list_installs()
+        history = await worker.call("carHistory", state=car_state, installs=installs)
+        # The Flash plan reads the window, like every reply: a change from
+        # before the last Flash or Install never proposes a cell for the car
+        # as it is now.
+        rows = history["rows"]
+        latest = rows[-1]["id"] if rows else None
+        win = W.drive_window(rows, car_state.get("flashes"), installs, latest)
         plan = await worker.call(
-            "flashPlan", state=car_state, now=settings.now_ms()
+            "flashPlan", state=W.windowed_state(car_state, win["ids"]), now=settings.now_ms()
         )
         return {
             "carProfile": store.car_profile(),
+            "profileSpec": P.profile_spec(worker.ktuner_basemap),
+            "hasDrives": bool(rows),
+            "driveWindow": C.window_card(win),
             "ktunerBasemap": worker.ktuner_basemap,
             "carHistory": history["rows"],
             "baseline": history["baseline"],
             "flashes": store.list_flashes(),
-            "installs": store.list_installs(),
+            "installs": installs,
             "mapVersions": store.list_map_versions(),
             "activeMapVersion": active,
             "openSteps": store.list_open_steps(only_open=True),
@@ -230,20 +253,24 @@ def create_app(
         # Rebuild the Car history from events, not by patching.
         state = await Q.rebuild_history(store, worker, settings.now_ms())
 
-        # Re-decide this Drive's Next step with the answer applied.
+        # Re-decide this Drive's Next step with the answer applied — against
+        # the window, like every reply, while settling still reads the whole
+        # Car history.
+        win = W.window_for_state(state, store.list_installs(), drive_id)
+        window_state = W.windowed_state(state, win["ids"])
         try:
             settled = await worker.call(
                 "settleOpenSteps", state=state, driveId=drive_id,
                 openSteps=store.list_open_steps(),
             )
             decided = await worker.call(
-                "nextStep", state=state, driveId=drive_id, openSteps=settled["openSteps"],
+                "nextStep", state=window_state, driveId=drive_id, openSteps=settled["openSteps"],
                 installs=store.list_installs(),
             )
             store.save_open_steps(decided["openSteps"])
-            plan = await worker.call("flashPlan", state=state, now=settings.now_ms())
+            plan = await worker.call("flashPlan", state=window_state, now=settings.now_ms())
             asked_now = await worker.call(
-                "questions", state=state, driveId=drive_id,
+                "questions", state=window_state, driveId=drive_id,
                 openSteps=store.list_open_steps(), installs=store.list_installs(),
             )
         except WorkerError as exc:
@@ -268,6 +295,127 @@ def create_app(
             "cause": C.cause_line(decided.get("diagnose")),
             "settled": C.settled_rows(settled["settled"]),
             "unansweredQuestions": await _unanswered_questions(store, worker, settings),
+        }
+
+    # ------------------------------------------------------- car profile setup
+    @app.post("/api/profile/draft")
+    async def api_profile_draft(request: Request) -> dict[str, Any]:
+        """Fill the typed Car profile card from the owner's own words.
+
+        Pure: nothing is saved. The owner corrects any field and confirms
+        through `POST /api/profile`, so a misread word never becomes a fact
+        about the car. The same fields the no-key plain form shows
+        (`profileSpec` in `GET /api/state`).
+        """
+        try:
+            body = await request.json()
+        except Exception as exc:  # noqa: BLE001 - any bad body is the same message
+            raise HTTPException(status_code=400, detail="Tell me about your car in your own words first.") from exc
+        text = str(body.get("text") or "").strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="Tell me about your car in your own words first.")
+        return {"ok": True, "draft": P.draft_from_text(text, worker.ktuner_basemap)}
+
+    @app.post("/api/profile")
+    async def api_profile_save(request: Request) -> dict[str, Any]:
+        """Confirm the Car profile card. Nothing is saved before this call.
+
+        A parts change records an Install with its date for every fitted or
+        removed part, so the drives that follow read against the car as it is
+        now — like a Flash, an Install starts the drive window.
+        """
+        try:
+            body = await request.json()
+        except Exception as exc:  # noqa: BLE001 - any bad body is the same message
+            raise HTTPException(status_code=400, detail="A Car profile needs its fields.") from exc
+        try:
+            cleaned = P.validate_fields(body.get("fields"), worker.ktuner_basemap)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        now = settings.now_ms()
+        created = []
+        for change in P.installs_for_part_change(store.car_profile(), cleaned):
+            created.append(
+                store.add_install(
+                    change["part"], change["action"], installed_at=now, note="Changed in the Car profile."
+                )
+            )
+        store.save_car_profile(cleaned)
+        return {"ok": True, "profile": cleaned, "installs": created, "line": "Car profile saved."}
+
+    # ---------------------------------------------------------------- installs
+    @app.post("/api/installs")
+    async def api_install_record(request: Request) -> dict[str, Any]:
+        """Record an Install: a part fitted or removed, with its date.
+
+        It appears in the Car history and starts the drive window like a
+        Flash: the next reply reads the Drives since it.
+        """
+        try:
+            body = await request.json()
+        except Exception as exc:  # noqa: BLE001 - any bad body is the same message
+            raise HTTPException(status_code=400, detail="An Install names a part and when it went on.") from exc
+        part = str(body.get("part") or "").strip()
+        if part not in P.PARTS:
+            raise HTTPException(
+                status_code=400,
+                detail="That is not a part I know: " + (part or "nothing named")
+                + ". I know these parts: " + ", ".join(P.PARTS) + ".",
+            )
+        action = str(body.get("action") or "fitted").strip()
+        if action not in ("fitted", "removed"):
+            raise HTTPException(status_code=400, detail="An Install is fitted or removed.")
+        installed_at = body.get("installed_at", body.get("installedAt"))
+        if installed_at is None:
+            installed_at = settings.now_ms()
+        try:
+            installed_at = int(installed_at)
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail="An Install needs a date and time.") from exc
+        row = store.add_install(part, action, installed_at=installed_at, note=str(body.get("note") or ""))
+        day = C.stamp_day(installed_at)
+        return {
+            "ok": True,
+            "install": row,
+            "line": f"Install recorded: {P.part_display(part)} {action} on {day}.",
+        }
+
+    # ------------------------------------------------------- asking, no upload
+    @app.post("/api/ask")
+    async def api_ask(request: Request) -> dict[str, Any]:
+        """A typed question with no Drive uploaded.
+
+        With no Drive at all only Car profile setup runs: a setup flow fills
+        the draft card, and a tuning question is answered with "upload a drive
+        first". With Drives, a tuning question states the current window and
+        points at an upload — the full typed-question flow is ticket 11, which
+        replaces the answer body on this same seam.
+        """
+        try:
+            body = await request.json()
+        except Exception as exc:  # noqa: BLE001 - any bad body is the same message
+            raise HTTPException(status_code=400, detail="Ask me in words first.") from exc
+        text = str(body.get("text") or "").strip()
+        flow = str(body.get("flow") or "").strip()
+        if flow == "setup":
+            if not text:
+                raise HTTPException(status_code=400, detail="Tell me about your car in your own words first.")
+            return {"ok": True, "kind": "profile-draft", "draft": P.draft_from_text(text, worker.ktuner_basemap)}
+        state = store.car_state(None) or {}
+        if not state.get("drives"):
+            if not text:
+                raise HTTPException(status_code=400, detail="Ask me in words first.")
+            return {
+                "ok": True,
+                "kind": "no-drive",
+                "answer": "Upload a Drive first: every answer here is read off your Drives, not guessed.",
+            }
+        win = C.window_card(W.window_for_state(state, store.list_installs(), _latest_drive(state)))
+        return {
+            "ok": True,
+            "kind": "upload-first",
+            "window": win["line"],
+            "answer": win["line"] + ". Upload a Drive and its reply covers this.",
         }
 
     @app.get("/api/history")

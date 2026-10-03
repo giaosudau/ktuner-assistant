@@ -2,12 +2,14 @@
 
 import { useRef } from "react";
 
+import { CarProfile } from "../components/CarProfile";
 import { OpenStepsPanel } from "../components/OpenStepsPanel";
 import { ReplyCard } from "../components/ReplyCard";
 import { useThread } from "../lib/useThread";
 
 export default function Page() {
-  const { turns, busy, send, openSteps, questions, answered } = useThread();
+  const { turns, busy, send, openSteps, questions, answered, carProfile, profileSpec, hasLlm, hasDrives, refreshLoop } =
+    useThread();
   const picker = useRef<HTMLInputElement>(null);
 
   return (
@@ -51,8 +53,16 @@ export default function Page() {
         </button>
       </div>
 
-      {/* The Open steps sit beside the thread on a desktop and above it on a
-          phone, so the whole loop is in one glance before the first Drive. */}
+      {/* The Car profile sits above the thread: setup on first open, then a
+          quiet card with the Install form. The Open steps sit beside the thread
+          on a desktop and above it on a phone. */}
+      <CarProfile
+        profile={carProfile}
+        spec={profileSpec}
+        hasLlm={hasLlm}
+        hasDrives={hasDrives}
+        onSaved={() => void refreshLoop()}
+      />
       <div className="layout">
         <OpenStepsPanel steps={openSteps} questions={questions} />
         <main className="thread">

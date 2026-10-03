@@ -434,6 +434,10 @@ var OPS = {
       rows: KTA.carTableRows(state),
       baseline: KTA.carBaseline(state),
       flashes: (state.flashes || []).slice(),
+      // Installs live beside the Car history, not in it: the app passes its
+      // own Install list in and reads it back out, so the harness step shows
+      // the change the window starts after, next to the Drives it bounds.
+      installs: Array.isArray(args.installs) ? args.installs : [],
       hidden: (state.hidden || []).slice(),
       answers: Object.assign({}, state.answers || {}),
       shakedown: state.shakedown || null,

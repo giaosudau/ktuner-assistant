@@ -265,10 +265,11 @@ async def _run_tool(
         )
     if name == "get_car_history":
         state = store.car_state(None) or {}
+        installs = store.list_installs() if hasattr(store, "list_installs") else []
         return await harness.step(
             config, "carHistory", "Explain: the Car history window",
             {"through": drive_id},
-            lambda: worker.call("carHistory", state=state),
+            lambda: worker.call("carHistory", state=state, installs=installs),
         )
     if name == "get_open_steps":
         return await harness.step(

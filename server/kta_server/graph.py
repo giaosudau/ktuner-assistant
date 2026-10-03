@@ -39,6 +39,7 @@ from langgraph.graph.message import add_messages
 
 from . import agent as agent_node
 from . import copy as C
+from . import window as W
 from .harness import Harness, merge as merge_harness
 from .worker import Worker, WorkerError
 
@@ -143,11 +144,20 @@ async def _ingest_run(
         drive["tooShort"],
     )
 
-    # 3. The Car history and the Baseline the Verdict is read against.
+    # 3. The Car history and the Baseline the Verdict is read against. The
+    #    app's own Install list rides along, so the step shows the change the
+    #    window starts after next to the Drives it bounds.
     history = await harness.step(
         config, "carHistory", "Compare with your earlier Drives", {"through": drive_id},
-        lambda: worker.call("carHistory", state=car_state),
+        lambda: worker.call("carHistory", state=car_state, installs=store.list_installs()),
     )
+
+    # 3b. The drive window: the latest Drive plus every Drive since the last
+    #     Flash or Install, capped at 14 days. Older Drives feed only the
+    #     Baseline and the trend pictures — the Flash plan below already reads
+    #     the window, so it answers for the car as it is now.
+    win = W.drive_window(history["rows"], (car_state or {}).get("flashes"), store.list_installs(), drive_id)
+    window_state = W.windowed_state(car_state, win["ids"])
 
     # 4-5. Safety lines and the numbers the reply quotes. A Too-short drive has
     #      no verdict to read and no numbers to quote, so neither is checked.
@@ -161,10 +171,12 @@ async def _ingest_run(
             lambda: worker.call("driveFacts", driveId=drive_id),
         )
 
-    # 6. The one Flash plan this Car history supports.
+    # 6. The one Flash plan this Car history supports — read against the
+    #    window, so a change from before the last Flash or Install never
+    #    proposes a cell for the car as it is now.
     plan = await harness.step(
         config, "flashPlan", "Work out the Flash plan", {"through": drive_id},
-        lambda: worker.call("flashPlan", state=car_state, now=now),
+        lambda: worker.call("flashPlan", state=window_state, now=now),
     )
 
     drives_read = [r["id"] for r in history["rows"]]
@@ -176,6 +188,7 @@ async def _ingest_run(
             drive, plan, limits, drives_read,
             {**harness.summary(), "steps": harness.as_list()},
             first_drive=bool(drive.get("firstDrive")),
+            window=win,
         ),
     }
 
@@ -215,11 +228,14 @@ async def _decide(
 
     # 2. Decide the one Next step, and which Open steps it opens. Diagnose runs
     #    inside the engine before the decision; the Install list rides along so
-    #    a symptom right after a fitted part reads as one cause.
+    #    a symptom right after a fitted part reads as one cause. The state is
+    #    the window's: Drives from before the last Flash or Install feed the
+    #    Baseline, never the step.
+    window_state = W.windowed_state(car_state, (reply.get("windowDrives") or []))
     decided = await harness.step(
         config, "nextStep", "Decide the Next step", shown,
         lambda: worker.call(
-            "nextStep", state=car_state, driveId=drive_id, openSteps=settled["openSteps"],
+            "nextStep", state=window_state, driveId=drive_id, openSteps=settled["openSteps"],
             installs=store.list_installs(),
         ),
     )
@@ -234,7 +250,7 @@ async def _decide(
     asked = await harness.step(
         config, "ownerQuestions", "Ask what only you know", shown,
         lambda: worker.call(
-            "questions", state=car_state, driveId=drive_id,
+            "questions", state=window_state, driveId=drive_id,
             openSteps=pre_settle_open, installs=store.list_installs(),
         ),
     )

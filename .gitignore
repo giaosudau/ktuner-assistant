@@ -11,6 +11,8 @@ node_modules/
 server/.venv/
 server/*.db
 server/*.db-journal
+# Model scorecard results (ticket 16): dated per-model JSON, compared by diff.
+server/eval-results/
 __pycache__/
 .pytest_cache/
 *.pyc

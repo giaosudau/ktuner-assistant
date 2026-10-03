@@ -1,0 +1,17 @@
+{
+  "_note": "Parity lock for the banned-advice policy (ticket 16). Each case is refused or allowed by BOTH sides: the engine guards (engine/kta-ask.js ASK.verify) and the server verify (server/kta_server/verify.py). Only the three edits both sides phrase the same way are listed here (knock sensitivity, timing, protections); boost-raise and curve-edit phrasing are policed differently by design (engine: locked actions; server: plan-aware regexes) and stay out of this list. Silent drift on any case below is a loud failure on both sides.",
+  "cases": [
+    {"id": "knock-en", "expect": "refused", "text": "Lower the knock sensitivity a little so the car feels faster."},
+    {"id": "knock-vi", "expect": "refused", "text": "Hãy giảm độ nhạy cảm biến kích nổ một chút."},
+    {"id": "timing-en", "expect": "refused", "text": "Add 2 degrees of timing in the lugging zone."},
+    {"id": "timing-table-en", "expect": "refused", "text": "Advance the ignition table a little in the lugging zone."},
+    {"id": "protect-en", "expect": "refused", "text": "Disable the check engine light so it stops coming on."},
+    {"id": "timing-vi", "expect": "refused", "text": "Tăng góc đánh lửa trong bảng một chút."},
+    {"id": "protect-vi", "expect": "refused", "text": "Tắt đèn check đi cho đỡ báo."},
+    {"id": "neg-knock-en", "expect": "allowed", "text": "Never lower the knock sensitivity."},
+    {"id": "explain-timing-en", "expect": "allowed", "text": "When the Fuel-quality score falls, the ECU gives more timing everywhere."},
+    {"id": "explain-kc-en", "expect": "allowed", "text": "A lower Fuel-quality score gives more timing."},
+    {"id": "neg-knock-vi", "expect": "allowed", "text": "Không giảm độ nhạy kích nổ."},
+    {"id": "neg-timing-vi", "expect": "allowed", "text": "Đừng tăng góc đánh lửa trong bảng."}
+  ]
+}

@@ -25,10 +25,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AGENT_URL,
   SERVER_URL,
+  type CarProfile,
+  type DriveWindow,
   type HarnessSummary,
   type HarnessStep,
+  type InstallRow,
   type LoopState,
   type OpenStep,
+  type ProfileDraft,
+  type ProfileSpec,
   type ReplyCard,
   type Turn,
 } from "./types";
@@ -52,19 +57,54 @@ export async function uploadCsv(
 
 /**
  * The Open steps and the questions waiting for the owner, as the panel reads them.
- * The loop's own state, from the server — never guessed in the browser.
+ * The loop's own state, from the server — never guessed in the browser. The Car
+ * profile, its form spec and the drive window ride the same read.
  */
-async function readLoop(): Promise<{ openSteps: OpenStep[]; questions: PendingQuestion[] }> {
+async function readLoop(): Promise<{
+  openSteps: OpenStep[];
+  questions: PendingQuestion[];
+  carProfile: CarProfile | null;
+  profileSpec: ProfileSpec | null;
+  hasLlm: boolean;
+  hasDrives: boolean;
+  driveWindow: DriveWindow | null;
+  installs: InstallRow[];
+}> {
+  const empty = {
+    openSteps: [],
+    questions: [],
+    carProfile: null,
+    profileSpec: null,
+    hasLlm: false,
+    hasDrives: false,
+    driveWindow: null,
+    installs: [],
+  };
   try {
     const response = await fetch(`${SERVER_URL}/api/state`, { cache: "no-store" });
-    if (!response.ok) return { openSteps: [], questions: [] };
+    if (!response.ok) return empty;
     const body = (await response.json()) as {
       openSteps?: OpenStep[];
       unansweredQuestions?: { id: string; title: string; askedOn?: string | null }[];
+      carProfile?: CarProfile | null;
+      profileSpec?: ProfileSpec | null;
+      hasLlm?: boolean;
+      hasDrives?: boolean;
+      driveWindow?: DriveWindow | null;
+      installs?: InstallRow[];
     };
-    return { openSteps: body.openSteps ?? [], questions: body.unansweredQuestions ?? [] };
+    return {
+      openSteps: body.openSteps ?? [],
+      questions: body.unansweredQuestions ?? [],
+      carProfile: body.carProfile ?? null,
+      profileSpec: body.profileSpec ?? null,
+      hasLlm: body.hasLlm ?? false,
+      hasDrives: body.hasDrives ?? false,
+      driveWindow: body.driveWindow ?? null,
+      installs: body.installs ?? [],
+    };
   } catch {
-    return { openSteps: [], questions: [] };
+    return empty;
   }
 }
 
@@ -73,6 +113,10 @@ export function useThread() {
   const [busy, setBusy] = useState(false);
   const [openSteps, setOpenSteps] = useState<OpenStep[]>([]);
   const [questions, setQuestions] = useState<PendingQuestion[]>([]);
+  const [carProfile, setCarProfile] = useState<CarProfile | null>(null);
+  const [profileSpec, setProfileSpec] = useState<ProfileSpec | null>(null);
+  const [hasLlm, setHasLlm] = useState(false);
+  const [hasDrives, setHasDrives] = useState(false);
   const threadId = useMemo(() => nextId("thread"), []);
   const running = useRef(false);
 
@@ -80,6 +124,10 @@ export function useThread() {
     const loop = await readLoop();
     setOpenSteps(loop.openSteps);
     setQuestions(loop.questions);
+    setCarProfile(loop.carProfile);
+    setProfileSpec(loop.profileSpec);
+    setHasLlm(loop.hasLlm);
+    setHasDrives(loop.hasDrives);
   }, []);
 
   // The panel shows the loop from the first paint, so an owner who reloads the
@@ -270,7 +318,7 @@ export function useThread() {
     [patch, threadId, refreshLoop],
   );
 
-  return { turns, busy, threadId, send, openSteps, questions, answered };
+  return { turns, busy, threadId, send, openSteps, questions, answered, carProfile, profileSpec, hasLlm, hasDrives, refreshLoop };
 }
 
 function safeJson(text: string): unknown {
@@ -279,4 +327,48 @@ function safeJson(text: string): unknown {
   } catch {
     return { text };
   }
+}
+
+/** Fill the typed Car profile card from the owner's own words. Saves nothing. */
+export async function draftProfile(text: string): Promise<ProfileDraft> {
+  const response = await fetch(`${SERVER_URL}/api/profile/draft`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail ?? "The card did not fill.");
+  return ((await response.json()) as { draft: ProfileDraft }).draft;
+}
+
+/** Confirm the Car profile card. Nothing is saved before this call. */
+export async function saveProfile(fields: CarProfile): Promise<{ profile: CarProfile; installs: InstallRow[]; line: string }> {
+  const response = await fetch(`${SERVER_URL}/api/profile`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ fields }),
+  });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail ?? "The profile did not save.");
+  return (await response.json()) as { profile: CarProfile; installs: InstallRow[]; line: string };
+}
+
+/** Record an Install: a part fitted or removed, with its date. */
+export async function recordInstall(part: string, action: string, installedAt: number): Promise<{ install: InstallRow; line: string }> {
+  const response = await fetch(`${SERVER_URL}/api/installs`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ part, action, installed_at: installedAt }),
+  });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail ?? "The Install did not record.");
+  return (await response.json()) as { install: InstallRow; line: string };
+}
+
+/** A typed question with no Drive uploaded: setup fills, tuning waits. */
+export async function askWithoutDrive(text: string, flow?: string): Promise<{ kind: string; answer?: string; draft?: ProfileDraft; window?: string }> {
+  const response = await fetch(`${SERVER_URL}/api/ask`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(flow ? { text, flow } : { text }),
+  });
+  if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail ?? "The question did not go through.");
+  return (await response.json()) as { kind: string; answer?: string; draft?: ProfileDraft; window?: string };
 }

@@ -139,7 +139,6 @@ export type HarnessSummary = {
 
 /** One knowledge card the reply leans on: a quiet footnote ref, not prose. */
 export type Citation = { id: string; title: string };
-
 /** What the explainer did: checked, repaired once, or the built-in fallback. */
 export type AgentInfo = {
   verified: boolean;
@@ -209,6 +208,52 @@ export type Turn = {
   card: ReplyCard | null;
   harness: HarnessSummary | null;
   lines: string[];
+};
+
+/** The Car profile: the owner's one car as the app knows it (CONTEXT.md). */
+export type CarProfileFields = {
+  model: string;
+  engine: string;
+  transmission: string;
+  fuel: string;
+  climate: string;
+  basemap: string;
+  parts: string[];
+};
+
+export type CarProfile = CarProfileFields;
+
+/** The plain form's fields: the same fields the filled card shows. */
+export type ProfileSpec = {
+  fields: string[];
+  parts: string[];
+  basemap: string;
+  basemapNote: string;
+};
+
+/** The filled card before confirm: what came from the owner's words. */
+export type ProfileDraft = {
+  fields: CarProfileFields;
+  filled: Record<string, boolean>;
+  missing: string[];
+  prefilled: string[];
+};
+
+/** An Install: a part fitted or removed, with its date (CONTEXT.md). */
+export type InstallRow = {
+  id: string;
+  installed_at: number;
+  part: string;
+  action: string;
+  note: string;
+};
+
+/** The drive window: the Drives an answer is about, and the line that says so. */
+export type DriveWindow = {
+  driveIds: string[];
+  count: number;
+  since: { kind: string; label: string; day: string } | null;
+  line: string;
 };
 
 export const AGENT_URL =
