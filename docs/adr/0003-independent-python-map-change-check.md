@@ -12,3 +12,5 @@ The thresholds both checks use live in one data file, each with its value, unit,
 ## Consequences
 
 Tests feed both checks the same generated changes (in bounds, off by one cell, wrong before, out of bounds, broken pair) and fail on any disagreement. A threshold change is a data change with its basis, reviewed like code.
+
+The banned-advice policy (knock sensitivity, timing, protections) is ported the same way, in `engine/kta-ask.js` and `server/kta_server/verify.py`. It has the same discipline: one case list, `server/tests/banned_advice_cases.json` (text, lang, category, expected), run by `test/banned-advice.test.js` and `server/tests/test_verify.py`. Edit a banned phrase in one port and the other test fails until the list is updated. Boost and AFM-curve phrasing are policed differently on purpose and are not on the list.

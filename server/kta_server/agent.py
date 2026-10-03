@@ -319,13 +319,6 @@ def _wrap(value: Any) -> Any:
     return call
 
 
-def _wrap(value: Any) -> Any:
-    async def call() -> Any:
-        return value
-
-    return call
-
-
 def _map_cell(tables: Mapping[str, Any], args: Mapping[str, Any]) -> dict[str, Any]:
     table = tables.get(str(args.get("table")))
     if not isinstance(table, Mapping):

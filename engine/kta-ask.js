@@ -273,7 +273,8 @@
       if (b.unless && !locked[b.unless] && P.all.some(function (a) { return a.id === b.unless && !a.blockedBy; })) return;
       var re = new RegExp(b.re.source, 'giu'), m;
       while ((m = re.exec(ans))) {
-        var before = ans.slice(Math.max(0, m.index - 40), m.index);
+        // Same sentence only: a verdict line ("costs timing, not damage.") must not launder advice after its full stop.
+        var before = ans.slice(Math.max(0, m.index - 40), m.index).split(/[.!?\u2026\n]+/).pop();
         if (!NEG.test(before)) { issues.push('The answer suggests "' + m[0].trim() + '", which this app never recommends for this drive. Remove it or say why not to.'); break; }
       }
     });

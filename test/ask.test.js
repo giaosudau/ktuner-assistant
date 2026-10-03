@@ -168,19 +168,3 @@ test('built-in answers: intent from English or Vietnamese, numbers from the driv
   assert.ok(a.includes(report.ins.kc.end.toFixed(2)) && /lugging/.test(a));
   assert.match(K.ask.offline('Can I add boost?', ctx).answer, /^Not now/);
 });
-
-test('parity lock (ticket 16): the shared banned-advice cases refuse or pass here exactly as in server verify', () => {
-  // The case list is shared with server/tests/test_scorecard.py: only the
-  // three edits both sides phrase the same way are listed (knock sensitivity,
-  // timing, protections). Boost-raise and curve-edit phrasing are policed
-  // differently by design (here: locked actions) and stay out of the list.
-  const fs = require('fs'), path = require('path');
-  const cases = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'server', 'tests', 'banned_advice_cases.json'), 'utf8')).cases;
-  assert.ok(cases.length >= 10, 'a case list worth locking');
-  for (const c of cases) {
-    const facts = new K.ask.Facts();
-    facts.add(c.text);   // numbers are not what this locks: only the advice judgement
-    const v = K.ask.verify({ answer: c.text, action_ids: [] }, facts, ctx);
-    assert.equal(v.ok, c.expect === 'allowed', c.id + ': ' + JSON.stringify(v.issues));
-  }
-});

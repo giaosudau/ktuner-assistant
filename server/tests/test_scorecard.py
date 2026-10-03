@@ -104,16 +104,6 @@ def test_classes_cover_the_ticket_list_with_zeros_kept():
     assert counts["other"] == 1
 
 
-# -- the parity lock, Python side (the engine side lives in test/ask.test.js) --
-def test_every_shared_banned_case_parses_the_same_way_in_verify():
-    cases = json.loads((Path(__file__).parent / "banned_advice_cases.json").read_text())["cases"]
-    assert {c["expect"] for c in cases} == {"refused", "allowed"}
-    for case in cases:
-        facts = V.numbers_in(case["text"]) + list(V.FREE)
-        verdict = V.verify(case["text"], "baseline", "baseline", facts, PLAN, [])
-        assert verdict["ok"] == (case["expect"] == "allowed"), case["id"]
-
-
 # -- the judge ----------------------------------------------------------------
 def test_judge_parsing_takes_bools_and_abstains_on_junk():
     good = S.parse_judge_reply('{"one_action": true, "plain_words": false, "named_drive": true}')

@@ -6,10 +6,13 @@ prove the whole repair-then-fallback path through the front door.
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+import pytest
 
 from kta_server import verify as V
 
@@ -146,3 +149,13 @@ def test_boost_raise_is_allowed_when_the_plan_raises_boost():
             "cells": [{"table": "Boost_Target_1_Normal_L", "row": 9, "col": 9, "before": 15.0, "after": 16.0}],
         },
     )["ok"] is True
+
+
+# -- parity lock (ADR 0003): one case list, also run by test/banned-advice.test.js against the JS guards
+_CASES = json.loads((Path(__file__).parent / "banned_advice_cases.json").read_text())["cases"]
+
+
+@pytest.mark.parametrize("case", _CASES, ids=[c["id"] for c in _CASES])
+def test_shared_banned_advice_case(case):
+    facts = V.numbers_in(case["text"]) + list(V.FREE)
+    assert check(case["text"], facts=facts)["ok"] == (case["expect"] == "allowed")

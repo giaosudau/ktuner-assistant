@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "echo 'Serving at http://localhost:8000/ (file:// works for the built-in drives; use this server for your own CSVs)' && python3 -m http.server 8000",
     "car-check": "node tools/car-history-check.js",
-    "test": "node --test test/engine.test.js test/drive.test.js test/ask.test.js test/build.test.js test/car.test.js test/thresholds.test.js",
+    "test": "node --test test/engine.test.js test/drive.test.js test/ask.test.js test/build.test.js test/car.test.js test/thresholds.test.js test/banned-advice.test.js",
     "e2e": "node e2e/app.e2e.js",
     "sync-ref": "node tools/sync-ref.js",
     "examples": "node tools/build-examples.js"
