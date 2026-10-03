@@ -43,11 +43,11 @@ def test_a_file_that_is_not_a_tuner_view_log_is_rejected_with_a_readable_reason(
 
 def test_the_worker_hands_back_the_engines_own_limits_and_never_a_raw_row(loop: Loop):
     limits = loop.worker.limits
-    assert limits["mapTargetAfr"] == 11.0
-    assert limits["leanLimitAfr"] == 12.0
-    assert limits["trimOk"] == 5
-    assert limits["minMoving"] == 60
-    assert limits["coolIat"] == 42
+    assert limits["LIMITS"]["mixture"]["target"] == 11.0
+    assert limits["LIMITS"]["mixture"]["leanLimit"] == 12.0
+    assert limits["LIMITS"]["trim"]["good"] == 5
+    assert limits["CAR_RULES"]["minMoving"] == 60
+    assert limits["CAR_RULES"]["coolIat"] == 42
     assert loop.worker.ktuner_basemap == "Starter 21 Dual Tune 2"
 
     reply = loop.upload_and_reply("aug30-1529")

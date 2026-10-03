@@ -73,3 +73,24 @@ test('checkMapChange rejects the textbook faults with the shared reasons', () =>
   assert.equal(K.checkMapChange({ mapVersion: 1, tables: { Ignition_Base_L: [{ row: 0, col: 0, before: MAP.Ignition_Base_L.values[0][0], after: 30 }] } }, MAP).reason, 'forbidden-table');
   assert.equal(K.checkMapChange({ mapVersion: 1, tables: {} }, MAP).reason, 'empty-change');
 });
+
+// A3: the verdict limits the worker ships to the reply are the engine's own
+// numbers under the engine's own names — no renamed copy.
+test('every limit the worker ships equals the engine value of the same name, and no other key exists', () => {
+  const K2 = require('../engine/kta-car.js'); // the worker's own entry: engine + car + drive
+  const { spawnSync } = require('node:child_process');
+  const run = spawnSync('node', [require('node:path').join(__dirname, '../server/kta_worker/worker.js')],
+    { input: JSON.stringify({ id: '1', op: 'ping', args: {} }) + '\n', encoding: 'utf8' });
+  const shipped = JSON.parse(run.stdout).result.limits;
+  const engine = { LIMITS: K2.LIMITS, CAR_RULES: K2.CAR_RULES, DRIVE_LIMITS: K2.DRIVE_LIMITS };
+  let leaves = 0;
+  (function walk(sent, eng, path) {
+    for (const key of Object.keys(sent)) {
+      assert.ok(eng && key in eng, 'worker limit ' + path + key + ' is not an engine name');
+      if (sent[key] !== null && typeof sent[key] === 'object') walk(sent[key], eng[key], path + key + '.');
+      else { leaves++; assert.equal(sent[key], eng[key], path + key); }
+    }
+  })(shipped, engine, '');
+  assert.ok(leaves >= 15, 'the reply still gets its limits');
+  assert.equal(K.LIMITS.mixture.leanLimit, K.LIMITS.mixture.target + K.LIMITS.mixture.stopLean);
+});

@@ -16,11 +16,7 @@ from conftest import Loop, template_replies
 
 from kta_server import copy as C
 
-LIMITS = {
-    "mapTargetAfr": 11.0,
-    "leanLimitAfr": 12.0,
-    "trimOk": 5,
-}
+LIMITS = {"LIMITS": {"mixture": {"target": 11.0, "leanLimit": 12.0}, "trim": {"good": 5}}}
 
 
 def drive(verdict: str, **summary) -> dict:

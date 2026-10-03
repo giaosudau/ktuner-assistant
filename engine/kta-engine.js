@@ -178,6 +178,9 @@
     wotTargetAfr: { min: 11.0, max: 12.0 } // allowed WOT command band (display AFR)
   };
 
+  // The leanest full-throttle AFR the verdict tolerates: the map's target plus the Stop lean.
+  KTA.LIMITS.mixture.leanLimit = Math.round((KTA.LIMITS.mixture.target + KTA.LIMITS.mixture.stopLean) * 10) / 10;
+
   // Map-change thresholds (ticket 12, ADR 0003): the bounds a Flash must stay
   // inside live in data/thresholds.json, and this engine reads them from that
   // file instead of carrying its own copies. In Node the JSON is required; in

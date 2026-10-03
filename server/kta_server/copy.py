@@ -170,16 +170,16 @@ def first_sentence(drive: Mapping[str, Any], limits: Mapping[str, Any]) -> str:
     # are the cause, so they lead. When the trims are inside ±5 % there is no
     # trim clause at all, and the sentence stays the shape the prototype fixed.
     trim = summary.get("trimWorst")
-    trim_ok = limits.get("trimOk", 5)
+    trim_ok = lim(limits, "LIMITS.trim.good", 5)
     if trim is not None and abs(trim) > trim_ok:
         clauses.append(f"worst fuel trim {sg(trim, 1)} %")
 
     leanest = summary.get("mixLeanest")
     if leanest is not None:
-        target = summary.get("mixTarget") or limits.get("mapTargetAfr")
+        target = summary.get("mixTarget") or lim(limits, "LIMITS.mixture.target", None)
         clauses.append(
             f"full-throttle AFR {n(leanest, 1)} (map asks {n(target, 1)}, "
-            f"lean limit {n(limits.get('leanLimitAfr'), 1)})"
+            f"lean limit {n(lim(limits, 'LIMITS.mixture.leanLimit', None), 1)})"
         )
 
     peak = summary.get("kcPeak")
@@ -454,48 +454,56 @@ def wasted_line(wasted: Mapping[str, Any] | None) -> str | None:
 GAUGE_COLUMNS = ["Gauge in TunerView", "OK", "If you see", "Then"]
 
 
+def lim(limits: Mapping[str, Any], path: str, fallback: Any) -> Any:
+    """One limit by the engine's own dotted name, e.g. `LIMITS.trim.good`."""
+    node: Any = limits
+    for part in path.split("."):
+        node = node.get(part) if isinstance(node, Mapping) else None
+    return fallback if node is None else node
+
+
 def gauge_row(key: str, limits: Mapping[str, Any], dead: list[str] | None = None) -> dict[str, str] | None:
     """One gauge, the four cells the owner reads. `None` when there is no such row."""
-    def at(name: str, fallback: Any) -> Any:
-        return limits.get(name) if limits.get(name) is not None else fallback
+    def at(path: str, fallback: Any) -> Any:
+        return lim(limits, path, fallback)
 
     if key == "trims":
         return {
             "gauge": "STFT B1 + LTFT B1",
-            "ok": f"within ±{n(at('trimOk', 5), 0)} %",
-            "see": f"beyond ±{n(at('trimStop', 10), 0)} %",
+            "ok": f"within ±{n(at('LIMITS.trim.good', 5), 0)} %",
+            "see": f"beyond ±{n(at('LIMITS.trim.watch', 10), 0)} %",
             "then": "Stop pulling. Drive home calm, upload.",
         }
     if key == "kc":
         return {
             "gauge": "Knock Control",
-            "ok": f"at or under {n(at('scoreWatch', 0.56), 2)}",
-            "see": f"above {n(at('scoreNoHard', 0.62), 2)}",
+            "ok": f"at or under {n(at('LIMITS.score.watch', 0.56), 2)}",
+            "see": f"above {n(at('LIMITS.score.noHard', 0.62), 2)}",
             "then": (
                 "Ease off, and note what you were doing (rpm, heat, hill). "
-                f"Up to {n(at('scoreNoHard', 0.62), 2)} costs about 1.3° of timing, not damage."
+                f"Up to {n(at('LIMITS.score.noHard', 0.62), 2)} costs about 1.3° of timing, not damage."
             ),
         }
     if key == "iat":
         return {
             "gauge": "IAT2",
-            "ok": f"under {n(at('coolIat', 42), 0)} °C moving, under {n(at('pullIat', 48), 0)} °C when a pull starts",
-            "see": f"over {n(at('pullIat', 48), 0)} °C",
+            "ok": f"under {n(at('CAR_RULES.coolIat', 42), 0)} °C moving, under {n(at('DRIVE_LIMITS.pullIatGood', 48), 0)} °C when a pull starts",
+            "see": f"over {n(at('DRIVE_LIMITS.pullIatGood', 48), 0)} °C",
             "then": "Hold a steady speed 1–2 min before the pull. A hot pull is not a test.",
         }
     if key == "afr":
-        target = at("mapTargetAfr", 11.0)
+        target = at("LIMITS.mixture.target", 11.0)
         return {
             "gauge": "O2 (AFR) at full throttle",
             "ok": f"{n(target - 1.0, 1)}–{n(target + 0.5, 1)}",
-            "see": f"leaner than {n(at('leanLimitAfr', 12.0), 1)}",
+            "see": f"leaner than {n(at('LIMITS.mixture.leanLimit', 12.0), 1)}",
             "then": "Lift. Upload before the next pull.",
         }
     if key == "boost":
         return {
             "gauge": "Turbo Pressure",
-            "ok": f"within +{n(at('overshootOk', 1.5), 1)} psi of Turbo Pressure Target",
-            "see": f"more than +{n(at('overshootWatch', 2.5), 1)} psi above Turbo Pressure Target, held",
+            "ok": f"within +{n(at('LIMITS.overshoot.good', 1.5), 1)} psi of Turbo Pressure Target",
+            "see": f"more than +{n(at('LIMITS.overshoot.watch', 2.5), 1)} psi above Turbo Pressure Target, held",
             "then": "Upload. A held overshoot is the only reason to touch boost.",
         }
     if key == "rpm":
@@ -536,12 +544,12 @@ def drive_recipe(
     key: str, limits: Mapping[str, Any], channels_open: bool = False, drive: Mapping[str, Any] | None = None
 ) -> dict[str, Any] | None:
     """`{intro, steps}` for the Drive a step asks for, or None when it asks for none."""
-    def at(name: str, fallback: Any) -> Any:
-        return limits.get(name) if limits.get(name) is not None else fallback
+    def at(path: str, fallback: Any) -> Any:
+        return lim(limits, path, fallback)
 
     if key == "baseline":
         steps = [
-            f"Before 8 am, or after an hour parked in shade: intake under {n(at('coolIat', 42), 0)} °C.",
+            f"Before 8 am, or after an hour parked in shade: intake under {n(at('CAR_RULES.coolIat', 42), 0)} °C.",
             "10 minutes of normal driving first, so the engine and the CVT are warm.",
             "Then two pulls in S, 50 → 100 km/h, on a straight safe road, a minute apart.",
         ]
@@ -549,7 +557,7 @@ def drive_recipe(
             steps.append(
                 "While you are in TunerView: add AFR Command and MAF Hz to the logged list if your app "
                 f"offers them. Without AFR Command I judge the mixture against the map's "
-                f"{n(at('mapTargetAfr', 11.0), 1)}, not what the ECU asked for."
+                f"{n(at('LIMITS.mixture.target', 11.0), 1)}, not what the ECU asked for."
             )
         return {
             "intro": (

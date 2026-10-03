@@ -138,26 +138,24 @@ function askRun(driveId, tool, input) {
 // What a Drive looks like on the wire: the numbers the reply shows, and the
 // limits they are read against, all from the engine's own constants.
 // ---------------------------------------------------------------------------
-var S = KTA.LIMITS.score, MIX = KTA.LIMITS.mixture, CR = KTA.CAR_RULES, DL = KTA.DRIVE_LIMITS;
+var S = KTA.LIMITS.score;
+function pick(src, keys) {
+  var out = {};
+  keys.forEach(function (k) { out[k] = src[k]; });
+  return out;
+}
+// The limits the reply can show, grouped and named exactly as the engine does
+// (LIMITS.trim.good ships as limits.LIMITS.trim.good). test/thresholds.test.js
+// fails if a key here is not in the engine.
 var LIMITS = {
-  scoreBaseline: S.baseline,
-  tableDeg: S.tableDeg,
-  scoreWatch: S.watch,
-  scoreNoHard: S.noHard,
-  scoreStop: S.stop,
-  mapTargetAfr: MIX.target,
-  leanLimitAfr: Math.round((MIX.target + MIX.stopLean) * 10) / 10,
-  trimOk: KTA.LIMITS.trim.good,
-  trimStop: KTA.LIMITS.trim.watch,
-  minMoving: KTA.CAR_RULES.minMoving,
-  coolIat: KTA.CAR_RULES.coolIat,
-  hotIat: DL.hotDrive,
-  pullIat: DL.pullIatGood,
-  overshootWatch: KTA.LIMITS.overshoot.watch,
-  overshootOk: KTA.LIMITS.overshoot.good,
-  shakedownCalmSec: CR.shakedownCalm,
-  lugOk: CR.lugOk,
-  uploadScore: CR.uploadScore
+  LIMITS: {
+    trim: KTA.LIMITS.trim,
+    overshoot: KTA.LIMITS.overshoot,
+    score: pick(S, ['baseline', 'tableDeg', 'watch', 'noHard', 'stop']),
+    mixture: pick(KTA.LIMITS.mixture, ['target', 'leanLimit'])
+  },
+  CAR_RULES: pick(KTA.CAR_RULES, ['minMoving', 'coolIat', 'shakedownCalm', 'lugOk', 'uploadScore']),
+  DRIVE_LIMITS: pick(KTA.DRIVE_LIMITS, ['hotDrive', 'pullIatGood'])
 };
 
 /** The degrees of timing a Fuel-quality score costs under boost (fact-check.md §2). */
