@@ -540,6 +540,18 @@ def gauge_table(
 # Numbered, short and physical — no jargon the owner has to translate, and no KTuner
 # table name anywhere (only the Flash plan names those).
 # ---------------------------------------------------------------------------
+def log_guide(limits: Mapping[str, Any]) -> dict[str, Any]:
+    """How to log a drive the chat can read (chat CA-08): the Baseline recipe and the gauges to watch.
+
+    The same recipe and gauge rows the Baseline Next step uses, so the chat never words its own.
+    """
+    return {
+        "title": "One Cool drive with 2 pulls",
+        "recipe": drive_recipe("baseline", limits, channels_open=True),
+        "gauges": gauge_table(["iat", "kc", "afr", "trims"], limits),
+    }
+
+
 def drive_recipe(
     key: str, limits: Mapping[str, Any], channels_open: bool = False, drive: Mapping[str, Any] | None = None
 ) -> dict[str, Any] | None:

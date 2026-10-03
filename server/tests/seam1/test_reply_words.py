@@ -485,6 +485,9 @@ def test_the_python_stamp_is_the_engine_stamp():
 
 
 def test_the_web_no_longer_spells_status_or_stamp_words():
-    ui = (C.REPO_ROOT / "web/components/OpenStepsPanel.tsx").read_text()
-    for spelled in ("Not yet", "Still off", "Jan", "STATUS", "driveStamp"):
-        assert spelled not in ui.split("*/", 1)[1], spelled
+    # Every chat file: the step status words and Drive stamps arrive worded by the engine.
+    web = C.REPO_ROOT / "web"
+    for path in [*web.glob("components/*.tsx"), web / "lib/useChat.ts", web / "lib/api.ts"]:
+        ui = path.read_text()
+        for spelled in ("Not yet", "Still off", "Jan", "STATUS", "driveStamp"):
+            assert spelled not in ui, f"{path.name} spells {spelled!r}"

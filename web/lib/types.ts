@@ -208,6 +208,32 @@ export type AgentInfo = {
   citations: Citation[];
 };
 
+/**
+ * A picture the engine made the data for (ticket 15); the chat only draws it.
+ * Every number it prints is also in the reply text.
+ */
+export type Picture =
+  | { kind: "cant-tell"; title: string; why: string }
+  | { kind: "baseline" | "proof"; title: string; unit: string; bars: { label: string; value: number }[]; note?: string }
+  | {
+      kind: "trace";
+      title: string;
+      unit: string;
+      series: { name: string; points: [number, number][] }[];
+      moment: { at: number; label: string };
+    }
+  | {
+      kind: "map_grid";
+      title: string;
+      tables: string[];
+      rpm: number[];
+      cols: number;
+      changes: { row: number; col: number; before: number; after: number; rpm: number }[];
+      driven: number[];
+      unit: string;
+    }
+  | { kind: "maf_gap"; title: string; x: number[]; before: number[]; after: number[]; gapPct: number; unit: string };
+
 /** The typed reply card, read from the AG-UI STATE_SNAPSHOT. */
 export type ReplyCard = {
   say: string;
@@ -232,8 +258,10 @@ export type ReplyCard = {
   /** The Open steps as they stand after this reply. */
   openSteps: OpenStep[];
   harness: HarnessSummary | null;
+  /** At most one picture, plus the map grid when the step is a Flash. */
+  pictures?: Picture[] | null;
   /** The explainer's record, when a model wrote the sentence above. */
-  agent?: AgentInfo | null;
+  agent?: (AgentInfo & { pictures?: Picture[] | null; thinking?: string | null }) | null;
   error?: { message: string; code: string };
 };
 
@@ -271,6 +299,10 @@ export type Turn = {
   card: ReplyCard | null;
   harness: HarnessSummary | null;
   lines: string[];
+  /** The model's own words while it worked: shown apart, labelled unchecked. */
+  thinking?: string;
+  /** The tool running right now, for the live work row. */
+  live?: string;
 };
 
 /** The Car profile: the owner's one car as the app knows it (CONTEXT.md). */

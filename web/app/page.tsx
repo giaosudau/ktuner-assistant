@@ -1,90 +1,258 @@
 "use client";
 
-import { useRef } from "react";
+/**
+ * KTuner Assistant: a chat, laid out like Claude and ChatGPT. Sidebar with the
+ * car and the tuning journey; one thread; one composer that takes words, a
+ * TunerView CSV or a screenshot.
+ */
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { AskBox } from "../components/AskBox";
-import { CarProfile } from "../components/CarProfile";
-import { MapPanel } from "../components/MapPanel";
-import { OpenStepsPanel } from "../components/OpenStepsPanel";
-import { ReplyCard } from "../components/ReplyCard";
-import { useThread } from "../lib/useThread";
+import { Composer, refuse } from "../components/Composer";
+import { Icon } from "../components/Icons";
+import { Message, type Actions } from "../components/Messages";
+import { phaseOf, Sidebar } from "../components/Sidebar";
+import { useChat } from "../lib/useChat";
+
+const EXAMPLE =
+  "Civic FE 1.5T CVT on E10 RON95, hot city traffic. Intake, downpipe, front pipe, catback, big intercooler and a CVT cooler. I flashed KTuner Starter 21 Dual Tune 2.";
+
+function useTheme(): [string | null, () => void] {
+  // The theme in force: the saved choice, else the system's.
+  const [theme, setTheme] = useState<string | null>(null);
+  useEffect(() => {
+    let saved: string | null = null;
+    try {
+      saved = localStorage.getItem("kta-theme");
+    } catch {
+      /* system theme it is */
+    }
+    if (saved) document.documentElement.dataset.theme = saved;
+    setTheme(saved ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+  }, []);
+  const toggle = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    setTheme(next);
+    try {
+      localStorage.setItem("kta-theme", next);
+    } catch {
+      /* fine */
+    }
+  };
+  return [theme, toggle];
+}
 
 export default function Page() {
-  const { turns, busy, send, openSteps, questions, answered, carProfile, profileSpec, hasLlm, hasDrives, refreshLoop } =
-    useThread();
-  const picker = useRef<HTMLInputElement>(null);
+  const chat = useChat();
+  const { messages, loop, busy } = chat;
+  const [text, setText] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [side, setSide] = useState(true);
+  const [dragging, setDragging] = useState(false);
+  const [theme, toggleTheme] = useTheme();
+  const scroller = useRef<HTMLDivElement>(null);
+  const pinned = useRef(true);
+
+  useEffect(() => setSide(window.innerWidth >= 1024), []);
+  const closeOnPhone = useCallback(() => {
+    if (window.innerWidth < 1024) setSide(false);
+  }, []);
+
+  // Follow the reply as it streams, unless the owner scrolled up to read.
+  useEffect(() => {
+    const el = scroller.current;
+    if (el && pinned.current) el.scrollTo({ top: el.scrollHeight });
+  }, [messages]);
+
+  const submit = useCallback(
+    (words = text, attached = file) => {
+      if (busy) return;
+      pinned.current = true;
+      void chat.send(words, attached);
+      setText("");
+      setFile(null);
+      setError(null);
+    },
+    [busy, chat, file, text],
+  );
+
+  const actions: Actions = {
+    busy,
+    loop,
+    onAnswer: (id, q, choice) => {
+      pinned.current = true;
+      void chat.answer(id, q, choice);
+    },
+    onFlash: (id, action, ref) => {
+      pinned.current = true;
+      void chat.flash(id, action, ref);
+    },
+    onSaveCar: (id, fields) => {
+      pinned.current = true;
+      void chat.saveCar(id, fields);
+    },
+    onSuggest: (words) => submit(words, null),
+    onGuide: () => {
+      pinned.current = true;
+      chat.showGuide();
+    },
+  };
+
+  const phase = phaseOf(loop);
+  const empty = chat.ready && messages.length === 0;
+  const car = loop?.carProfile;
+  const placeholder = "Message KTuner Assistant…";
+
+  const composer = (
+    <div className="composer-wrap">
+      <Composer
+        text={text}
+        setText={setText}
+        file={file}
+        setFile={setFile}
+        error={error}
+        setError={setError}
+        onSend={() => submit()}
+        busy={busy}
+        placeholder={placeholder}
+        autoFocus
+      />
+      {!empty ? <p className="disclaimer">Every number comes from your own logs and is checked before you see it. Nothing changes your map until you flash it.</p> : null}
+    </div>
+  );
 
   return (
-    <div className="wrap">
-      <header className="hero">
-        <div className="eyebrow">Civic FE 1.5T CVT · KTuner Starter 21 Dual Tune 2 · E10 RON95</div>
-        <h1>Upload a Drive. Is it OK, what do I do next?</h1>
-        <p className="muted">
-          The first line answers whether you are hurting the car, in your numbers. Then one thing to do, and the
-          Drive that proves it.
-        </p>
-      </header>
-
-      <div className="picker">
-        <input
-          ref={picker}
-          type="file"
-          accept=".csv,text/csv"
-          data-testid="file-input"
-          style={{ display: "none" }}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) void send(file);
-            event.target.value = "";
-          }}
-        />
-        <button
-          type="button"
-          className="btn-upload"
-          data-testid="upload"
-          disabled={busy}
-          onClick={() => picker.current?.click()}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-            <path
-              d="M8 11 V2.5 M4.5 6 L8 2.5 L11.5 6 M2.5 11 V13.5 H13.5 V11"
-              style={{ fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }}
-            />
-          </svg>
-          {busy ? "Reading your log…" : "Upload a TunerView CSV"}
-        </button>
-      </div>
-
-      {/* The Car profile sits above the thread: setup on first open, then a
-          quiet card with the Install form. The Open steps sit beside the thread
-          on a desktop and above it on a phone. */}
-      <CarProfile
-        profile={carProfile}
-        spec={profileSpec}
-        hasLlm={hasLlm}
-        hasDrives={hasDrives}
-        onSaved={() => void refreshLoop()}
+    <div className={`app ${side ? "side-open" : "side-closed"}`}>
+      <Sidebar
+        loop={loop}
+        busy={busy}
+        onNewChat={chat.newChat}
+        onEditCar={chat.editCar}
+        onClose={closeOnPhone}
+        onToggle={() => setSide(false)}
+        onFlashBasemap={() => void chat.flash("", "revert", { version: 1 })}
       />
-      <AskBox />
-      <MapPanel />
-      <div className="layout">
-        <OpenStepsPanel steps={openSteps} questions={questions} />
-        <main className="thread">
-          {turns.length === 0 ? (
-            <p className="muted" data-testid="empty">
-              Nothing uploaded yet. Pick a TunerView log from your phone or laptop.
-            </p>
+      <div className="scrim" onClick={() => setSide(false)} aria-hidden="true" />
+
+      <main
+        className="main"
+        onDragOver={(event) => {
+          if (event.dataTransfer.types.includes("Files")) {
+            event.preventDefault();
+            setDragging(true);
+          }
+        }}
+        onDragLeave={(event) => {
+          if (event.currentTarget === event.target || !event.currentTarget.contains(event.relatedTarget as Node)) setDragging(false);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragging(false);
+          const dropped = event.dataTransfer.files?.[0];
+          if (!dropped) return;
+          const why = refuse(dropped);
+          setError(why);
+          if (!why) setFile(dropped);
+        }}
+      >
+        <header className="topbar">
+          {!side ? (
+            <button type="button" className="icon-btn" aria-label="Open sidebar" data-testid="open-sidebar" onClick={() => setSide(true)}>
+              <Icon name="menu" />
+            </button>
           ) : null}
-          {turns.map((turn) => (
-            <div key={turn.id} className="turn">
-              <div className="up">
-                <b>Uploaded</b> {turn.fileName}
-              </div>
-              <ReplyCard turn={turn} onAnswered={(updated) => answered(turn.id, updated)} />
+          <div className="topbar-title">
+            {car ? car.model || "Your car" : "KTuner Assistant"}
+            {loop?.activeMapVersion ? <span className="muted">· {loop.activeMapVersion.label}</span> : null}
+          </div>
+          <span className="spacer" />
+          <button type="button" className="icon-btn" aria-label="Switch light or dark" title="Switch light or dark" onClick={toggleTheme}>
+            <Icon name={theme === "dark" ? "sun" : "moon"} />
+          </button>
+        </header>
+
+        {!chat.ready ? (
+          <div className="scroll" aria-busy="true" />
+        ) : empty ? (
+          <div className="welcome" data-testid="empty">
+            {phase === "car" ? (
+              <>
+                <h1>Let&apos;s tune your car.</h1>
+                <p>
+                  Tell me about it in your own words: model, gearbox, fuel, where you drive, the parts you fitted and which KTuner map you
+                  flashed. I&apos;ll fill your car profile and keep it.
+                </p>
+              </>
+            ) : phase === "baseline" ? (
+              <>
+                <h1>Ready for your first log.</h1>
+                <p>Attach a TunerView CSV, or drop it anywhere here. I&apos;ll tell you if the engine is OK and what to do next.</p>
+              </>
+            ) : (
+              <>
+                <h1>What are we tuning today?</h1>
+                <p>Attach your latest TunerView log, or ask about your car.</p>
+              </>
+            )}
+            {composer}
+            <div className="chips">
+              {phase === "car" ? (
+                <button type="button" className="chip" data-testid="use-example" onClick={() => {
+                    setText(EXAMPLE);
+                    document.getElementById("composer-text")?.focus();
+                  }}>
+                  <Icon name="car" />
+                  Use an example description
+                </button>
+              ) : null}
+              <button type="button" className="chip" onClick={actions.onGuide}>
+                <Icon name="route" />
+                How should I log a drive?
+              </button>
+              {car && loop?.hasDrives ? (
+                <>
+                  <button type="button" className="chip" onClick={() => submit("Why is my car slower in the heat?", null)}>
+                    <Icon name="help" />
+                    Why is it slower in the heat?
+                  </button>
+                  <button type="button" className="chip" onClick={() => submit("Is my knock control OK?", null)}>
+                    <Icon name="gauge" />
+                    Is my knock control OK?
+                  </button>
+                </>
+              ) : null}
             </div>
-          ))}
-        </main>
-      </div>
+          </div>
+        ) : (
+          <>
+            <div
+              className="scroll"
+              ref={scroller}
+              onScroll={(event) => {
+                const el = event.currentTarget;
+                pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+              }}
+            >
+              <div className="thread" data-testid="thread" role="log" aria-live="polite">
+                {messages.map((m, i) => (
+                  <Message key={m.id} msg={m} latest={i === messages.length - 1} a={actions} />
+                ))}
+              </div>
+            </div>
+            {composer}
+          </>
+        )}
+
+        {dragging ? (
+          <div className="drop" aria-hidden="true">
+            <div>
+              Drop to attach
+              <span className="muted">A TunerView CSV, or a screenshot</span>
+            </div>
+          </div>
+        ) : null}
+      </main>
     </div>
   );
 }

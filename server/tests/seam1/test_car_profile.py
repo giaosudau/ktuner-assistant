@@ -304,3 +304,12 @@ def test_every_new_line_uses_the_words_context_allows(loop: Loop):
         assert word not in blob, f"'{word}' in {lines}"
     for word in ("session", "tune", "revision", "mod ", "upgrade", "garage"):
         assert word not in blob, f"'{word}' in {lines}"
+
+
+def test_state_carries_the_first_log_guide(loop: Loop):
+    """Chat CA-08: before any Drive the chat can say how to log one, in the engine's own words."""
+    guide = loop.get("/api/state").json()["logGuide"]
+    assert guide["title"] == "One Cool drive with 2 pulls"
+    assert len(guide["recipe"]["steps"]) >= 3
+    assert "AFR Command" in " ".join(guide["recipe"]["steps"])
+    assert [row["gauge"] for row in guide["gauges"]["rows"]] == ["IAT2", "Knock Control", "O2 (AFR) at full throttle", "STFT B1 + LTFT B1"]

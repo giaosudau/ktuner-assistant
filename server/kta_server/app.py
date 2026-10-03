@@ -204,6 +204,7 @@ def create_app(
             "drives": store.list_drives(),
             "flashPlan": plan,
             "hasLlm": settings.has_llm,
+            "logGuide": C.log_guide(worker.limits),
         }
 
     # ------------------------------------------------------- owner questions

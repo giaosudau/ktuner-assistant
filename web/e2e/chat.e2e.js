@@ -1,9 +1,11 @@
 'use strict';
 /*
- * Browser smoke test: upload a Drive in the chat, see the reply card, expand the
- * steps (ADR 0004 §"Where each seam's tests live" — the browser smoke seam).
+ * Browser smoke test: use the chat the way the owner does (chat CA-10).
+ * Describe the car, attach a real TunerView log with +, read the reply, open the
+ * work row, ask a question, open the sidebar — all on a 390 px phone.
  *
- *   npm run e2e            (needs the server and the chat already running)
+ *   npm run e2e            (needs the server and the chat already running;
+ *                           a fresh KTA_DB also runs the car-setup steps)
  *   KTA_CHAT=http://127.0.0.1:3000 KTA_SERVER=http://127.0.0.1:8000 npm run e2e
  *
  * The Drive is the owner's own log, read out of the engine's own fixture — the
@@ -34,36 +36,14 @@ function ownerFileName(id) {
   return name ? name[1] : `TunerView_${id.replace(/-/g, '_')}.csv`;
 }
 
-/**
- * Tap the owner's own upload button and pick the file, the way a person does.
- * Retried while the page finishes hydrating: a tap before hydration does
- * nothing, and a person would simply tap again.
- */
-async function pickFile(page, button, file) {
-  let lastError;
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    try {
-      const [chooser] = await Promise.all([
-        page.waitForEvent('filechooser', { timeout: 5000 }),
-        page.click(button),
-      ]);
-      await chooser.setFiles(file);
-      return;
-    } catch (error) {
-      lastError = error;
-      await page.waitForTimeout(750);
-    }
-  }
-  throw lastError;
-}
-
 async function run() {
   const health = await fetch(`${SERVER}/healthz`).catch(() => null);
   if (!health || !health.ok) {
-    console.error(`The server is not answering on ${SERVER}. Start it first:\n  cd server && python3 -m uvicorn kta_server.app:app`);
+    console.error(`The server is not answering on ${SERVER}. Start it first: make run`);
     process.exitCode = 1;
     return;
   }
+  const fresh = !(await (await fetch(`${SERVER}/api/state`)).json()).carProfile;
 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kta-e2e-'));
   const csv = path.join(dir, ownerFileName(EXAMPLE));
@@ -85,135 +65,102 @@ async function run() {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e && e.message)));
-  const noOverflow = () =>
-    page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  const noOverflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  const lastAi = () => page.locator('[data-testid="assistant-message"]').last();
+  const idle = () => page.waitForFunction(() => !document.querySelector('.spinner'), undefined, { timeout: 120000 });
 
   try {
-    await step('the chat opens on a phone and offers one big upload button', async () => {
+    await step('the chat opens on a phone as one composer with + and send, nothing else to fill in', async () => {
       await page.goto(CHAT, { waitUntil: 'domcontentloaded' });
-      await page.waitForSelector('[data-testid="upload"]', { timeout: 30000 });
-      const box = await page.locator('[data-testid="upload"]').boundingBox();
-      assert.ok(box.height >= 44, 'the upload target is ' + box.height + ' px tall');
+      await page.evaluate(() => localStorage.clear());
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('[data-testid="empty"] [data-testid="composer"]', { timeout: 30000 });
+      for (const sel of ['attach', 'send']) {
+        const box = await page.locator(`[data-testid="${sel}"]`).boundingBox();
+        assert.ok(box.height >= 44, `${sel} is ${box.height} px tall`);
+      }
+      assert.equal(await page.locator('select, input[type="date"]').count(), 0, 'no form on the first screen');
       assert.equal(await noOverflow(), 0, 'no sideways scrolling at 390 px');
     });
 
-    await step('uploading a real CSV streams the reply card with the Verdict sentence and the four numbers', async () => {
-      await pickFile(page, '[data-testid="upload"]', csv);
-      await page.waitForSelector('[data-testid="say"]', { timeout: 120000 });
-      const say = await page.textContent('[data-testid="say"]');
+    if (fresh) {
+      await step('describing the car in words gives a car card in the thread; saving it asks for the first log', async () => {
+        await page.click('[data-testid="use-example"]');
+        await page.click('[data-testid="send"]');
+        await page.waitForSelector('[data-testid="user-message"]', { timeout: 10000 });
+        await page.waitForSelector('[data-testid="setup-confirm"]', { timeout: 30000 });
+        assert.equal(await page.inputValue('[data-testid="setup-field-transmission"]'), 'CVT');
+        await page.click('[data-testid="setup-confirm"]');
+        await page.waitForSelector('[data-testid="log-guide"]', { timeout: 30000 });
+        assert.match(await page.textContent('[data-testid="log-guide"]'), /2 pulls/);
+        await page.waitForFunction(() => document.querySelector('[data-testid="journey"]')?.dataset.phase === 'baseline');
+      });
+    }
+
+    await step('attaching a real CSV with + sends it as my message and streams the reply below it', async () => {
+      const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('[data-testid="attach"]')]);
+      await chooser.setFiles(csv);
+      await page.waitForSelector('[data-testid="attachment"]');
+      await page.click('[data-testid="send"]');
+      await page.waitForSelector(`[data-testid="user-message"] >> text=${path.basename(csv)}`, { timeout: 10000 });
+      await idle();
+      const say = await lastAi().locator('[data-testid="say"]').textContent();
       assert.match(say, /^(Engine healthy|Nothing broken|Stop driving hard|Can't tell|Nothing read)/, say);
-
-      await page.waitForSelector('[data-testid="verdict"]', { timeout: 30000 });
-      const verdict = await page.getAttribute('[data-testid="verdict"]', 'data-verdict');
+      const verdict = await lastAi().locator('[data-testid="verdict"]').getAttribute('data-verdict');
       assert.ok(['OK', 'Watch', 'Stop', "Can't tell"].includes(verdict), verdict);
-
-      const tiles = await page.locator('[data-testid="numbers"] .tile > span').allTextContents();
-      assert.deepEqual(
-        tiles,
-        ['intake air, moving', 'Knock Control, start → peak', 'worst fuel trim', 'hard pulls'],
-        JSON.stringify(tiles),
-      );
-      assert.match(await page.textContent('[data-testid="flash-plan"]'), /no map change|flash|MAF Flow|Boost/i);
-      assert.equal(await noOverflow(), 0, 'the reply card fits 390 px');
+      const labels = await lastAi().locator('[data-testid="numbers"] .stat > span').allTextContents();
+      assert.deepEqual(labels, ['intake air, moving', 'Knock Control, start → peak', 'worst fuel trim', 'hard pulls']);
+      assert.equal(await noOverflow(), 0, 'the reply fits 390 px');
     });
 
-    await step('the card says which Map version this Drive ran on, under the numbers', async () => {
-      const line = page.locator('[data-testid="map-version"]');
-      await line.waitFor({ timeout: 30000 });
-      assert.equal(await line.getAttribute('data-version'), '1');
-      assert.equal(await line.locator('.mapver-line').textContent(), 'on Map version 1 · Starter 21 Dual Tune 2');
-      // It is a quiet line under the four numbers, not a headline.
-      const order = await page.evaluate(() => {
-        const top = (sel) => document.querySelector(sel)?.getBoundingClientRect().top ?? -1;
-        return {
-          say: top('[data-testid="say"]'),
-          numbers: top('[data-testid="numbers"]'),
-          mapVersion: top('[data-testid="map-version"]'),
-          plan: top('[data-testid="flash-plan"]'),
-        };
+    await step('the prose comes first, then the report, then exactly one Next step that names the drive to upload', async () => {
+      const order = await lastAi().evaluate((el) => {
+        const top = (sel) => el.querySelector(sel)?.getBoundingClientRect().top ?? -1;
+        return { say: top('[data-testid="say"]'), report: top('[data-testid="reply-card"]'), next: top('[data-testid="next-step"]') };
       });
-      assert.ok(order.say < order.numbers, 'the Verdict sentence comes first');
-      assert.ok(order.numbers < order.mapVersion, 'the Map version line sits under the numbers');
-      assert.ok(order.mapVersion < order.plan, 'the Flash plan comes after it');
-      // The first Drive explains what a Map version is, once.
-      assert.match(await line.textContent(), /A Map version is the map on your ECU/);
-      assert.equal(await noOverflow(), 0, 'the Map version line fits 390 px');
+      assert.ok(order.say < order.report && order.report < order.next, JSON.stringify(order));
+      assert.equal(await lastAi().locator('[data-testid="next-step"]').count(), 1);
+      assert.match(await lastAi().locator('[data-testid="next-step"]').textContent(), /Upload when:/);
     });
 
-    await step('the harness is one collapsed line that expands to each step with its inputs and output', async () => {
-      await page.waitForSelector('[data-testid="harness-line"]', { timeout: 30000 });
-      // The server's own count and seconds arrive with the last step; wait for
-      // them rather than for the row that exists while the steps are still in.
-      await page.waitForFunction(
-        () => /^Checked \d+ things · \d+(\.\d+)? s$/.test(
-          document.querySelector('[data-testid="harness-line"]')?.textContent ?? '',
-        ),
-        undefined,
-        { timeout: 30000 },
-      );
-      const line = await page.textContent('[data-testid="harness-line"]');
-      assert.match(line, /^Checked \d+ things · \d+(\.\d+)? s$/, line);
-      assert.equal(await page.locator('[data-testid="harness"]').getAttribute('open'), null);
-
-      await page.click('[data-testid="harness-line"]');
-      await page.waitForSelector('[data-step="flashPlan"]', { timeout: 10000 });
-      const steps = await page.locator('.step-row').count();
-      assert.ok(steps >= 4, 'six steps: ' + steps);
-
-      await page.click('[data-step="flashPlan"] summary');
-      await page.waitForSelector('[data-step="flashPlan"] details[open] pre[data-io="output"]', { timeout: 10000 });
-      const inputs = await page.textContent('[data-step="flashPlan"] pre[data-io="inputs"]');
-      const output = await page.textContent('[data-step="flashPlan"] pre[data-io="output"]');
-      assert.match(inputs, /20260901-081358/, 'the step shows what it was given');
-      assert.match(output, /headline/, 'the Flash plan output shows its headline');
-      assert.equal(await noOverflow(), 0, 'the expanded steps still fit 390 px');
+    await step('the work row is collapsed and opens to each tool with its input and output', async () => {
+      const line = lastAi().locator('[data-testid="harness-line"]');
+      assert.match(await line.textContent(), /^Worked for .+ · Checked \d+ things?/);
+      assert.equal(await lastAi().locator('[data-testid="harness"]').getAttribute('open'), null);
+      await line.click();
+      const tool = lastAi().locator('[data-step="flashPlan"]');
+      await tool.locator('summary').click();
+      assert.match(await tool.locator('pre[data-io="inputs"]').textContent(), /\S/);
+      assert.match(await tool.locator('pre[data-io="output"]').textContent(), /headline/);
+      assert.ok((await lastAi().locator('.work-list > li').count()) >= 4);
+      assert.equal(await noOverflow(), 0, 'the open steps still fit 390 px');
     });
 
-    await step('there is exactly one Next step, and it names the drive to upload', async () => {
-      assert.equal(await page.locator('[data-testid="next-step"]').count(), 1);
-      const stepCard = page.locator('[data-testid="next-step"]');
-      assert.match(await stepCard.locator('h3').textContent(), /\S/);
-      assert.match(await stepCard.textContent(), /Upload when:/);
-      assert.equal(await noOverflow(), 0, 'the Next step fits 390 px');
+    await step('a typed question is answered in the same thread', async () => {
+      const before = await page.locator('[data-testid="assistant-message"]').count();
+      await page.fill('[data-testid="composer-text"]', 'Why is my car slower in the heat?');
+      await page.keyboard.press('Enter');
+      await page.waitForFunction((n) => document.querySelectorAll('[data-testid="assistant-message"]').length > n, before);
+      await idle();
+      assert.match(await lastAi().locator('[data-testid="ask-answer"]').textContent(), /\S/);
     });
 
-    await step('the Next step shows its drive recipe and its gauge table, one row per gauge', async () => {
-      const stepCard = page.locator('[data-testid="next-step"]');
-      // The recipe is numbered and physical: when, how warm, how many pulls.
-      const recipe = stepCard.locator('ol.recipe li');
-      assert.ok((await recipe.count()) >= 3, 'the drive recipe is numbered: ' + (await recipe.count()));
-      assert.match(await recipe.first().textContent(), /intake under 42 °C/);
-      // The gauge table: TunerView's own names, then OK / If you see / Then.
-      const gauges = page.locator('[data-testid="gauges"] .gauge');
-      assert.ok((await gauges.count()) >= 3, 'the gauge table has a row per gauge');
-      assert.equal(await gauges.first().getAttribute('data-gauge'), 'IAT2');
-      assert.match(await gauges.first().textContent(), /under 42 °C moving/);
-      // Four columns do not fit a phone: the rows are stacked, so nothing scrolls sideways.
-      const row = await gauges.first().boundingBox();
-      const head = await page.locator('.gauge-head').first().boundingBox();
-      assert.equal(head, null, 'the column heads only appear when the table is a table');
-      assert.ok(row.width <= 390, 'a gauge row fits 390 px');
-      assert.equal(await noOverflow(), 0, 'the gauge table fits 390 px');
+    await step('the sidebar opens as a drawer with the car, the journey and the open steps', async () => {
+      await page.click('[data-testid="open-sidebar"]');
+      await page.waitForSelector('[data-testid="journey"] li[aria-current="step"]');
+      assert.match(await page.textContent('[data-testid="car-summary"]'), /Map version \d/);
+      assert.equal(await noOverflow(), 0);
     });
 
-    await step('the Open steps sit above the thread on a phone, each with its status', async () => {
-      const panel = page.locator('[data-testid="open-steps"]');
-      await panel.waitFor({ timeout: 30000 });
-      const items = panel.locator('.asks li');
-      assert.ok((await items.count()) >= 2, 'the Baseline step and the channels to add');
-      assert.match(await items.first().textContent(), /Baseline: one Cool drive with 2 pulls/);
-      // Above the thread at 390 px.
-      const order = await page.evaluate(() => {
-        const top = (sel) => document.querySelector(sel)?.getBoundingClientRect().top ?? -1;
-        return { panel: top('[data-testid="open-steps"]'), reply: top('[data-testid="reply-card"]') };
-      });
-      assert.ok(order.panel < order.reply, 'the Open steps are read before the thread on a phone');
-      assert.equal(await noOverflow(), 0, 'the Open steps panel fits 390 px');
+    await step('the thread survives a reload', async () => {
+      const count = await page.locator('[data-testid="assistant-message"]').count();
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('[data-testid="thread"] [data-testid="assistant-message"]');
+      assert.equal(await page.locator('[data-testid="assistant-message"]').count(), count);
     });
 
-    await step('the reply holds no raw log and the page raised no errors', async () => {
-      const text = await page.textContent('body');
-      assert.ok(!text.includes('Timestamp;'), 'no CSV header on the page');
+    await step('the page holds no raw log and raised no errors', async () => {
+      assert.ok(!(await page.textContent('body')).includes('Timestamp;'), 'no CSV header on the page');
       assert.deepEqual(errors, []);
     });
   } finally {

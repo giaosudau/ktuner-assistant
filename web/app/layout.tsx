@@ -3,8 +3,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Civic FE Tune Assist",
-  description: "Upload a Drive. Is it OK, what do I do next, and can I check the work.",
+  title: "KTuner Assistant",
+  description: "Chat with a tuner who reads your KTuner logs and tells you what to change next.",
 };
 
 export const viewport: Viewport = {
