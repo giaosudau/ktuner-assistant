@@ -310,20 +310,11 @@ def loop(tmp_path: Path):
 # need a different history (a fresh car, a single drive, an interleaved
 # sequence) keep taking the `loop` fixture above, which replays nothing.
 # ---------------------------------------------------------------------------
-@pytest.fixture(scope="session")
-def _replay_template(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
-    """The nine owner Drives replayed exactly once; the DB file is the template.
-
-    The Loop (worker, event loop, HTTP client) is closed before returning, so
-    only plain data crosses the fixture boundary: the template DB files, the
-    thread the replay ran under, and each reply's events. Every test then gets
-    its own copy (`replayed` below) plus deep copies of the replies.
-    """
-    home = tmp_path_factory.mktemp("replay-template")
+def _build_replay_template(home: Path) -> None:
     running = Loop(home).start()
     try:
         replies = dict(running.run(running.reply_to_all_owner_drives()))
-        events = {example_id: copy.deepcopy(reply.events) for example_id, reply in replies.items()}
+        events = {example_id: reply.events for example_id, reply in replies.items()}
         thread_id = running.thread_id
     finally:
         running.close()
@@ -331,7 +322,33 @@ def _replay_template(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]
     # the DB file so copying the one file is a complete database.
     with sqlite3.connect(home / "ktuner.db", timeout=30) as c:
         c.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-    return {"db": home / "ktuner.db", "thread_id": thread_id, "events": events}
+    (home / "meta.json.tmp").write_text(json.dumps({"thread_id": thread_id, "events": events}))
+    (home / "meta.json.tmp").rename(home / "meta.json")  # written last: its presence means "done"
+
+
+@pytest.fixture(scope="session")
+def _replay_template(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
+    """The nine owner Drives replayed exactly once per test RUN (not per xdist
+    worker); the DB file is the template.
+
+    Under xdist every worker used to replay on its own (8 replays contending
+    for CPU, ~10 s setup each). Now the first worker to take the lock builds
+    the template in a directory shared by all workers; the rest wait on the
+    lock and load it. Only plain data crosses the fixture boundary: the DB
+    file, the thread id, and each reply's events (JSON).
+    """
+    import fcntl
+
+    root = tmp_path_factory.getbasetemp()
+    root = root.parent if root.name.startswith("popen-gw") else root  # shared across workers
+    home = root / "replay-template"
+    home.mkdir(exist_ok=True)
+    with open(root / "replay-template.lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if not (home / "meta.json").exists():
+            _build_replay_template(home)
+    meta = json.loads((home / "meta.json").read_text())
+    return {"db": home / "ktuner.db", "thread_id": meta["thread_id"], "events": meta["events"]}
 
 
 @pytest.fixture
