@@ -34,6 +34,7 @@ import httpx
 
 from . import verify as V
 from . import knowledge as K
+from . import pictures as PIC
 from .harness import Harness
 
 #: How many provider calls one run may spend, tools and repair included.
@@ -138,6 +139,18 @@ def TOOLS() -> list[dict[str, Any]]:
             ["query"],
         ),
         fn(
+            "show_chart",
+            "Pick ONE picture that answers this reply's question. The app draws it from the engine's data; you only choose the kind. "
+            "trace: a channel around a Key moment. baseline: this Drive against the Baseline. proof: before and after bars for the step "
+            "this Drive settled. maf_gap: the MAF Scaling curve and the planned change. map_grid: the Flash plan's cells (only when the Next step is a Flash). "
+            "Every number it returns in numbers_to_say must also be in your prose.",
+            {
+                "kind": {"type": "string", "enum": list(PIC.KINDS)},
+                "moment": {"type": "integer", "description": "For trace only: which Key moment, 0 first."},
+            },
+            ["kind"],
+        ),
+        fn(
             "submit_reply",
             "Call once, last, with the final reply. The app checks every number, the step, every cell and every advice line.",
             {
@@ -193,6 +206,8 @@ def system_prompt(drive: Mapping[str, Any], reply: Mapping[str, Any]) -> str:
             "7. For anything the tools do not say — what is normal on this car, what owners report, where things "
             "live in KTuner — call search_knowledge first and cite the card id in brackets at the end of the "
             "sentence, for example [kc-ranges]. The brackets are quiet footnote refs; never explain them.",
+            "8. A picture is optional: at most one, chosen with show_chart, and only when it answers the question better than a sentence. "
+            "Say every number it prints in your prose. Never read numbers off a screenshot: quote tool numbers only.",
         ]
     )
 
@@ -410,6 +425,7 @@ async def run_agent(
     config: Any,
     llm_caller: LlmCaller | None = None,
     question: str | None = None,
+    image: str | None = None,
 ) -> dict[str, Any]:
     """Explain the decided reply (or, with `question`, answer the owner's typed question about it). Never raises: failures come back as fallback."""
     facts = seed_facts(drive, reply, worker.limits if getattr(worker, "limits", None) else {})
@@ -427,10 +443,17 @@ async def run_agent(
         map_tables = {}
 
     tools = TOOLS()
+    ask = (
+        f"The owner asks: {question}\nAnswer that question first, from the tools and cards."
+        if question
+        else "Explain this Drive's reply to its owner."
+    )
     messages: list[Message] = [
         {"role": "system", "content": system_prompt(drive, reply)},
-        {"role": "user", "content": f"The owner asks: {question}\nAnswer that question first, from the tools and cards." if question else "Explain this Drive's reply to its owner."},
+        # A screenshot rides only in the user turn, as a data URL; the model may look at it but may quote only tool numbers.
+        {"role": "user", "content": [{"type": "text", "text": ask}, {"type": "image_url", "image_url": {"url": image}}] if image else ask},
     ]
+    pictures: list[dict[str, Any]] = []
     caller = llm_caller or (lambda msgs, tls: _post_chat(settings, msgs, tls))
     thinking: list[str] = []
     calls = 0
@@ -439,6 +462,7 @@ async def run_agent(
 
     def fail(reason: str, issues: list[str]) -> dict[str, Any]:
         return {
+            "pictures": [],
             "prose": None,
             "thinking": "\n\n".join(thinking) or None,
             "verified": False,
@@ -472,6 +496,11 @@ async def run_agent(
             if call["name"] == "submit_reply":
                 submitted = call
                 continue
+            if call["name"] == "show_chart":
+                shown = await _show_chart(call["args"], pictures, worker, store, drive_id, decided, plan)
+                facts.extend(V.collect_numbers(shown.get("numbers_to_say")))
+                results.append({"tool_call_id": call["id"], "role": "tool", "name": "show_chart", "content": _slim_json(shown)})
+                continue
             try:
                 output = await _run_tool(harness, config, worker, store, drive_id, map_tables, decided, plan, call["name"], call["args"])
                 if call["name"] == "search_knowledge":
@@ -495,6 +524,7 @@ async def run_agent(
                 plan,
                 args.get("cells") or [],
                 knowledge=list(seen_cards.values()),
+                pictures=pictures,
             )
             messages.append(
                 {
@@ -508,6 +538,7 @@ async def run_agent(
             if verdict["ok"]:
                 prose = str(args.get("prose") or "")
                 return {
+                    "pictures": list(pictures),
                     "prose": prose,
                     "thinking": "\n\n".join(thinking) or None,
                     "verified": True,
@@ -532,7 +563,7 @@ async def run_agent(
         text = (strip_thinking(message.get("content")) or "").strip()
         if not text:
             return fail("empty", ["The model returned no text and no tool calls."])
-        verdict = V.verify(text, None, decided.get("key"), facts, plan, [], knowledge=list(seen_cards.values()))
+        verdict = V.verify(text, None, decided.get("key"), facts, plan, [], knowledge=list(seen_cards.values()), pictures=pictures)
         if verdict["ok"]:  # pragma: no cover - plain text never names the step key
             return {
                 "prose": text,
@@ -554,6 +585,28 @@ async def run_agent(
                 + "\nUse the tools, quote their numbers, name the decided step, and finish with submit_reply.",
             }
         )
+
+
+async def _show_chart(
+    args: Mapping[str, Any], pictures: list[dict[str, Any]], worker: Any, store: Any, drive_id: str,
+    decided: Mapping[str, Any], plan: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Draw one picture of the kind the model chose. One per reply, plus the map grid on a Flash step."""
+    kind = str(args.get("kind") or "")
+    if kind not in PIC.KINDS:
+        return {"error": f"Pick one of: {', '.join(PIC.KINDS)}."}
+    flash = (decided or {}).get("kind") == "flash"
+    if kind == "map_grid" and not flash:
+        return {"error": "The map grid is only drawn when the Next step is a Flash."}
+    extra = [p for p in pictures if p.get("kind") != "map_grid"]
+    if kind != "map_grid" and extra:
+        return {"error": "One picture per reply: you already chose one."}
+    if any(p.get("kind") == kind for p in pictures):
+        return {"error": f"The {kind} picture is already on this reply."}
+    car_state = store.car_state(None) or {}
+    pic = await PIC.build(kind, worker, store, drive_id, car_state, plan, args.get("moment"))
+    pictures.append(pic)
+    return PIC.summary_for_model(pic)
 
 
 def _slim_json(value: Any) -> str:

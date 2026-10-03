@@ -184,6 +184,7 @@ async def _explain(out, text, state, latest_id, plan, step, worker, store, setti
     if result.get("verified") and result.get("prose"):
         out["answer"] = result["prose"]
         out["citations"] = result.get("citations") or out["citations"]
+        out["pictures"] = result.get("pictures") or []
     out["agent"] = {"verified": bool(result.get("verified")), "fallback": result.get("fallback"), "issues": list(result.get("issues") or [])}
 
 

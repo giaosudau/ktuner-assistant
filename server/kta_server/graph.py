@@ -272,6 +272,15 @@ async def _decide(
     pictures = []
     if step.get("kind") == "flash" and ((reply.get("flashPlan") or {}).get("ktunerCard") or {}).get("kind") == "change":
         pictures.append(await PIC.build("map_grid", worker, store, drive_id, car_state, reply.get("flashPlan")))
+    elif reply.get("numbers"):
+        # Every read Drive shows one picture, model or not (chat CA-06): the proof bars when this
+        # Drive settled a step under matched conditions, else the trace around its first Key moment.
+        # A picture that can't be drawn is left out, never shown as a gap.
+        for kind in ("proof", "trace"):
+            picture = await PIC.build(kind, worker, store, drive_id, car_state, reply.get("flashPlan"))
+            if picture.get("kind") != "cant-tell":
+                pictures.append(picture)
+                break
     return {
         "reply": {
             **reply,
@@ -339,9 +348,10 @@ async def _agent(
     )
     if result.get("verified") and result.get("prose"):
         merged["say"] = result["prose"]
-        # The model's one picture joins the Flash grid already there (never a second grid).
-        held = [p.get("kind") for p in merged.get("pictures") or []]
-        merged["pictures"] = [*(merged.get("pictures") or []), *[p for p in result.get("pictures") or [] if p.get("kind") not in held]]
+        # The model's one picture replaces the built-in one and joins the Flash grid (never a second grid).
+        chosen = [p for p in result.get("pictures") or [] if p.get("kind") != "map_grid"]
+        if chosen:
+            merged["pictures"] = [*[p for p in merged.get("pictures") or [] if p.get("kind") == "map_grid"], *chosen]
     merged["agent"] = {
         "verified": bool(result.get("verified")),
         "repaired": bool(result.get("repaired")),

@@ -282,6 +282,26 @@ def banned_issues(prose: str, plan: Mapping[str, Any] | None = None) -> list[str
     return issues
 
 
+def picture_issues(prose: str, pictures: Sequence[Mapping[str, Any]] | None) -> list[str]:
+    """A number a picture prints must also be said in the reply (rounding is fine), so no number lives only in a chart."""
+    said = numbers_in(prose)
+    missing = sorted(
+        {
+            f"{n:g}"
+            for pic in pictures or []
+            for n in pic.get("numbers") or []
+            if not any(number_allowed(t, [float(n)]) for t in said)
+        }
+    )
+    if not missing:
+        return []
+    return [
+        "The picture shows " + ", ".join(missing[:6]) + " but the reply text does not say "
+        + ("it" if len(missing) == 1 else "them")
+        + ". Say every number the picture shows, in the text, or do not show the picture."
+    ]
+
+
 def verify(
     prose: str,
     action_key: str | None,
@@ -290,6 +310,7 @@ def verify(
     plan: Mapping[str, Any] | None = None,
     cells: Sequence[Mapping[str, Any]] | None = None,
     knowledge: Sequence[Mapping[str, Any]] | None = None,
+    pictures: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Judge one draft reply. Returns `{"ok": bool, "issues": [...]}`.
 
@@ -301,6 +322,7 @@ def verify(
       remove or change the Next step;
     * every submitted cell must match a Flash plan cell exactly;
     * table-like names in `prose` must be tables the Flash plan holds;
+    * every number a picture prints (`pictures`) must also be in the text;
     * banned advice (EN+VI) is rejected.
     """
     issues: list[str] = []
@@ -369,6 +391,7 @@ def verify(
                 "Only Flash plan tables may be named."
             )
 
+    issues.extend(picture_issues(text, pictures))
     issues.extend(banned_issues(text, plan))
     return {"ok": not issues, "issues": issues}
 
@@ -380,6 +403,7 @@ __all__ = [
     "collect_numbers",
     "number_allowed",
     "numbers_in",
+    "picture_issues",
     "plan_cells",
     "plan_ceiling_psi",
     "plan_has_afm_cells",
