@@ -19,7 +19,7 @@ engine) and `docs/adr/0003` (two map checks) still bind. Vocabulary is `CONTEXT.
 | 07 | Owner questions: pause, answer, resume | 03, 06 | ready (after 03, 06) |
 | 08 | LLM agent with verify, repair and fallback | 04 | ready (after 04) |
 | 09 | Knowledge cards and citations | 08 | ready (after 08) |
-| 10 | Car profile, Install and the drive window | 03, 08 | ready (after 03, 08) |
+| 10 | Car profile, Install and the drive window | 03, 08 | done |
 | 11 | Ask without uploading | 09, 10 | ready (after 09, 10) |
 | 12 | Thresholds file and the independent Python map change check | 03 | ready (after 03) |
 | 13 | Flash step: KTuner card to a new Map version (and the History file) | 07, 10, 12 | ready (after 07, 10, 12) |
