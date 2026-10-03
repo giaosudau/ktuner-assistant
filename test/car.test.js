@@ -12,9 +12,22 @@ for (const id of ['aug30-1601', 'aug30-1529', 'sep01-0813', 'aug23-1959', 'aug23
   require('../data/example-' + id + '.js');
 }
 const csv = (id) => zlib.gunzipSync(Buffer.from(globalThis.KTA_EXAMPLES[id].gz, 'base64')).toString('utf8');
-const logOf = (id) => K.readLog(csv(id));
+// Parse each real drive once per file; tests share the parsed log (engine reads it, never mutates).
+const LOGS = {};
+const logOf = (id) => (LOGS[id] = LOGS[id] || K.readLog(csv(id)));
 // The digitized KTuner basemap: Map version 1's tables, and what every Flash
 // plan is read against.
+// carIngest re-analyses the whole drive (~130 ms); the suite repeats the same
+// (state, drive, meta) hundreds of times. Memoize it and hand each caller a fresh clone.
+const logIds = new WeakMap();
+const INGESTS = new Map();
+const rawIngest = K.carIngest;
+K.carIngest = function (state, log, meta, opts) {
+  if (!logIds.has(log)) logIds.set(log, logIds.size + 1);
+  const key = JSON.stringify([state, logIds.get(log), meta, opts]);
+  if (!INGESTS.has(key)) INGESTS.set(key, rawIngest(state, log, meta, opts));
+  return structuredClone(INGESTS.get(key));
+};
 const MAP = require('../data/ktuner-maps-digitized.json');
 // File names the owner actually has on disk.
 const NAME = {

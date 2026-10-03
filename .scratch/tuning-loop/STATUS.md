@@ -52,4 +52,4 @@ Each row is committed as "Refactor A<n> — …"; tests stay green; run `uv run 
 | A2 | Reply wording: stop spelling stamp/channel/status words in 3 places | done |
 | A3 | Worker passes engine limits through, no renamed copy | ready (after A2) |
 | A5 | Worker op surface collapse (speculative, only if A1–A3 confirm the pattern) | ready (after A3) |
-| T  | Slow tests: `npm test` 63 s, pytest 43 s — find and fix the cause | done — pytest 48s→39s (replay shared across xdist workers); node bound by car.test.js |
+| T  | Slow tests: `npm test` 63 s, pytest 43 s — find and fix the cause | done — pytest 48s→39s (replay shared across xdist workers); node bound by car.test.js; T2: car.test.js 87s→22s, npm test 83s→23s (memoized readLog+carIngest in test; engine hot: rollingMedian/finite/toNum) |
