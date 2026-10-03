@@ -808,3 +808,7 @@ h3 {
 .setup-install input[type="date"] {
   max-width: 100%;
 }
+.ask form { display: flex; gap: 8px; margin: 12px 0; }
+.ask input { flex: 1; min-width: 0; padding: 10px 12px; font: inherit; border: 1px solid var(--line, #ccc); border-radius: 8px; }
+.ask button { padding: 10px 16px; font: inherit; border-radius: 8px; }
+.ask-answer { margin-bottom: 12px; }

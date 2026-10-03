@@ -255,7 +255,7 @@ def test_the_windowed_state_keeps_flashes_and_drops_old_drives():
 
 # -- with no Drive, a tuning question is answered with "upload a drive first"
 def test_with_no_drive_a_tuning_question_is_answered_with_upload_a_drive_first(loop: Loop):
-    response = post(loop, "/api/ask", {"text": "Why is my Knock Control high in traffic?"})
+    response = post(loop, "/api/ask", {"text": "Why is my car slower in the heat?"})
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["kind"] == "no-drive"
@@ -278,8 +278,7 @@ def test_with_drives_a_typed_question_states_its_window(loop: Loop):
     response = post(loop, "/api/ask", {"text": "Why is my Knock Control high in traffic?"})
     assert response.status_code == 200, response.text
     body = response.json()
-    # Ticket 11 replaces the answer body on this same seam; the window stays.
-    assert body["kind"] == "upload-first"
+    assert body["kind"] == "answer"
     assert body["window"] == "based on this Drive only (22 Aug 09:03)"
 
 

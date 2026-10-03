@@ -31,6 +31,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+from .ask import answer_question
 from .config import Settings, load_settings
 from .db import Store
 from .graph import build_graph
@@ -386,11 +387,10 @@ def create_app(
     async def api_ask(request: Request) -> dict[str, Any]:
         """A typed question with no Drive uploaded.
 
-        With no Drive at all only Car profile setup runs: a setup flow fills
-        the draft card, and a tuning question is answered with "upload a drive
-        first". With Drives, a tuning question states the current window and
-        points at an upload — the full typed-question flow is ticket 11, which
-        replaces the answer body on this same seam.
+        A setup flow fills the Car profile draft. Any other question is answered
+        by `ask.answer_question` over the drive window and the knowledge cards
+        (ticket 11); a question that needs Drives with none held is answered
+        with "upload a drive first".
         """
         try:
             body = await request.json()
@@ -402,22 +402,10 @@ def create_app(
             if not text:
                 raise HTTPException(status_code=400, detail="Tell me about your car in your own words first.")
             return {"ok": True, "kind": "profile-draft", "draft": P.draft_from_text(text, worker.ktuner_basemap)}
+        if not text:
+            raise HTTPException(status_code=400, detail="Ask me in words first.")
         state = store.car_state(None) or {}
-        if not state.get("drives"):
-            if not text:
-                raise HTTPException(status_code=400, detail="Ask me in words first.")
-            return {
-                "ok": True,
-                "kind": "no-drive",
-                "answer": "Upload a Drive first: every answer here is read off your Drives, not guessed.",
-            }
-        win = C.window_card(W.window_for_state(state, store.list_installs(), _latest_drive(state)))
-        return {
-            "ok": True,
-            "kind": "upload-first",
-            "window": win["line"],
-            "answer": win["line"] + ". Upload a Drive and its reply covers this.",
-        }
+        return await answer_question(text, worker, store, settings, _latest_drive(state), llm_caller)
 
     @app.get("/api/history")
     async def api_history() -> JSONResponse:

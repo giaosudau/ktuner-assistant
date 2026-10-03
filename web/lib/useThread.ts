@@ -362,13 +362,22 @@ export async function recordInstall(part: string, action: string, installedAt: n
   return (await response.json()) as { install: InstallRow; line: string };
 }
 
-/** A typed question with no Drive uploaded: setup fills, tuning waits. */
-export async function askWithoutDrive(text: string, flow?: string): Promise<{ kind: string; answer?: string; draft?: ProfileDraft; window?: string }> {
+/** What a typed question comes back with: the answer, the window it reads, the cards it cites. */
+export type AskAnswer = {
+  kind: string;
+  answer?: string;
+  draft?: ProfileDraft;
+  window?: string;
+  citations?: { id: string; title: string }[];
+};
+
+/** A typed question, no upload needed: answered over the drive window and the cards. */
+export async function askWithoutDrive(text: string, flow?: string): Promise<AskAnswer> {
   const response = await fetch(`${SERVER_URL}/api/ask`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(flow ? { text, flow } : { text }),
   });
   if (!response.ok) throw new Error((await response.json().catch(() => null))?.detail ?? "The question did not go through.");
-  return (await response.json()) as { kind: string; answer?: string; draft?: ProfileDraft; window?: string };
+  return (await response.json()) as AskAnswer;
 }

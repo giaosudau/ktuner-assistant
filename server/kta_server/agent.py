@@ -409,8 +409,9 @@ async def run_agent(
     harness: Harness,
     config: Any,
     llm_caller: LlmCaller | None = None,
+    question: str | None = None,
 ) -> dict[str, Any]:
-    """Explain the decided reply. Never raises: failures come back as fallback."""
+    """Explain the decided reply (or, with `question`, answer the owner's typed question about it). Never raises: failures come back as fallback."""
     facts = seed_facts(drive, reply, worker.limits if getattr(worker, "limits", None) else {})
     decided = reply.get("nextStep") or {}
     plan = reply.get("flashPlan")
@@ -428,7 +429,7 @@ async def run_agent(
     tools = TOOLS()
     messages: list[Message] = [
         {"role": "system", "content": system_prompt(drive, reply)},
-        {"role": "user", "content": "Explain this Drive's reply to its owner."},
+        {"role": "user", "content": f"The owner asks: {question}\nAnswer that question first, from the tools and cards." if question else "Explain this Drive's reply to its owner."},
     ]
     caller = llm_caller or (lambda msgs, tls: _post_chat(settings, msgs, tls))
     thinking: list[str] = []
