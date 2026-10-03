@@ -9,7 +9,6 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** ready-for-agent
 **Status:** done (3 Oct 2026: 4 rules in `engine/`, 14 new + 3 rewritten engine tests; suite 129/129; seam-1 34/34 unchanged)
 
 - [x] On the owner's drives, "Unexplained change: boost" no longer fires between a Drive with pulls and one without — `test/car.test.js`: `a Drive with no pull never raises "Unexplained change: boost" against Drives that had one` (22 Aug 09:03 → 09:50: nine pulls then none, 16.3 vs 8.7 psi, no ask). The rule is not one-sided: a Drive with pulls is still compared against the pulls, and still asks when the target moved. Needs 3 pull Drives (`CAR_RULES.targetRefMin`) — one pull Drive is not this car's boost normal.
