@@ -4,15 +4,19 @@
  * One reply, in the order the owner reads it:
  *
  *   the sentence that answers "am I hurting it?" · the window it read ·
- *   the four numbers · the Verdict word · the Flash plan headline ·
- *   the collapsed harness steps · exactly one Next step.
+ *   the four numbers · the Map version this Drive ran on · what I asked last
+ *   time (settled, with the reason) · whether this Drive was a Wasted one ·
+ *   the Verdict word · the Flash plan headline · the collapsed harness steps ·
+ *   exactly one Next step with its recipe or gauge table.
  */
 import type { Turn } from "../lib/types";
 
 import { HarnessSteps } from "./HarnessSteps";
+import { MapVersionLine } from "./MapVersionLine";
 import { NextStepCard } from "./NextStepCard";
 import { NumberRow } from "./NumberRow";
 import { PlanCard } from "./PlanCard";
+import { SettledSteps, WastedLine } from "./SettledSteps";
 import { VerdictPill } from "./VerdictPill";
 
 export function ReplyCard({ turn }: { turn: Turn }) {
@@ -43,6 +47,9 @@ export function ReplyCard({ turn }: { turn: Turn }) {
       ) : null}
 
       {card?.numbers ? <NumberRow tiles={card.numbers} /> : null}
+      {card?.mapVersion ? <MapVersionLine card={card.mapVersion} /> : null}
+      {card?.settled ? <SettledSteps rows={card.settled} /> : null}
+      <WastedLine line={card?.wasted ?? null} />
       {card?.flashPlan ? <PlanCard plan={card.flashPlan} /> : null}
       {turn.harness ? <HarnessSteps harness={turn.harness} /> : null}
       {card?.nextStep ? <NextStepCard step={card.nextStep} /> : null}

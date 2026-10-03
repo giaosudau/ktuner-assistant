@@ -8,8 +8,10 @@ What each node owns:
 
 * `ingest` — the engine calls the reply is built from, streamed as harness
   steps; then SQLite (the raw CSV was stored by `POST /upload`, and the Car
-  history state goes back in exactly as the engine returned it).
-* `decide`  — exactly one Next step, and the Open step it opens.
+  history state goes back in exactly as the engine returned it). The Drive's Map
+  version travels with the Drive, so the reply can name it.
+* `decide`  — settle every Open step against the new Drive, then exactly one
+  Next step and the Open steps it opens.
 * `reply`   — the typed reply card, streamed as prose and left in state.
 
 The LLM node (agent → verify → repair/fallback) is a later ticket; it slots in
@@ -27,7 +29,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 
 from . import copy as C
-from .harness import Harness
+from .harness import Harness, merge as merge_harness
 from .worker import Worker, WorkerError
 
 
@@ -53,7 +55,7 @@ def build_graph(worker: Worker, store, settings, checkpointer=None):
         return await _ingest(state, config, worker, store, settings)
 
     async def decide(state: LoopState, config: RunnableConfig) -> dict[str, Any]:
-        return await _decide(state, config, store)
+        return await _decide(state, config, worker, store, settings)
 
     async def reply(state: LoopState, config: RunnableConfig) -> dict[str, Any]:
         return await _reply(state, config, store)
@@ -152,28 +154,67 @@ async def _ingest_run(
         "upload_id": upload["upload_id"],
         "thread_id": state.get("thread_id") or upload.get("thread_id") or "",
         "drive": {**drive, "logRows": loaded["rows"], "drivesRead": drives_read},
-        "reply": C.build_reply(drive, plan, limits, drives_read, {**harness.summary(), "steps": harness.as_list()}),
+        "reply": C.build_reply(
+            drive, plan, limits, drives_read,
+            {**harness.summary(), "steps": harness.as_list()},
+            first_drive=bool(drive.get("firstDrive")),
+        ),
     }
 
 
 # ---------------------------------------------------------------------------
-# decide: exactly one Next step
+# decide: settle what was asked last time, then exactly one Next step
+#
+# Settling runs first, so the step this Drive is given is chosen knowing what the
+# Drive proved. Both operations are the engine's (`settleOpenSteps`, `nextStep`)
+# and both are streamed as harness steps: what the owner is told was checked is
+# what was checked.
 # ---------------------------------------------------------------------------
-async def _decide(state: LoopState, config: RunnableConfig, store) -> dict[str, Any]:
+async def _decide(
+    state: LoopState, config: RunnableConfig, worker: Worker, store, settings
+) -> dict[str, Any]:
     if state.get("error"):
         return {}
+    harness = Harness()
     drive = state["drive"]
-    step = C.next_step(drive, state["reply"].get("flashPlan"))
-    thread_id = state.get("thread_id") or "local"
-    store.add_open_step(
-        f"{thread_id}:{state['upload_id']}",
-        drive.get("id"),
-        step["kind"],
-        step["title"],
-        step.get("body", ""),
-        opened_at=(drive.get("summary") or {}).get("start"),
+    drive_id = drive.get("id")
+    car_state = store.car_state(None)
+    reply = state["reply"]
+    shown = {"driveId": drive_id, "openSteps": len(store.list_open_steps(only_open=True))}
+
+    # 1. Settle every Open step against this Drive.
+    settled = await harness.step(
+        config, "settleOpenSteps", "Settle what I asked last time", shown,
+        lambda: worker.call(
+            "settleOpenSteps", state=car_state, driveId=drive_id,
+            openSteps=store.list_open_steps(),
+        ),
     )
-    return {"reply": {**state["reply"], "nextStep": step}}
+
+    # 2. Decide the one Next step, and which Open steps it opens.
+    decided = await harness.step(
+        config, "nextStep", "Decide the Next step", shown,
+        lambda: worker.call(
+            "nextStep", state=car_state, driveId=drive_id, openSteps=settled["openSteps"],
+        ),
+    )
+    store.save_open_steps(decided["openSteps"])
+
+    step = C.next_step_card(
+        decided["step"], reply.get("flashPlan"), worker.limits, decided["openSteps"]
+    )
+    return {
+        "reply": {
+            **reply,
+            "settled": C.settled_rows(settled["settled"]),
+            "wasted": C.wasted_line(settled["wasted"]),
+            "nextStep": step,
+            "openSteps": decided["openSteps"],
+            "harness": merge_harness(
+                [reply.get("harness"), {**harness.summary(), "steps": harness.as_list()}]
+            ),
+        }
+    }
 
 
 # ---------------------------------------------------------------------------

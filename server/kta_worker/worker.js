@@ -20,7 +20,10 @@
  *      are, so the numbers match the in-browser assistant's.
  *   3. The Car history state is one JSON document that goes in and comes back
  *      unchanged — the engine's operations are pure, so this worker never owns
- *      state of its own beyond the log cache.
+ *      state of its own beyond the log cache. Map versions travel in it as
+ *      numbers, names and dates; their tables do not, because the whole KTuner
+ *      map would ride out with every Drive. `mapVersion` fetches one version's
+ *      tables when a change is checked against it (ADR 0003).
  *   4. Every number the reply can show is computed here, from the engine's own
  *      constants. Python never re-derives a threshold.
  *
@@ -42,6 +45,11 @@ var KTA = require(path.join(__dirname, '..', '..', 'engine', 'kta-car.js'));
 require(path.join(__dirname, '..', '..', 'engine', 'kta-ask.js')); // adds KTA.ask
 var MAP_DEFAULT = require(path.join(__dirname, '..', '..', 'data', 'ktuner-maps-digitized.json'));
 var TEXTS = globalThis.window.KTA_I18N.en;
+
+// Where a Map version's tables come from. `ktuner-basemap` is this app's own
+// digitized KTuner basemap — Map version 1's tables. A version whose tables the
+// app has not stored yet says so instead of borrowing another version's tables.
+var TABLE_SOURCES = { 'ktuner-basemap': function () { return MAP_DEFAULT; } };
 
 var isNum = function (v) { return typeof v === 'number' && isFinite(v); };
 function rnd(v, d) { return isNum(v) ? Math.round(v * Math.pow(10, d)) / Math.pow(10, d) : null; }
@@ -130,7 +138,7 @@ function askRun(driveId, tool, input) {
 // What a Drive looks like on the wire: the numbers the reply shows, and the
 // limits they are read against, all from the engine's own constants.
 // ---------------------------------------------------------------------------
-var S = KTA.LIMITS.score, MIX = KTA.LIMITS.mixture;
+var S = KTA.LIMITS.score, MIX = KTA.LIMITS.mixture, CR = KTA.CAR_RULES, DL = KTA.DRIVE_LIMITS;
 var LIMITS = {
   scoreBaseline: S.baseline,
   tableDeg: S.tableDeg,
@@ -143,7 +151,13 @@ var LIMITS = {
   trimStop: KTA.LIMITS.trim.watch,
   minMoving: KTA.CAR_RULES.minMoving,
   coolIat: KTA.CAR_RULES.coolIat,
-  overshootWatch: KTA.LIMITS.overshoot.watch
+  hotIat: DL.hotDrive,
+  pullIat: DL.pullIatGood,
+  overshootWatch: KTA.LIMITS.overshoot.watch,
+  overshootOk: KTA.LIMITS.overshoot.good,
+  shakedownCalmSec: CR.shakedownCalm,
+  lugOk: CR.lugOk,
+  uploadScore: CR.uploadScore
 };
 
 /** The degrees of timing a Fuel-quality score costs under boost (fact-check.md §2). */
@@ -161,6 +175,21 @@ function shakedownOut(sh) {
   };
 }
 
+/** The Map version a Drive ran on, as the reply reads it. */
+function mapOut(m) {
+  if (!m || !m.recorded) return null;
+  return {
+    recorded: true,
+    version: m.version,
+    label: m.label || 'Map version ' + m.version,
+    name: m.name,
+    since: m.since == null ? null : m.since,
+    kind: m.kind || null,
+    flashId: m.flashId || null,
+    changed: m.changed || null
+  };
+}
+
 /** Compact: no rows, no timelines, no cells. This is what crosses the boundary. */
 function driveOut(report) {
   if (!report) return null;
@@ -172,7 +201,9 @@ function driveOut(report) {
     verdict: report.verdict,
     verdictWord: KTA.STATUS_LABEL[report.verdict] || "Can't tell",
     baseline: report.baseline || null,
-    map: report.map || { recorded: false, name: null, since: null },
+    // Which Map version this Drive ran on, in the owner's words: the version
+    // active at its start, never guessed from the log, never "not recorded".
+    map: mapOut(report.map),
     isShakedown: !!report.isShakedown,
     shakedown: shakedownOut(report.shakedown),
     flashCause: report.flashCause || null,
@@ -197,6 +228,11 @@ function driveOut(report) {
       mixLeanest: s.mixLeanest, mixTarget: s.mixTarget,
       boostTarget: s.boostTarget, overshoot: s.overshoot, wgAtPeak: s.wgAtPeak,
       cvtPeak: s.cvtPeak, lugShare: s.lugShare,
+      // Why the score moved while the car was lugging: the facts the habit cause
+      // is diagnosed from (and the Diagnose node reads next).
+      kcUpSteps: s.kcUpSteps == null ? null : s.kcUpSteps,
+      lugUpSteps: s.lugUpSteps == null ? null : s.lugUpSteps,
+      lugRpm: s.lugRpm == null ? null : s.lugRpm,
       accel5070: s.accel5070 ? rnd(s.accel5070.seconds, 2) : null,
       flat: (s.flat || []).slice(), missing: (s.missing || []).slice(),
       calmSec: s.calmSec, shakedown: s.shakedown
@@ -221,6 +257,8 @@ function planOut(plan) {
     headline: plan.headline, route: plan.route || null, basis: plan.basis || null,
     proof: plan.proof || null,
     saveAs: plan.saveAs || null, undoName: plan.undoName || null,
+    undo: plan.undo || null,
+    mapVersion: plan.mapVersion || null,
     ceilingPsi: plan.ceiling != null ? plan.ceiling : null,
     tables: (plan.tables || []).map(function (t) {
       return { id: t.id, kind: t.kind, cellCount: (t.cells || []).length, pasteRow: t.pasteRow || null };
@@ -234,6 +272,67 @@ function planOut(plan) {
     deferred: plan.deferred || [],
     levers: (plan.levers || []).map(function (l) { return { id: l.id, family: l.family, title: l.title, status: l.status, reason: l.reason, unlocks: l.unlocks }; }),
     openIssues: plan.openIssues || null
+  };
+}
+
+/**
+ * Map versions as the engine holds them, plus the tables a named version is held
+ * with. A Map version never borrows another version's tables: `mapVersion` (what
+ * a check reads) refuses a version whose Flashed change is not stored yet, and
+ * says so. This is the seam the two map checks (ADR 0003) read a version from.
+ */
+function versionsOf(state) {
+  var s = KTA.carEmpty();
+  if (state && typeof state === 'object' && Array.isArray(state.mapVersions)) s.mapVersions = state.mapVersions;
+  return KTA.carMapVersions(s);
+}
+function versionByNumber(state, ref) {
+  var vs = versionsOf(state);
+  if (isNum(ref)) {
+    var byNumber = vs.filter(function (v) { return v.n === ref; })[0];
+    if (!byNumber) fail('no-map-version', 'There is no Map version ' + ref + '. The app holds: ' + versionList(vs) + '.');
+    return byNumber;
+  }
+  var byName = vs.filter(function (v) { return v.name === String(ref); })[0];
+  if (!byName) fail('no-map-version', 'There is no Map version named "' + ref + '". The app holds: ' + versionList(vs) + '.');
+  return byName;
+}
+function versionList(vs) { return vs.map(function (v) { return v.label; }).join(', ') || 'none'; }
+function tablesFor(v) {
+  var source = TABLE_SOURCES[v.tablesFrom];
+  if (!source) fail('no-map-tables', 'The app holds the name of ' + v.label + ' but not its tables yet.');
+  return source();
+}
+/** Which Map version a plan is written against: the one asked for, else the active one.
+ *  A plan may be written on a version whose change is not stored yet (the app can
+ *  still read the map); `mapVersion` is where a check refuses. */
+function mapForVersion(state, ref) {
+  if (ref != null) return tablesFor(versionByNumber(state, ref));
+  var active = versionsOf(state).slice(-1)[0];
+  return active ? tablesFor(active) : MAP_DEFAULT;
+}
+function tableCount(v) {
+  if (!v.tablesFrom || !TABLE_SOURCES[v.tablesFrom]) return 0;
+  return Object.keys(TABLE_SOURCES[v.tablesFrom]()).length;
+}
+/** The tables a check may be made against: a version's own, never an older map's. */
+function tablesToCheck(v) {
+  if (v.tablesPending) {
+    fail('map-change-pending',
+      'The change behind ' + v.label + ' is not stored yet, so its tables cannot be checked. ' +
+      'Ask the owner what they flashed, or store the checked change first.');
+  }
+  return tablesFor(v);
+}
+function versionOut(v) {
+  if (!v) return null;
+  return {
+    n: v.n, label: v.label, name: v.name, kind: v.kind, tablesFrom: v.tablesFrom || null,
+    tablesPending: !!v.tablesPending,
+    tablesHeld: !!(v.tablesFrom && TABLE_SOURCES[v.tablesFrom] && !v.tablesPending),
+    from: v.from == null ? null : v.from, flashId: v.flashId || null, changed: v.changed || null,
+    note: v.note || '', updatedAt: v.updatedAt == null ? null : v.updatedAt,
+    tableCount: tableCount(v)
   };
 }
 
@@ -255,8 +354,51 @@ var OPS = {
       ok: true, engine: { carVersion: KTA.CAR_RULES.version, driveVersion: KTA.DRIVE_LIMITS.version || null },
       limits: LIMITS,
       cachedDrives: CACHE_ORDER.slice(),
-      ktunerBasemap: 'Starter 21 Dual Tune 2'
+      ktunerBasemap: KTA.CAR_RULES.ktunerBasemap,
+      mapVersionSeed: {
+        n: 1, label: 'Map version 1', name: KTA.CAR_RULES.ktunerBasemap,
+        kind: 'ktuner-basemap', tablesFrom: 'ktuner-basemap',
+        tableCount: Object.keys(MAP_DEFAULT).length
+      }
     };
+  },
+
+  /** Every Map version the app holds, and which one the car is on now. */
+  mapVersions: function (args) {
+    var vs = versionsOf(stateOf(args));
+    return {
+      versions: vs.map(versionOut),
+      active: vs.length ? versionOut(vs[vs.length - 1]) : null
+    };
+  },
+
+  /**
+   * One Map version with its tables, as the map checks read it (ADR 0003). Only
+   * asked for when a change is being checked against that version: the tables are
+   * the whole KTuner map, so they never ride out with a Drive report. A version
+   * whose change the app has not stored yet refuses rather than handing over the
+   * tables of an older map.
+   */
+  mapVersion: function (args) {
+    var state = stateOf(args);
+    var ref = args.version == null ? null : args.version;
+    var v = ref == null ? versionsOf(state).slice(-1)[0] : versionByNumber(state, ref);
+    if (!v) fail('no-map-version', 'This car has no Map version yet.');
+    return { version: versionOut(v), tables: tablesToCheck(v) };
+  },
+
+  /** Map version 1: the KTuner basemap the owner gave the app. Idempotent. */
+  recordBasemap: function (args) {
+    var state = stateOf(args);
+    var now = isNum(args.now) ? args.now : Date.now();
+    var opts = args.basemap && typeof args.basemap === 'object' ? args.basemap : {};
+    var out;
+    try {
+      out = KTA.carRecordBasemap(state, opts, { now: now });
+    } catch (e) {
+      fail('engine-error', 'The KTuner basemap could not be recorded: ' + (e && e.message));
+    }
+    return { state: out.state, version: versionOut(out.version), created: !!out.created };
   },
 
   /** The raw CSV again: parse it and put the log back in the cache (after a restart). */
@@ -287,6 +429,7 @@ var OPS = {
   /** The remembered Car history, as the Car history screen reads it. */
   carHistory: function (args) {
     var state = stateOf(args);
+    var vs = versionsOf(state);
     return {
       rows: KTA.carTableRows(state),
       baseline: KTA.carBaseline(state),
@@ -294,17 +437,59 @@ var OPS = {
       hidden: (state.hidden || []).slice(),
       answers: Object.assign({}, state.answers || {}),
       shakedown: state.shakedown || null,
+      mapVersions: vs.map(versionOut),
+      activeMapVersion: vs.length ? versionOut(vs[vs.length - 1]) : null,
       driveCount: KTA.carTableRows(state).length
     };
   },
 
   carBaseline: function (args) { return KTA.carBaseline(stateOf(args)); },
 
-  /** The one Flash plan this Car history supports (the only place a table is named). */
+  /**
+   * Settle every Open step against one Drive: Done / Not yet / Still off /
+   * Can't tell yet, each with the numbers behind it, plus whether the Drive was a
+   * Wasted drive (it settled none of them) and what would have settled one. The
+   * Open steps are passed in and come back settled — the app holds them.
+   */
+  settleOpenSteps: function (args) {
+    var state = stateOf(args);
+    var driveId = need(args, 'driveId', 'string');
+    var out;
+    try {
+      out = KTA.carSettle(state, driveId, args.openSteps);
+    } catch (e) {
+      fail('engine-error', 'The Open steps could not be settled against ' + driveId + ': ' + (e && e.message));
+    }
+    return { settled: out.settled, openSteps: out.openSteps, wasted: out.wasted };
+  },
+
+  /**
+   * Exactly one Next step, in the order the app always uses: an open Stop first,
+   * then "this log cannot be read", the dead gauges, the Baseline, a cause seen
+   * today, an Open step still open (compactly), and otherwise nothing. The step
+   * names the Drive whose upload will settle it.
+   */
+  nextStep: function (args) {
+    var state = stateOf(args);
+    var driveId = need(args, 'driveId', 'string');
+    var out;
+    try {
+      out = KTA.carNextStep(state, driveId, args.openSteps);
+    } catch (e) {
+      fail('engine-error', 'The Next step could not be decided after ' + driveId + ': ' + (e && e.message));
+    }
+    return { step: out.step, openSteps: out.openSteps, opened: out.opened };
+  },
+
+  /**
+   * The one Flash plan this Car history supports (the only place a table is named).
+   * `mapVersion` names the Map version to write against — the active one by
+   * default — so a proposed change can be checked against the map it was made on.
+   */
   flashPlan: function (args) {
     var state = stateOf(args);
     var now = isNum(args.now) ? args.now : Date.now();
-    var map = args.map || MAP_DEFAULT;
+    var map = args.map || mapForVersion(state, args.mapVersion);
     var plan;
     try {
       plan = KTA.carFlashPlan(state, map, { now: now, history: Array.isArray(args.history) ? args.history : [] });
@@ -314,7 +499,7 @@ var OPS = {
     return planOut(plan);
   },
 
-  /** Record a Flash the owner says they wrote to the ECU. */
+  /** Record a Flash the owner says they wrote to the ECU. It becomes the next Map version. */
   recordFlash: function (args) {
     var state = stateOf(args);
     var f = need(args, 'flash', 'object');
@@ -325,7 +510,10 @@ var OPS = {
     } catch (e) {
       fail('engine-error', 'The Flash could not be recorded: ' + (e && e.message));
     }
-    return { state: out.state, flash: out.flash };
+    return {
+      state: out.state, flash: out.flash,
+      version: out.version ? versionOut(out.version) : null
+    };
   },
 
   /** Answer an Unexplained change for one Drive. */

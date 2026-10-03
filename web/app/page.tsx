@@ -2,11 +2,12 @@
 
 import { useRef } from "react";
 
+import { OpenStepsPanel } from "../components/OpenStepsPanel";
 import { ReplyCard } from "../components/ReplyCard";
 import { useThread } from "../lib/useThread";
 
 export default function Page() {
-  const { turns, busy, send } = useThread();
+  const { turns, busy, send, openSteps, questions } = useThread();
   const picker = useRef<HTMLInputElement>(null);
 
   return (
@@ -50,21 +51,26 @@ export default function Page() {
         </button>
       </div>
 
-      <main className="thread">
-        {turns.length === 0 ? (
-          <p className="muted" data-testid="empty">
-            Nothing uploaded yet. Pick a TunerView log from your phone or laptop.
-          </p>
-        ) : null}
-        {turns.map((turn) => (
-          <div key={turn.id} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div className="up">
-              <b>Uploaded</b> {turn.fileName}
+      {/* The Open steps sit beside the thread on a desktop and above it on a
+          phone, so the whole loop is in one glance before the first Drive. */}
+      <div className="layout">
+        <OpenStepsPanel steps={openSteps} questions={questions} />
+        <main className="thread">
+          {turns.length === 0 ? (
+            <p className="muted" data-testid="empty">
+              Nothing uploaded yet. Pick a TunerView log from your phone or laptop.
+            </p>
+          ) : null}
+          {turns.map((turn) => (
+            <div key={turn.id} className="turn">
+              <div className="up">
+                <b>Uploaded</b> {turn.fileName}
+              </div>
+              <ReplyCard turn={turn} />
             </div>
-            <ReplyCard turn={turn} />
-          </div>
-        ))}
-      </main>
+          ))}
+        </main>
+      </div>
     </div>
   );
 }

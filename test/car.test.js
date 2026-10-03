@@ -13,6 +13,9 @@ for (const id of ['aug30-1601', 'aug30-1529', 'sep01-0813', 'aug23-1959', 'aug23
 }
 const csv = (id) => zlib.gunzipSync(Buffer.from(globalThis.KTA_EXAMPLES[id].gz, 'base64')).toString('utf8');
 const logOf = (id) => K.readLog(csv(id));
+// The digitized KTuner basemap: Map version 1's tables, and what every Flash
+// plan is read against.
+const MAP = require('../data/ktuner-maps-digitized.json');
 // File names the owner actually has on disk.
 const NAME = {
   'aug23-1959': 'TunerView_20260823_195901.csv',
@@ -109,20 +112,162 @@ test('first drive says the history starts here; rows read in time order', () => 
 });
 
 // ---------------------------------------------------------------------------
+// Map version 1: the KTuner basemap, active from the first Drive
+// ---------------------------------------------------------------------------
+
+test('a fresh car is on Map version 1, the KTuner basemap, before any Drive', () => {
+  const s = K.carEmpty();
+  assert.deepEqual(K.carMapVersions(s).map((v) => v.n), [1]);
+  const active = K.carActiveMapVersion(s);
+  assert.equal(active.n, 1);
+  assert.equal(active.name, 'Starter 21 Dual Tune 2');
+  assert.equal(active.label, 'Map version 1');
+  assert.equal(active.kind, 'ktuner-basemap');
+  // The tables are the app's own KTuner map data, named not inlined: the Car
+  // history document must not grow by half a megabyte on every Drive.
+  assert.equal(active.tablesFrom, 'ktuner-basemap');
+  assert.equal(JSON.stringify(s).includes('values'), false, 'no table arrays in the state');
+  // Nothing was flashed yet, so no Shakedown drive is waiting.
+  assert.equal(s.shakedown.status, 'none');
+});
+
+test('Map version 1 starts no Shakedown drive: the first Drive is an ordinary Drive', () => {
+  let s = K.carEmpty();
+  const first = ingest(s, 'aug23-1959');
+  s = first.state;
+  assert.equal(first.report.isShakedown, false);
+  assert.equal(first.report.shakedown.role, 'none');
+  assert.equal(s.shakedown.status, 'none');
+  assert.equal(first.report.map.version, 1);
+  assert.equal(K.carTableRows(s)[0].mapVersion, 1);
+  // The prototype's side effect: recording the starting map as a Flash made the
+  // first Drive a Shakedown drive. Recording it as Map version 1 does not, even
+  // when the owner gives it the date they flashed the car that day.
+  const dated = K.carRecordBasemap(s, { from: Date.UTC(2026, 7, 23, 13, 0, 0) }, { now: NOW }).state;
+  assert.equal(dated.shakedown.status, 'none');
+  const after = ingest(dated, 'aug23-2038');
+  assert.equal(after.report.isShakedown, false);
+  assert.equal(after.report.map.version, 1);
+  assert.equal(after.report.flashCause, null);
+});
+
+test('recording the KTuner basemap again never makes two Map version 1s', () => {
+  // A fresh car already has Map version 1, so recording it creates nothing.
+  const again = K.carRecordBasemap(K.carEmpty(), {}, { now: NOW });
+  assert.equal(again.created, false);
+  assert.deepEqual(K.carMapVersions(again.state).map((v) => v.n), [1]);
+  // The owner can still say when they gave the app the map: it stays Map
+  // version 1, with that date, and still starts no Shakedown drive.
+  const dated = K.carRecordBasemap(K.carEmpty(), { from: Date.UTC(2026, 7, 22, 2, 0, 0) }, { now: NOW });
+  assert.equal(dated.version.n, 1);
+  assert.equal(dated.version.name, 'Starter 21 Dual Tune 2');
+  assert.equal(dated.state.shakedown.status, 'none');
+  assert.deepEqual(K.carMapVersions(dated.state).map((v) => v.n), [1]);
+});
+
+test('the Map a Drive ran on is the version active at its start, never the log', () => {
+  let s = K.carEmpty();
+  s = ingest(s, 'aug23-1959').state;
+  // 20:00 Vietnam time = 13:00 UTC, between the two Drives.
+  s = K.carRecordFlash(s, { time: Date.UTC(2026, 7, 23, 13, 0, 0), map: 'Starter 21 PRL preset', changed: 'afm', note: '' }, { now: NOW }).state;
+  // The Flash is Map version 2, and only Drives that start after it ran on it.
+  assert.deepEqual(K.carMapVersions(s).map((v) => v.n), [1, 2]);
+  assert.equal(K.carActiveMapVersion(s).n, 2);
+  assert.equal(K.carMapAt(s, Date.UTC(2026, 7, 23, 12, 59, 1)).n, 1);
+  assert.equal(K.carMapAt(s, Date.UTC(2026, 7, 23, 13, 38, 53)).n, 2);
+  const r = ingest(s, 'aug23-2038');
+  assert.equal(r.report.map.version, 2);
+  assert.equal(r.report.map.name, 'Starter 21 PRL preset');
+  // Re-checking the earlier Drive after the Flash does not move it: its Map is
+  // the one active when it started, not the one active now.
+  const rechecked = K.carIngest(r.state, logOf('aug23-1959'), { fileName: NAME['aug23-1959'], now: NOW });
+  assert.equal(rechecked.report.map.version, 1);
+  assert.equal(K.carReport(r.state, '20260823-195901').map.version, 1);
+});
+
+test('a Flash the owner confirms is the next Map version; Undo names the one before', () => {
+  let s = K.carEmpty();
+  s = ingest(s, 'aug23-1959').state;
+  s = K.carRecordFlash(s, { time: Date.UTC(2026, 7, 23, 12, 30, 0), map: 'Starter 21 known-good', changed: 'other', note: '' }, { now: NOW }).state;
+  s = K.carRecordFlash(s, { time: Date.UTC(2026, 7, 23, 13, 0, 0), map: 'Starter 21 PRL preset', changed: 'afm', note: '' }, { now: NOW }).state;
+  assert.deepEqual(K.carMapVersions(s).map((v) => v.n + ':' + v.name), [
+    '1:Starter 21 Dual Tune 2', '2:Starter 21 known-good', '3:Starter 21 PRL preset'
+  ]);
+  assert.equal(K.carMapVersionBefore(s, 3).name, 'Starter 21 known-good');
+  assert.equal(K.carMapVersionBefore(s, 1), null);
+  // A Stop on the version-3 Shakedown drive names the version before it.
+  const r = ingest(s, 'aug23-2038');
+  assert.equal(r.report.map.version, 3);
+  assert.equal(r.report.flashCause.version, 3);
+  assert.equal(r.report.flashCause.previousMap.version, 2);
+  assert.equal(r.report.flashCause.previousMap.map, 'Starter 21 known-good');
+  const p = K.carFlashPlan(r.state, MAP, { now: NOW });
+  assert.equal(p.undo.version, 2);
+  assert.match(p.undo.label, /Map version 2 · Starter 21 known-good, flashed 20260823-1930/);
+});
+
+test('the Flash plan Undo names a Map version, and never invents one', () => {
+  // Map version 1 is the only version the app holds, so there is no earlier one:
+  // the plan says so and the owner is asked, rather than a name being made up.
+  const r = ingest(K.carEmpty(), 'aug23-2038');
+  assert.equal(r.report.map.version, 1);
+  const p = K.carFlashPlan(r.state, MAP, { now: NOW });
+  assert.equal(p.kind, 'undo');
+  assert.equal(p.undo.known, false);
+  assert.equal(p.undo.version, null);
+  assert.equal(p.undo.name, null);
+  assert.equal(p.undo.label, null);
+  assert.match(p.undo.headline, /tell me which one/);
+  assert.match(p.headline, /tell me which one it is/);
+  // Once there is a version to go back to, Undo names it, with the KTuner name.
+  const flashed = K.carRecordFlash(r.state, { time: Date.UTC(2026, 7, 23, 13, 0, 0), map: 'Starter 21 PRL preset', changed: 'afm', note: '' }, { now: NOW }).state;
+  const later = ingest(flashed, 'aug23-2038');
+  const undo = K.carFlashPlan(later.state, MAP, { now: NOW }).undo;
+  assert.equal(undo.known, true);
+  assert.equal(undo.version, 1);
+  assert.equal(undo.name, 'Starter 21 Dual Tune 2');
+  assert.equal(undo.headline, 'Flash your previous map file (Map version 1 · Starter 21 Dual Tune 2)');
+});
+
+test('the History file carries Map versions and merges them by number', () => {
+  let s = K.carEmpty();
+  s = ingest(s, 'aug23-1959').state;
+  s = K.carRecordFlash(s, { time: 1000, map: 'Starter 21 r2', changed: 'afm', note: '' }, { now: NOW }).state;
+  const doc = K.carExport(s);
+  assert.deepEqual(doc.mapVersions.map((v) => v.n), [1, 2]);
+  assert.equal(doc.mapVersions[1].name, 'Starter 21 r2');
+  const back = K.carImport(K.carEmpty(), doc).state;
+  assert.deepEqual(back.mapVersions.map((v) => v.n + ':' + v.name), ['1:Starter 21 Dual Tune 2', '2:Starter 21 r2']);
+  // A History file from before Map versions existed still imports: the car had
+  // Map version 1 all along, and its Flashes become the versions after it.
+  const old = K.carImport(K.carEmpty(), { version: 1, drives: doc.drives, flashes: doc.flashes, hidden: [], answers: {} });
+  assert.equal(old.error, undefined);
+  assert.deepEqual(old.state.mapVersions.map((v) => v.n), [1, 2]);
+});
+
+// ---------------------------------------------------------------------------
 // 05 — Flashes, Map on the drive card, Shakedown drive
 // ---------------------------------------------------------------------------
 
-test('map on the card: not recorded until a flash predates the drive', () => {
+test('the map on the card is the Map version active when the drive started', () => {
   let s = K.carEmpty();
   s = ingest(s, 'aug23-1959').state;
+  // No Flash recorded: the app still knows, because Map version 1 is the KTuner
+  // basemap the owner gave it and is active from the first Drive.
   const r = ingest(s, 'aug23-2038'); s = r.state;
-  assert.equal(r.report.map.recorded, false);
-  assert.equal(r.report.map.name, null);
+  assert.equal(r.report.map.recorded, true);
+  assert.equal(r.report.map.name, 'Starter 21 Dual Tune 2');
+  assert.equal(r.report.map.version, 1);
+  assert.equal(r.report.map.label, 'Map version 1');
   const f = K.carRecordFlash(s, { time: Date.UTC(2026, 7, 23, 13, 0, 0), map: 'Starter 21 AFM fix', changed: 'afm', note: '' }, { now: NOW });
   s = f.state;
-  // The drive card for 20:38 now names the map; 19:59 stays not-recorded.
+  assert.equal(f.version.n, 2);
+  // The drive card for 20:38 now names the version that Flash produced; 19:59
+  // keeps Map version 1, because it started before it.
   assert.equal(K.carReport(s, '20260823-203853').map.name, 'Starter 21 AFM fix');
-  assert.equal(K.carReport(s, '20260823-195901').map.recorded, false);
+  assert.equal(K.carReport(s, '20260823-203853').map.version, 2);
+  assert.equal(K.carReport(s, '20260823-195901').map.version, 1);
+  assert.equal(K.carReport(s, '20260823-195901').map.name, 'Starter 21 Dual Tune 2');
 });
 
 test('flash CRUD: edit fixes a typo, delete asks nothing here but removes once', () => {
@@ -131,9 +276,16 @@ test('flash CRUD: edit fixes a typo, delete asks nothing here but removes once',
   s = f.state;
   const id = f.flash.id;
   s = K.carEditFlash(s, id, { map: 'Starter 21 rev2' });
-  assert.equal(K.carMapAt(s, 2000).map, 'Starter 21 rev2');
+  // The Flash's Map version keeps step with it, so Undo never names a file the
+  // owner has just renamed.
+  assert.equal(K.carMapAt(s, 2000).name, 'Starter 21 rev2');
+  assert.equal(K.carMapAt(s, 2000).n, 2);
   s = K.carDeleteFlash(s, id);
-  assert.equal(K.carMapAt(s, 2000), null);
+  // Deleting the Flash takes its Map version with it; the car is back on
+  // Map version 1, the map it started on, with no gap in the numbering.
+  assert.equal(K.carMapAt(s, 2000).n, 1);
+  assert.equal(K.carMapAt(s, 2000).name, 'Starter 21 Dual Tune 2');
+  assert.deepEqual(K.carMapVersions(s).map((v) => v.n), [1]);
 });
 
 test('Aug 23 with a flash at 20:00: 20:38 is a shakedown drive that fails and names the flash', () => {
@@ -502,16 +654,16 @@ test('an answered drive is never asked again, even when re-checked', () => {
 
 test('the drive card carries the highest boost target measured, even unmapped', () => {
   const r = ingest(K.carEmpty(), 'aug30-1529');
-  assert.equal(r.report.map.recorded, false);
+  assert.equal(r.report.map.version, 1);
   assert.ok(Math.abs(r.report.summary.boostTarget - 19.2) < 0.15, 'highest target ' + r.report.summary.boostTarget);
   assert.equal(K.carTableRows(r.state)[0].boostTarget, r.report.summary.boostTarget);
+  assert.equal(K.carTableRows(r.state)[0].mapVersion, 1);
 });
 
 // ---------------------------------------------------------------------------
 // 10 — Flash plan (engine: KTA.carFlashPlan, pure data for the Next Flash card)
 // ---------------------------------------------------------------------------
 const fs = require('fs');
-const MAP = require('../data/ktuner-maps-digitized.json');
 const DESK = '/Users/bean/Library/Mobile Documents/com~apple~CloudDocs/Desktop';
 function ownerState() {
   // The owner's folder when present (16 drives), else the bundled drives in time order.
@@ -676,8 +828,12 @@ test('record-prefill from the plan names the new file and starts the shakedown',
   const p = K.carFlashPlan(trimState([-7.1, -6.8, -7.3, -6.5, -7.0]), MAP, { now: NOW });
   assert.equal(p.kind, 'one-family');
   assert.match(p.saveAs, /AFM Flow/);
-  assert.match(p.undoName, /previous|not recorded/i);
+  // The change is written on Map version 1, so Undo names Map version 1 — with
+  // the KTuner name the owner gave it, not a shortened invention.
+  assert.equal(p.mapVersion.n, 1);
+  assert.match(p.undoName, /Flash your previous map file \(Map version 1 · Starter 21 Dual Tune 2\)/);
   assert.equal(p.prefill.changed, 'afm');
+  assert.match(p.saveAs, /^Starter 21 Dual Tune 2 · /, 'the new file is named after the Map version it is written on');
   const r = K.carRecordFlash(K.carEmpty(), p.prefill, { now: NOW });
   assert.equal(r.state.shakedown.status, 'pending');
   const d = K.carIngest(r.state, logOf('sep01-0813'), { fileName: NAME['sep01-0813'], now: NOW });
@@ -717,7 +873,7 @@ test('the flash plan is deterministic for the same state and clock', () => {
   assert.deepEqual(K.carFlashPlan(s, MAP, { now: NOW }), K.carFlashPlan(s, MAP, { now: NOW }));
 });
 
-test('next-flash card contract: 19:59, one Flash at 20:00, 20:38 Stop → Undo naming that file', () => {
+test('next-flash card contract: 19:59, one Flash at 20:00, 20:38 Stop → Undo naming that Map version', () => {
   let s = K.carEmpty();
   s = ingest(s, 'aug23-1959').state;
   s = K.carRecordFlash(s, { time: Date.UTC(2026, 7, 23, 13, 0, 0), map: 'Starter 21', changed: 'other', note: '' }, { now: NOW }).state;
@@ -729,10 +885,17 @@ test('next-flash card contract: 19:59, one Flash at 20:00, 20:38 Stop → Undo n
   assert.equal(p.route, 'preset');
   assert.equal(p.tables.length, 0);
   assert.equal(p.cells.length, 0);
+  // The Stop ran on Map version 2, so Undo names Map version 1 — the KTuner
+  // basemap the owner gave the app — with its KTuner spelling.
+  assert.equal(p.mapVersion.n, 2);
+  assert.equal(p.undo.version, 1);
+  assert.equal(p.undo.name, 'Starter 21 Dual Tune 2');
+  assert.match(p.undoName, /Map version 1 · Starter 21 Dual Tune 2/);
   // "Record this Flash" from the card names the file and starts the Shakedown drive.
-  assert.equal(p.prefill.map, 'Starter 21');
+  assert.equal(p.prefill.map, 'Starter 21 Dual Tune 2');
   const r = K.carRecordFlash(K.carEmpty(), p.prefill, { now: NOW });
   assert.equal(r.state.shakedown.status, 'pending');
+  assert.equal(r.version.n, 2);
 });
 
 test('next-flash card contract: no-change carries six levers and no file, table or prefill', () => {
@@ -746,4 +909,232 @@ test('next-flash card contract: no-change carries six levers and no file, table 
   assert.equal(p.undoName, null);
   assert.equal(p.tables.length, 0);
   assert.equal(p.cells.length, 0);
+});
+
+// ---------------------------------------------------------------------------
+// 04 — Open steps, settling them, and exactly one Next step
+// ---------------------------------------------------------------------------
+
+const OWNER_NINE = [
+  'aug22-0903', 'aug22-0950', 'aug23-1959', 'aug23-2038', 'aug30-1509',
+  'aug30-1529', 'aug30-1601', 'sep01-0813', 'sep05-0756'
+];
+
+/**
+ * The owner's nine real Drives through the loop, in order: settle what was asked
+ * against the new Drive, then decide one Next step — the two engine operations
+ * the app calls for every upload, in that order.
+ */
+function loop(ids) {
+  let s = K.carEmpty();
+  let steps = [];
+  return (ids || OWNER_NINE).map((id) => {
+    const r = ingest(s, id);
+    s = r.state;
+    const settled = K.carSettle(s, r.report.identity, steps);
+    steps = settled.openSteps;
+    const decided = K.carNextStep(s, r.report.identity, steps);
+    steps = decided.openSteps;
+    return {
+      id, driveId: r.report.identity, tooShort: r.report.tooShort, verdict: r.report.verdict,
+      summary: r.report.summary, settled: settled.settled, wasted: settled.wasted,
+      step: decided.step, open: steps
+    };
+  });
+}
+const byDrive = (rows, id) => rows.filter((r) => r.id === id)[0];
+
+test('the loop over the owner\'s nine Drives: one Next step each, in the ticket\'s order', () => {
+  const rows = loop();
+  // Drive → which branch of the fixed decision order it took.
+  assert.deepEqual(
+    rows.map((r) => r.step.key + '/' + r.step.kind),
+    [
+      'baseline/drive',   // 22 Aug 09:03 no Baseline yet
+      'baseline/drive',   // 22 Aug 09:50 too warm — the same step again
+      'baseline/drive',   // 23 Aug 19:59 too warm — the same step again
+      'undo/flash',       // 23 Aug 20:38 the open Stop: Undo is the only step
+      'tooShort/none',    // 30 Aug 15:09 nothing read, the previous step stands
+      'baseline/drive',   // 30 Aug 15:29 the Undo is Done, the Baseline is next
+      'baseline/drive',   // 30 Aug 16:01 Baseline step + the habit opened beside it
+      'habit/drive',      // 1 Sep 08:13 the Baseline is Done, the habit is scored
+      'logger/watch'      // 5 Sep 07:56 four dead gauges: fix the logger
+    ]
+  );
+  // Exactly one step per Drive, never a list.
+  assert.ok(rows.every((r) => r.step && typeof r.step.title === 'string' && r.step.title));
+  assert.ok(rows.every((r) => !Array.isArray(r.step)), 'one step, not a list');
+});
+
+test('30 Aug 16:01 gives the Baseline step with the lugging habit added as an Open step', () => {
+  const row = byDrive(loop(), 'aug30-1601');
+  // The Baseline is still the step: the habit waits to be scored against it.
+  assert.equal(row.step.key, 'baseline');
+  assert.equal(row.step.also, 'habit');
+  assert.equal(row.step.same, false, 'a step that brings news of its own is never compact');
+  assert.deepEqual(row.step.gauges, ['iat', 'kc', 'afr', 'boost']);
+  // The cause is diagnosed from this Drive's own numbers and told as a free habit.
+  assert.match(row.step.cause.why, /Knock Control went 0\.49 → 0\.65/);
+  assert.match(row.step.cause.why, /1\.6° of timing taken under boost\. Not damage\./);
+  assert.match(row.step.cause.why, /31 of its 41 step-ups came while the CVT held 1,509 rpm/);
+  assert.equal(row.summary.lugUpSteps, 31);
+  assert.equal(row.summary.kcUpSteps, 41);
+  // And it is a real Open step, waiting for the Drive that settles it.
+  const habit = row.open.filter((x) => x.key === 'habit')[0];
+  assert.equal(habit.status, 'open');
+  assert.equal(habit.askedOn, '20260830-160151');
+  assert.equal(habit.lastAskedOn, null, 'opened beside the step, not asked for yet');
+});
+
+test('the Undo settles Done in 2 Drives on 30 Aug 15:29, with the trims and the calm minutes', () => {
+  const rows = loop();
+  const asked = byDrive(rows, 'aug23-2038').step;
+  assert.equal(asked.key, 'undo', 'the open Stop makes Undo the only step');
+  assert.equal(asked.proves, 'trims back within ±5 % over 10 calm minutes');
+  assert.equal(asked.settlesOn, 'after the first calm drive on the old file');
+
+  const undone = byDrive(rows, 'aug30-1529').settled.filter((x) => x.key === 'undo')[0];
+  assert.equal(undone.status, 'done');
+  assert.match(undone.why, /Trims −2\.3 % over 15 calm minutes/);
+  assert.match(undone.why, /they were −21\.4 %/, 'the number the step was asked against');
+  // Drives to proof: asked on 20:38, settled on 15:29 — two uploads, one of them
+  // the Too-short Drive that settled nothing.
+  const askedOn = byDrive(rows, 'aug23-2038').driveId;
+  const settledBy = byDrive(rows, 'aug30-1529').driveId;
+  const counting = rows.filter((r) => r.driveId > askedOn && r.driveId <= settledBy);
+  assert.deepEqual(counting.map((r) => r.id), ['aug30-1509', 'aug30-1529']);
+  assert.equal(counting.filter((r) => !r.tooShort).length, 1, 'one of them proved it');
+});
+
+test('a Drive that settles nothing is a Wasted drive, and it says what would have settled one', () => {
+  const rows = loop();
+  // Too short: nothing read, and the Undo was the step waiting.
+  const short = byDrive(rows, 'aug30-1509');
+  assert.deepEqual(short.settled, [], 'a Too-short Drive settles nothing at all');
+  assert.equal(short.wasted.wasted, true);
+  assert.equal(short.wasted.key, 'undo');
+  assert.match(short.wasted.reason, /too short/);
+  assert.equal(short.wasted.would, 'a drive of 10 calm minutes');
+  assert.equal(short.wasted.proves, 'the Undo');
+  // It also leaves the step the owner already has standing.
+  assert.equal(short.step.previous.key, 'undo');
+  assert.equal(short.step.same, true);
+
+  // A logger fault: the reason is the logger, and what would count names the gauges.
+  const dead = byDrive(rows, 'sep05-0756');
+  assert.equal(dead.wasted.wasted, true);
+  assert.match(dead.wasted.reason, /the logger lost DIFP, Transmission Temperature, Turbo Pressure and Turbo Pressure Target/);
+  assert.equal(dead.wasted.withGauges, true, 'the Drive that would count needs every gauge moving');
+  // A Drive that settled something is never called a Wasted drive.
+  for (const id of ['aug30-1529', 'sep01-0813']) {
+    assert.equal(byDrive(rows, id).wasted.wasted, false, id);
+  }
+});
+
+test('a Stop Drive is never called a Wasted drive, whatever it could not settle', () => {
+  const stop = byDrive(loop(), 'aug23-2038');
+  assert.equal(stop.verdict, 'stop');
+  assert.ok(stop.settled.length > 0, 'it did read and settle the steps it could');
+  assert.equal(stop.wasted.wasted, false, 'the owner has a fault to fix, not a lesson');
+});
+
+test('every "Can\'t tell yet" carries a why, and never reads like a failure', () => {
+  const rows = loop();
+  const judged = rows.flatMap((r) => r.settled);
+  assert.ok(judged.length > 10, 'the nine Drives judge a lot of steps: ' + judged.length);
+  const waits = judged.filter((j) => j.status === 'wait');
+  assert.ok(waits.length >= 6, 'several waits across the nine Drives');
+  for (const j of judged) {
+    assert.ok(j.why && j.why.length > 10, j.key + ': every judgement says why: ' + j.why);
+    for (const banned of ['failed', 'failure', 'try again', 'not yet —', 'bad log', 'wrong']) {
+      assert.ok(!j.why.toLowerCase().includes(banned), j.key + ': "' + j.why + '"');
+    }
+  }
+  // The whys CONTEXT.md asks for, each on a real Drive where it applies.
+  assert.ok(
+    waits.some((j) => /Cool Drive \(37 °C moving\): the habit only shows on a hot afternoon/.test(j.why)),
+    'cool when the habit needs heat'
+  );
+  assert.match(byDrive(rows, 'aug30-1509').wasted.reason, /it was too short \(under a minute moving\)/,
+    'too short: the why is on the Wasted drive line, because a Too-short Drive settles nothing');
+  assert.match(
+    K.carSettle(synth([{ id: 'x', flat: ['kControl'], kcPeak: 0.6, kcStart: 0.5, hot: true, lugShare: 8 }]),
+      'x', [{ key: 'habit', status: 'open', why: 'asked', askedOn: 'older', lastAskedOn: 'older' }]).settled[0].why,
+    /Knock Control was dead in this log/
+  );
+});
+
+test('the Baseline settles Done on 1 Sep 08:13 with the intake, the pulls and 50→70', () => {
+  const rows = loop();
+  assert.match(byDrive(rows, 'sep01-0813').settled.filter((x) => x.key === 'baseline')[0].why,
+    /Intake 37 °C, 2 pulls, 50→70 km\/h in 1\.97 s\. Every later Drive is compared to this one\./);
+  // And the habit, opened on 16:01, is asked for as the step from then on.
+  const step = byDrive(rows, 'sep01-0813').step;
+  assert.equal(step.key, 'habit');
+  assert.equal(step.settlesOn, 'after your next hot-afternoon Drive');
+});
+
+test('every Next step names the Drive whose upload will settle it', () => {
+  for (const r of loop()) {
+    assert.ok(r.step.settlesOn && r.step.settlesOn.length > 5, r.id + ': ' + r.step.settlesOn);
+    // "Upload when" is a Drive to log, or a moment to come back after — never blank.
+    assert.match(r.step.settlesOn, /^(after|your next|something)/, r.id + ': ' + r.step.settlesOn);
+    if (r.step.proves) assert.ok(r.step.proves.length > 5, r.id + ' names what it proves');
+  }
+});
+
+test('a repeated step is one short line: same step as last time', () => {
+  const rows = loop();
+  for (const id of ['aug22-0950', 'aug23-1959']) {
+    assert.equal(byDrive(rows, id).step.same, true, id + ' repeats the step as last time');
+  }
+  assert.equal(byDrive(rows, 'aug22-0903').step.same, false, 'the first Drive is not a repeat');
+  assert.equal(byDrive(rows, 'aug30-1601').step.same, false, 'a cause seen today is never hidden');
+  assert.equal(byDrive(rows, 'sep01-0813').step.same, false,
+    'the habit was opened beside the Baseline, never asked for: not a repeat');
+});
+
+test('an Open step asked again keeps its place, and only its last ask moves', () => {
+  const rows = loop();
+  const after = byDrive(rows, 'aug23-1959').open.filter((x) => x.key === 'baseline')[0];
+  assert.equal(after.askedOn, '20260822-090322', 'the Drive that first asked it: Drives to proof counts from here');
+  assert.equal(after.lastAskedOn, '20260823-195901', 'and the Drive that asked it most recently');
+  assert.equal(after.status, 'wait', 'the last judgement is kept, not reset');
+  assert.equal(after.settledBy, '20260823-195901');
+});
+
+test('a Drive never settles the step it asked itself', () => {
+  let s = ingest(K.carEmpty(), 'aug23-1959').state;
+  const stop = ingest(s, 'aug23-2038');
+  s = stop.state;
+  const steps = K.carNextStep(s, stop.report.identity, []).openSteps;
+  assert.equal(steps.filter((x) => x.key === 'undo')[0].askedOn, stop.report.identity);
+  // Re-checking the same Drive must not judge the Undo against its own fault.
+  const again = K.carSettle(s, stop.report.identity, steps);
+  assert.equal(again.settled.filter((x) => x.key === 'undo').length, 0);
+  assert.equal(again.openSteps.filter((x) => x.key === 'undo')[0].status, 'open');
+});
+
+test('the loop is deterministic: the same Car history and Open steps give the same reply', () => {
+  assert.deepEqual(loop(), loop());
+});
+
+test('no step names a KTuner table; only the Flash plan does', () => {
+  const rows = loop();
+  const words = JSON.stringify(rows.map((r) => r.step));
+  for (const id of Object.keys(K.TABLES)) {
+    assert.ok(!words.includes(id), id + ' must never appear in a step');
+  }
+  // The Flash plan still names its tables: the only place that does.
+  const plan = K.carFlashPlan(trimState([-7.1, -6.8, -7.3, -6.5, -7.0]), MAP, { now: NOW });
+  assert.deepEqual(plan.tables.map((t) => t.id), ['MAF_Scaling_Custom']);
+});
+
+test('the Open steps read as the loop\'s own vocabulary: keys, statuses and reasons', () => {
+  const open = loop(OWNER_NINE.slice(0, 1))[0].open;
+  assert.deepEqual(open.map((x) => x.key), ['baseline', 'channels']);
+  assert.deepEqual(open.map((x) => x.status), ['open', 'open']);
+  for (const step of open) assert.match(step.title, /^(Undo|Baseline|Habit test|Log AFR|Fix the logger)/);
+  // A hand-made step key is dropped rather than guessed at.
+  assert.deepEqual(K.carOpenSteps([{ key: 'invented', status: 'open' }]), []);
 });

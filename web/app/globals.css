@@ -75,6 +75,32 @@ button {
   padding: 0 12px;
 }
 
+/* ---------------------------------------------------------------- the loop layout
+   The Open steps sit beside the thread where there is room for both, and above it
+   on a phone — the loop is the first thing read, the thread is the second. */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .wrap {
+    max-width: 1060px;
+  }
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 16px;
+  }
+  /* On a desktop the panel is on the right, beside the thread it belongs to. */
+  .side {
+    order: 2;
+    position: sticky;
+    top: 12px;
+  }
+}
+
 header.hero {
   padding: 20px 0 6px;
 }
@@ -151,6 +177,71 @@ h3 {
   flex-direction: column;
   gap: 12px;
   padding-bottom: 48px;
+}
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------------------------------------------------------- what I asked last time
+   Each Open step this Drive settled: the word, the step, and the reason with the
+   numbers in it. Never a verdict on the owner. */
+.settled {
+  margin-top: 12px;
+  border-top: 1px solid var(--line-2);
+  padding-top: 10px;
+}
+.settled .row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-top: 5px;
+  font-size: 14px;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.settled .row .v {
+  flex: none;
+}
+.settled .row b {
+  color: var(--ink);
+}
+
+/* The Wasted drive line: one quiet line, never a scolding. */
+.wasted {
+  margin-top: 8px;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------- open steps */
+.asks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.asks li {
+  padding: 8px 0;
+  border-top: 1px solid var(--line-2);
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+.asks li:first-child {
+  border-top: 0;
+}
+.asks li b {
+  display: block;
+  color: var(--ink);
+  font-weight: 600;
+  margin-top: 3px;
+}
+.asks li span.why {
+  display: block;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  margin-top: 2px;
 }
 
 .up {
@@ -255,6 +346,30 @@ h3 {
   font-size: 14px;
 }
 
+/* Which Map version this Drive ran on: one quiet line, then the one-off note. */
+.mapver {
+  margin-top: 8px;
+  padding-left: 9px;
+  border-left: 2px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mapver-line {
+  font: 600 13px/1.4 var(--font-b);
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
+.mapver-note {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+
 /* ---------------------------------------------------------------- the harness */
 .harness {
   margin-top: 12px;
@@ -334,6 +449,115 @@ h3 {
   border: 2px solid var(--accent-line);
   border-radius: 10px;
   padding: 12px 14px;
+}
+/* A repeated step: one quiet line, so it can be scrolled past in a second. */
+.next.same {
+  border-style: dashed;
+  border-width: 1px;
+}
+.same-note {
+  margin-left: 6px;
+}
+
+/* The drive recipe: numbered, short, physical. */
+.recipe-head {
+  margin-top: 12px;
+}
+.recipe {
+  margin: 6px 0 0;
+  padding-left: 20px;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+.recipe li + li {
+  margin-top: 4px;
+}
+.recipe li {
+  overflow-wrap: anywhere;
+}
+
+/* A cause seen today, told as a free habit beside the step it was seen on. */
+.also {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--sheet-2);
+  border-radius: 10px;
+  font-size: 14px;
+}
+.also p {
+  margin: 4px 0 0;
+}
+
+/* The gauge table: the gauge as TunerView spells it, then OK / If you see / Then.
+   Four columns do not fit a phone, so each gauge is one stacked row there and the
+   whole table widens into columns once there is room. */
+.gauges {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+.gauge {
+  background: var(--sheet-2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.g-name {
+  font: 600 12.5px/1.3 var(--font-m);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.g-cell {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.g-cell i {
+  font: 600 11px/1.5 var(--font-b);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-style: normal;
+}
+/* The column heads only exist once the table is a table. */
+.gauge-head {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .gauges {
+    gap: 0;
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .gauge,
+  .gauge-head {
+    grid-template-columns: 150px repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 8px 10px;
+    background: transparent;
+  }
+  .gauge + .gauge {
+    border-top: 1px solid var(--line-2);
+  }
+  .gauge-head {
+    display: grid;
+    background: var(--sheet-2);
+    font: 600 11.5px/1.4 var(--font-b);
+    color: var(--ink-3);
+  }
+  .g-cell {
+    display: block;
+  }
+  .g-cell i {
+    display: none;
+  }
 }
 
 .tag {

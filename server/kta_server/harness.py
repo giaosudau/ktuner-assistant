@@ -115,6 +115,22 @@ class Harness:
         await cm.on_custom_event(HARNESS_SUMMARY, dict(summary) if summary else self.summary())
 
 
+def merge(parts: list[Mapping[str, Any] | None]) -> dict[str, Any]:
+    """One harness summary out of several nodes' steps.
+
+    The line has to say what the whole run checked, so the count and the seconds
+    are added up where the line is drawn rather than per node.
+    """
+    steps = [s for part in parts if part for s in (part.get("steps") or [])]
+    seconds = round(sum(float(s.get("ms") or 0) for s in steps) / 1000.0, 1)
+    return {
+        "checked": len(steps),
+        "seconds": seconds,
+        "line": f"Checked {len(steps)} things · {seconds:.1f} s",
+        "steps": steps,
+    }
+
+
 def _slim(value: Any, depth: int = 0) -> Any:
     """Compact summaries only: drop long free text and arrays of numbers."""
     if depth > 6:
@@ -130,4 +146,4 @@ def _slim(value: Any, depth: int = 0) -> Any:
     return value
 
 
-__all__ = ["Harness", "Step", "HARNESS_SUMMARY", "MANUALLY_EMIT_MESSAGE"]
+__all__ = ["Harness", "Step", "HARNESS_SUMMARY", "MANUALLY_EMIT_MESSAGE", "merge"]

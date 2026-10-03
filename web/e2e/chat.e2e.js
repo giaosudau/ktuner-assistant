@@ -117,6 +117,29 @@ async function run() {
       assert.equal(await noOverflow(), 0, 'the reply card fits 390 px');
     });
 
+    await step('the card says which Map version this Drive ran on, under the numbers', async () => {
+      const line = page.locator('[data-testid="map-version"]');
+      await line.waitFor({ timeout: 30000 });
+      assert.equal(await line.getAttribute('data-version'), '1');
+      assert.equal(await line.locator('.mapver-line').textContent(), 'on Map version 1 · Starter 21 Dual Tune 2');
+      // It is a quiet line under the four numbers, not a headline.
+      const order = await page.evaluate(() => {
+        const top = (sel) => document.querySelector(sel)?.getBoundingClientRect().top ?? -1;
+        return {
+          say: top('[data-testid="say"]'),
+          numbers: top('[data-testid="numbers"]'),
+          mapVersion: top('[data-testid="map-version"]'),
+          plan: top('[data-testid="flash-plan"]'),
+        };
+      });
+      assert.ok(order.say < order.numbers, 'the Verdict sentence comes first');
+      assert.ok(order.numbers < order.mapVersion, 'the Map version line sits under the numbers');
+      assert.ok(order.mapVersion < order.plan, 'the Flash plan comes after it');
+      // The first Drive explains what a Map version is, once.
+      assert.match(await line.textContent(), /A Map version is the map on your ECU/);
+      assert.equal(await noOverflow(), 0, 'the Map version line fits 390 px');
+    });
+
     await step('the harness is one collapsed line that expands to each step with its inputs and output', async () => {
       await page.waitForSelector('[data-testid="harness-line"]', { timeout: 30000 });
       // The server's own count and seconds arrive with the last step; wait for
@@ -150,7 +173,42 @@ async function run() {
       assert.equal(await page.locator('[data-testid="next-step"]').count(), 1);
       const stepCard = page.locator('[data-testid="next-step"]');
       assert.match(await stepCard.locator('h3').textContent(), /\S/);
-      assert.match(await stepCard.textContent(), /Upload:/);
+      assert.match(await stepCard.textContent(), /Upload when:/);
+      assert.equal(await noOverflow(), 0, 'the Next step fits 390 px');
+    });
+
+    await step('the Next step shows its drive recipe and its gauge table, one row per gauge', async () => {
+      const stepCard = page.locator('[data-testid="next-step"]');
+      // The recipe is numbered and physical: when, how warm, how many pulls.
+      const recipe = stepCard.locator('ol.recipe li');
+      assert.ok((await recipe.count()) >= 3, 'the drive recipe is numbered: ' + (await recipe.count()));
+      assert.match(await recipe.first().textContent(), /intake under 42 °C/);
+      // The gauge table: TunerView's own names, then OK / If you see / Then.
+      const gauges = page.locator('[data-testid="gauges"] .gauge');
+      assert.ok((await gauges.count()) >= 3, 'the gauge table has a row per gauge');
+      assert.equal(await gauges.first().getAttribute('data-gauge'), 'IAT2');
+      assert.match(await gauges.first().textContent(), /under 42 °C moving/);
+      // Four columns do not fit a phone: the rows are stacked, so nothing scrolls sideways.
+      const row = await gauges.first().boundingBox();
+      const head = await page.locator('.gauge-head').first().boundingBox();
+      assert.equal(head, null, 'the column heads only appear when the table is a table');
+      assert.ok(row.width <= 390, 'a gauge row fits 390 px');
+      assert.equal(await noOverflow(), 0, 'the gauge table fits 390 px');
+    });
+
+    await step('the Open steps sit above the thread on a phone, each with its status', async () => {
+      const panel = page.locator('[data-testid="open-steps"]');
+      await panel.waitFor({ timeout: 30000 });
+      const items = panel.locator('.asks li');
+      assert.ok((await items.count()) >= 2, 'the Baseline step and the channels to add');
+      assert.match(await items.first().textContent(), /Baseline: one Cool drive with 2 pulls/);
+      // Above the thread at 390 px.
+      const order = await page.evaluate(() => {
+        const top = (sel) => document.querySelector(sel)?.getBoundingClientRect().top ?? -1;
+        return { panel: top('[data-testid="open-steps"]'), reply: top('[data-testid="reply-card"]') };
+      });
+      assert.ok(order.panel < order.reply, 'the Open steps are read before the thread on a phone');
+      assert.equal(await noOverflow(), 0, 'the Open steps panel fits 390 px');
     });
 
     await step('the reply holds no raw log and the page raised no errors', async () => {

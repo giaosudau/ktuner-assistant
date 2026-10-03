@@ -62,8 +62,18 @@ CREATE TABLE IF NOT EXISTS map_versions (
   name        TEXT    NOT NULL,
   parent_id   INTEGER,
   flash_id    TEXT,
-  created_at  INTEGER NOT NULL
+  created_at  INTEGER NOT NULL,
+  -- Added with Map version 1 (ticket 03). `id` IS the Map version number: the
+  -- owner says it out loud, so it is a small integer and never a UUID.
+  kind        TEXT    NOT NULL DEFAULT 'ktuner-basemap',
+  source      TEXT    NOT NULL DEFAULT 'ktuner-basemap',
+  changed     TEXT,
+  note        TEXT    NOT NULL DEFAULT '',
+  flashed_at  INTEGER,
+  tables      TEXT,
+  updated_at  INTEGER
 );
+CREATE INDEX IF NOT EXISTS map_versions_by_created ON map_versions(created_at);
 
 CREATE TABLE IF NOT EXISTS flashes (
   id          TEXT PRIMARY KEY,
@@ -98,7 +108,11 @@ CREATE TABLE IF NOT EXISTS open_steps (
   status      TEXT    NOT NULL,
   opened_at   INTEGER NOT NULL,
   settled_at  INTEGER,
-  settled_by  TEXT
+  settled_by  TEXT,
+  -- The Drive that asked this step most recently, which is how the app knows a
+  -- repeated step is a repeat. `drive_id` is the Drive that first asked it:
+  -- Drives to proof counts from there.
+  last_asked_on TEXT
 );
 CREATE INDEX IF NOT EXISTS open_steps_by_status ON open_steps(status, opened_at);
 
@@ -128,6 +142,23 @@ def _json(value: Any) -> str:
     return json.dumps(value, separators=(",", ":"), default=str)
 
 
+# Columns added after the first schema shipped. SQLite cannot add a column with
+# CREATE TABLE IF NOT EXISTS, so an owner's own database from an earlier build is
+# brought forward here, once, at startup.
+_MAP_VERSION_COLUMNS = {
+    "kind": "TEXT NOT NULL DEFAULT 'ktuner-basemap'",
+    "source": "TEXT NOT NULL DEFAULT 'ktuner-basemap'",
+    "changed": "TEXT",
+    "note": "TEXT NOT NULL DEFAULT ''",
+    "flashed_at": "INTEGER",
+    "tables": "TEXT",
+    "updated_at": "INTEGER",
+}
+
+# Added with the Open steps settling (ticket 04).
+_OPEN_STEP_COLUMNS = {"last_asked_on": "TEXT"}
+
+
 class Store:
     """A thin, explicit SQLite wrapper. One connection per operation."""
 
@@ -136,6 +167,20 @@ class Store:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as c:
             c.executescript(SCHEMA)
+            self._migrate(c)
+
+    @staticmethod
+    def _migrate(c: sqlite3.Connection) -> None:
+        """Bring a database written by an earlier build up to this schema."""
+        have = {row["name"] for row in c.execute("PRAGMA table_info(map_versions)")}
+        if have:
+            for column, decl in _MAP_VERSION_COLUMNS.items():
+                if column not in have:
+                    c.execute(f"ALTER TABLE map_versions ADD COLUMN {column} {decl}")
+        steps = {row["name"] for row in c.execute("PRAGMA table_info(open_steps)")}
+        for column, decl in _OPEN_STEP_COLUMNS.items():
+            if column not in steps:
+                c.execute(f"ALTER TABLE open_steps ADD COLUMN {column} {decl}")
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
@@ -277,7 +322,89 @@ class Store:
         }
 
     # -- Map versions -------------------------------------------------------
+    # `id` IS the Map version number: Map version 1, 2, 3 — the small integer the
+    # owner says out loud. `tables` holds that version's full tables as JSON, so
+    # a change can be checked against the Map it was written on (ADR 0003) and
+    # the Car history document stays small.
+
+    def ensure_map_version(
+        self,
+        number: int,
+        name: str,
+        tables: dict[str, Any] | None = None,
+        *,
+        source: str = "ktuner-basemap",
+        kind: str = "ktuner-basemap",
+        flashed_at: int | None = None,
+        flash_id: str | None = None,
+        changed: str | None = None,
+        note: str = "",
+        parent_id: int | None = None,
+    ) -> dict[str, Any]:
+        """Create a Map version, or return the one already there.
+
+        Idempotent on purpose: the server seeds Map version 1 at startup and again
+        at first use, so a fresh car always has one and a returning one never
+        grows a second copy of it. Tables are only rewritten when they are given
+        and missing, so a version's tables are never silently replaced.
+        """
+        row = self._one("SELECT * FROM map_versions WHERE id = ?", (number,))
+        if row is not None:
+            if tables is not None and not row["tables"]:
+                self._exec(
+                    "UPDATE map_versions SET tables = ?, updated_at = ? WHERE id = ?",
+                    (_json(tables), _now(), number),
+                )
+            return self.map_version(number)
+        self._exec(
+            "INSERT INTO map_versions (id, name, parent_id, flash_id, created_at, kind, source, "
+            "changed, note, flashed_at, tables, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                number, name, parent_id, flash_id, _now(), kind, source, changed, note,
+                flashed_at, _json(tables) if tables is not None else None, _now(),
+            ),
+        )
+        return self.map_version(number)
+
+    @staticmethod
+    def _map_version_row(row: sqlite3.Row) -> dict[str, Any]:
+        return {
+            "id": row["id"],
+            "n": row["id"],
+            "label": f"Map version {row['id']}",
+            "name": row["name"],
+            "kind": row["kind"],
+            "source": row["source"],
+            "parent_id": row["parent_id"],
+            "flash_id": row["flash_id"],
+            "changed": row["changed"],
+            "note": row["note"],
+            "flashed_at": row["flashed_at"],
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+            "has_tables": bool(row["tables"]),
+        }
+
+    @staticmethod
+    def _map_version(row: dict[str, Any]) -> dict[str, Any]:
+        """One Map version with its tables, as the two map checks read it."""
+        out = dict(row)
+        raw = out.pop("tables_json", None)
+        out["tables"] = json.loads(raw) if raw else None
+        return out
+
+    def map_version(self, number: int) -> dict[str, Any] | None:
+        """One Map version by its number, with its full tables."""
+        row = self._one("SELECT * FROM map_versions WHERE id = ?", (number,))
+        if row is None:
+            return None
+        version = self._map_version_row(row)
+        version["tables_json"] = row["tables"]
+        return self._map_version(version)
+
     def add_map_version(self, name: str, parent_id: int | None = None, flash_id: str | None = None) -> int:
+        """Kept for callers that just want the next number (Map versions before
+        they carried tables); the table row id is the Map version number."""
         with self._conn() as c:
             cur = c.execute(
                 "INSERT INTO map_versions (name, parent_id, flash_id, created_at) VALUES (?, ?, ?, ?)",
@@ -285,11 +412,15 @@ class Store:
             )
             return int(cur.lastrowid or 0)
 
-    def list_map_versions(self) -> list[dict[str, Any]]:
-        return [
-            {"id": r["id"], "name": r["name"], "parent_id": r["parent_id"], "flash_id": r["flash_id"], "created_at": r["created_at"]}
-            for r in self._all("SELECT * FROM map_versions ORDER BY id")
-        ]
+    def list_map_versions(self, with_tables: bool = False) -> list[dict[str, Any]]:
+        rows = self._all("SELECT * FROM map_versions ORDER BY id")
+        out = []
+        for row in rows:
+            version = self._map_version_row(row)
+            if with_tables:
+                version["tables"] = json.loads(row["tables"]) if row["tables"] else None
+            out.append(version)
+        return out
 
     def latest_map_version(self) -> dict[str, Any] | None:
         rows = self.list_map_versions()
@@ -336,41 +467,57 @@ class Store:
         return {r["drive_id"]: r["answer"] for r in self._all("SELECT * FROM answers")}
 
     # -- Open steps ----------------------------------------------------------
-    def add_open_step(
-        self, step_id: str, drive_id: str | None, kind: str, title: str, detail: str = "", opened_at: int | None = None
-    ) -> None:
-        self._exec(
-            "INSERT INTO open_steps (id, drive_id, kind, title, detail, status, opened_at) VALUES (?, ?, ?, ?, ?, 'open', ?) "
-            "ON CONFLICT(id) DO UPDATE SET drive_id=excluded.drive_id, kind=excluded.kind, title=excluded.title, "
-            "detail=excluded.detail",
-            (step_id, drive_id, kind, title, detail, opened_at if opened_at is not None else _now()),
-        )
+    # One row per kind of step, in the shape the engine's `carSettle` /
+    # `carNextStep` take and give back (ticket 04). The id is the step's own key:
+    # the app never asks the same step twice at once, so a repeat moves the row's
+    # `last_asked_on` instead of growing a second one. `status` is the engine's
+    # own word — open (Not yet) / wait (Can't tell yet) / fail (Still off) /
+    # done — and `only_open` means "not proven yet", which is what the chat shows:
+    # a step that came back "Still off" is still one the owner has to act on.
+    @staticmethod
+    def open_step_out(row: sqlite3.Row) -> dict[str, Any]:
+        return {
+            "id": row["id"],
+            "key": row["kind"],
+            "title": row["title"],
+            "status": row["status"],
+            "why": row["detail"],
+            "askedOn": row["drive_id"],
+            "askedAt": row["opened_at"],
+            "lastAskedOn": row["last_asked_on"],
+            "settledBy": row["settled_by"],
+            "settledAt": row["settled_at"],
+        }
 
-    def settle_open_step(self, step_id: str, status: str, drive_id: str | None = None) -> None:
-        self._exec(
-            "UPDATE open_steps SET status = ?, settled_at = ?, settled_by = ? WHERE id = ?",
-            (status, _now(), drive_id, step_id),
-        )
+    @staticmethod
+    def open_step_id(step: dict[str, Any]) -> str:
+        return str(step["key"])
+
+    def save_open_steps(self, steps: list[dict[str, Any]]) -> None:
+        """Store the Open steps as the engine left them, one row each."""
+        with self._conn() as c:
+            for step in steps:
+                c.execute(
+                    "INSERT INTO open_steps (id, drive_id, kind, title, detail, status, opened_at,"
+                    " settled_at, settled_by, last_asked_on) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                    "ON CONFLICT(id) DO UPDATE SET drive_id=excluded.drive_id, kind=excluded.kind,"
+                    " title=excluded.title, detail=excluded.detail, status=excluded.status,"
+                    " opened_at=excluded.opened_at, settled_at=excluded.settled_at,"
+                    " settled_by=excluded.settled_by, last_asked_on=excluded.last_asked_on",
+                    (
+                        self.open_step_id(step), step.get("askedOn"), step["key"], step.get("title", ""),
+                        step.get("why", ""), step.get("status", "open"),
+                        step.get("askedAt") if step.get("askedAt") is not None else _now(),
+                        step.get("settledAt"), step.get("settledBy"), step.get("lastAskedOn"),
+                    ),
+                )
 
     def list_open_steps(self, only_open: bool = False) -> list[dict[str, Any]]:
         sql = "SELECT * FROM open_steps"
         if only_open:
-            sql += " WHERE status = 'open'"
-        sql += " ORDER BY opened_at"
-        return [
-            {
-                "id": r["id"],
-                "drive_id": r["drive_id"],
-                "kind": r["kind"],
-                "title": r["title"],
-                "detail": r["detail"],
-                "status": r["status"],
-                "opened_at": r["opened_at"],
-                "settled_at": r["settled_at"],
-                "settled_by": r["settled_by"],
-            }
-            for r in self._all(sql)
-        ]
+            sql += " WHERE status <> 'done'"
+        sql += " ORDER BY opened_at, id"
+        return [self.open_step_out(r) for r in self._all(sql)]
 
     # -- chat threads --------------------------------------------------------
     def touch_thread(self, thread_id: str) -> None:

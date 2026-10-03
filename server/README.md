@@ -10,11 +10,13 @@ server/
   kta_server/
     config.py            .env, read once; every value has a working default
     worker.py            the Python side of the worker protocol (newline-delimited JSON)
-    db.py                SQLite: Car profile, Car history state, Map versions, Flashes,
-                         Installs, answers, Open steps, threads, the raw CSV of every upload
+    db.py                SQLite: Car profile, Car history state, Map versions (with their
+                         full tables), Flashes, Installs, answers, Open steps, threads,
+                         the raw CSV of every upload
+    mapdata.py           the KTuner basemap's tables: Map version 1's copy of the Map
     harness.py           one engine call -> one AG-UI TOOL_CALL_* quartet
     copy.py              every word the owner reads (the built-in reply)
-    graph.py             ingest -> decide -> reply
+    graph.py             ingest -> decide (settle, then one Next step) -> reply
     app.py               FastAPI: POST /upload, POST /agent (AG-UI), GET /api/state, GET /healthz
   tests/seam1/           the seam-1 harness: post an upload, assert the reply events
 ```
@@ -47,10 +49,47 @@ sees a log it did not send.
 ← {"id":"7","ok":false,"error":{"message":"…","code":"…"}}
 ```
 
-Ops: `ping`, `loadLog`, `ingestUpload`, `carHistory`, `carBaseline`, `flashPlan`,
-`recordFlash`, `answerDrive`, `exportHistory`, `importHistory`, `driveFacts`, and
+Ops: `ping`, `loadLog`, `ingestUpload`, `carHistory`, `carBaseline`, `mapVersions`,
+`mapVersion`, `recordBasemap`, `flashPlan`, `recordFlash`, `answerDrive`,
+`settleOpenSteps`, `nextStep`, `exportHistory`, `importHistory`, `driveFacts`, and
 the `engine/kta-ask.js` tool handlers `overview`, `insight`, `channelStats`,
 `timingCell`, `pull`.
+
+## The loop in two calls
+
+`decide` runs the engine twice per upload, in this order, both as harness steps:
+
+```
+→ {"op":"settleOpenSteps","args":{"state":{…},"driveId":"…","openSteps":[…]}}
+← {"ok":true,"result":{"settled":[…],"openSteps":[…],"wasted":{…}}}
+→ {"op":"nextStep","args":{"state":{…},"driveId":"…","openSteps":[…]}}
+← {"ok":true,"result":{"step":{…},"openSteps":[…],"opened":["baseline","habit"]}}
+```
+
+- **The Open steps live in SQLite** (`open_steps`, one row per kind of step, in the
+  engine's own shape) and travel in and out of these two calls. The engine judges
+  them; the server stores them.
+- `settled` is one row per step this Drive settled: `done` (Done), `open` (Not yet),
+  `fail` (Still off) or `wait` (Can't tell yet), each with its reason and numbers.
+  `wasted` is set when the Drive settled none of them.
+- `step` is **exactly one** Next step, always naming the Drive whose upload will
+  settle it (`settlesOn`), with `gauges` to watch, `also` for a free habit seen
+  today, and `same` when it is the step from last time.
+
+## Map versions
+
+A fresh car is on **Map version 1**, the KTuner basemap `Starter 21 Dual Tune 2`,
+before anything is uploaded to it. `ensure_map_version_one` seeds it in SQLite
+when the app is built and again on the first `GET /api/state`, tables included.
+
+- The **state document** carries the numbers, names and dates only. The tables
+  (166 kB) live in `map_versions.tables`, so a Drive report stays small.
+- `mapVersions` is the engine's list; `mapVersion {version}` hands back one
+  version **with its tables** for a change to be checked against it (ADR 0003).
+  A version whose Flashed change is not stored yet refuses
+  (`map-change-pending`) rather than handing over an older map's tables.
+- `flashPlan {mapVersion: 1}` writes against a named version; with no argument it
+  writes against the active one.
 
 Two rules keep it honest:
 
@@ -71,4 +110,4 @@ compiled graph. The chat sends `state.upload_id` and `state.thread_id`:
 | `TEXT_MESSAGE_*` | the reply prose: the first sentence, then the window |
 | `TOOL_CALL_START/ARGS/END/RESULT` | one harness step with its inputs and its output |
 | `CUSTOM` name `harness` | `{checked, seconds, line, steps}` — the collapsed line |
-| `STATE_SNAPSHOT` | `state.reply`, the typed card the chat renders |
+| `STATE_SNAPSHOT` | `state.reply`, the typed card the chat renders: the Verdict sentence, the window, the four numbers, the **Map version line**, what I asked last time, the Wasted drive line, the Flash plan, the harness steps, the one Next step with its recipe or gauge table, and the Open steps list |

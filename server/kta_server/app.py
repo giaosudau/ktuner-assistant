@@ -14,6 +14,10 @@ Routes (ADR 0004 §"How the chat reaches Python"):
 `POST /upload` stores the raw CSV and hands back an upload id; the chat then
 runs one AG-UI turn with that id in `state`, and the Drive is created by the
 graph — server-side, never in the browser (spec §Chat UI).
+
+A fresh car is on **Map version 1**, the KTuner basemap with its full tables,
+before any Drive is uploaded: `ensure_map_version_one` seeds it when the app is
+built and again on the first `GET /api/state`.
 """
 
 from __future__ import annotations
@@ -30,9 +34,40 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from .config import Settings, load_settings
 from .db import Store
 from .graph import build_graph
+from .mapdata import KTUNER_BASEMAP_SOURCE, basemap_tables
 from .worker import Worker, WorkerError
 
 AGENT_NAME = "kta-tune-assist"
+
+
+def ensure_map_version_one(store: Store, name: str) -> dict[str, Any]:
+    """Map version 1: the KTuner basemap, with its tables, before any Drive.
+
+    A fresh car is on Map version 1 from its first Drive (CONTEXT.md), so this
+    runs when the app is built — before the first upload, and again on every
+    start — and is idempotent, so a car that already has it never grows a second
+    copy. The tables come from the app's own KTuner map data
+    (`mapdata.py`), which is the same file the engine reads (ADR 0003: two
+    independent reads, one source).
+
+    Returns the version without its tables: `GET /api/state` is the chat's state
+    panel, and a Map version's 166 kB of tables are fetched with
+    `store.map_version(n)` by whatever checks a change against it.
+    """
+    version = ensure_map_version_one_full(store, name)
+    version.pop("tables", None)
+    return version
+
+
+def ensure_map_version_one_full(store: Store, name: str) -> dict[str, Any]:
+    """The same seeding, with the tables — the accessor a map check reads."""
+    return store.ensure_map_version(
+        1,
+        name,
+        basemap_tables(),
+        source=KTUNER_BASEMAP_SOURCE,
+        kind="ktuner-basemap",
+    )
 
 
 def create_app(
@@ -43,6 +78,8 @@ def create_app(
     settings = settings or load_settings()
     store = store or Store(settings.db_path)
     worker = worker or Worker(settings.worker_script, settings.node_exe)
+    # A fresh car is on Map version 1 before anything is uploaded to it.
+    ensure_map_version_one(store, worker.ktuner_basemap)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -91,6 +128,9 @@ def create_app(
     # ----------------------------------------------------------------- state
     @app.get("/api/state")
     async def api_state() -> dict[str, Any]:
+        # First use counts too: if the worker was down when the app was built,
+        # Map version 1 is seeded now, and still before any Drive is read.
+        active = ensure_map_version_one(store, worker.ktuner_basemap)
         history = await worker.call("carHistory", state=store.car_state(None) or {})
         plan = await worker.call(
             "flashPlan", state=store.car_state(None) or {}, now=settings.now_ms()
@@ -103,7 +143,7 @@ def create_app(
             "flashes": store.list_flashes(),
             "installs": store.list_installs(),
             "mapVersions": store.list_map_versions(),
-            "activeMapVersion": store.latest_map_version(),
+            "activeMapVersion": active,
             "openSteps": store.list_open_steps(only_open=True),
             "answers": store.list_answers(),
             "unansweredQuestions": [],  # owner questions arrive with a later ticket
@@ -165,4 +205,4 @@ def __getattr__(name: str):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-__all__ = ["create_app", "AGENT_NAME"]
+__all__ = ["create_app", "ensure_map_version_one", "ensure_map_version_one_full", "AGENT_NAME"]

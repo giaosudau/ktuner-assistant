@@ -11,6 +11,19 @@ export type NumberTile = { label: string; value: string; unit: string };
 /** OK | Watch | Stop | Can't tell — and null for a Too-short drive. */
 export type VerdictWord = "OK" | "Watch" | "Stop" | "Can't tell" | null;
 
+/**
+ * Which Map version this Drive ran on — always, from the first Drive.
+ * `note` explains what a Map version is, on the first reply only.
+ */
+export type MapVersionCard = {
+  line: string;
+  version: number;
+  name: string;
+  since: number | null;
+  kind: string;
+  note?: string;
+};
+
 export type FlashPlan = {
   kind: "no-change" | "undo" | "one-family";
   changeId: string | null;
@@ -19,19 +32,72 @@ export type FlashPlan = {
   proof: string | null;
   saveAs: string | null;
   undoName: string | null;
+  /** The Map version to flash back to, when the app knows it. */
+  undo?: { known: boolean; version: number | null; name: string | null; stamp: string | null } | null;
+  /** The Map version this plan is written on. */
+  mapVersion?: { n: number; label: string; name: string; tablesPending?: boolean } | null;
   cellCount: number;
   evidence: { drives?: string[]; text: string; basis?: string }[];
   levers: { id: string; title: string; status: string; reason: string; unlocks: string }[];
   openIssues: unknown;
 };
 
+/**
+ * One Open step, as the panel beside the thread reads it. `status` is the
+ * engine's own word: open (Not yet), wait (Can't tell yet), fail (Still off),
+ * done (proved — and then no longer Open).
+ */
+export type OpenStep = {
+  id: string;
+  key: string;
+  title: string;
+  status: string;
+  why: string;
+  askedOn: string | null;
+  askedAt: number | null;
+  lastAskedOn: string | null;
+  settledBy: string | null;
+  settledAt: number | null;
+};
+
+/** What this Drive settled about a step asked before, and the numbers behind it. */
+export type SettledStep = {
+  key: string;
+  title: string;
+  status: string;
+  /** Done / Not yet / Still off / Can't tell yet — the spec's four words. */
+  word: string;
+  /** The pill to draw it with: good / watch / stop / none. */
+  tone: string;
+  why: string;
+};
+
+/** One gauge to watch while driving: TunerView's name, then OK / If you see / Then. */
+export type GaugeRow = { gauge: string; ok: string; see: string; then: string };
+export type GaugeTable = { columns: string[]; rows: GaugeRow[] };
+
+/** The Drive a step asks for: numbered, short, physical. */
+export type DriveRecipe = { intro: string; steps: string[] };
+
+/** A cause seen today, told as a free habit beside the step it was seen on. */
+export type AlsoStep = { key: string; title: string; why: string; steps: string[]; settlesOn: string };
+
 export type NextStep = {
   kind: "flash" | "watch" | "drive" | "none";
+  /** Which step this is, so the chat can style it: undo, baseline, habit, logger… */
+  key: string;
   title: string;
   body: string;
+  recipe: DriveRecipe | null;
+  gauges: GaugeTable | null;
+  /** The same step as last time: one short line, no repeated essay. */
+  same: boolean;
   proves: string;
+  /** The Drive whose upload will settle it, in the owner's words. */
   upload: string;
+  uploadWhen: string;
   flashPlan?: FlashPlan | null;
+  also?: AlsoStep | null;
 };
 
 /** One harness step, as the collapsed row expands to. */
@@ -43,7 +109,7 @@ export type HarnessStep = {
   ms: number;
 };
 
-/** `Checked 6 things · 4.2 s` — the server's own count and seconds. */
+/** `Checked 8 things · 0.4 s` — the server's own count and seconds. */
 export type HarnessSummary = {
   checked: number;
   seconds: number;
@@ -56,9 +122,16 @@ export type ReplyCard = {
   say: string;
   window: string;
   numbers: NumberTile[];
+  mapVersion: MapVersionCard | null;
   verdict: VerdictWord;
+  /** What I asked last time, settled by this Drive. */
+  settled: SettledStep[];
+  /** One kind line when this Drive settled nothing, else null. */
+  wasted: string | null;
   flashPlan: FlashPlan | null;
   nextStep: NextStep | null;
+  /** The Open steps as they stand after this reply. */
+  openSteps: OpenStep[];
   harness: HarnessSummary | null;
   error?: { message: string; code: string };
 };

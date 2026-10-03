@@ -73,8 +73,13 @@ def test_api_state_carries_the_car_history_the_baseline_and_the_open_steps(loop:
     assert [row["id"] for row in body["carHistory"]] == ["20260901-081358", "20260905-075634"]
     assert body["baseline"] == {"value": 0.49, "n": 2}
     assert body["flashPlan"]["kind"] == "no-change"
-    assert len(body["openSteps"]) == 2
-    assert all(step["status"] == "open" for step in body["openSteps"])
+    # Ticket 04: every Open step carries its own status, and the panel shows the
+    # ones still to do — so the Baseline (still waiting for a Cool Drive with 2
+    # pulls), the two channels to add, and the logger the 05 Sep Drive opened.
+    assert [s["key"] for s in body["openSteps"]] == ["baseline", "channels", "logger"]
+    assert {s["status"] for s in body["openSteps"]} == {"wait", "open"}
+    assert body["openSteps"][0]["why"], "each Open step says why it is where it is"
+    assert body["openSteps"][0]["title"].startswith("Baseline")
     # Every seam a later ticket needs is present, even if empty for now.
     for key in ("carProfile", "mapVersions", "installs", "flashes", "answers", "unansweredQuestions", "hasLlm"):
         assert key in body
@@ -112,3 +117,57 @@ def test_a_bad_upload_says_it_could_not_be_read_instead_of_crashing(loop: Loop):
     assert reply.errors() == []
     assert reply.say.startswith("I could not read that file")
     assert reply.snapshot()["reply"]["error"]["code"]
+
+
+# -- Map versions -----------------------------------------------------------
+def test_the_worker_names_map_version_one_and_holds_its_tables(loop: Loop):
+    """The engine's own version list; its tables come out only when asked."""
+    versions = loop.run(loop.worker.call("mapVersions"))
+    assert [v["label"] for v in versions["versions"]] == ["Map version 1"]
+    assert versions["active"]["name"] == "Starter 21 Dual Tune 2"
+    assert versions["active"]["tablesFrom"] == "ktuner-basemap"
+    assert versions["active"]["tablesHeld"] is True
+    assert versions["active"]["tableCount"] == 39
+
+    held = loop.run(loop.worker.call("mapVersion", version=1))
+    assert held["version"]["label"] == "Map version 1"
+    assert len(held["tables"]["MAF_Scaling_Custom"]["values"][0]) == 103
+    assert held["tables"]["Boost_Target_1_Normal_L"]["values"][0]
+
+
+def test_naming_a_map_version_that_does_not_exist_says_which_ones_there_are(loop: Loop):
+    with pytest.raises(WorkerError) as caught:
+        loop.run(loop.worker.call("mapVersion", version=7))
+    assert caught.value.code == "no-map-version"
+    assert "Map version 1" in caught.value.message
+    assert "Traceback" not in caught.value.message
+
+
+def test_a_proposed_change_can_be_planned_against_a_named_map_version(loop: Loop):
+    """The seam the two map checks (ADR 0003) need: a plan names its Map version."""
+    state = loop.store.car_state(None)
+    active = loop.run(loop.worker.call("flashPlan", state=state, now=1756723200000))
+    assert active["mapVersion"]["n"] == 1
+    named = loop.run(loop.worker.call("flashPlan", state=state, now=1756723200000, mapVersion=1))
+    assert named["mapVersion"]["label"] == "Map version 1"
+    assert named["headline"] == active["headline"]
+
+
+def test_a_map_version_whose_change_is_not_stored_yet_cannot_be_checked(loop: Loop):
+    """A Flash the app has not stored the change for never borrows an older map."""
+    flashed = loop.run(loop.worker.call(
+        "recordFlash",
+        flash={"time": 1756723200000, "map": "Starter 21 r2", "changed": "afm"},
+        now=1756723200000,
+    ))
+    assert flashed["version"]["n"] == 2
+    assert flashed["version"]["tablesPending"] is True
+    with pytest.raises(WorkerError) as caught:
+        loop.run(loop.worker.call("mapVersion", state=flashed["state"], version=2))
+    assert caught.value.code == "map-change-pending"
+    assert "Map version 2" in caught.value.message
+    # The plan can still be read against the map the change was written on, and it
+    # says which version it was written on.
+    plan = loop.run(loop.worker.call("flashPlan", state=flashed["state"], now=1756723200000))
+    assert plan["mapVersion"]["n"] == 2
+    assert plan["mapVersion"]["tablesPending"] is True

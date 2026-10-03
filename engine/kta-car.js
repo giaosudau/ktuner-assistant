@@ -10,19 +10,27 @@
  *   KTA.carHide / carUnhide                 a Hidden drive leaves charts and the Baseline
  *   KTA.carAnswer(state, driveId, answer)   I flashed / New tank of fuel / Neither
  *   KTA.carBaseline(state)                  this car's own normal Fuel-quality score
- *   KTA.carMapAt(state, startMs)            the Map a drive ran on, never guessed
+ *   KTA.carMapVersions(state)               every Map version the app holds, in order
+ *   KTA.carActiveMapVersion(state)          the Map version the car is on now
+ *   KTA.carRecordBasemap(state, opts)       Map version 1: the KTuner basemap, no Shakedown
+ *   KTA.carMapAt(state, startMs)            the Map version a drive ran on, never guessed
+ *   KTA.carMapVersionBefore(state, n)       the version before n — the file Undo names
  *   KTA.carTableRows(state)                 the honest table behind the charts
  *   KTA.carChartSeries(state)               data stub for the charts (drawn elsewhere)
  *   KTA.carProofSpansFlash(state, a, b)     before/after across a Flash proves nothing
  *   KTA.carExport(state) / carImport(state, doc)  the History file, merged never overwritten
  *   KTA.carFlashPlan(state, map, opts)       the Next Flash card model (spec P1–P9)
+ *   KTA.carOpenSteps(list)                   the Open steps as they are stored, one per key
+ *   KTA.carSettle(state, driveId, steps)     judge every Open step against one Drive
+ *   KTA.carNextStep(state, driveId, steps)   exactly one Next step, and the Open step it opens
  *
- * Vocabulary is CONTEXT.md: Drive, Car history, Flash, Map, Shakedown drive,
- * Cool drive, Hot restart, Too-short drive, Hidden drive, Unexplained change,
- * History file, Verdict, Baseline, Fuel-quality score.
- * Verdict thresholds live in kta-engine.js / kta-drive.js (another ticket owns
- * them); this module only reads their numbers. The same log and car state
- * always give the same next state (pass meta.now to fix the clock in tests).
+ * Vocabulary is CONTEXT.md: Drive, Car history, Flash, Map, Map version, KTuner
+ * basemap, Shakedown drive, Cool drive, Hot restart, Too-short drive, Hidden drive,
+ * Unexplained change, History file, Verdict, Baseline, Fuel-quality score, Next
+ * step, Open step, Drives to proof, Wasted drive. Verdict thresholds live in
+ * kta-engine.js / kta-drive.js (another ticket owns them); this module only reads
+ * their numbers. The same log and car state always give the same next state
+ * (pass meta.now to fix the clock in tests).
  */
 (function (root, factory) {
   var KTA = typeof module === 'object' && module.exports ? require('./kta-drive.js') : root.KTA;
@@ -51,21 +59,99 @@
                                  // not an Unexplained change. A start above it still counts.
   var LEAN_WATCH = 0.5;          // AFR points leaner than the Map's full-load target
   var LEAN_STOP = 1.0;
+  var LUG_OK = 4;               // under 4 % of moving time lugging: keep-the-revs-up is holding
+  var LUG_RISE_OK = 0.03;       // a Fuel-quality score that ends within 0.03 of its start: holding
+  var LUG_RISE_SEEN = 0.08;     // a rise of 0.08 or more: the lugging cause seen today
+  var LUG_STEPS_SHARE = 0.5;    // ... and more than half of its step-ups came while lugging
+  var UPLOAD_SCORE = 0.60;      // Knock Control on the gauge that means "upload and tell me":
+                                 // the loop's own trigger when there is nothing else to ask
+  var KTUNER_BASEMAP = 'Starter 21 Dual Tune 2'; // the KTuner basemap this car started from
   var VIETNAM_OFFSET = 7 * 3600 * 1000; // TunerView names are Vietnam wall time
   KTA.CAR_RULES = {
     version: CAR_VERSION, defaultBaseline: DEFAULT_BASELINE, coolIat: COOL_IAT,
     minMoving: MIN_MOVING, shakedownCalm: SHAKEDOWN_CALM, trimOk: TRIM_OK,
     scoreShakedown: SCORE_SHAKEDOWN, trimJump: TRIM_JUMP, targetJump: TARGET_JUMP,
     scoreJump: SCORE_JUMP, afterFlashStart: AFTER_FLASH_START,
-    targetRefMin: TARGET_REF_MIN
+    targetRefMin: TARGET_REF_MIN, ktunerBasemap: KTUNER_BASEMAP,
+    lugOk: LUG_OK, lugRiseOk: LUG_RISE_OK, lugRiseSeen: LUG_RISE_SEEN,
+    lugStepsShare: LUG_STEPS_SHARE, uploadScore: UPLOAD_SCORE
   };
 
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
   function emptyShakedown() { return { status: 'none', flashId: null, calmSec: 0, driveIds: [] }; }
+
+  // ---------------------------------------------------------------------------
+  // Map versions: one numbered copy of the Map's tables, kept by the app.
+  //
+  // A Map version is identified by its small number (Map version 1, 2, …) and
+  // carries the map's name, where its tables come from and when it became the
+  // map on the car. Map version 1 is the KTuner basemap the owner gave the app:
+  // active from the first Drive, and it starts no Shakedown drive, because the
+  // owner did not just flash it. Every recorded Flash becomes the next version.
+  //
+  // The tables themselves are NOT in this document: they are held by the app
+  // (SQLite, `map_versions.tables`; the basemap comes from the app's own
+  // `data/ktuner-maps-digitized.json`). `tablesFrom` names where they live, so a
+  // check can re-read a named version's tables without this document growing by
+  // half a megabyte on every Drive.
+  //
+  // A Flash that becomes the next version carries `changePending: true` until the
+  // app has stored the change she flashed: until then the version points at the
+  // tables it was written on, so the plan can still be read, and the flag says
+  // plainly that a check must not sign off on those tables. Nothing here pretends
+  // the stored tables are the flashed ones.
+  // ---------------------------------------------------------------------------
+  function basemapVersion() {
+    return {
+      n: 1, name: KTUNER_BASEMAP, kind: 'ktuner-basemap',
+      tablesFrom: 'ktuner-basemap', from: null,   // from the first Drive: nothing before it
+      flashId: null, changed: null, note: '', changePending: false, updatedAt: null
+    };
+  }
+  /** The version as a caller outside the module sees it. */
+  function versionOut(v) {
+    if (!v) return null;
+    return {
+      n: v.n, name: v.name, label: 'Map version ' + v.n, kind: v.kind,
+      tablesFrom: v.tablesFrom || null, tablesPending: !!v.changePending,
+      from: v.from == null ? null : v.from,
+      flashId: v.flashId || null, changed: v.changed || null, note: v.note || '',
+      updatedAt: v.updatedAt == null ? null : v.updatedAt
+    };
+  }
+  function normVersions(list) {
+    var out = [], seen = {};
+    (Array.isArray(list) ? list : []).forEach(function (v) {
+      if (!v || typeof v !== 'object' || !isNum(v.n) || v.n < 1) return;
+      if (seen[v.n]) return;
+      seen[v.n] = true;
+      out.push({
+        n: v.n,
+        name: String(v.name || KTUNER_BASEMAP),
+        kind: v.kind === 'flash' ? 'flash' : 'ktuner-basemap',
+        tablesFrom: v.tablesFrom ? String(v.tablesFrom) : null,
+        changePending: !!v.changePending,
+        from: isNum(v.from) ? v.from : null,
+        flashId: v.flashId ? String(v.flashId) : null,
+        changed: CHANGED[v.changed] ? v.changed : null,
+        note: v.note ? String(v.note) : '',
+        updatedAt: isNum(v.updatedAt) ? v.updatedAt : null
+      });
+    });
+    out.sort(function (a, b) { return a.n - b.n; });
+    // A History file written before Map versions existed, or a hand-made state:
+    // Map version 1 is the map the owner gave the app, so it is always there.
+    // No clock is read here, so normalize stays pure.
+    if (!out.length || out[0].n !== 1) out.unshift(basemapVersion());
+    return out;
+  }
   KTA.carEmpty = function () {
-    return { version: CAR_VERSION, drives: {}, flashes: [], answers: {}, hidden: [], shakedown: emptyShakedown() };
+    return {
+      version: CAR_VERSION, drives: {}, flashes: [], answers: {}, hidden: [],
+      shakedown: emptyShakedown(), mapVersions: normVersions([])
+    };
   };
   function normalize(state) {
     var s = state && typeof state === 'object' ? state : {};
@@ -76,6 +162,7 @@
       flashes: Array.isArray(s.flashes) ? s.flashes : [],
       answers: s.answers && typeof s.answers === 'object' ? s.answers : {},
       hidden: Array.isArray(s.hidden) ? s.hidden : [],
+      mapVersions: normVersions(s.mapVersions),
       shakedown: sh
         ? { status: sh.status || 'none', flashId: sh.flashId || null, calmSec: sh.calmSec || 0, driveIds: Array.isArray(sh.driveIds) ? sh.driveIds : [], shares: sh.shares && typeof sh.shares === 'object' ? sh.shares : {} }
         : emptyShakedown()
@@ -191,6 +278,13 @@
       iatMoving: I.heat.iatMoving,
       cvtPeak: I.heat.cvtMax,
       lugShare: I.lug ? I.lug.share : null,
+      // Why the score moved while the car was lugging: how many of its step-ups
+      // came below 1,700 rpm, and the revs the CVT held while it did. These are
+      // the facts the habit cause is diagnosed from, so they are remembered with
+      // the Drive rather than re-derived from a log nobody has open.
+      kcUpSteps: I.kc ? I.kc.upSteps : null,
+      lugUpSteps: I.kc ? I.kc.lugUpSteps : null,
+      lugRpm: I.lug ? I.lug.rpm : null,
       accel5070: acc,
       boostTarget: I.boost ? I.boost.peakTarget : null,
       overshoot: I.boost ? I.boost.overshoot : null,
@@ -221,36 +315,139 @@
   };
 
   // ---------------------------------------------------------------------------
-  // Flashes and the Map a drive ran on (never guessed from the log)
+  // Map versions, Flashes and the Map a drive ran on (never guessed from the log)
   // ---------------------------------------------------------------------------
   var CHANGED = { afm: 1, boost: 1, fuel: 1, other: 1 };
   function slug(map) {
     return String(map || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 16) || 'map';
   }
   function sortFlashes(s) { s.flashes.sort(function (a, b) { return a.time - b.time || (a.id < b.id ? -1 : 1); }); }
-  /** The latest Flash strictly before the target (the known-good file for Undo). */
-  function latestFlashBefore(s, target) {
+  function versionsOf(s) { return s.mapVersions; }
+  /** Every Map version the app holds, oldest first, as callers see them. */
+  KTA.carMapVersions = function (state) { return versionsOf(normalize(state)).map(versionOut); };
+  /** The Map version the car is on now: the highest number, as versions only grow. */
+  KTA.carActiveMapVersion = function (state) {
+    var vs = versionsOf(normalize(state));
+    return vs.length ? versionOut(vs[vs.length - 1]) : null;
+  };
+  /** The Map version before number n — the file Undo names — or null. */
+  KTA.carMapVersionBefore = function (state, n) {
+    if (!isNum(n)) return null;
     var best = null;
-    s.flashes.forEach(function (f) {
-      if (f.id === target.id) return;
-      if (f.time < target.time || (f.time === target.time && f.id < target.id)) {
-        if (!best || f.time > best.time || (f.time === best.time && f.id > best.id)) best = f;
-      }
+    versionsOf(normalize(state)).forEach(function (v) {
+      if (v.n >= n) return;
+      if (!best || v.n > best.n) best = v;
     });
-    return best;
+    return best ? versionOut(best) : null;
+  };
+  /**
+   * Map version 1: the KTuner basemap the owner gave the app, active from the
+   * first Drive. It starts NO Shakedown drive — the owner did not just flash it,
+   * so their first Drive is an ordinary Drive (the prototype made it a Shakedown
+   * drive by recording the starting map as a Flash; that is what this replaces).
+   *
+   * Idempotent: calling it on a car that already has Map version 1 changes
+   * nothing unless a name or a date is passed. opts { name, from, tablesFrom }.
+   */
+  KTA.carRecordBasemap = function (state, opts, meta) {
+    var s = clone(state);
+    opts = opts || {};
+    var v = s.mapVersions.filter(function (x) { return x.n === 1; })[0] || basemapVersion();
+    var had = s.mapVersions.some(function (x) { return x.n === 1; });
+    if (opts.name != null) {
+      if (!String(opts.name).trim()) throw new Error('A Map needs a name.');
+      v.name = String(opts.name).trim();
+    }
+    if (opts.from != null) {
+      if (!isNum(opts.from)) throw new Error('A Map version needs a date and time.');
+      v.from = opts.from;
+    }
+    if (opts.tablesFrom != null) v.tablesFrom = String(opts.tablesFrom);
+    if (!had || opts.name != null || opts.from != null || opts.tablesFrom != null) v.updatedAt = nowOf(meta);
+    if (!had) {
+      s.mapVersions = normVersions(s.mapVersions.filter(function (x) { return x.n !== 1; }).concat([v]));
+    }
+    return { state: s, version: versionOut(v), created: !had };
+  };
+  /**
+   * The Map version a Drive ran on: the version active at its start, taken from
+   * the app's own record, never guessed from the log. Map version 1 (from: null)
+   * is active from the first Drive. A Drive with no known start cannot be placed
+   * in time, so it is only answered when Map version 1 is the only version.
+   */
+  KTA.carMapAt = function (state, startMs) {
+    var vs = versionsOf(normalize(state));
+    if (!isNum(startMs)) return vs.length === 1 ? versionOut(vs[0]) : null;
+    var best = null;
+    vs.forEach(function (v) {
+      if (v.from != null && v.from > startMs) return;
+      if (!best || v.n > best.n) best = v;
+    });
+    return best ? versionOut(best) : null;
+  };
+  /** What the owner reads for a Drive's Map: the name, the number, when it went on. */
+  function mapOut(v) {
+    if (!v) return { recorded: false, name: null, since: null, version: null, label: null };
+    return {
+      recorded: true, name: v.name, since: v.from == null ? null : v.from,
+      version: v.n, label: 'Map version ' + v.n, kind: v.kind,
+      flashId: v.flashId || null, changed: v.changed || null
+    };
+  }
+  function versionOfFlash(s, flashId) {
+    return s.mapVersions.filter(function (v) { return v.flashId === flashId; })[0] || null;
+  }
+  /**
+   * Undo, naming the Map version to flash back to: the file, its number and the
+   * owner's own spelling. `known` is false only when there genuinely is no
+   * earlier version — the app then says so plainly and asks once, rather than
+   * inventing a name.
+   */
+  function undoTo(v) {
+    if (!v) {
+      return {
+        known: false, version: null, name: null, from: null, stamp: null,
+        label: null,
+        headline: 'your previous map file — I need you to tell me which one'
+      };
+    }
+    var stamp = isNum(v.from) ? vnStamp(v.from) : null;
+    var label = 'Map version ' + v.n + ' · ' + v.name + (stamp ? ', flashed ' + stamp : '');
+    return {
+      known: true, version: v.n, name: v.name,
+      from: isNum(v.from) ? v.from : null, stamp: stamp, label: label,
+      headline: 'Flash your previous map file (' + label + ')'
+    };
+  }
+  /** Undo for a plan written on a given version: the version before it. */
+  function undoFor(s, version) {
+    return undoTo(version ? KTA.carMapVersionBefore(s, version.n) : null);
   }
   /** The likely cause of a Stop on a Shakedown drive: the Flash it ran on,
-   *  plus the previous map file to undo to. Shared by carIngest and carReport
-   *  so a reopened drive names the same Flash. */
+   *  plus the Map version before it to undo to. Shared by carIngest and carReport
+   *  so a reopened drive names the same Flash and the same version. */
   function flashCauseFor(s, flash, summary) {
     var trimStop = isNum(summary.trimWorst) && Math.abs(summary.trimWorst) > TRIM_STOP;
     var leanStop = isNum(summary.mixLeanest) && isNum(summary.mixTarget) && summary.mixLeanest >= summary.mixTarget + LEAN_STOP;
-    var previousFlash = latestFlashBefore(s, flash);
+    var version = versionOfFlash(s, flash.id);
+    var previous = version ? KTA.carMapVersionBefore(s, version.n) : null;
+    var previousFlash = previous && previous.flashId
+      ? s.flashes.filter(function (f) { return f.id === previous.flashId; })[0] || null
+      : null;
     return {
       flashId: flash.id,
       map: flash.map,
       changed: flash.changed,
-      previousMap: previousFlash ? { id: previousFlash.id, map: previousFlash.map, time: previousFlash.time } : null,
+      version: version ? version.n : null,
+      previousMap: previous
+        ? {
+            id: previousFlash ? previousFlash.id : null,
+            map: previous.name,
+            time: isNum(previous.from) ? previous.from : null,
+            version: previous.n,
+            label: 'Map version ' + previous.n + ' · ' + previous.name
+          }
+        : null,
       trimStop: trimStop,
       leanStop: leanStop,
       advice: flash.changed === 'afm' || trimStop
@@ -274,9 +471,19 @@
     };
     s.flashes.push(rec);
     sortFlashes(s);
-    // The next drive is a Shakedown drive.
+    // A Flash the owner confirms is the next Map version (CONTEXT.md). Its tables
+    // are the ones it was written on until the app stores the change she flashed
+    // (`changePending`), so a plan can still be read and a check knows to refuse.
+    var last = s.mapVersions[s.mapVersions.length - 1];
+    s.mapVersions.push({
+      n: (last ? last.n : 0) + 1, name: rec.map, kind: 'flash',
+      tablesFrom: last ? last.tablesFrom : KTUNER_BASEMAP, changePending: true,
+      from: rec.time, flashId: rec.id, changed: rec.changed, note: rec.note, updatedAt: rec.updatedAt
+    });
+    // The next drive is a Shakedown drive. (Map version 1 never gets here: it is
+    // the map the owner gave the app, not a Flash.)
     s.shakedown = { status: 'pending', flashId: id, calmSec: 0, driveIds: [] };
-    return { state: s, flash: rec };
+    return { state: s, flash: rec, version: versionOut(s.mapVersions[s.mapVersions.length - 1]) };
   };
   KTA.carEditFlash = function (state, id, patch, meta) {
     var s = clone(state), found = false;
@@ -291,21 +498,32 @@
     });
     if (!found) throw new Error('Flash not found: ' + id);
     sortFlashes(s);
+    // The Map version that Flash produced keeps step with it, or Undo would name
+    // a file the owner has just renamed.
+    s.mapVersions.forEach(function (v) {
+      if (v.flashId !== id) return;
+      var f = s.flashes.filter(function (x) { return x.id === id; })[0];
+      if (f) { v.name = f.map; v.from = f.time; v.changed = f.changed; v.note = f.note; }
+      v.updatedAt = nowOf(meta);
+    });
     return s;
   };
   KTA.carDeleteFlash = function (state, id) {
     var s = clone(state);
     s.flashes = s.flashes.filter(function (f) { return f.id !== id; });
     if (s.shakedown.flashId === id) s.shakedown = emptyShakedown();
+    // The Map version that Flash produced goes with it, or Undo would name a
+    // version the Car history no longer has a Flash for.
+    var kept = s.mapVersions.filter(function (v) { return v.flashId !== id; });
+    if (kept.length !== s.mapVersions.length) s.mapVersions = normVersions(renumber(kept));
     return s;
   };
-  KTA.carMapAt = function (state, startMs) {
-    var s = normalize(state), best = null;
-    s.flashes.forEach(function (f) {
-      if (f.time <= startMs && (!best || f.time > best.time)) best = f;
+  /** Versions numbered 1..n with no gaps, so a deleted Flash leaves no hole. */
+  function renumber(list) {
+    return list.slice().sort(function (a, b) { return a.n - b.n; }).map(function (v, i) {
+      return Object.assign({}, v, { n: i + 1 });
     });
-    return best ? { id: best.id, map: best.map, time: best.time, changed: best.changed } : null;
-  };
+  }
 
   // ---------------------------------------------------------------------------
   // The main operation: check a drive, remember it, judge the new state
@@ -344,10 +562,10 @@
     var prior = orderedSummaries(s).filter(function (d) {
       return d.id !== summary.id && !hidden[d.id] && d.start != null && summary.start != null && d.start < summary.start;
     });
-    var flash = summary.start != null
-      ? KTA.carMapAt({ drives: {}, flashes: s.flashes, answers: {}, hidden: [] }, summary.start)
+    var version = summary.start != null
+      ? KTA.carMapAt({ flashes: s.flashes, mapVersions: s.mapVersions }, summary.start)
       : null;
-    var since = flash ? prior.filter(function (d) { return d.start >= flash.time; }) : prior;
+    var since = (version && isNum(version.from)) ? prior.filter(function (d) { return d.start >= version.from; }) : prior;
     var ref = since.length >= 3 ? since : prior.slice(-5);
     var reasons = [];
     if (ref.length) {
@@ -388,7 +606,10 @@
         report: {
           identity: ident.id, tooShort: true, replaced: false, summary: null,
           verdict: 'nodata', baseline: KTA.carBaseline(s),
-          map: { recorded: false, name: null, since: null },
+          // A Too-short Drive read nothing, but the car is still on a Map: the
+          // reply says nothing more than its one sentence, so this only has to
+          // be honest for anything that reads the card.
+          map: mapOut(KTA.carActiveMapVersion(s)),
           isShakedown: false,
           shakedown: { role: 'none', status: s.shakedown.status, calmSec: 0, needed: SHAKEDOWN_CALM, passed: false },
           flashCause: null, hardDrivingWatch: false,
@@ -421,7 +642,9 @@
     // Shakedown: only a drive that starts at or after the Flash banks minutes.
     // A pass already banked resets first: the next drive is ordinary again.
     if (s.shakedown.status === 'passed') s.shakedown = emptyShakedown();
-    var flash = summary.start != null ? KTA.carMapAt(s, summary.start) : null;
+    // The Map this Drive ran on: the Map version active at its start, never the
+    // one active now, and never guessed from the log.
+    var version = KTA.carMapAt(s, summary.start);
     var pendingFlash = s.shakedown.status === 'pending'
       ? s.flashes.filter(function (f) { return f.id === s.shakedown.flashId; })[0] || null
       : null;
@@ -478,7 +701,7 @@
       report: {
         identity: summary.id, tooShort: false, replaced: replaced, summary: summary,
         verdict: verdict, baseline: baseline,
-        map: flash ? { recorded: true, name: flash.map, since: flash.time } : { recorded: false, name: null, since: null },
+        map: mapOut(version),
         isShakedown: isShakedown,
         shakedown: {
           role: summary.shakedown, status: s.shakedown.status,
@@ -499,7 +722,11 @@
     var s = normalize(state), summary = s.drives[driveId];
     if (!summary) return null;
     var baseline = KTA.carBaseline(s);
-    var flash = summary.start != null ? KTA.carMapAt(s, summary.start) : null;
+    var version = KTA.carMapAt(s, summary.start);
+    // The Flash that produced that Map version, when there was one.
+    var flash = version && version.flashId
+      ? s.flashes.filter(function (f) { return f.id === version.flashId; })[0] || null
+      : null;
     var isShakedown = summary.shakedown !== 'none';
     var unexplained = s.answers[driveId] != null
       ? Object.assign(unexplainedFor(s, summary, baseline) || { reasons: [] }, { state: 'answered-' + s.answers[driveId] })
@@ -518,7 +745,7 @@
     return {
       identity: driveId, tooShort: false, replaced: true, summary: summary,
       verdict: summary.verdict, baseline: baseline,
-      map: flash ? { recorded: true, name: flash.map, since: flash.time } : { recorded: false, name: null, since: null },
+      map: mapOut(version),
       isShakedown: isShakedown,
       shakedown: {
         role: summary.shakedown, status: s.shakedown.status,
@@ -563,7 +790,7 @@
     return orderedSummaries(s)
       .filter(function (d) { return !hidden[d.id]; })
       .map(function (d) {
-        var flash = d.start != null ? KTA.carMapAt(s, d.start) : null;
+        var version = KTA.carMapAt(s, d.start);
         return {
           id: d.id, start: d.start, fileName: d.fileName,
           duration: d.duration, moving: d.moving,
@@ -576,7 +803,8 @@
           boostTarget: d.boostTarget, hardPulls: d.hardPulls,
           overshoot: d.overshoot != null ? d.overshoot : null,
           wgAtPeak: d.wgAtPeak != null ? d.wgAtPeak : null,
-          map: flash ? flash.map : null,
+          map: version ? version.name : null,
+          mapVersion: version ? version.n : null,
           shakedown: d.shakedown,
           answered: s.answers[d.id] || null
         };
@@ -606,6 +834,7 @@
         series('accel5070', function (r) { return r.accel5070 ? r.accel5070.seconds : null; })
       ],
       flashes: s.flashes.map(function (f) { return { time: f.time, map: f.map }; }),
+      mapVersions: s.mapVersions.map(function (v) { return versionOut(v); }),
       baseline: KTA.carBaseline(s)
     };
   };
@@ -632,7 +861,8 @@
       drives: s.drives,
       flashes: s.flashes,
       hidden: s.hidden,
-      answers: s.answers
+      answers: s.answers,
+      mapVersions: s.mapVersions.map(function (v) { return versionOut(v); })
     };
     if (s.shakedown.status !== 'none') doc.shakedown = s.shakedown;
     return doc;
@@ -646,7 +876,20 @@
         error: 'future-version', futureVersion: doc.version
       };
     }
-    var added = { drives: 0, flashes: 0 };
+    var added = { drives: 0, flashes: 0, mapVersions: 0 };
+    // Map versions merge by number, never overwrite: a History file that knows
+    // a later version adds it, one that knows the same version later updates it.
+    (doc.mapVersions || []).forEach(function (inc) {
+      if (!inc || typeof inc !== 'object' || !isNum(inc.n)) return;
+      var cur = s.mapVersions.filter(function (v) { return v.n === inc.n; })[0];
+      if (!cur) {
+        s.mapVersions.push(normVersions([inc]).filter(function (v) { return v.n === inc.n; })[0]);
+        added.mapVersions++;
+      } else if (isNum(inc.updatedAt) && isNum(cur.updatedAt) && inc.updatedAt > cur.updatedAt) {
+        Object.keys(inc).forEach(function (k) { cur[k] = inc[k]; });
+      }
+    });
+    s.mapVersions = normVersions(s.mapVersions);
     Object.keys(doc.drives || {}).forEach(function (id) {
       var inc = doc.drives[id];
       if (!inc || typeof inc !== 'object') return;
@@ -667,6 +910,18 @@
       }
     });
     sortFlashes(s);
+    // A Flash the incoming file knows but this car does not is the next Map
+    // version: the history it names is the map that Flash put on the car.
+    s.flashes.forEach(function (f) {
+      if (versionOfFlash(s, f.id)) return;
+      var last = s.mapVersions[s.mapVersions.length - 1];
+      s.mapVersions.push({
+        n: (last ? last.n : 0) + 1, name: f.map, kind: 'flash',
+        tablesFrom: last ? last.tablesFrom : KTUNER_BASEMAP, changePending: true,
+        from: f.time, flashId: f.id, changed: f.changed, note: f.note || '', updatedAt: f.updatedAt
+      });
+    });
+    s.mapVersions = normVersions(s.mapVersions);
     (doc.hidden || []).forEach(function (id) { if (s.hidden.indexOf(id) < 0) s.hidden.push(id); });
     Object.keys(doc.answers || {}).forEach(function (id) { if (s.answers[id] == null) s.answers[id] = doc.answers[id]; });
     if (s.shakedown.status === 'none' && doc.shakedown && doc.shakedown.status && doc.shakedown.status !== 'none') {
@@ -856,12 +1111,11 @@
     // ---- P1: an open Stop -> Undo is the only plan ---------------------------
     if (issues.stop) {
       var stopD = s.drives[issues.stop.driveId];
-      var target = stopD && stopD.start != null ? KTA.carMapAt(s, stopD.start) : lastFlashOf(s);
-      var prev = target ? latestFlashBefore(s, target) : null;
-      var undoName = prev
-        ? 'Flash ' + prev.map + ' · ' + vnStamp(prev.time)
-        : (target ? 'Flash ' + target.map + ' · ' + vnStamp(target.time) + ' (previous file not recorded)'
-          : 'Previous map file not recorded — record your Flashes first');
+      // The Map version that Drive ran on, and the version before it to flash
+      // back to. When there is genuinely no earlier version, Undo says so and
+      // the owner is asked once — it never invents a file name.
+      var target = KTA.carMapAt(s, stopD && stopD.start) || KTA.carActiveMapVersion(s);
+      var undo = undoFor(s, target);
       var trimRouted = stopD && isNum(stopD.trimWorst) && Math.abs(stopD.trimWorst) > TRIM_STOP;
       lever('afm', 'AFM Flow', 'AFM Flow curve', 'locked',
         'Superseded by the open Stop: undo first. Trims off everywhere route to pick the right preset / Undo, never a curve edit.',
@@ -878,20 +1132,28 @@
         'No edit needed: ECO mode already runs the 18 psi targets (KTuner Starter 21 Dual Tune 2).', '—', []);
       return {
         kind: 'undo', changeId: 'undo', family: null,
-        headline: 'Stop open: flash your previous map file (' + undoName + ').',
+        headline: undo.known
+          ? 'Stop open: flash your previous map file (' + undo.label + ').'
+          : 'Stop open: flash your previous map file, and tell me which one it is.',
         route: trimRouted ? 'preset' : 'previous-map',
         evidence: [{
           drives: [issues.stop.driveId],
           text: 'Drive ' + issues.stop.driveId + ' is a Stop' +
             (stopD && isNum(stopD.trimWorst) ? ' (worst trim ' + stopD.trimWorst.toFixed(1) + ' %)' : '') +
-            (target ? ' on the Map from Flash ' + target.map + '.' : ' with no Flash recorded.'),
+            (target ? ' on ' + target.label + ' · ' + target.name + '.' : ' with no Map version on record.'),
           basis: 'Data'
         }],
         basis: 'Data',
         proof: 'The next Shakedown drive passes: 10 calm minutes with trims within ±5 %, score near the Baseline, no lean mixture.',
         tables: [], cells: [], afmPasteRow: null,
-        saveAs: null, undoName: undoName,
-        prefill: { time: now, map: prev ? prev.map : (target ? target.map : ''), changed: target ? target.changed : 'other', note: 'Undo after the ' + issues.stop.driveId + ' Stop.' },
+        saveAs: null, undoName: undo.headline, undo: undo,
+        mapVersion: target,
+        prefill: {
+          time: now,
+          map: undo.name || (target ? target.name : ''),
+          changed: target && target.changed ? target.changed : 'other',
+          note: 'Undo after the ' + issues.stop.driveId + ' Stop.'
+        },
         deferred: [], levers: levers, openIssues: issues,
         mapFacts: { normalPeak: normalPeak, ecoPeak: ecoPeak, finalPeak: finalPeak, pairsIdentical: pairsIdentical },
         ceiling: ceiling
@@ -1068,7 +1330,8 @@
         headline: 'Your logs support no map change right now.',
         evidence: [], basis: 'Data',
         proof: null, tables: [], cells: [], afmPasteRow: null,
-        saveAs: null, undoName: null, prefill: null,
+        saveAs: null, undoName: null, undo: null, prefill: null,
+        mapVersion: KTA.carActiveMapVersion(s),
         deferred: deferred, levers: levers, openIssues: issues,
         mapFacts: { normalPeak: normalPeak, ecoPeak: ecoPeak, finalPeak: finalPeak, pairsIdentical: pairsIdentical },
         ceiling: ceiling
@@ -1105,8 +1368,9 @@
         var tcells = shape.map(function (cell) {
           var before = normals[id].values[cell.rpmRow][cell.col - 1];
           var after = Math.round(Math.min(before + cell.delta, ceiling) * 10) / 10;
-          // P7: no boost raised below 3,000 rpm — a raise here is dropped, never shipped.
-          if (cell.rpm < 3000 && after > before + 1e-9) return null;
+          // P7: no boost raised below the thresholds floor — a raise here is dropped, never shipped.
+          var lowFloor = KTA.THRESHOLDS ? KTA.THRESHOLDS.boost_raise_min_rpm.value : 3000;
+          if (cell.rpm < lowFloor && after > before + 1e-9) return null;
           return { table: id, rpm: cell.rpm, rpmRow: cell.rpmRow, col: cell.col, of: cell.of, before: before, after: after };
         }).filter(Boolean);
         tables.push({ id: id, kind: 'map', cells: tcells });
@@ -1114,10 +1378,13 @@
       });
     }
     var revCount = s.flashes.filter(function (f) { return CHANGED_FAMILY[f.changed] === winner.family; }).length;
-    var mapName = lastF ? lastF.map : 'Starter 21';
+    // The change is written on top of the Map version the car is on now, so that
+    // version is the Undo file — named, with the KTuner map name the owner gave
+    // it, not a shortened invention.
+    var baseVersion = KTA.carActiveMapVersion(s);
+    var mapName = baseVersion ? baseVersion.name : KTUNER_BASEMAP;
     var saveAs = mapName + ' · ' + vnDay(now) + ' · ' + winner.family + ' r' + (revCount + 1);
-    var undoPrev = lastF;
-    var undoName2 = undoPrev ? 'Flash ' + undoPrev.map + ' · ' + vnStamp(undoPrev.time) : 'Previous map file not recorded';
+    var undo = undoTo(baseVersion);
     return {
       kind: 'one-family', changeId: winner.id, family: winner.family,
       headline: winner.id === 'afmCurve'
@@ -1129,12 +1396,458 @@
       basis: basis, proof: proof,
       tables: tables, cells: cells,
       afmPasteRow: afmPasteRow, afmAfter: afmAfter, afmPct: afmPct,
-      saveAs: saveAs, undoName: undoName2,
+      saveAs: saveAs, undoName: undo.headline, undo: undo, mapVersion: baseVersion,
       prefill: { time: now, map: saveAs, changed: FAMILY_CHANGED[winner.family], note: winner.id + ': ' + winner.evidence.text },
       deferred: deferred, levers: levers, openIssues: issues,
       mapFacts: { normalPeak: normalPeak, ecoPeak: ecoPeak, finalPeak: finalPeak, pairsIdentical: pairsIdentical },
       ceiling: ceiling
     };
+  };
+
+  // ---------------------------------------------------------------------------
+  // The loop: Open steps, settling them against a Drive, and exactly one Next step
+  //
+  // An **Open step** is a Next step still waiting for the Drive that proves or
+  // disproves it (CONTEXT.md). Three public operations move it, all pure:
+  //
+  //   KTA.carOpenSteps(list)            the steps as they are stored, one per key
+  //   KTA.carSettle(state, id, steps)   judge every Open step against one Drive
+  //   KTA.carNextStep(state, id, steps) exactly one Next step, and what it opens
+  //
+  // Settling runs first and the decision second, so the step a Drive is given is
+  // chosen knowing everything that Drive proved. A Drive that settled none of the
+  // Open steps it could have settled is a **Wasted drive** (CONTEXT.md), and the
+  // operation says which step would have been settled instead — never as a
+  // verdict on the owner.
+  //
+  // The order the Next step is decided in (prototypes/next-step/, amended: the
+  // Baseline before the habit) never reorders:
+  //
+  //   open Stop            → Flash: Undo (the only step)
+  //   Too-short Drive      → nothing read; the previous step stands
+  //   logger fault         → watch in TunerView: fix the dead gauges
+  //   no Baseline yet      → drive: one Cool drive with 2 pulls
+  //                          (+ a cause seen today is opened as a free habit)
+  //   cause seen today     → its step
+  //   Open step still open → its step, compact "same step as last time"
+  //   otherwise            → nothing: upload after a Flash, Install, new fuel,
+  //                          or Knock Control over the upload score
+  //
+  // Every step names the Drive whose upload will settle it (`settlesOn`). A
+  // repeated step is one short line (`same`), never a second essay. Only the
+  // Flash plan names a KTuner table: nothing here writes a cell or a table name.
+  // ---------------------------------------------------------------------------
+  var LOG_CHANNEL_NAMES = {
+    boost: 'Turbo Pressure', boostTarget: 'Turbo Pressure Target', fp: 'DIFP',
+    fpTarget: 'DIFP Target', cvt: 'Transmission Temperature', stft: 'STFT B1',
+    ltft: 'LTFT B1', kControl: 'Knock Control', lam: 'O2', lamCmd: 'AFR Command',
+    afrCmd: 'AFR Command', mafHz: 'MAF Hz', mafGs: 'MAF Hz',
+    iat: 'IAT', iat2: 'IAT2', rpm: 'Engine RPM', vss: 'Vehicle Speed'
+  };
+  /** A logged channel named the way TunerView spells it. */
+  function logChannel(key) { return LOG_CHANNEL_NAMES[key] || key; }
+  function logChannelList(keys) {
+    var names = (keys || []).map(logChannel).filter(function (v, i, a) { return a.indexOf(v) === i; });
+    if (names.length < 2) return names.join('');
+    return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+  }
+  function n0(v) { return isNum(v) ? v.toFixed(0) : '–'; }
+  function n1(v) { return isNum(v) ? v.toFixed(1) : '–'; }
+  function n2(v) { return isNum(v) ? v.toFixed(2) : '–'; }
+  /** Signed, with the real minus sign the owner reads (copy.py spells it the same). */
+  function sg1(v) { return KTA.fmt.signed(v, 1, '').replace('-', '−'); }
+  function minutes(sec) { return Math.round((isNum(sec) ? sec : 0) / 60); }
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  /** A Drive's id the way the owner reads it: `20260830-160151` → `30 Aug 16:01`. */
+  function driveStamp(id) {
+    var m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})$/.exec(String(id == null ? '' : id));
+    if (!m) return String(id == null ? '' : id);
+    return Number(m[3]) + ' ' + (MONTHS[Number(m[2]) - 1] || '') + ' ' + m[4] + ':' + m[5];
+  }
+
+  /** The dead channels among `keys`, as TunerView names them, or null. */
+  function deadOf(sum, keys) {
+    var dead = (sum.flat || []).filter(function (k) { return keys.indexOf(k) >= 0; });
+    return dead.length ? logChannelList(dead) : null;
+  }
+
+  function judged(status, why, because) {
+    return { status: status, why: why, because: because || null };
+  }
+  /** `done` and `fail` answered the question; `open` and `wait` did not. */
+  function settledStatus(status) { return status === 'done' || status === 'fail'; }
+  /** Only `done` proves the step. A step that came back "Still off" is asked again. */
+  function doneStatus(status) { return status === 'done'; }
+
+  // Each step: what the owner was told to do (title), what settling it settles
+  // (`short`), and the Drive that would settle it (`would`) — the three words
+  // the Wasted drive line is made of. The judge reads only the summary of the new
+  // Drive, so a Drive this car never logged can never settle anything.
+  var STEP_JUDGES = {
+    undo: {
+      key: 'undo', title: 'Undo: trims back within ±' + TRIM_OK + ' %', short: 'the Undo',
+      would: 'a drive of ' + (SHAKEDOWN_CALM / 60) + ' calm minutes', needs: ['stft', 'ltft'],
+      judge: function (s, step, ctx) {
+        if (!s) return judged('wait', 'Too short to judge: it needs ' + (SHAKEDOWN_CALM / 60) + ' calm minutes.', 'it was too short');
+        var dead = deadOf(s, ['stft', 'ltft']);
+        if (dead) return judged('wait', 'The fuel trims were dead in this log (' + dead + '), so nothing could be read.', 'the logger lost ' + dead);
+        if (isNum(s.trimWorst) && Math.abs(s.trimWorst) <= TRIM_OK && s.calmSec >= SHAKEDOWN_CALM) {
+          return judged('done', 'Trims ' + sg1(s.trimWorst) + ' % over ' + minutes(s.calmSec) + ' calm minutes' +
+            (isNum(ctx.was) ? ' (they were ' + sg1(ctx.was) + ' %)' : '') + '.');
+        }
+        if (isNum(s.trimWorst) && Math.abs(s.trimWorst) > TRIM_STOP) {
+          return judged('fail', 'Trims still ' + sg1(s.trimWorst) + ' %.');
+        }
+        return judged('open', 'Trims ' + sg1(s.trimWorst) + ' %, ' + minutes(s.calmSec) + ' calm min: not enough yet.',
+          s.calmSec >= SHAKEDOWN_CALM ? 'the trims were still ' + sg1(s.trimWorst) + ' %' : 'it was not ' + (SHAKEDOWN_CALM / 60) + ' calm minutes');
+      }
+    },
+    baseline: {
+      key: 'baseline', title: 'Baseline: one Cool drive with 2 pulls', short: 'the Baseline',
+      would: 'a Cool Drive with 2 pulls', needs: [],
+      judge: function (s) {
+        var pulls = s && s.hardPulls ? s.hardPulls : 0;
+        if (!s) return judged('wait', 'Too short: a Baseline Drive is ' + (SHAKEDOWN_CALM / 60) + ' minutes with 2 pulls.', 'it was too short');
+        if (s.cool && pulls >= 2) {
+          return judged('done', 'Intake ' + n0(s.iatMoving) + ' °C, ' + pulls + ' pulls' +
+            (s.accel5070 ? ', 50→70 km/h in ' + n2(s.accel5070.seconds) + ' s' : '') +
+            '. Every later Drive is compared to this one.');
+        }
+        if (!s.cool) return judged('wait', 'Intake ' + n0(s.iatMoving) + ' °C while moving: not a Cool Drive.', 'it was too warm to be a Cool Drive');
+        return judged('wait', 'Cool (' + n0(s.iatMoving) + ' °C) but ' + (pulls ? 'only ' + pulls + ' pull' + (pulls === 1 ? '' : 's') : 'no hard pulls') + '.', 'it had no hard pulls');
+      }
+    },
+    habit: {
+      key: 'habit', title: 'Habit test: revs up in hot traffic', short: 'the habit test',
+      would: 'a hot-afternoon drive', needs: ['kControl'],
+      judge: function (s) {
+        if (!s) return judged('wait', 'Too short: the habit shows on a drive of 10 minutes or more.', 'it was too short');
+        var dead = deadOf(s, ['kControl']);
+        if (dead) return judged('wait', dead + ' was dead in this log, so Knock Control could not be read.', 'the logger lost ' + dead);
+        if (!isNum(s.kcPeak) || !isNum(s.kcStart)) return judged('wait', 'Knock Control was not in this log.', 'Knock Control was not logged');
+        if (!s.hot) return judged('wait', 'Cool Drive (' + n0(s.iatMoving) + ' °C moving): the habit only shows on a hot afternoon.', 'it was a Cool Drive, and the habit needs heat');
+        var rise = s.kcPeak - s.kcStart;
+        if (isNum(s.lugShare) && s.lugShare < LUG_OK && rise <= LUG_RISE_OK) {
+          return judged('done', 'Lugging ' + n1(s.lugShare) + ' % of moving time, Knock Control ' + n2(s.kcStart) + ' → ' + n2(s.kcPeak) + '.');
+        }
+        return judged('open', 'Lugging ' + n1(s.lugShare) + ' % of moving time, Knock Control rose ' + n2(rise) + '.',
+          'it was still lugging ' + n1(s.lugShare) + ' % of moving time');
+      }
+    },
+    channels: {
+      key: 'channels', title: 'Log AFR Command and MAF Hz', short: 'the AFR Command / MAF Hz step',
+      would: 'a log with AFR Command and MAF Hz in the list', needs: [],
+      judge: function (s) {
+        if (!s) return judged('wait', 'Too short: nothing could be read out of it.', 'it was too short');
+        var missing = (s.missing || []).filter(function (k) { return k === 'afrCmd' || k === 'mafHz' || k === 'mafGs' || k === 'lamCmd'; });
+        if (missing.length) {
+          return judged('wait', 'Still not in the log (' + logChannelList(missing) + '). Mixture is judged against the map' +
+            (isNum(s.mixTarget) ? "'s " + n1(s.mixTarget) : "'s own target") + ', not what the ECU asked.', 'they were not logged');
+        }
+        return judged('done', 'Both in the log now.');
+      }
+    },
+    logger: {
+      key: 'logger', title: 'Fix the logger: dead gauges', short: 'the logger fix',
+      would: 'a drive with every gauge moving', needs: [],
+      judge: function (s) {
+        if (!s) return judged('wait', 'Too short: a Drive has to be read to see whether the gauges moved.', 'it was too short');
+        if ((s.flat || []).length) return judged('fail', 'Still flat: ' + logChannelList(s.flat) + '.');
+        return judged('done', 'Every gauge moves again.');
+      }
+    }
+  };
+  /** The steps that can be the one Next step, in the order they are re-asked. */
+  var STEP_ORDER = ['undo', 'logger', 'habit', 'channels', 'baseline'];
+  KTA.STEP_KEYS = STEP_ORDER.slice();
+
+  function stepOf(key) { return STEP_JUDGES[key]; }
+
+  /** The Open steps as they are stored: one row per key, in the order asked. */
+  KTA.carOpenSteps = function (list) {
+    var out = [], seen = {};
+    (Array.isArray(list) ? list : []).forEach(function (st) {
+      if (!st || typeof st !== 'object' || !st.key || !STEP_JUDGES[st.key] || seen[st.key]) return;
+      seen[st.key] = true;
+      out.push({
+        key: st.key,
+        title: st.title || STEP_JUDGES[st.key].title,
+        status: settledStatus(st.status) ? st.status : (st.status === 'wait' ? 'wait' : 'open'),
+        why: st.why ? String(st.why) : '',
+        id: st.id || null,
+        // `askedOn` is the Drive that first asked it (Drives to proof counts from
+        // here); `lastAskedOn` is the Drive that asked it most recently, which is
+        // how a repeated step knows it is a repeat.
+        askedOn: st.askedOn || null,
+        askedAt: isNum(st.askedAt) ? st.askedAt : null,
+        // Null until the step is the one Next step: a step opened beside it as a
+        // free habit has not been asked for yet.
+        lastAskedOn: st.lastAskedOn || null,
+        settledBy: st.settledBy || null,
+        settledAt: isNum(st.settledAt) ? st.settledAt : null
+      });
+    });
+    out.sort(function (a, b) {
+      return (isNum(a.askedAt) ? a.askedAt : 0) - (isNum(b.askedAt) ? b.askedAt : 0) ||
+        STEP_ORDER.indexOf(a.key) - STEP_ORDER.indexOf(b.key);
+    });
+    return out;
+  };
+  function stepByKey(steps, key) {
+    return steps.filter(function (s) { return s.key === key; })[0] || null;
+  }
+  function openOf(steps, key) {
+    var st = stepByKey(steps, key);
+    return st && !doneStatus(st.status) ? st : null;
+  }
+
+  /**
+   * Judge every Open step against one Drive: Done / Not yet / Still off / Can't
+   * tell yet, each with the numbers behind it, and say whether the Drive was a
+   * Wasted drive. A Drive never settles the step it asked itself, a settled step
+   * is never judged twice, and a Too-short Drive reads nothing at all — so it
+   * settles nothing and says what would have.
+   */
+  KTA.carSettle = function (state, driveId, openSteps) {
+    var s = normalize(state);
+    var steps = KTA.carOpenSteps(openSteps);
+    var sum = s.drives[driveId] || null;   // a Drive not in the Car history is a Too-short Drive
+    var out = [], considered = [];
+
+    // A Too-short Drive read nothing, so it settles nothing and no Open step loses
+    // its status to "Can't tell yet". It is still a Wasted Drive, and it says what
+    // would have counted.
+    if (!sum) {
+      return {
+        state: s, settled: [], openSteps: steps,
+        wasted: wastedFor(steps.filter(function (st) { return !doneStatus(st.status); }), null, [])
+      };
+    }
+
+    steps.forEach(function (st) {
+      if (settledStatus(st.status)) return;              // already answered
+      if (st.askedOn === driveId) return;                // a Drive never settles its own ask
+      considered.push(st);
+      var ctx = { was: trimOfDrive(s, st.askedOn) };
+      var v = stepOf(st.key).judge(sum, st, ctx);
+      st.status = v.status;
+      st.why = v.why;
+      st.settledBy = driveId;
+      st.settledAt = isNum(sum.start) ? sum.start : null;
+      out.push({
+        key: st.key, title: st.title, status: v.status, why: v.why,
+        would: stepOf(st.key).would, proves: stepOf(st.key).short, because: v.because
+      });
+    });
+
+    var settledAny = out.some(function (r) { return settledStatus(r.status); });
+    return {
+      state: s, settled: out, openSteps: steps,
+      // A Stop Drive is never called a Wasted Drive: the owner has a fault to fix,
+      // and a note about the Drive on top of a Stop only adds to the noise.
+      wasted: (settledAny || sum.verdict === 'stop') ? NOT_WASTED : wastedFor(considered, sum, out)
+    };
+  };
+  var NOT_WASTED = { wasted: false, reason: null, would: null, proves: null, key: null };
+  /**
+   * The Wasted drive line: why this Drive settled nothing, and the Drive that
+   * would have settled the step it could not. The step named is the one the owner
+   * is actually waiting on (an Undo before a habit before the Baseline), and a
+   * Drive that lost gauges is told that first, because that is the reason nothing
+   * on it could be trusted.
+   */
+  var WOULD_PRIORITY = ['undo', 'logger', 'habit', 'baseline', 'channels'];
+  function wastedFor(considered, sum, settledRows) {
+    if (!considered.length) return NOT_WASTED;
+    var pick = null;
+    WOULD_PRIORITY.forEach(function (k) {
+      if (pick) return;
+      if (considered.some(function (st) { return st.key === k; })) pick = k;
+    });
+    var j = stepOf(pick);
+    var dead = sum && (sum.flat || []).length ? logChannelList(sum.flat) : '';
+    var row = (settledRows || []).filter(function (r) { return r.key === pick; })[0];
+    return {
+      wasted: true, key: pick, proves: j.short,
+      reason: !sum ? 'it was too short (under a minute moving)'
+        : (dead ? 'the logger lost ' + dead : (row && row.because) || 'this Drive could not test ' + j.short),
+      would: j.would, withGauges: !!dead
+    };
+  }
+  function trimOfDrive(s, driveId) {
+    var d = driveId ? s.drives[driveId] : null;
+    return d && isNum(d.trimWorst) ? d.trimWorst : null;
+  }
+
+  /** The read Drive before this one: what "the same step as last time" is read against. */
+  function previousReadId(s, driveId) {
+    var here = s.drives[driveId] || null;
+    var prev = null;
+    orderedSummaries(s).forEach(function (d) {
+      if (d.id === driveId) return;
+      if (here && isNum(here.start) && isNum(d.start) && !(d.start < here.start)) return;
+      if (!prev || (isNum(d.start) && isNum(prev.start) ? d.start > prev.start : true)) prev = d;
+    });
+    return prev ? prev.id : null;
+  }
+
+  /**
+   * The cause seen today: the Fuel-quality score climbing on a hot Drive while
+   * the CVT held it below 1,700 rpm. Diagnosed from this Drive's own numbers,
+   * and free — no Flash, nothing to type in KTuner.
+   */
+  function habitCause(sum, baseline) {
+    if (!sum || !sum.hot) return null;
+    if (!isNum(sum.kcPeak) || !isNum(sum.kcStart)) return null;
+    var rise = sum.kcPeak - sum.kcStart;
+    if (rise < LUG_RISE_SEEN) return null;
+    if (!isNum(sum.kcUpSteps) || !isNum(sum.lugUpSteps)) return null;
+    if (!(sum.lugUpSteps > sum.kcUpSteps * LUG_STEPS_SHARE)) return null;
+    var base = isNum(baseline) ? baseline : KTA.LIMITS.score.baseline;
+    return {
+      key: 'habit',
+      kcStart: sum.kcStart, kcPeak: sum.kcPeak, iatMoving: sum.iatMoving,
+      lugRpm: sum.lugRpm, upSteps: sum.kcUpSteps, lugUpSteps: sum.lugUpSteps, rise: rise,
+      why: 'Knock Control went ' + n2(sum.kcStart) + ' → ' + n2(sum.kcPeak) + ': about ' +
+        n1(KTA.LIMITS.score.tableDeg * Math.max(0, sum.kcPeak - base)) + '° of timing taken under boost. Not damage. ' +
+        sum.lugUpSteps + ' of its ' + sum.kcUpSteps + ' step-ups came while the CVT held ' +
+        KTA.fmt.num(sum.lugRpm, 0) + ' rpm with load in ' + n0(sum.iatMoving) + ' °C air.'
+    };
+  }
+
+  /**
+   * Exactly one Next step, in the fixed order above, plus the Open steps as they
+   * stand after it: the step it opens, and the one added beside it as a free
+   * habit when a cause was seen today before the Baseline exists.
+   */
+  KTA.carNextStep = function (state, driveId, openSteps) {
+    var s = normalize(state);
+    var steps = KTA.carOpenSteps(openSteps);
+    var sum = s.drives[driveId] || null;   // a Drive not in the Car history is a Too-short Drive
+    var prevRead = previousReadId(s, driveId);
+    var baseline = KTA.carBaseline(s);
+
+    /** The step, the Open steps as they now stand, and the keys the app stores. */
+    function answer(step, keys, alsoKeys) {
+      var asked = keys || [];
+      var opened = asked.concat(alsoKeys || []);
+      if (asked.length) {
+        // "Same step as last time" is read against the Drive before this one, and
+        // never hides a step that brings news of its own (a cause seen today).
+        var prev = stepByKey(steps, asked[0]);
+        step.same = !!step.same && !step.also && !!prevRead && !!prev && prev.lastAskedOn === prevRead;
+      }
+      opened.forEach(function (k) {
+        var st = stepByKey(steps, k);
+        if (st) {
+          // Asked again: the same step, so it keeps its place and the Drive that
+          // first asked it (Drives to proof counts from there); only this move.
+          if (asked.indexOf(k) >= 0) st.lastAskedOn = driveId;
+        } else {
+          steps.push({
+            key: k, title: stepOf(k).title, status: 'open', why: 'Asked on ' + driveStamp(driveId) + '.',
+            id: null, askedOn: driveId, askedAt: sum && isNum(sum.start) ? sum.start : null,
+            lastAskedOn: asked.indexOf(k) >= 0 ? driveId : null, settledBy: null, settledAt: null
+          });
+        }
+      });
+      return { state: s, step: step, openSteps: steps, opened: opened };
+    }
+    function base(key, kind, title, gauges, proves, settlesOn, opens, also) {
+      return {
+        key: key, kind: kind, title: title, opens: opens || null, also: also || null,
+        gauges: gauges || [], proves: proves || null, settlesOn: settlesOn,
+        // A step that opens something can be a repeat; one that opens nothing
+        // (nothing to change) never is.
+        same: !!opens, cause: null, previous: null, flat: sum ? (sum.flat || []).slice() : []
+      };
+    }
+    function held(key) { return openOf(steps, key); }
+    /** Two channels to add in TunerView: free, and worth asking for while we are there. */
+    function missingChannels() {
+      return !!sum && (sum.missing || []).some(function (k) {
+        return k === 'afrCmd' || k === 'mafHz' || k === 'mafGs' || k === 'lamCmd';
+      }) && !openOf(steps, 'channels');
+    }
+
+    // 1. An open Stop: Undo is the only step, exactly as the Flash plan's P1.
+    if (sum && sum.verdict === 'stop') {
+      return answer(base('undo', 'flash', 'Put the map from before back on the car', ['trims', 'kc'],
+        'trims back within ±' + TRIM_OK + ' % over ' + (SHAKEDOWN_CALM / 60) + ' calm minutes',
+        'after the first calm drive on the old file', 'undo'), ['undo'],
+        missingChannels() ? ['channels'] : []);
+    }
+
+    // 2. A Too-short Drive read nothing: the step the owner already has stands.
+    if (!sum) {
+      var stand = held('undo') || held('logger') || held('habit') || held('channels') || held('baseline');
+      return answer({
+        key: 'tooShort', kind: 'none', opens: null, also: null, gauges: [], proves: null,
+        settlesOn: 'after a drive of 10 minutes or more', same: true, cause: null, flat: [],
+        title: 'Nothing read: the drive was too short',
+        previous: stand ? { key: stand.key, title: stand.title } : null
+      }, []);
+    }
+
+    // 3. A logger fault: the log, not the car.
+    if ((sum.flat || []).length) {
+      return answer(base('logger', 'watch', 'Your logger recorded ' + (sum.flat.length) +
+        ' dead ' + (sum.flat.length === 1 ? 'gauge' : 'gauges'), ['live'],
+        'that every gauge moves again', 'your next drive, any kind', 'logger'), ['logger']);
+    }
+
+    // 4. No Baseline yet: one Cool Drive with 2 pulls, and a cause seen today is
+    //    opened beside it as a free habit (the Baseline stays the step: the habit
+    //    is scored against it).
+    var baselineStep = stepByKey(steps, 'baseline');
+    var cause = habitCause(sum, baseline.value);
+    // Opened beside the step, never instead of it: the free habit, and the two
+    // channels to add in TunerView while the owner is there anyway.
+    var beside = [];
+    if (cause) beside.push('habit');
+    if (missingChannels()) beside.push('channels');
+    if (!baselineStep || !doneStatus(baselineStep.status)) {
+      var cool = answer(base('baseline', 'drive', 'Log one Cool-morning drive with 2 pulls',
+        ['iat', 'kc', 'afr', 'boost'],
+        'a Cool Drive with 2 pulls to measure every later Drive against',
+        'after that morning Drive', 'baseline', cause ? 'habit' : null),
+        ['baseline'], beside);
+      cool.step.cause = cause;
+      return cool;
+    }
+
+    // 5. A cause seen today: its step.
+    if (cause) {
+      var habit = answer(base('habit', 'drive', 'Keep the revs up in hot traffic (free, no Flash)',
+        ['rpm', 'kc', 'iat'],
+        'lugging under ' + LUG_OK + ' % of moving time and Knock Control not rising (today ' +
+        n1(sum.lugShare) + ' %, +' + n2(cause.rise) + ')',
+        'after your next hot-afternoon Drive', 'habit'), ['habit'],
+        missingChannels() ? ['channels'] : []);
+      habit.step.cause = cause;
+      return habit;
+    }
+
+    // 6. An Open step still open: its step again, compact — "same step as last time".
+    var again = held('undo') || held('logger') || held('habit');
+    if (again) {
+      var titles = { undo: 'Undo: put the map from before back on the car', logger: 'Fix the logger: the dead gauges', habit: 'Habit test: log your next hot-afternoon Drive' };
+      var kinds = { undo: 'flash', logger: 'watch', habit: 'drive' };
+      var gauges = { undo: ['trims', 'kc'], logger: ['live'], habit: ['rpm', 'kc', 'iat'] };
+      var when = { undo: 'after the first calm drive on the old file', logger: 'your next drive, any kind', habit: 'after your next hot-afternoon Drive' };
+      var proves = {
+        undo: 'trims back within ±' + TRIM_OK + ' % over ' + (SHAKEDOWN_CALM / 60) + ' calm minutes',
+        logger: 'that every gauge moves again',
+        habit: 'lugging under ' + LUG_OK + ' % of moving time and Knock Control not rising'
+      };
+      return answer(base(again.key, kinds[again.key], titles[again.key], gauges[again.key],
+        proves[again.key], when[again.key], again.key), [again.key]);
+    }
+
+    // 7. Nothing to ask: the app says what it is waiting to hear.
+    return answer(base('none', 'none', 'Nothing to change. Drive it.', [],
+      null, 'after any Flash, any part fitted, a new fuel brand, or Knock Control over ' +
+      n2(UPLOAD_SCORE) + ' on the gauge', null), [], missingChannels() ? ['channels'] : []);
   };
 
   return KTA;

@@ -163,28 +163,165 @@ def test_a_too_short_drive_says_it_read_nothing_rather_than_pretending():
 
 
 # -- one Next step, always ------------------------------------------------
+# The engine decides it (`worker.nextStep` → `KTA.carNextStep`); the copy says it.
+# These tests read one decided step the way the chat would.
+def decided(step, plan=None, limits=LIMITS, open_steps=None):
+    return C.next_step_card(step, plan, limits, open_steps)
+
+
+def step_undo(flat=None, hot=True):
+    """What the engine hands the copy for the Undo branch of a Stop Drive."""
+    return {
+        "key": "undo", "kind": "flash", "opens": "undo", "also": None,
+        "title": "Put the map from before back on the car", "gauges": ["trims", "kc"],
+        "proves": "trims back within ±5 % over 10 calm minutes",
+        "settlesOn": "after the first calm drive on the old file",
+        "same": False, "cause": None, "previous": None, "flat": flat or [],
+    }
+
+
+def step_logger(flat):
+    return {
+        "key": "logger", "kind": "watch", "opens": "logger", "also": None,
+        "title": f"Your logger recorded {len(flat)} dead gauges", "gauges": ["live"],
+        "proves": "that every gauge moves again", "settlesOn": "your next drive, any kind",
+        "same": False, "cause": None, "previous": None, "flat": flat,
+    }
+
+
 def test_exactly_one_next_step_and_never_a_list():
-    for verdict in ("good", "watch", "stop", "nodata"):
-        step = C.next_step(drive(verdict, kcPeak=0.5, timingCostDeg=0.1, trimWorst=-1.0), {"kind": "no-change", "headline": "x"})
-        assert set(step) >= {"kind", "title", "body", "proves", "upload"}
-        assert isinstance(step["title"], str) and step["title"]
-        assert "1." not in step["title"] and "2." not in step["title"]
+    for step in (
+        step_undo(),
+        step_logger(["fp"]),
+        {"key": "none", "kind": "none", "title": "Nothing to change. Drive it.", "settlesOn": "after any Flash"},
+        {"key": "tooShort", "kind": "none", "title": "Nothing read: the drive was too short",
+         "settlesOn": "after a drive of 10 minutes or more", "same": True, "previous": None},
+    ):
+        card = decided(step)
+        assert set(card) >= {"kind", "title", "body", "proves", "upload", "uploadWhen"}
+        assert isinstance(card["title"], str) and card["title"]
+        assert "1." not in card["title"] and "2." not in card["title"]
+        assert card["uploadWhen"] == f"Upload when: {card['upload']}."
 
 
 def test_a_stop_makes_undo_the_only_next_step():
-    step = C.next_step(
-        drive("stop", trimWorst=-21.4), {"kind": "undo", "headline": "Stop open: …", "undoName": "Flash Starter 21 · 23 Aug 20:00"}
+    step = decided(
+        step_undo(),
+        {"kind": "undo", "headline": "Stop open: …", "undoName": "Flash Starter 21 · 23 Aug 20:00"},
     )
     assert step["kind"] == "flash"
-    assert "Undo" in step["body"] or "map from before" in step["title"]
+    assert "map from before" in step["title"]
     assert "Shakedown drive" in step["body"]
+    # A Flash step's cells come only from the Flash plan; there is nothing else.
+    assert step["flashPlan"]["headline"] == "Stop open: …"
+    assert step["gauges"] is None and step["recipe"] is None
 
 
 def test_a_dead_gauge_is_a_watch_step_naming_the_gauge_as_tunerview_spells_it():
-    step = C.next_step(drive("good", flat=["fp", "cvt", "boost", "boostTarget"], kcPeak=0.5, trimWorst=-1.6), None)
+    dead = ["fp", "cvt", "boost", "boostTarget"]
+    step = decided(step_logger(dead), None, LIMITS, None)
     assert step["kind"] == "watch"
     for name in ("DIFP", "Transmission Temperature", "Turbo Pressure"):
         assert name in step["body"]
+    # And the gauge table names the dead gauges as TunerView spells them.
+    gauge = step["gauges"]["rows"][0]
+    assert gauge["gauge"] == "DIFP, Transmission Temperature, Turbo Pressure and Turbo Pressure Target"
+    assert gauge["ok"] == "move as you drive"
+    assert gauge["see"] == "stuck on one number"
+
+
+def test_a_repeated_step_is_one_short_line_and_never_a_second_essay():
+    """The owner should be able to scroll past a repeated step in a second."""
+    step = step_undo()
+    step["same"] = True
+    card = decided(step, {"kind": "undo", "headline": "Stop open: …"})
+    assert card["same"] is True
+    assert card["body"] == ""
+    assert card["recipe"] is None
+    assert card["gauges"] is None
+    # Only what the owner still needs: the title, and the Drive to upload.
+    assert card["title"]
+    assert card["uploadWhen"] == "Upload when: after the first calm drive on the old file."
+
+
+def test_the_drive_recipe_is_numbered_short_and_physical():
+    recipe = C.drive_recipe("baseline", LIMITS, channels_open=True)
+    assert len(recipe["steps"]) == 4
+    assert "10 minutes of normal driving first" in recipe["steps"][1]
+    assert "two pulls in S, 50 → 100 km/h" in recipe["steps"][2]
+    assert "AFR Command and MAF Hz" in recipe["steps"][3]
+    # No jargon, and no KTuner table name anywhere in the recipe.
+    blob = " ".join([recipe["intro"], *recipe["steps"]]).lower()
+    for word in ("table", "cell", "preset", "maflow", "wot_enrich", "afm"):
+        assert word not in blob, word
+
+
+def test_every_gauge_is_named_as_tunerview_spells_it_with_ok_see_and_then():
+    table = C.gauge_table(["trims", "kc", "iat", "afr", "boost", "rpm", "live"], LIMITS)
+    assert table["columns"] == ["Gauge in TunerView", "OK", "If you see", "Then"]
+    names = [r["gauge"] for r in table["rows"]]
+    assert names[:6] == [
+        "STFT B1 + LTFT B1",
+        "Knock Control",
+        "IAT2",
+        "O2 (AFR) at full throttle",
+        "Turbo Pressure",
+        "Engine RPM",
+    ]
+    for row in table["rows"]:
+        assert row["ok"] and row["see"] and row["then"], row["gauge"]
+    # The thresholds are the engine's, read through the worker.
+    assert table["rows"][0]["ok"] == "within ±5 %"
+    assert table["rows"][1]["ok"] == "at or under 0.56"
+    assert "Turbo Pressure Target" in table["rows"][4]["see"]
+
+
+# -- What I asked last time -------------------------------------------------
+def test_the_four_settled_words_are_the_specs_four():
+    rows = C.settled_rows(
+        [
+            {"key": "undo", "title": "Undo: trims back within ±5 %", "status": "done", "why": "Trims −2.3 %."},
+            {"key": "baseline", "title": "Baseline", "status": "open", "why": "not enough yet."},
+            {"key": "habit", "title": "Habit test", "status": "fail", "why": "Lugging 8.3 %."},
+            {"key": "logger", "title": "Fix the logger", "status": "wait", "why": "Knock Control was dead."},
+        ]
+    )
+    assert [r["word"] for r in rows] == ["Done", "Not yet", "Still off", "Can't tell yet"]
+    assert [r["tone"] for r in rows] == ["good", "watch", "stop", "none"]
+    assert rows[3]["why"].startswith("Knock Control was dead")
+
+
+def test_cant_tell_yet_never_reads_as_failure_and_always_says_why():
+    """The one word that must never feel like a verdict on the owner."""
+    reasons = [
+        "Intake 53 °C while moving: not a Cool Drive.",
+        "Knock Control was dead in this log, so Knock Control could not be read.",
+        "Still not in the log (MAF Hz and AFR Command). Mixture is judged against the map's 11.0.",
+    ]
+    for why in reasons:
+        assert C.settled_rows([{"key": "baseline", "status": "wait", "why": why}])[0]["word"] == "Can't tell yet"
+        low = why.lower()
+        for banned in ("failed", "failure", "try again", "bad", "wrong", "you must"):
+            assert banned not in low, why
+        # It always says why, and the why carries a number or names the gauge.
+        assert any(ch.isdigit() for ch in why) or "Control" in why, why
+
+
+def test_a_wasted_drive_is_flagged_in_one_kind_line_with_what_would_have_counted():
+    line = C.wasted_line(
+        {"wasted": True, "reason": "it was too short (under a minute moving)",
+         "would": "a drive of 10 calm minutes", "proves": "the Undo"}
+    )
+    assert line == (
+        "This Drive settles nothing: it was too short (under a minute moving). "
+        "A drive of 10 calm minutes would have settled the Undo."
+    )
+    assert C.wasted_line({"wasted": False}) is None
+    assert C.wasted_line(None) is None
+    # Never a scolding, never a count kept against the owner.
+    low = line.lower()
+    for banned in ("waste", "wasted", "failed", "again", "mistake", "wrong"):
+        assert banned not in low, line
 
 
 # -- vocabulary -----------------------------------------------------------
@@ -202,7 +339,80 @@ BANNED = [
     "stock map",
     "base tune",
     "danger",
+    # Map version naming: a small integer the owner can say out loud, never a
+    # revision, a short code or a UUID (CONTEXT.md: Map version).
+    "map v1",
+    "map rev",
+    "revision 1",
+    "map not recorded",
+    "previous map file not recorded",
 ]
+
+
+# -- the Map version --------------------------------------------------------
+def on_map_version(version: int = 1, name: str = "Starter 21 Dual Tune 2", **rest) -> dict:
+    return {"verdict": "good", "tooShort": False, "map": {"version": version, "name": name, **rest}}
+
+
+def test_the_reply_says_which_map_version_the_drive_ran_on():
+    assert C.map_version_line(on_map_version()) == "on Map version 1 · Starter 21 Dual Tune 2"
+    assert (
+        C.map_version_line(on_map_version(2, "Starter 21 Dual Tune 2 · AFM Flow r1"))
+        == "on Map version 2 · Starter 21 Dual Tune 2 · AFM Flow r1"
+    )
+
+
+def test_the_map_version_line_is_never_not_recorded():
+    """The app always holds Map version 1, so "not recorded" cannot happen."""
+    assert C.map_version_line({"verdict": "good", "tooShort": False}) is None
+    assert C.map_version_line({"tooShort": True, "map": {"version": 1, "name": "x"}}) is None
+    for word in ("not recorded", "unknown", "revision", "map v1"):
+        assert word not in (C.map_version_line(on_map_version()) or "")
+
+
+def test_a_map_version_is_explained_once_then_the_app_stops_explaining():
+    first = C.map_version_card(on_map_version(), first_drive=True)
+    later = C.map_version_card(on_map_version(), first_drive=False)
+    # The line is quiet on every Drive; the explanation is a footnote under it.
+    assert first["line"] == later["line"] == "on Map version 1 · Starter 21 Dual Tune 2"
+    assert first["note"] == C.MAP_VERSION_WHAT_IT_IS
+    assert "Map version" in C.MAP_VERSION_WHAT_IT_IS
+    assert "note" not in later, "explained once, then never again"
+
+
+def test_the_undo_names_the_map_version_not_just_the_file():
+    undo = {"known": True, "version": 1, "name": "Starter 21 Dual Tune 2", "stamp": "20260823-200000"}
+    assert C.undo_sentence({"undo": undo}) == (
+        "Flash your previous map file (Map version 1 · Starter 21 Dual Tune 2, flashed 23 Aug 20:00). "
+        "Save today's file first so nothing is lost."
+    )
+    # A version the owner never dated says no date, rather than a wrong one.
+    plain = C.undo_sentence({"undo": {"known": True, "version": 2, "name": "Starter 21 r2"}})
+    assert plain.startswith("Flash your previous map file (Map version 2 · Starter 21 r2).")
+    assert "flashed" not in plain
+
+
+def test_the_undo_never_invents_a_map_name():
+    asked = C.undo_sentence({"undo": {"known": False, "version": None, "name": None}})
+    assert "Map version 1 ·" not in asked
+    assert "Map version 2 ·" not in asked
+    assert asked.count("tell me what you flashed") == 1
+    # Even with no structured Undo at all, the sentence asks rather than guesses.
+    assert "tell me what you flashed" in C.undo_sentence(None)
+
+
+def test_the_stop_next_step_names_the_map_version_to_flash_back():
+    step = decided(
+        step_undo(),
+        {
+            "kind": "undo",
+            "headline": "Stop open: flash your previous map file (Map version 1 · Starter 21 Dual Tune 2).",
+            "undo": {"known": True, "version": 1, "name": "Starter 21 Dual Tune 2", "stamp": None},
+        },
+    )
+    assert step["kind"] == "flash"
+    assert "Map version 1 · Starter 21 Dual Tune 2" in step["body"]
+    assert "Shakedown drive" in step["body"]
 
 
 def our_own_words(card: dict) -> str:
@@ -214,6 +424,7 @@ def our_own_words(card: dict) -> str:
             "window": card["window"],
             "verdict": card["verdict"],
             "numbers": card["numbers"],
+            "mapVersion": card.get("mapVersion"),
             "nextStep": card["nextStep"],
         }
     ).lower()

@@ -20,7 +20,7 @@ import {
   type ToolCallResultEvent,
   type ToolCallStartEvent,
 } from "@ag-ui/client";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   AGENT_URL,
@@ -28,9 +28,12 @@ import {
   type HarnessSummary,
   type HarnessStep,
   type LoopState,
+  type OpenStep,
   type ReplyCard,
   type Turn,
 } from "./types";
+
+import type { PendingQuestion } from "../components/OpenStepsPanel";
 
 let counter = 0;
 const nextId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(counter += 1)}`;
@@ -47,11 +50,43 @@ export async function uploadCsv(
   return (await response.json()) as { uploadId: string; fileName: string; bytes: number };
 }
 
+/**
+ * The Open steps and the questions waiting for the owner, as the panel reads them.
+ * The loop's own state, from the server — never guessed in the browser.
+ */
+async function readLoop(): Promise<{ openSteps: OpenStep[]; questions: PendingQuestion[] }> {
+  try {
+    const response = await fetch(`${SERVER_URL}/api/state`, { cache: "no-store" });
+    if (!response.ok) return { openSteps: [], questions: [] };
+    const body = (await response.json()) as {
+      openSteps?: OpenStep[];
+      unansweredQuestions?: { id: string; title: string; askedOn?: string | null }[];
+    };
+    return { openSteps: body.openSteps ?? [], questions: body.unansweredQuestions ?? [] };
+  } catch {
+    return { openSteps: [], questions: [] };
+  }
+}
+
 export function useThread() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
+  const [openSteps, setOpenSteps] = useState<OpenStep[]>([]);
+  const [questions, setQuestions] = useState<PendingQuestion[]>([]);
   const threadId = useMemo(() => nextId("thread"), []);
   const running = useRef(false);
+
+  const refreshLoop = useCallback(async () => {
+    const loop = await readLoop();
+    setOpenSteps(loop.openSteps);
+    setQuestions(loop.questions);
+  }, []);
+
+  // The panel shows the loop from the first paint, so an owner who reloads the
+  // chat still sees the steps they are holding.
+  useEffect(() => {
+    void refreshLoop();
+  }, [refreshLoop]);
 
   const patch = useCallback(
     (id: string, change: Partial<Turn> | ((prev: Turn) => Partial<Turn>)) => {
@@ -204,12 +239,14 @@ export function useThread() {
       } finally {
         running.current = false;
         setBusy(false);
+        // The Open steps moved: the panel beside the thread follows the loop.
+        void refreshLoop();
       }
     },
-    [patch, threadId],
+    [patch, threadId, refreshLoop],
   );
 
-  return { turns, busy, threadId, send };
+  return { turns, busy, threadId, send, openSteps, questions };
 }
 
 function safeJson(text: string): unknown {
