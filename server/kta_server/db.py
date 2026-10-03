@@ -99,6 +99,30 @@ CREATE TABLE IF NOT EXISTS answers (
   answered_at INTEGER NOT NULL
 );
 
+-- Owner question answers (ticket 07): one row per question, changeable.
+-- `id` is the question (`kind:driveId`, e.g. `what-changed:20260823-203853`);
+-- a changed answer overwrites the row and the Car history re-derives.
+CREATE TABLE IF NOT EXISTS question_answers (
+  id          TEXT PRIMARY KEY,
+  drive_id    TEXT NOT NULL,
+  kind        TEXT NOT NULL,
+  choice      TEXT NOT NULL,
+  answered_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS question_answers_by_drive ON question_answers(drive_id);
+
+-- Every owner question the engine ever asked (ticket 07): asked once per
+-- Drive, answered separately. Unanswered = asked minus answered ("Waiting for
+-- you"). Asked rows never change; answers overwrite and re-derive.
+CREATE TABLE IF NOT EXISTS asked_questions (
+  id          TEXT PRIMARY KEY,
+  drive_id    TEXT NOT NULL,
+  kind        TEXT NOT NULL,
+  title       TEXT NOT NULL,
+  asked_at    INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS asked_questions_by_drive ON asked_questions(drive_id);
+
 CREATE TABLE IF NOT EXISTS open_steps (
   id          TEXT PRIMARY KEY,
   drive_id    TEXT,
@@ -441,6 +465,10 @@ class Store:
             for r in self._all("SELECT * FROM flashes ORDER BY flashed_at")
         ]
 
+    def delete_flash(self, flash_id: str) -> None:
+        """Remove one Flash (a changed answer withdraws the Flash it recorded)."""
+        self._exec("DELETE FROM flashes WHERE id = ?", (flash_id,))
+
     def add_install(self, part: str, action: str = "fitted", installed_at: int | None = None, note: str = "") -> dict[str, Any]:
         install_id = f"{part}-{installed_at or _now()}"
         self._exec(
@@ -465,6 +493,62 @@ class Store:
 
     def list_answers(self) -> dict[str, str]:
         return {r["drive_id"]: r["answer"] for r in self._all("SELECT * FROM answers")}
+
+    # -- owner question answers (ticket 07) ----------------------------------
+    # One row per question (`what-changed:<driveId>` …), changeable: answering
+    # again overwrites the row and the Car history re-derives from events.
+    def save_question_answer(self, question_id: str, drive_id: str, kind: str, choice: str) -> None:
+        self._exec(
+            "INSERT INTO question_answers (id, drive_id, kind, choice, answered_at) VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(id) DO UPDATE SET drive_id=excluded.drive_id, kind=excluded.kind, "
+            "choice=excluded.choice, answered_at=excluded.answered_at",
+            (question_id, drive_id, kind, choice, _now()),
+        )
+
+    def get_question_answer(self, question_id: str) -> dict[str, Any] | None:
+        row = self._one("SELECT * FROM question_answers WHERE id = ?", (question_id,))
+        if row is None:
+            return None
+        return {
+            "id": row["id"], "drive_id": row["drive_id"], "kind": row["kind"],
+            "choice": row["choice"], "answered_at": row["answered_at"],
+        }
+
+    def list_question_answers(self) -> dict[str, dict[str, Any]]:
+        return {
+            r["id"]: {
+                "id": r["id"], "drive_id": r["drive_id"], "kind": r["kind"],
+                "choice": r["choice"], "answered_at": r["answered_at"],
+            }
+            for r in self._all("SELECT * FROM question_answers ORDER BY answered_at, id")
+        }
+
+    def delete_question_answers_for_drive(self, drive_id: str) -> None:
+        self._exec("DELETE FROM question_answers WHERE drive_id = ?", (drive_id,))
+
+    # -- asked questions (ticket 07): what the engine asked, once per Drive --
+    def save_asked_questions(self, questions: list[dict[str, Any]]) -> None:
+        """Remember what was asked, so "Waiting for you" survives a restart."""
+        with self._conn() as c:
+            for q in questions or []:
+                if not isinstance(q, dict) or not q.get("id"):
+                    continue
+                c.execute(
+                    "INSERT INTO asked_questions (id, drive_id, kind, title, asked_at) VALUES (?, ?, ?, ?, ?) "
+                    "ON CONFLICT(id) DO NOTHING",
+                    (q["id"], q.get("askedOn"), q.get("kind"), q.get("title") or "", _now()),
+                )
+
+    def list_asked_questions(self) -> list[dict[str, Any]]:
+        return [
+            {"id": r["id"], "drive_id": r["drive_id"], "kind": r["kind"], "title": r["title"], "askedOn": r["drive_id"]}
+            for r in self._all("SELECT * FROM asked_questions ORDER BY asked_at, id")
+        ]
+
+    def list_unanswered_questions(self) -> list[dict[str, Any]]:
+        """Asked minus answered, oldest first — "Waiting for you"."""
+        saved = {r["id"] for r in self._all("SELECT id FROM question_answers")}
+        return [q for q in self.list_asked_questions() if q["id"] not in saved]
 
     # -- Open steps ----------------------------------------------------------
     # One row per kind of step, in the shape the engine's `carSettle` /

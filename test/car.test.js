@@ -1322,3 +1322,110 @@ test('the nine drives keep their steps: only 20:38 and 16:01 carry a cause', () 
     '20260905-075634': null,
   });
 });
+
+// ---------------------------------------------------------------------------
+// 07 — Owner questions: pause, answer, resume (engine: KTA.carQuestions)
+// ---------------------------------------------------------------------------
+
+function questionsLoop() {
+  // The nine drives through ingest + open-steps, with the plan each drive saw,
+  // so questions read what the reply would have shown.
+  let s = K.carEmpty();
+  let open = [];
+  const rows = [];
+  for (const id of OWNER_NINE) {
+    const r = ingest(s, id);
+    s = r.state;
+    if (r.report.tooShort) {
+      rows.push({ id, driveId: null, questions: [] });
+      continue;
+    }
+    const driveId = r.report.identity;
+    const plan = K.carFlashPlan(s, MAP, { now: NOW });
+    const qs = K.carQuestions(s, driveId, { openSteps: open, plan });
+    rows.push({ id, driveId, questions: qs, plan });
+    const settled = K.carSettle(s, driveId, open);
+    const decided = K.carNextStep(s, driveId, settled.openSteps, {});
+    open = decided.openSteps;
+  }
+  return { state: s, rows };
+}
+
+test('07: 20:38 asks what changed and which housing, in that order', () => {
+  const { rows } = questionsLoop();
+  const fault = rows.filter((r) => r.id === 'aug23-2038')[0];
+  assert.deepEqual(fault.questions.map((q) => q.kind), ['what-changed', 'housing']);
+  const changed = fault.questions[0];
+  assert.equal(changed.title, 'What changed');
+  assert.match(changed.question, /What changed/);
+  assert.deepEqual(changed.choices.map((c) => c.id), ['maf', 'other-flash', 'part', 'nothing']);
+  assert.deepEqual(changed.choices.map((c) => c.label), [
+    'I flashed, changing MAF Scaling',
+    'I flashed something else',
+    'I fitted a part, no flash',
+    'Nothing I know of',
+  ]);
+  assert.equal(changed.askedOn, '20260823-203853');
+  assert.match(changed.id, /what-changed:20260823-203853/);
+  const housing = fault.questions[1];
+  assert.equal(housing.kind, 'housing');
+  assert.match(housing.question, /intake housing/);
+  assert.deepEqual(housing.choices.map((c) => c.id), ['factory', 'hvi', 'race', 'won', 'unsure']);
+  assert.deepEqual(housing.choices.map((c) => c.label), [
+    'Factory airbox', 'PRL HVI', 'PRL Race housing', '27WON Race', 'Not sure',
+  ]);
+});
+
+test('07: 15:29 asks did-you-flash when the after-flash pattern meets the open Stop', () => {
+  // The did-flash question needs the Undo still open, as it is when 15:29
+  // arrives: the pre-settle Open steps carry the Undo asked on 20:38.
+  let s = K.carEmpty();
+  let open = [];
+  for (const id of ['aug22-0903', 'aug23-1959', 'aug23-2038']) {
+    const r = ingest(s, id);
+    s = r.state;
+    const settled = K.carSettle(s, r.report.identity, open);
+    open = K.carNextStep(s, r.report.identity, settled.openSteps, {}).openSteps;
+  }
+  const r = ingest(s, 'aug30-1529');
+  s = r.state;
+  const plan = K.carFlashPlan(s, MAP, { now: NOW });
+  const qs = K.carQuestions(s, r.report.identity, { openSteps: open, plan });
+  assert.deepEqual(qs.map((q) => q.kind), ['did-flash']);
+  assert.match(qs[0].question, /Did you flash after the Stop/);
+  assert.deepEqual(qs[0].choices.map((c) => c.id), ['undo', 'other', 'no']);
+  assert.deepEqual(qs[0].choices.map((c) => c.label), [
+    'Yes, the old file back (Undo)', 'Yes, a different file', 'No',
+  ]);
+});
+
+test('07: drives with no pattern ask nothing', () => {
+  const { rows } = questionsLoop();
+  for (const row of rows) {
+    if (row.id === 'aug23-2038' || row.id === 'aug30-1529') continue;
+    assert.deepEqual(row.questions, [], row.id + ' asks nothing');
+  }
+});
+
+test('07: housing routes to the MAF Scaling option, and not-sure stays on the Undo file', () => {
+  assert.deepEqual(K.mafOptionFor('factory'), { option: 'Factory', detail: 'Factory airbox, factory housing.' });
+  assert.equal(K.mafOptionFor('hvi').option, 'Factory');
+  assert.match(K.mafOptionFor('hvi').detail, /calm drive must show/);
+  assert.equal(K.mafOptionFor('race').option, 'PRL Race');
+  assert.equal(K.mafOptionFor('won').option, '27Won Race');
+  assert.equal(K.mafOptionFor('unsure').option, null);
+  assert.match(K.mafOptionFor('unsure').detail, /Stay on the Undo file/);
+  assert.equal(K.mafOptionFor('nope'), null);
+});
+
+test('07: questions never name a KTuner table except MAF Scaling in a choice', () => {
+  const { rows } = questionsLoop();
+  for (const row of rows) {
+    for (const q of row.questions) {
+      for (const table of ['MAF_Scaling_Custom', 'WOT_Enrich', 'Boost_Target', 'Final_Boost']) {
+        assert.ok(!q.question.includes(table), q.kind + ' names ' + table);
+        for (const c of q.choices) assert.ok(!c.label.includes(table), c.label);
+      }
+    }
+  }
+});

@@ -35,6 +35,8 @@ from .config import Settings, load_settings
 from .db import Store
 from .graph import build_graph
 from .mapdata import KTUNER_BASEMAP_SOURCE, basemap_tables
+from . import copy as C
+from . import questions as Q
 from .worker import Worker, WorkerError
 
 AGENT_NAME = "kta-tune-assist"
@@ -68,6 +70,22 @@ def ensure_map_version_one_full(store: Store, name: str) -> dict[str, Any]:
         source=KTUNER_BASEMAP_SOURCE,
         kind="ktuner-basemap",
     )
+
+
+async def _unanswered_questions(store: Store, worker: Worker, settings: Settings) -> list[dict[str, Any]]:
+    """Every unanswered owner question, oldest Drive first — "Waiting for you".
+
+    Asked once per Drive through the engine (never the model) and stored when
+    asked; answering stores the answer and the Car history re-derives. Quiet:
+    at most the three first questions, one per Drive that earned them.
+    """
+    asked = store.list_asked_questions()
+    saved_ids = set(store.list_question_answers().keys())
+    return [
+        {"id": q["id"], "title": q["title"], "askedOn": q.get("askedOn")}
+        for q in asked
+        if q["id"] not in saved_ids
+    ]
 
 
 def create_app(
@@ -132,9 +150,10 @@ def create_app(
         # First use counts too: if the worker was down when the app was built,
         # Map version 1 is seeded now, and still before any Drive is read.
         active = ensure_map_version_one(store, worker.ktuner_basemap)
-        history = await worker.call("carHistory", state=store.car_state(None) or {})
+        car_state = store.car_state(None) or {}
+        history = await worker.call("carHistory", state=car_state)
         plan = await worker.call(
-            "flashPlan", state=store.car_state(None) or {}, now=settings.now_ms()
+            "flashPlan", state=car_state, now=settings.now_ms()
         )
         return {
             "carProfile": store.car_profile(),
@@ -147,10 +166,108 @@ def create_app(
             "activeMapVersion": active,
             "openSteps": store.list_open_steps(only_open=True),
             "answers": store.list_answers(),
-            "unansweredQuestions": [],  # owner questions arrive with a later ticket
+            "questionAnswers": store.list_question_answers(),
+            "unansweredQuestions": await _unanswered_questions(store, worker, settings),
             "drives": store.list_drives(),
             "flashPlan": plan,
             "hasLlm": settings.has_llm,
+        }
+
+    # ------------------------------------------------------- owner questions
+    @app.post("/api/answer")
+    async def api_answer(request: Request) -> dict[str, Any]:
+        """Answer one owner question, then resume with the Next step updated.
+
+        The answer is saved, applied through engine operations at its point in
+        time (a Flash before the Drive it explains, an Unexplained-change mark
+        after it), the Car history is rebuilt from events, and the Drive's Next
+        step is re-decided with the answer applied. Answering again overwrites
+        and re-derives again.
+        """
+        try:
+            body = await request.json()
+        except Exception as exc:  # noqa: BLE001 - any bad body is the same message
+            raise HTTPException(status_code=400, detail="That is not an answer.") from exc
+        kind = str(body.get("kind") or "")
+        drive_id = str(body.get("driveId") or body.get("drive_id") or "")
+        choice = str(body.get("choice") or "")
+        if kind not in Q.VALID_KINDS or not drive_id or not choice:
+            raise HTTPException(status_code=400, detail="An answer needs a question, a Drive and a choice.")
+        drive = store.drive(drive_id)
+        if drive is None:
+            # The Car history may hold drives the drives table has not indexed
+            # yet; fall back to the engine state's own summary.
+            car_state = store.car_state(None) or {}
+            summary = (car_state.get("drives") or {}).get(drive_id)
+            start = (summary or {}).get("start") if isinstance(summary, dict) else None
+        else:
+            start = drive.get("started_at") or (drive.get("summary") or {}).get("start")
+
+        # The question must be one the engine asked on this Drive, with this
+        # exact choice. Asked rows are stored at upload time (with the
+        # pre-settle Open steps the did-flash question needs), so validation
+        # holds even after the loop moved on and the Undo is proven.
+        if choice not in Q.VALID_CHOICES.get(kind, ()):
+            raise HTTPException(status_code=400, detail="That is not a choice for this question.")
+        asked_rows = {q["id"]: q for q in store.list_asked_questions()}
+        question_id = Q.question_id(kind, drive_id)
+        if question_id not in asked_rows:
+            raise HTTPException(status_code=400, detail="That question is not asked on this Drive.")
+
+        store.save_question_answer(question_id, drive_id, kind, choice)
+
+        # A "flashed …" answer records the Flash before the Drive it explains;
+        # any other answer withdraws the Flash a previous answer recorded, so a
+        # changed answer re-derives from what the owner says now, not before.
+        flash = Q.flash_for_question(kind, choice, start, drive_id)
+        store.delete_flash(f"q-{kind}-{drive_id}")
+        if flash is not None:
+            store.add_flash(
+                {"id": flash["id"], "time": flash["time"], "map": flash["map"],
+                 "changed": flash["changed"], "note": flash.get("note", "")}
+            )
+
+        # Rebuild the Car history from events, not by patching.
+        state = await Q.rebuild_history(store, worker, settings.now_ms())
+
+        # Re-decide this Drive's Next step with the answer applied.
+        try:
+            settled = await worker.call(
+                "settleOpenSteps", state=state, driveId=drive_id,
+                openSteps=store.list_open_steps(),
+            )
+            decided = await worker.call(
+                "nextStep", state=state, driveId=drive_id, openSteps=settled["openSteps"],
+                installs=store.list_installs(),
+            )
+            store.save_open_steps(decided["openSteps"])
+            plan = await worker.call("flashPlan", state=state, now=settings.now_ms())
+            asked_now = await worker.call(
+                "questions", state=state, driveId=drive_id,
+                openSteps=store.list_open_steps(), installs=store.list_installs(),
+            )
+        except WorkerError as exc:
+            raise HTTPException(status_code=502, detail=exc.message) from exc
+        saved = store.list_question_answers()
+        questions = C.question_cards(asked_now.get("questions"), saved)
+        # The housing answer resolves the Flash plan's own preset route as asked
+        # (route preset on the Stop drive), not the current plan after all nine
+        # drives — so read the saved housing choice for this Drive directly.
+        housing_saved = saved.get(f"housing:{drive_id}", {})
+        housing_choice = housing_saved.get("choice") if isinstance(housing_saved, dict) else None
+        step = C.next_step_card(decided["step"], plan, worker.limits, decided["openSteps"])
+        return {
+            "ok": True,
+            "questionId": question_id,
+            "kind": kind,
+            "driveId": drive_id,
+            "choice": choice,
+            "questions": questions,
+            "housing": C.housing_line(housing_choice),
+            "nextStep": step,
+            "cause": C.cause_line(decided.get("diagnose")),
+            "settled": C.settled_rows(settled["settled"]),
+            "unansweredQuestions": await _unanswered_questions(store, worker, settings),
         }
 
     @app.get("/api/history")

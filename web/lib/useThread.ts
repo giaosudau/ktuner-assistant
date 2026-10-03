@@ -99,6 +99,30 @@ export function useThread() {
     [],
   );
 
+  // An owner answer pauses and resumes the reply with the answer applied:
+  // the answered Turn's card gets the new questions, Next step and housing,
+  // and the panel beside the thread follows the loop.
+  const answered = useCallback(
+    (
+      turnId: string,
+      updated: {
+        questions: ReplyCard["questions"];
+        nextStep: ReplyCard["nextStep"];
+        housing: ReplyCard["housing"];
+        unansweredQuestions: PendingQuestion[];
+      },
+    ) => {
+      patch(turnId, (prev) => ({
+        card: prev.card
+          ? { ...prev.card, questions: updated.questions, nextStep: updated.nextStep, housing: updated.housing }
+          : prev.card,
+      }));
+      setQuestions(updated.unansweredQuestions);
+      void refreshLoop();
+    },
+    [patch, refreshLoop],
+  );
+
   const send = useCallback(
     async (file: File) => {
       if (running.current) return;
@@ -246,7 +270,7 @@ export function useThread() {
     [patch, threadId, refreshLoop],
   );
 
-  return { turns, busy, threadId, send, openSteps, questions };
+  return { turns, busy, threadId, send, openSteps, questions, answered };
 }
 
 function safeJson(text: string): unknown {

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 
-from conftest import OWNER_DRIVES, Loop
+from conftest import OWNER_DRIVES, Loop, template_replies
 
 # Drive → (what the Next step is, what settles it), as the ticket's fixed order
 # walks the owner's own nine uploads. 30 Aug 16:01 opens the lugging habit beside
@@ -32,13 +32,13 @@ LOOP_PATH = [
 ]
 
 
-def the_loop(loop: Loop) -> dict:
-    """The owner's nine Drives in order, as nine replies."""
-    return dict(loop.run(loop.reply_to_all_owner_drives()))
+def the_loop(replayed: Loop) -> dict:
+    """The owner's nine Drives in order, as nine replies (replayed once)."""
+    return template_replies(replayed)
 
 
-def test_the_nine_drives_give_the_loop_the_ticket_fixes(loop: Loop):
-    replies = the_loop(loop)
+def test_the_nine_drives_give_the_loop_the_ticket_fixes(replayed: Loop):
+    replies = the_loop(replayed)
     got = [(example_id, r.card["nextStep"]["title"], r.card["nextStep"]["kind"]) for example_id, r in replies.items()]
     assert got == LOOP_PATH
     # Exactly one Next step per reply, every time. Never a list.
@@ -48,8 +48,8 @@ def test_the_nine_drives_give_the_loop_the_ticket_fixes(loop: Loop):
         assert step["kind"] in {"flash", "watch", "drive", "none"}, example_id
 
 
-def test_every_next_step_names_the_drive_whose_upload_will_settle_it(loop: Loop):
-    replies = the_loop(loop)
+def test_every_next_step_names_the_drive_whose_upload_will_settle_it(replayed: Loop):
+    replies = the_loop(replayed)
     for example_id, reply in replies.items():
         step = reply.card["nextStep"]
         assert step["upload"], example_id
@@ -57,8 +57,8 @@ def test_every_next_step_names_the_drive_whose_upload_will_settle_it(loop: Loop)
         assert step["proves"] != "nothing", example_id
 
 
-def test_a_repeated_step_reads_compactly_and_never_again_as_an_essay(loop: Loop):
-    replies = the_loop(loop)
+def test_a_repeated_step_reads_compactly_and_never_again_as_an_essay(replayed: Loop):
+    replies = the_loop(replayed)
     for example_id in ("aug22-0950", "aug23-1959"):
         step = replies[example_id].card["nextStep"]
         assert step["same"] is True, example_id
@@ -70,8 +70,8 @@ def test_a_repeated_step_reads_compactly_and_never_again_as_an_essay(loop: Loop)
     assert replies["aug30-1601"].card["nextStep"]["same"] is False
 
 
-def test_the_reply_settles_what_it_asked_last_time_with_the_numbers(loop: Loop):
-    replies = the_loop(loop)
+def test_the_reply_settles_what_it_asked_last_time_with_the_numbers(replayed: Loop):
+    replies = the_loop(replayed)
     # 23 Aug 20:38 asked for the Undo; 30 Aug 15:29 proved it, in two Drives.
     settled = {(r["key"], r["status"]) for r in replies["aug30-1529"].card["settled"]}
     assert ("undo", "done") in settled, settled
@@ -87,8 +87,8 @@ def test_the_reply_settles_what_it_asked_last_time_with_the_numbers(loop: Loop):
     assert "Intake 37 °C, 2 pulls" in baseline["why"]
 
 
-def test_cant_tell_yet_always_says_why_on_the_owner_drives(loop: Loop):
-    replies = the_loop(loop)
+def test_cant_tell_yet_always_says_why_on_the_owner_drives(replayed: Loop):
+    replies = the_loop(replayed)
     waits = [
         row
         for reply in replies.values()
@@ -112,8 +112,8 @@ def test_cant_tell_yet_always_says_why_on_the_owner_drives(loop: Loop):
     assert habit and all("hot afternoon" in r["why"] for r in habit), habit
 
 
-def test_the_ticket_s_case_30_aug_16_01_gives_the_baseline_step_with_the_habit_added(loop: Loop):
-    replies = the_loop(loop)
+def test_the_ticket_s_case_30_aug_16_01_gives_the_baseline_step_with_the_habit_added(replayed: Loop):
+    replies = the_loop(replayed)
     card = replies["aug30-1601"].card
     step = card["nextStep"]
 
@@ -135,15 +135,15 @@ def test_the_ticket_s_case_30_aug_16_01_gives_the_baseline_step_with_the_habit_a
 
     # …and it is in the panel beside the thread, with its status (the panel is
     # read at the end of the replay, so the habit has been asked about since).
-    panel = {s["key"]: s for s in loop.get("/api/state").json()["openSteps"]}
+    panel = {s["key"]: s for s in replayed.get("/api/state").json()["openSteps"]}
     assert panel["habit"]["status"] in {"open", "wait", "fail"}
     assert panel["habit"]["title"] == "Habit test: revs up in hot traffic"
     assert "hot afternoon" in panel["habit"]["why"]
     assert "baseline" not in panel, "the Baseline is proven on 1 Sep, so it is no longer Open"
 
 
-def test_the_chat_shows_the_next_step_with_its_gauge_table_and_drive_recipe(loop: Loop):
-    replies = the_loop(loop)
+def test_the_chat_shows_the_next_step_with_its_gauge_table_and_drive_recipe(replayed: Loop):
+    replies = the_loop(replayed)
 
     # A watch step: the gauge table, TunerView's own names, OK / If you see / Then.
     logger = replies["sep05-0756"].card["nextStep"]
@@ -176,8 +176,8 @@ def test_the_chat_shows_the_next_step_with_its_gauge_table_and_drive_recipe(loop
     assert "Shakedown drive" in undo["body"]
 
 
-def test_a_wasted_drive_is_flagged_kindly_with_what_would_have_settled_one(loop: Loop):
-    replies = the_loop(loop)
+def test_a_wasted_drive_is_flagged_kindly_with_what_would_have_settled_one(replayed: Loop):
+    replies = the_loop(replayed)
 
     # 30 Aug 15:09, under a minute moving: nothing read, and the Undo waits.
     wasted = replies["aug30-1509"].card["wasted"]
@@ -204,9 +204,9 @@ def test_a_wasted_drive_is_flagged_kindly_with_what_would_have_settled_one(loop:
     assert replies["sep01-0813"].card["wasted"] is None
 
 
-def test_the_open_steps_sit_beside_the_thread_with_their_status_and_the_question_slot(loop: Loop):
-    the_loop(loop)
-    body = loop.get("/api/state").json()
+def test_the_open_steps_sit_beside_the_thread_with_their_status_and_the_question_slot(replayed: Loop):
+    the_loop(replayed)
+    body = replayed.get("/api/state").json()
     keys = [s["key"] for s in body["openSteps"]]
     assert keys == ["channels", "habit", "logger"], keys
     for step in body["openSteps"]:
@@ -215,14 +215,21 @@ def test_the_open_steps_sit_beside_the_thread_with_their_status_and_the_question
         assert step["askedOn"], "every Open step says which Drive asked it"
     # The settled ones are gone from the panel but stay in the Car history.
     assert "undo" not in keys, "a proven step is not an Open step any more"
-    assert loop.store.list_open_steps() != loop.store.list_open_steps(only_open=True)
+    assert replayed.store.list_open_steps() != replayed.store.list_open_steps(only_open=True)
 
     # Ticket 07 fills this: unanswered questions read as "Waiting for you".
-    assert body["unansweredQuestions"] == []
+    # After the nine Drives with no answers: what changed + housing on 20:38,
+    # did-you-flash on 15:29 — asked once, never answered.
+    waiting = body["unansweredQuestions"]
+    assert [(q["id"], q["title"]) for q in waiting] == [
+        ("what-changed:20260823-203853", "What changed"),
+        ("housing:20260823-203853", "Which intake housing is fitted"),
+        ("did-flash:20260830-152931", "Did you flash"),
+    ], waiting
 
 
-def test_the_replay_reads_end_to_end_and_never_leaks_a_raw_log(loop: Loop):
-    replies = the_loop(loop)
+def test_the_replay_reads_end_to_end_and_never_leaks_a_raw_log(replayed: Loop):
+    replies = the_loop(replayed)
     for example_id, reply in replies.items():
         assert reply.errors() == [], example_id
         blob = json.dumps(reply.events)
@@ -230,10 +237,10 @@ def test_the_replay_reads_end_to_end_and_never_leaks_a_raw_log(loop: Loop):
         assert len(blob) < 400_000, example_id
 
 
-def test_every_drive_of_the_nine_is_read_against_the_same_open_steps(loop: Loop):
+def test_every_drive_of_the_nine_is_read_against_the_same_open_steps(replayed: Loop):
     """One Drive, settled twice, gives the same reply: the loop is deterministic."""
-    replies = the_loop(loop)
-    again = loop.upload_and_reply("sep05-0756")
+    replies = the_loop(replayed)
+    again = replayed.upload_and_reply("sep05-0756")
     assert again.card["nextStep"]["key"] == replies["sep05-0756"].card["nextStep"]["key"]
     assert again.card["say"] == replies["sep05-0756"].card["say"]
-    assert len(loop.store.car_state(None)["drives"]) == 8
+    assert len(replayed.store.car_state(None)["drives"]) == 8

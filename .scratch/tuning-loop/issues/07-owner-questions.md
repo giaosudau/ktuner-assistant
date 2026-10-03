@@ -11,11 +11,28 @@ The housing answer only resolves the Flash plan's own route, shown inside the KT
 
 **Blocked by:** 03, 06
 
-**Status:** ready-for-agent
+**Status:** done (3 Oct 2026: engine `KTA.carQuestions` + `mafOptionFor`, worker `questions`/`housingOption`, `POST /api/answer` with rebuild-from-events, reply choices + KTuner-box housing + "Waiting for you" panel; engine 168/168 incl. 5 new §07, seam-1 94/94 incl. 7 new in `test_questions.py`, 05 loop eval + 06 diagnose green unchanged)
 
-- [ ] Questions appear as choices in the reply; answering resumes the reply with the answer applied
-- [ ] An answer can be changed; the history re-derives
-- [ ] Unanswered questions show in the Open steps list as "Waiting for you"
-- [ ] Answers persist across a server restart
-- [ ] Loop eval with scripted answers: 20:38's Undo names the Map version 1 file; 15:29 passes as the Shakedown drive
-- [ ] "Not sure" keeps the owner on the Undo file and suggests no MAF Scaling option
+- [x] Questions appear as choices in the reply; answering resumes the reply with the answer applied — `test_questions.py::test_the_fault_drive_asks_what_changed_and_housing_as_tap_choices`, `::test_scripted_answers_name_the_undo_file_and_pass_the_shakedown` (answer returns re-decided Next step)
+- [x] An answer can be changed; the history re-derives — `::test_an_answer_can_be_changed_and_the_history_re_derives` (one row per question, flash withdrawn and re-added)
+- [x] Unanswered questions show in the Open steps list as "Waiting for you" — `::test_unanswered_questions_wait_beside_the_thread`, `test_open_steps.py::test_the_open_steps_sit_beside_the_thread_with_their_status_and_the_question_slot` (3 waiting after nine drives, no answers)
+- [x] Answers persist across a server restart — `::test_answers_persist_across_a_restart` (write 3 answers → restart app/db → all present, 15:29 still passed, nothing waiting)
+- [x] Loop eval with scripted answers: 20:38's Undo names the Map version 1 file; 15:29 passes as the Shakedown drive — `::test_scripted_answers_name_the_undo_file_and_pass_the_shakedown` (20:38 on Map v2, Undo names v1 · Starter 21 Dual Tune 2; 15:29 on Map v3, shakedown passed, 884 calm sec, trims −2.3 %)
+- [x] "Not sure" keeps the owner on the Undo file and suggests no MAF Scaling option — `::test_not_sure_stays_on_the_undo_file_with_no_maf_option` (option null, Undo zero cells) + `::test_housing_routes_inside_the_ktuner_box` (all five housings)
+
+## Where it lives
+
+- Engine: `KTA.carQuestions(state, driveId, opts)` + `KTA.mafOptionFor(housing)` in `engine/kta-car.js` (§ after `carNextStep`, near 04/06 code); tests `test/car.test.js` §07 (5 tests: 20:38 order + choices, 15:29 did-flash with pre-settle Undo, silence elsewhere, housing routes, no table names).
+- Worker: `questions` (plan route + carQuestions) and `housingOption` ops in `server/kta_worker/worker.js`.
+- Server: `kta_server/questions.py` (EFFECTS, `flash_for_question`, `rebuild_history`, `sync_map_versions`); `db.py` (`question_answers` + `asked_questions` tables); `app.py` (`POST /api/answer`, `GET /api/state` waiting list + `questionAnswers`); `graph.py` decide (`ownerQuestions` harness step, pre-settle opens for did-flash, asked rows saved); `copy.py` (`question_cards`, `waiting_for_you`, `housing_line`; `build_reply` declares `questions`/`housing`).
+- Chat: `QuestionCard` (tap choices, `POST /api/answer`, answered + change, Next step updated via `useThread.answered`), `ReplyCard` (questions between plan and harness), `PlanCard` (`housing-route` inside KTuner box), `OpenStepsPanel` slot filled, `useThread` refresh.
+- Seam-1: `server/tests/seam1/test_questions.py` (7 tests, scripted answers, no LLM).
+
+## PM notes — decisions later tickets must know
+
+1. **15:29 counts as the Shakedown drive because the Undo flash is recorded BEFORE it.** Ticket 03 says the first drive is never a Shakedown drive (Map version 1 starts none) — that still holds: 15:29 is a Shakedown drive only because the owner answered "yes, the old file back", which records an Undo Flash (Map version 3 · Starter 21 Dual Tune 2) at 15:29.start − 60 s. 15:29 is then the first drive after that Flash, with 884 calm seconds (≥ 600), trims −2.3 % (within ±5 %) and score 0.49 at the Baseline — so it passes. The Too-short 15:09 between the Stop and 15:29 banks nothing either way. Likewise the "what changed" answer records the bad flash (Map version 2 · MAF Scaling changed) at 20:38.start − 60 s, so 20:38 runs on version 2 and its Undo names version 1 — the file the ticket's eval row means.
+2. **Pause is logical, not a suspending LangGraph interrupt.** A suspending `interrupt()` after `reply` was built and proven to block same-thread subsequent uploads (the 15:29 run after 20:38 returned the earlier interrupt with no new reply and no snapshot), breaking the single-turn AG-UI contract the loop eval locks. No CopilotKit is in use (`web/package.json`: `@ag-ui/client` + own cards), so the reply card's own choice UI is the pause surface (one question at a time, most decisive first; "Waiting for you" beside the thread, quiet), and `POST /api/answer` is the resume (persist → rebuild → re-decide Next step). The graph stays four nodes; decide streams the `ownerQuestions` harness step (8 → 9; `test_upload_reply`, `test_llm_agent` updated).
+3. **Questions attach to causes (06) and the plan's own route.** What-changed fires only on the maf-preset cause; housing only when `plan.route === 'preset'`; did-flash only on the after-flash pattern (KC start ≥ 0.56, settles to Baseline) with the Undo still open pre-settle — a Drive never settles its own ask. `asked_questions` rows are stored at upload time so "Waiting for you" is historically exact (recomputing with current state would lose housing's preset route and did-flash's open Undo).
+4. **Housing changes no history.** Factory → Factory; PRL HVI → Factory, proven by the next calm drive's trims (not assumed); PRL Race → PRL Race; 27WON Race → 27Won Race; not sure → option null, stay on the Undo file. Shown only inside the Flash plan's KTuner box (`housing-route`); the Undo plan stays zero-cell.
+5. **What 10/13 reuse.** Ticket 10 ("I flashed it") needs no new plumbing for history: `rebuild_history(store, worker, now)` replays uploads + `flashes` + question-derived marks through pure worker ops and `sync_map_versions` keeps SQLite names abreast (tables stay with version 1 until 13 stores checked changes). Ticket 13's KTuner card reads `housing` for the preset route the same way `PlanCard` does. `store.save_asked_questions` / `list_unanswered_questions` are the panel's source; `Q.VALID_CHOICES` mirrors the engine's fixed choices so answers validate after the loop moves on.
+6. **Copy rules kept.** Questions and choices never name a KTuner table (engine test pins `MAF_Scaling_Custom`/`WOT_Enrich`/`Boost_Target`/`Final_Boost` absent); the MAF Scaling option appears only inside the KTuner box. English-only, one question at a time ordered by decision impact, answers editable, waiting-state quiet.

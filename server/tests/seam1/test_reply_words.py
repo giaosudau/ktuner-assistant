@@ -9,10 +9,9 @@ word outside CONTEXT.md's vocabulary sneaks in.
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 
-from conftest import Loop, owner_csv
+from conftest import Loop, template_replies
 
 from kta_server import copy as C
 
@@ -96,13 +95,9 @@ def test_no_after_flash_note_when_the_drive_did_not_settle_that_way():
     assert C.after_flash_note({"afterFlash": {"start": None, "end": 0.49}}) is None
 
 
-def test_the_owner_s_own_after_flash_drive_says_it_in_the_reply():
+def test_the_owner_s_own_after_flash_drive_says_it_in_the_reply(replayed: Loop):
     """30 Aug 15:29 starts 0.58 and settles to 0.49 — the real Drive, not a stub."""
-    loop = Loop(Path(tempfile.mkdtemp())).start()
-    try:
-        replies = dict(loop.run(loop.reply_to_all_owner_drives()))
-    finally:
-        loop.close()
+    replies = template_replies(replayed)
     card = replies["aug30-1529"].card
     assert card["afterFlash"] == (
         "Knock Control started at 0.58 and settled to your Baseline (0.49): "

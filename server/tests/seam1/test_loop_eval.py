@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import json
 
-from conftest import Loop
+from conftest import Loop, template_replies
 
 # Drive → Next step key/kind/title/still-the-same-step, and what this Drive
 # settled as (key, status) pairs in reply order. The titles are the exact
@@ -134,13 +134,13 @@ EXPECTED_PROOF_DRIVES = {
 EXPECTED_WASTED_IDS = ["aug22-0950", "aug23-1959", "aug30-1509", "aug30-1601", "sep05-0756"]
 
 
-def replay(loop: Loop):
-    """The owner's nine Drives in order, as nine replies."""
-    return loop.run(loop.reply_to_all_owner_drives())
+def replay(replayed: Loop):
+    """The owner's nine Drives in order, as nine replies (replayed once)."""
+    return list(template_replies(replayed).items())
 
 
-def test_loop_eval_locks_the_ticket_table_drive_by_drive(loop: Loop):
-    replies = dict(replay(loop))
+def test_loop_eval_locks_the_ticket_table_drive_by_drive(replayed: Loop):
+    replies = dict(replay(replayed))
     got = []
     for example_id, reply in replies.items():
         step = reply.card["nextStep"]
@@ -159,8 +159,8 @@ def test_loop_eval_locks_the_ticket_table_drive_by_drive(loop: Loop):
     assert got == EXPECTED_ROWS
 
 
-def test_loop_eval_ticket_rows_read_as_written(loop: Loop):
-    replies = dict(replay(loop))
+def test_loop_eval_ticket_rows_read_as_written(replayed: Loop):
+    replies = dict(replay(replayed))
 
     # 22 Aug 09:03: the first Drive settles nothing and asks the Baseline.
     assert replies["aug22-0903"].card["settled"] == []
@@ -229,14 +229,14 @@ def test_loop_eval_ticket_rows_read_as_written(loop: Loop):
     assert "logger lost DIFP" in dead["wasted"]
 
 
-def test_loop_eval_reports_drives_to_proof_and_the_wasted_count(loop: Loop):
-    replies = replay(loop)
+def test_loop_eval_reports_drives_to_proof_and_the_wasted_count(replayed: Loop):
+    replies = replay(replayed)
     by_id = dict(replies)
     order = [(example_id, reply.snapshot()["drive"]["id"]) for example_id, reply in replies]
 
     # Drives to proof per settled step, from the stored Open steps: uploads
     # after the first ask up to and including the proof.
-    steps = {s["key"]: s for s in loop.store.list_open_steps()}
+    steps = {s["key"]: s for s in replayed.store.list_open_steps()}
     proof: dict[str, list[str]] = {}
     for key in ("undo", "baseline"):
         asked_on, settled_by = steps[key]["askedOn"], steps[key]["settledBy"]
@@ -256,8 +256,8 @@ def test_loop_eval_reports_drives_to_proof_and_the_wasted_count(loop: Loop):
     )
 
 
-def test_loop_eval_stop_drive_never_yields_a_knock_fix_or_an_afm_curve_edit(loop: Loop):
-    replies = dict(replay(loop))
+def test_loop_eval_stop_drive_never_yields_a_knock_fix_or_an_afm_curve_edit(replayed: Loop):
+    replies = dict(replay(replayed))
     plan = replies["aug23-2038"].card["flashPlan"]
     assert plan["kind"] == "undo"
     # Any fix would be a table or cell edit. The Undo carries none: no AFM

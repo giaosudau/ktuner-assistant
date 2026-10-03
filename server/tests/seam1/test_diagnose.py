@@ -9,18 +9,18 @@ drive, silence everywhere else, and the same Next steps the loop eval locks.
 
 from __future__ import annotations
 
-from conftest import Loop
+from conftest import Loop, template_replies
 
 from kta_server import copy as C
 
 
-def the_loop(loop: Loop) -> dict:
-    """The owner's nine Drives in order, as nine replies."""
-    return dict(loop.run(loop.reply_to_all_owner_drives()))
+def the_loop(replayed: Loop) -> dict:
+    """The owner's nine Drives in order, as nine replies (replayed once)."""
+    return template_replies(replayed)
 
 
-def test_the_fault_drive_names_its_cause_in_one_sentence(loop: Loop):
-    replies = the_loop(loop)
+def test_the_fault_drive_names_its_cause_in_one_sentence(replayed: Loop):
+    replies = the_loop(replayed)
     card = replies["aug23-2038"].card
     cause = card["cause"]
     assert cause is not None, "20:38 carries a diagnosed cause"
@@ -37,8 +37,8 @@ def test_the_fault_drive_names_its_cause_in_one_sentence(loop: Loop):
     assert card["flashPlan"]["cellCount"] == 0
 
 
-def test_the_hot_lugging_drive_names_the_habit_in_one_sentence(loop: Loop):
-    replies = the_loop(loop)
+def test_the_hot_lugging_drive_names_the_habit_in_one_sentence(replayed: Loop):
+    replies = the_loop(replayed)
     card = replies["aug30-1601"].card
     cause = card["cause"]
     assert cause is not None
@@ -49,8 +49,8 @@ def test_the_hot_lugging_drive_names_the_habit_in_one_sentence(loop: Loop):
     assert card["nextStep"]["also"]["key"] == "habit"
 
 
-def test_drives_with_no_pattern_carry_no_cause_sentence(loop: Loop):
-    replies = the_loop(loop)
+def test_drives_with_no_pattern_carry_no_cause_sentence(replayed: Loop):
+    replies = the_loop(replayed)
     for example_id in (
         "aug22-0903", "aug22-0950", "aug23-1959",
         "aug30-1529", "sep01-0813", "sep05-0756",
@@ -60,8 +60,8 @@ def test_drives_with_no_pattern_carry_no_cause_sentence(loop: Loop):
     assert replies["aug30-1509"].card["cause"] is None
 
 
-def test_the_cause_sentence_uses_only_the_owner_s_words(loop: Loop):
-    replies = the_loop(loop)
+def test_the_cause_sentence_uses_only_the_owner_s_words(replayed: Loop):
+    replies = the_loop(replayed)
     banned = (
         "knock retard", "anomaly", "alert", "dashboard", "bad log",
         "danger", "failed", "mistake", "wrong", "try again",
@@ -79,7 +79,7 @@ def test_the_cause_sentence_uses_only_the_owner_s_words(loop: Loop):
             assert table not in cause, f"{example_id}: '{table}' in {cause}"
 
 
-def test_an_install_step_reads_as_a_physical_check_with_no_map_change(loop: Loop):
+def test_an_install_step_reads_as_a_physical_check_with_no_map_change():
     step = {
         "key": "install", "kind": "watch", "opens": "install", "also": None,
         "title": "Check the install: clamps and flanges", "gauges": ["trims", "afr"],
@@ -97,7 +97,7 @@ def test_an_install_step_reads_as_a_physical_check_with_no_map_change(loop: Loop
     assert card["uploadWhen"] == "Upload when: after your next drive, any kind."
 
 
-def test_a_downpipe_flash_step_carries_the_plan_headline_not_an_undo(loop: Loop):
+def test_a_downpipe_flash_step_carries_the_plan_headline_not_an_undo():
     step = {
         "key": "downpipe", "kind": "flash", "opens": "downpipe", "also": None,
         "title": "Flash the downpipe trim, then two pulls", "gauges": ["boost", "afr"],

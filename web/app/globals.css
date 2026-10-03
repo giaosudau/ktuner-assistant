@@ -654,3 +654,46 @@ h3 {
     transform: none;
   }
 }
+
+/* ------------------------------------------------------- owner questions
+   What only the owner knows, as tap-to-answer choices inside the reply. One
+   question at a time, most decisive first; a saved answer shows with a change
+   option, and unanswered ones sit beside the thread as "Waiting for you". */
+.qbox {
+  margin-top: 12px;
+  border: 1px solid var(--accent-line);
+  background: var(--accent-tint);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.qbox p {
+  margin: 4px 0 8px;
+  font-size: 14px;
+}
+.qbox .opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.qbox .opt {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.qbox .up.mine {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+.qbox .link {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 8px;
+}

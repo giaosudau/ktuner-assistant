@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from conftest import OWNER_DRIVES, REFERENCE_VERDICTS, Loop
+from conftest import OWNER_DRIVES, REFERENCE_VERDICTS, Loop, template_replies
 
 
 def test_upload_streams_a_reply_with_the_verdict_sentence_the_four_numbers_and_the_plan(loop: Loop):
@@ -83,7 +83,7 @@ def test_a_too_short_drive_says_nothing_read_and_stays_out_of_the_car_history(lo
     assert "20260823-203853" in loop.store.car_state(None)["drives"]
 
     # The safety lines and the numbers were not checked, because there is nothing
-    # to read — but settling and deciding still ran, so the owner is told the
+    # to read — but settling, deciding and asking still ran, so the owner is told the
     # Drive settled nothing and which step stands.
     assert reply.step_names() == [
         "readLog",
@@ -92,6 +92,7 @@ def test_a_too_short_drive_says_nothing_read_and_stays_out_of_the_car_history(lo
         "flashPlan",
         "settleOpenSteps",
         "nextStep",
+        "ownerQuestions",
     ]
 
 
@@ -99,13 +100,14 @@ def test_harness_steps_stream_as_a_collapsed_line_and_expand_to_inputs_and_outpu
     reply = loop.upload_and_reply("aug30-1601")
 
     # One collapsed row, with the server's own count and seconds. Ticket 04 added
-    # the two loop steps (settle what was asked, decide the Next step), so the
-    # line now counts eight, and they are steps the owner can expand like any other.
+    # the two loop steps (settle what was asked, decide the Next step), ticket 07
+    # the owner questions (what only the owner knows) — so the line now counts
+    # nine, and they are steps the owner can expand like any other.
     line = reply.harness_line()
-    assert line.startswith("Checked 8 things · ")
+    assert line.startswith("Checked 9 things · ")
     assert line.endswith(" s")
 
-    # Eight steps, each with its inputs and its output.
+    # Nine steps, each with its inputs and its output.
     steps = reply.harness_steps()
     assert [s["name"] for s in steps] == [
         "readLog",
@@ -116,6 +118,7 @@ def test_harness_steps_stream_as_a_collapsed_line_and_expand_to_inputs_and_outpu
         "flashPlan",
         "settleOpenSteps",
         "nextStep",
+        "ownerQuestions",
     ]
     first = steps[0]
     assert first["inputs"] == {"fileName": "TunerView_20260830_160151.csv", "bytes": steps[0]["inputs"]["bytes"]}
@@ -191,9 +194,9 @@ def test_a_stop_gives_undo_as_the_only_next_step(loop: Loop):
     assert "Starter 21 Dual Tune 2" not in card["nextStep"]["body"].split("Then drive")[0]
 
 
-def test_the_owners_nine_drives_in_order_give_the_engine_carc_history_check_verdicts(loop: Loop):
+def test_the_owners_nine_drives_in_order_give_the_engine_carc_history_check_verdicts(replayed: Loop):
     """The reference is `node tools/car-history-check.js` on the same nine files."""
-    replies = loop.run(loop.reply_to_all_owner_drives())
+    replies = template_replies(replayed).items()
 
     got = {}
     for example_id, reply in replies:
@@ -207,7 +210,7 @@ def test_the_owners_nine_drives_in_order_give_the_engine_carc_history_check_verd
     assert got == REFERENCE_VERDICTS
 
     # Eight Drives in the Car history, the too-short one kept out of it.
-    history = loop.store.car_state(None)["drives"]
+    history = replayed.store.car_state(None)["drives"]
     assert len(history) == 8
     assert "20260830-150925" not in history
     assert history["20260823-203853"]["verdict"] == "stop"
@@ -236,9 +239,9 @@ def test_a_fresh_car_is_on_map_version_1_before_any_upload(loop: Loop):
     assert len(json.dumps(body)) < 60_000
 
 
-def test_every_one_of_the_owners_nine_drives_says_which_map_version_it_ran_on(loop: Loop):
+def test_every_one_of_the_owners_nine_drives_says_which_map_version_it_ran_on(replayed: Loop):
     """The app knows from the first Drive: Map version 1 on all nine."""
-    replies = loop.run(loop.reply_to_all_owner_drives())
+    replies = template_replies(replayed).items()
 
     seen = []
     for example_id, reply in replies:
@@ -259,7 +262,7 @@ def test_every_one_of_the_owners_nine_drives_says_which_map_version_it_ran_on(lo
     assert "not recorded" not in json.dumps([r.card for _, r in replies]).lower()
 
     # The Car history rows carry the number too, so a Drive read later still knows.
-    rows = loop.get("/api/state").json()["carHistory"]
+    rows = replayed.get("/api/state").json()["carHistory"]
     assert [r["mapVersion"] for r in rows] == [1] * 8
     assert [r["map"] for r in rows] == ["Starter 21 Dual Tune 2"] * 8
 

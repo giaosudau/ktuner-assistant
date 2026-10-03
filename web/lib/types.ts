@@ -36,11 +36,31 @@ export type FlashPlan = {
   undo?: { known: boolean; version: number | null; name: string | null; stamp: string | null } | null;
   /** The Map version this plan is written on. */
   mapVersion?: { n: number; label: string; name: string; tablesPending?: boolean } | null;
+  /** The Flash plan's own route: preset means the MAF Scaling choice. */
+  route?: string | null;
   cellCount: number;
   evidence: { drives?: string[]; text: string; basis?: string }[];
   levers: { id: string; title: string; status: string; reason: string; unlocks: string }[];
   openIssues: unknown;
 };
+
+/** One tap-to-answer choice inside the reply. */
+export type QuestionChoice = { id: string; label: string };
+
+/** One owner question: what only the owner knows, asked once per Drive. */
+export type OwnerQuestion = {
+  id: string;
+  kind: "what-changed" | "housing" | "did-flash";
+  title: string;
+  question: string;
+  choices: QuestionChoice[];
+  askedOn: string | null;
+  /** The saved choice id, when answered — changeable. */
+  answer: string | null;
+};
+
+/** The MAF Scaling option for one housing, inside the KTuner box. */
+export type HousingOption = { housing: string; option: string | null; detail: string };
 
 /**
  * One Open step, as the panel beside the thread reads it. `status` is the
@@ -132,6 +152,10 @@ export type ReplyCard = {
   nextStep: NextStep | null;
   /** The one diagnosed cause, in one plain-words sentence — null when none. */
   cause: string | null;
+  /** What only the owner knows, as tap-to-answer choices — never the model. */
+  questions?: OwnerQuestion[] | null;
+  /** The MAF Scaling option for the answered housing, inside the KTuner box. */
+  housing?: HousingOption | null;
   /** The Open steps as they stand after this reply. */
   openSteps: OpenStep[];
   harness: HarnessSummary | null;

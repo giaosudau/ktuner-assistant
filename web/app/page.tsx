@@ -7,7 +7,7 @@ import { ReplyCard } from "../components/ReplyCard";
 import { useThread } from "../lib/useThread";
 
 export default function Page() {
-  const { turns, busy, send, openSteps, questions } = useThread();
+  const { turns, busy, send, openSteps, questions, answered } = useThread();
   const picker = useRef<HTMLInputElement>(null);
 
   return (
@@ -66,7 +66,7 @@ export default function Page() {
               <div className="up">
                 <b>Uploaded</b> {turn.fileName}
               </div>
-              <ReplyCard turn={turn} />
+              <ReplyCard turn={turn} onAnswered={(updated) => answered(turn.id, updated)} />
             </div>
           ))}
         </main>
