@@ -272,7 +272,7 @@ async def _decide(
             "cause": C.cause_line(decided.get("diagnose")),
             "questions": questions,
             "housing": housing,
-            "openSteps": decided["openSteps"],
+            "openSteps": C.step_words(decided["openSteps"]),
             "harness": merge_harness(
                 [reply.get("harness"), {**harness.summary(), "steps": harness.as_list()}]
             ),

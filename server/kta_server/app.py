@@ -84,7 +84,8 @@ async def _unanswered_questions(store: Store, worker: Worker, settings: Settings
     asked = store.list_asked_questions()
     saved_ids = set(store.list_question_answers().keys())
     return [
-        {"id": q["id"], "title": q["title"], "askedOn": q.get("askedOn")}
+        {"id": q["id"], "title": q["title"], "askedOn": q.get("askedOn"),
+         "askedOnStamp": C.drive_stamp(q.get("askedOn")) if q.get("askedOn") else None}
         for q in asked
         if q["id"] not in saved_ids
     ]
@@ -187,7 +188,7 @@ def create_app(
             "installs": installs,
             "mapVersions": store.list_map_versions(),
             "activeMapVersion": active,
-            "openSteps": store.list_open_steps(only_open=True),
+            "openSteps": C.step_words(store.list_open_steps(only_open=True)),
             "answers": store.list_answers(),
             "questionAnswers": store.list_question_answers(),
             "unansweredQuestions": await _unanswered_questions(store, worker, settings),

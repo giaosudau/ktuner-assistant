@@ -34,31 +34,26 @@ the worker with the limit it was read against.
 
 from __future__ import annotations
 
+import json
+import subprocess
 from typing import Any, Mapping
 
+from .config import REPO_ROOT
 from .profile import part_display
 
-MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+def _engine_words() -> dict[str, Any]:
+    """The owner-facing words the engine decides once (`KTA.carWords`). Read here, never re-spelled."""
+    out = subprocess.run(
+        ["node", "-p", "JSON.stringify(require('./engine/kta-car.js').carWords)"],
+        cwd=REPO_ROOT, capture_output=True, text=True, check=True,
+    ).stdout
+    return json.loads(out)
 
+
+_WORDS = _engine_words()
+MONTHS: list[str] = _WORDS["months"]
 # The gauge names TunerView spells, for the dead-gauge step (KTuner's channel names).
-CHANNEL_NAMES = {
-    "boost": "Turbo Pressure",
-    "boostTarget": "Turbo Pressure Target",
-    "fp": "DIFP",
-    "fpTarget": "DIFP Target",
-    "cvt": "Transmission Temperature",
-    "stft": "STFT B1",
-    "ltft": "LTFT B1",
-    "kControl": "Knock Control",
-    "lam": "O2",
-    "lamCmd": "AFR Command",
-    "iat": "IAT",
-    "iat2": "IAT2",
-    "egt": "EGT",
-    "map": "MAP",
-    "rpm": "Engine RPM",
-    "vss": "Vehicle Speed",
-}
+CHANNEL_NAMES: dict[str, str] = _WORDS["channels"]
 
 
 def channel_name(key: str) -> str:
@@ -389,9 +384,9 @@ def window_card(window: dict[str, Any] | None) -> dict[str, Any]:
 # earn its place, so it always carries the reason the Drive could not answer
 # (too short, too cool, a dead gauge) — never a failure and never a "try again".
 # ---------------------------------------------------------------------------
-STEP_STATUS_WORD = {"done": "Done", "open": "Not yet", "fail": "Still off", "wait": "Can't tell yet"}
+STEP_STATUS_WORD = {k: v["word"] for k, v in _WORDS["stepStatus"].items()}
 # The same four as the pill the chat draws: OK, Watch, Stop, Can't tell.
-STEP_STATUS_TONE = {"done": "good", "open": "watch", "fail": "stop", "wait": "none"}
+STEP_STATUS_TONE = {k: v["tone"] for k, v in _WORDS["stepStatus"].items()}
 
 
 def settled_rows(settled: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
@@ -410,6 +405,18 @@ def settled_rows(settled: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
             }
         )
     return rows
+
+
+def step_words(steps: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    """Open steps for the web, each with the status word, its pill tone, already worded."""
+    return [
+        {
+            **s,
+            "word": STEP_STATUS_WORD.get(s.get("status"), "Not yet"),
+            "tone": STEP_STATUS_TONE.get(s.get("status"), "watch"),
+        }
+        for s in steps or []
+    ]
 
 
 def wasted_line(wasted: Mapping[str, Any] | None) -> str | None:
@@ -879,6 +886,7 @@ __all__ = [
     "housing_line",
     "waiting_for_you",
     "settled_rows",
+    "step_words",
     "sg",
     "stamp_day",
     "stamp_of",

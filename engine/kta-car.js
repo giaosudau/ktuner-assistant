@@ -1478,7 +1478,12 @@
     fpTarget: 'DIFP Target', cvt: 'Transmission Temperature', stft: 'STFT B1',
     ltft: 'LTFT B1', kControl: 'Knock Control', lam: 'O2', lamCmd: 'AFR Command',
     afrCmd: 'AFR Command', mafHz: 'MAF Hz', mafGs: 'MAF Hz',
-    iat: 'IAT', iat2: 'IAT2', rpm: 'Engine RPM', vss: 'Vehicle Speed'
+    iat: 'IAT', iat2: 'IAT2', egt: 'EGT', map: 'MAP', rpm: 'Engine RPM', vss: 'Vehicle Speed'
+  };
+  /** The four words an Open step's status shows, and the pill tone each wears. */
+  var STEP_STATUS = {
+    done: { word: 'Done', tone: 'good' }, open: { word: 'Not yet', tone: 'watch' },
+    fail: { word: 'Still off', tone: 'stop' }, wait: { word: "Can't tell yet", tone: 'none' }
   };
   /** A logged channel named the way TunerView spells it. */
   function logChannel(key) { return LOG_CHANNEL_NAMES[key] || key; }
@@ -2250,6 +2255,12 @@
     out.sort(function (a, b) { return QUESTION_ORDER.indexOf(a.kind) - QUESTION_ORDER.indexOf(b.kind); });
     return out;
   };
+
+  /**
+   * Owner-facing words, decided here once (ADR 0004). The server reads this table
+   * at startup and passes the words through; no other module spells them.
+   */
+  KTA.carWords = { channels: LOG_CHANNEL_NAMES, months: MONTHS, stepStatus: STEP_STATUS, driveStamp: driveStamp };
 
   return KTA;
 }));

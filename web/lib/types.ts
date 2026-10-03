@@ -72,6 +72,9 @@ export type OpenStep = {
   key: string;
   title: string;
   status: string;
+  /** The status word and pill tone, worded by the engine (the server passes them through). */
+  word: string;
+  tone: string;
   why: string;
   askedOn: string | null;
   askedAt: number | null;
