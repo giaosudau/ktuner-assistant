@@ -39,3 +39,17 @@ engine) and `docs/adr/0003` (two map checks) still bind. Vocabulary is `CONTEXT.
    numbers, one Next step only, "Can't tell yet" always says why, KTuner names spelled exactly as
    KTuner spells them, no check names a table, no advice the app never gives.
 5. Committed on the current branch with a message naming the ticket.
+
+## Architecture review (3 Oct 2026) — refactor candidates
+
+Done one by one, never changes what the owner reads or any verdict unless a row says so.
+Each row is committed as "Refactor A<n> — …"; tests stay green; run `uv run pytest` from `server/`.
+
+| # | Candidate | Status |
+|---|---|---|
+| A1 | Open-step lifecycle: one entry per step in `engine/kta-car.js` | ready |
+| A4 | Banned-advice policy: shared case list, JS + Python both tested against it | ready |
+| A2 | Reply wording: stop spelling stamp/channel/status words in 3 places | ready (after A1) |
+| A3 | Worker passes engine limits through, no renamed copy | ready (after A2) |
+| A5 | Worker op surface collapse (speculative, only if A1–A3 confirm the pattern) | ready (after A3) |
+| T  | Slow tests: `npm test` 63 s, pytest 43 s — find and fix the cause | ready |
