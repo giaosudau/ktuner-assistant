@@ -12,11 +12,12 @@ import type { LoopState } from "../lib/api";
 import type { AiMsg, Msg, UserMsg } from "../lib/useChat";
 import { sizeOf } from "../lib/useChat";
 import type { CarProfile, HarnessSummary, OwnerQuestion, Picture, Turn } from "../lib/types";
-import { LogGuideCard, NextStepCard, OptionsCard, ProfileCard, QuestionCard, ReportCard, SettledCard } from "./Cards";
+import { NextStepCard, ProfileCard, QuestionCard, ReportCard, SettledCard } from "./Cards";
 import { Chart } from "./Chart";
-import { CitedSay } from "./Citations";
 import { Icon, Mark } from "./Icons";
 import type { FlashAct } from "./KTunerCard";
+import { Markdown } from "./Markdown";
+import { CheckpointsCard, DriveBriefCard, HealthCard, MapTourCard } from "./ShopCards";
 
 export type Actions = {
   busy: boolean;
@@ -26,9 +27,51 @@ export type Actions = {
   onSaveCar: (msgId: string, fields: CarProfile) => void;
   onSuggest: (text: string) => void;
   onGuide: () => void;
+  onEdit: (msgId: string, text: string) => void;
 };
 
-export function UserMessage({ msg }: { msg: UserMsg }) {
+export function UserMessage({ msg, a }: { msg: UserMsg; a: Actions }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(msg.text);
+  if (editing) {
+    return (
+      <div className="msg-user editing" data-testid="user-message-edit">
+        <textarea
+          className="edit-box"
+          value={draft}
+          rows={Math.min(8, Math.max(2, draft.split("\n").length))}
+          aria-label="Edit your message"
+          autoFocus
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setEditing(false);
+            if (event.key === "Enter" && !event.shiftKey && draft.trim()) {
+              event.preventDefault();
+              setEditing(false);
+              a.onEdit(msg.id, draft.trim());
+            }
+          }}
+        />
+        <div className="btn-row" style={{ marginTop: 0 }}>
+          <button type="button" className="btn ghost" onClick={() => setEditing(false)}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn primary"
+            data-testid="edit-send"
+            disabled={!draft.trim() || a.busy}
+            onClick={() => {
+              setEditing(false);
+              a.onEdit(msg.id, draft.trim());
+            }}
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="msg-user" data-testid="user-message">
       {msg.file ? (
@@ -49,6 +92,24 @@ export function UserMessage({ msg }: { msg: UserMsg }) {
         </div>
       ) : null}
       {msg.text ? <div className="bubble">{msg.text}</div> : null}
+      {msg.text && !msg.file ? (
+        <div className="msg-actions user-actions">
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Edit message"
+            title="Edit and resend"
+            data-testid="edit-message"
+            disabled={a.busy}
+            onClick={() => {
+              setDraft(msg.text);
+              setEditing(true);
+            }}
+          >
+            <Icon name="edit" />
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -146,11 +207,13 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
     <>
       <WorkRow turn={turn} />
       {say ? (
-        <div className="prose" data-testid="say">
-          <p className="lead">
-            <CitedSay say={say} citations={card?.agent?.citations} />
-          </p>
-          {card?.cause ? <p data-testid="cause">{card.cause}</p> : null}
+        <div data-testid="say">
+          <Markdown text={say} citations={card?.agent?.citations} />
+          {card?.cause && !card?.agent?.verified ? (
+            <p className="prose" data-testid="cause">
+              {card.cause}
+            </p>
+          ) : null}
         </div>
       ) : null}
       {card?.window ? (
@@ -159,7 +222,9 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
           {card.window}
         </div>
       ) : null}
+      {card?.checkpoints?.length ? <CheckpointsCard rows={card.checkpoints} /> : null}
       {card ? <ReportCard card={card} fileName={turn.fileName} /> : null}
+      {card?.health?.rows.length ? <HealthCard report={card.health} /> : null}
       {pictures.map((p, i) => (
         <Chart key={`${p.kind}-${i}`} picture={p} />
       ))}
@@ -167,8 +232,8 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
       {card?.questions?.map((q) => (
         <QuestionCard key={q.id} question={q} busy={a.busy} onAnswer={(choice) => a.onAnswer(msg.id, q, choice)} />
       ))}
-      {card?.flashPlan && (card.flashPlan.levers?.length || card.flashPlan.kind !== "no-change") ? (
-        <OptionsCard plan={card.flashPlan} housing={card.housing} />
+      {card?.tour ? (
+        <MapTourCard tour={card.tour} plan={card.flashPlan} housing={card.housing} onAsk={a.onSuggest} busy={a.busy} />
       ) : null}
       {card?.nextStep ? (
         <NextStepCard step={card.nextStep} acted={msg.acted} busy={a.busy} onFlash={(...args) => a.onFlash(msg.id, ...args)} />
@@ -201,13 +266,24 @@ function Body({ msg, a }: { msg: AiMsg; a: Actions }) {
   }
   if (msg.kind === "ask" && msg.answer) {
     const ans = msg.answer;
+    const work: Turn = {
+      id: msg.id,
+      fileName: "",
+      running: false,
+      card: null,
+      lines: [],
+      harness: ans.harness ?? null,
+      thinking: ans.thinking ?? undefined,
+    };
     return (
       <>
-        <div className="prose" data-testid="ask-answer">
-          <p>
-            <CitedSay say={ans.answer ?? "I have no answer to that yet."} citations={ans.citations} />
-          </p>
+        <WorkRow turn={work} />
+        <div data-testid="ask-answer">
+          <Markdown text={ans.answer ?? "I have no answer to that yet."} citations={ans.citations} />
         </div>
+        {(ans.pictures ?? []).map((p, i) => (
+          <Chart key={`${p.kind}-${i}`} picture={p} />
+        ))}
         {ans.window && ans.window !== "nothing read yet" ? (
           <div className="basis" data-testid="ask-window">
             <Icon name="history" />
@@ -272,7 +348,7 @@ function Body({ msg, a }: { msg: AiMsg; a: Actions }) {
           {msg.text ? <p className="lead">{msg.text}</p> : null}
           {msg.detail ? <p>{msg.detail}</p> : null}
         </div>
-        {msg.guide ? <LogGuideCard guide={a.loop?.logGuide} /> : null}
+        {msg.guide ? <DriveBriefCard brief={a.loop?.logGuide} /> : null}
       </>
     );
   }
@@ -336,5 +412,5 @@ export function AssistantMessage({ msg, latest, a }: { msg: AiMsg; latest: boole
 }
 
 export function Message({ msg, latest, a }: { msg: Msg; latest: boolean; a: Actions }) {
-  return msg.role === "user" ? <UserMessage msg={msg} /> : <AssistantMessage msg={msg} latest={latest} a={a} />;
+  return msg.role === "user" ? <UserMessage msg={msg} a={a} /> : <AssistantMessage msg={msg} latest={latest} a={a} />;
 }

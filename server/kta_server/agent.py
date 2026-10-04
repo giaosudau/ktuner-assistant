@@ -35,10 +35,11 @@ import httpx
 from . import verify as V
 from . import knowledge as K
 from . import pictures as PIC
+from . import tour as TOUR
 from .harness import Harness
 
 #: How many provider calls one run may spend, tools and repair included.
-MAX_CALLS = 8
+MAX_CALLS = 12
 
 Message = dict[str, Any]
 #: `async (messages, tools) -> response_json`. Overridden in tests with a
@@ -128,6 +129,45 @@ def TOOLS() -> list[dict[str, Any]]:
             ["table", "row", "col"],
         ),
         fn(
+            "get_health_report",
+            "The shop's report for this Drive: every health check the engine ran (fuel, air & boost, spark, heat, CVT) "
+            "with value and verdict, and whether the log met the drive brief (checkpoints). Start a Drive reply here.",
+            {},
+            [],
+        ),
+        fn(
+            "get_map_tour",
+            "Every KTuner table family on this car in the order a tuner works (airflow, mixture, boost, ignition, "
+            "knock, basemap): what it does, its tables, and its status this round — this-round (the Flash plan changes it), "
+            "locked (why, and what unlocks it), fine, or read-only. Use it to explain what you would change and why, at a high level.",
+            {},
+            [],
+        ),
+        fn(
+            "get_map_table",
+            "Read one whole table of the Map version on the car: rpm axis, load columns, every value, min and max, "
+            "and the row nearest an rpm. Use it to teach what a table does with the owner's real numbers. Read-only: "
+            "a change only ever comes from the Flash plan.",
+            {
+                "table": {"type": "string", "description": "The table id as the map data spells it, for example WOT_Enrich_L or Ignition_Base_H."},
+                "rpm": {"type": "number", "description": "Optional rpm to pick out one row."},
+            },
+            ["table"],
+        ),
+        fn(
+            "propose_knowledge",
+            "When you need a fact that no knowledge card holds, do NOT state it as fact. Propose it here for the "
+            "knowledge base instead (a reviewer checks and sources it before it can be cited), and tell the owner "
+            "you've noted it to check.",
+            {
+                "title": {"type": "string", "description": "The fact as one short sentence."},
+                "claim": {"type": "string", "description": "What you would say, in under 120 words."},
+                "why": {"type": "string", "description": "Why the owner needed it: the question or the Drive."},
+                "source_hint": {"type": "string", "description": "Where a reviewer could confirm it (a doc, a KTuner help page), if you know."},
+            },
+            ["title", "claim", "why"],
+        ),
+        fn(
             "search_knowledge",
             "General knowledge about this car: what is normal, what owners report, where things live in KTuner. "
             "Cite the card id in brackets for any claim the Drive tools do not say.",
@@ -154,7 +194,7 @@ def TOOLS() -> list[dict[str, Any]]:
             "submit_reply",
             "Call once, last, with the final reply. The app checks every number, the step, every cell and every advice line.",
             {
-                "prose": {"type": "string", "description": "The reply for the owner, in plain words, under 150 words."},
+                "prose": {"type": "string", "description": "The reply for the owner: plain words, short paragraphs and bullet lists in markdown, under 280 words."},
                 "action_key": {"type": "string", "description": "The decided Next step's key, exactly as get_next_step names it."},
                 "cells": {
                     "type": "array",
@@ -176,8 +216,8 @@ def TOOLS() -> list[dict[str, Any]]:
     ]
 
 
-def system_prompt(drive: Mapping[str, Any], reply: Mapping[str, Any]) -> str:
-    """What the model is: an explainer, never a decider."""
+def system_prompt(drive: Mapping[str, Any], reply: Mapping[str, Any], question: str | None = None) -> str:
+    """The tuner at the shop: orchestrates the tools and teaches; the engine and the map checks decide."""
     step = reply.get("nextStep") or {}
     plan = reply.get("flashPlan") or {}
     cells = V.plan_cells(plan)
@@ -185,29 +225,52 @@ def system_prompt(drive: Mapping[str, Any], reply: Mapping[str, Any]) -> str:
         plan_line = plan.get("headline", "") + f" ({len(cells)} cells, ceiling {plan.get('ceilingPsi')} psi)"
     else:
         plan_line = str(plan.get("headline") or "Your logs support no map change right now.")
+    task = (
+        "The owner asked a question in the chat. Answer it like a tuner teaching a customer: what the thing is, what it "
+        "is on THEIR car (read it with the tools), what would change if they changed it and why it matters, the risk, "
+        "and what you would do. Then tie it back to the one Next step."
+        if question
+        else
+        "The owner just uploaded a Drive. Write the shop's reply: (1) the verdict sentence, (2) what you checked and the "
+        "findings that matter, with their numbers (call get_health_report), (3) at a high level which table families "
+        "this round changes or doesn't and why, in the tuner's order (call get_map_tour; airflow, then mixture, then "
+        "boost; ignition is read-only), (4) the one Next step and exactly which drive to log, (5) one line inviting "
+        "questions, offering two the owner might ask."
+    )
     return "\n".join(
         [
-            "You explain one car's Drive reply to its owner. The car: Honda Civic FE 1.5T CVT on Vietnam E10 RON95 fuel, "
-            'KTuner map "Starter 21 Dual Tune 2", with intake, downpipe, exhaust, big intercooler and CVT cooler. The owner tunes '
-            "on the street without a dyno and wants the car to feel better without hurting the engine or the CVT.",
-            "You see the Drive only through the tools. The reply's decisions are already made and are not yours to change. Rules:",
+            "You are the tuner at a tuning shop that works over chat. The customer owns one car: Honda Civic FE 1.5T CVT on "
+            'Vietnam E10 RON95 fuel, KTuner map "Starter 21 Dual Tune 2", with intake, downpipe, exhaust, big intercooler and '
+            "CVT cooler. They tune on the street without a dyno, flash with KTuner, log with TunerView, and want the map fitted "
+            "to their car without hurting the engine or the CVT. Like any shop, you never expect the first change to be the "
+            "last one: every round is proved by the next log.",
+            "You orchestrate: decide which tools to call and in what order, reason from what they return, and write the "
+            "answer. The engine has already read the whole log; the verdict, the Next step and every map cell are the "
+            "engine's and the map checks', not yours. Rules:",
             "1. Take every number from the tools. Quote numbers as the tools return them (rounding is fine). Do not compute new "
             "numbers: no differences, sums, averages or percentages of your own.",
-            f"2. Name exactly one step: {step.get('title') or 'nothing'} (key: {step.get('key')}). Never add, remove or change it. "
-            f"Name the Drive to log: {step.get('uploadWhen') or ''}",
-            "3. Name only Flash plan cells, with the plan's exact values. If the plan holds no change, name no table, cell or value.",
-            "4. Never suggest lowering knock sensitivity, adding ignition timing, raising boost, or editing an AFM/MAF curve. "
-            "If asked, say it is outside what this app can check safely, and why.",
-            "5. Answer in English, in plain words for a car owner, under 150 words, no tables. "
-            f"Start with this sentence: {reply.get('say')}",
-            f"The Flash plan: {plan_line}",
-            "6. Finish by calling submit_reply once with your prose and the decided step's key. "
-            "The app checks every number, the step, every cell and every advice line before the owner sees them.",
-            "7. For anything the tools do not say — what is normal on this car, what owners report, where things "
-            "live in KTuner — call search_knowledge first and cite the card id in brackets at the end of the "
-            "sentence, for example [kc-ranges]. The brackets are quiet footnote refs; never explain them.",
-            "8. A picture is optional: at most one, chosen with show_chart, and only when it answers the question better than a sentence. "
+            f"2. Name exactly one Next step: {step.get('title') or 'nothing'} (key: {step.get('key')}). Never add, remove or "
+            f"change it. The drive whose upload settles it: {step.get('uploadWhen') or ''}",
+            "3. Name only Flash plan cells, with the plan's exact values. You may READ and explain any table with "
+            "get_map_table, but never propose a value for a table the plan doesn't change.",
+            "4. Never suggest lowering knock sensitivity, adding ignition timing, raising boost, or editing an AFM/MAF curve "
+            "by hand. If asked, explain why the shop won't (cite the card) and what would unlock it.",
+            "5. Write in English, plain words for a car owner. Markdown: short paragraphs, bullet lists, **bold** for the "
+            "one thing that matters. No tables (the app draws them). Under 280 words. "
+            + (
+                "The checked built-in answer is your starting point; build on it and go further. "
+                if question else ""
+            )
+            + f"Start with this sentence: {reply.get('say')}",
+            f"The Flash plan this round: {plan_line}",
+            "6. Finish by calling submit_reply once with your prose and the decided step's key. The app checks every number, "
+            "the step, every cell and every advice line before the owner sees them; a rejected draft gets one repair.",
+            "7. Every claim the tools don't say — what is normal on this car, what a table does, how tuners work — must come "
+            "from search_knowledge, cited by card id in brackets at the end of the sentence, for example [kc-ranges]. If no "
+            "card holds it, call propose_knowledge and say you've noted it to check; never state it as fact.",
+            "8. A picture is optional: at most one, chosen with show_chart, only when it answers better than a sentence. "
             "Say every number it prints in your prose. Never read numbers off a screenshot: quote tool numbers only.",
+            "Your task: " + task,
         ]
     )
 
@@ -441,6 +504,12 @@ async def run_agent(
             map_tables = held["tables"]
     except Exception:  # noqa: BLE001 - a missing table store only costs the map tool
         map_tables = {}
+    if not map_tables:
+        # A typed question has no Drive map: read the Map version the plan is written on (the car's active one).
+        try:
+            map_tables = dict(PIC._tables(store, plan))
+        except Exception:  # noqa: BLE001
+            map_tables = {}
 
     tools = TOOLS()
     ask = (
@@ -449,7 +518,7 @@ async def run_agent(
         else "Explain this Drive's reply to its owner."
     )
     messages: list[Message] = [
-        {"role": "system", "content": system_prompt(drive, reply)},
+        {"role": "system", "content": system_prompt(drive, reply, question)},
         # A screenshot rides only in the user turn, as a data URL; the model may look at it but may quote only tool numbers.
         {"role": "user", "content": [{"type": "text", "text": ask}, {"type": "image_url", "image_url": {"url": image}}] if image else ask},
     ]
@@ -495,6 +564,11 @@ async def run_agent(
         for call in calls_to_make:
             if call["name"] == "submit_reply":
                 submitted = call
+                continue
+            if call["name"] in SHOP_TOOLS:
+                output = await _shop_tool(call["name"], call["args"], reply, plan, map_tables, harness, config)
+                facts.extend(V.collect_numbers(output))
+                results.append({"tool_call_id": call["id"], "role": "tool", "name": call["name"], "content": _slim_json(output)})
                 continue
             if call["name"] == "show_chart":
                 shown = await _show_chart(call["args"], pictures, worker, store, drive_id, decided, plan)
@@ -585,6 +659,39 @@ async def run_agent(
                 + "\nUse the tools, quote their numbers, name the decided step, and finish with submit_reply.",
             }
         )
+
+
+SHOP_TOOLS = ("get_health_report", "get_map_tour", "get_map_table", "propose_knowledge")
+
+
+async def _shop_tool(
+    name: str, args: Mapping[str, Any], reply: Mapping[str, Any], plan: Mapping[str, Any] | None,
+    map_tables: Mapping[str, Any], harness: Harness, config: Any,
+) -> Any:
+    """The tuning-shop tools: the report, the map tour, a whole table, a knowledge proposal. Read-only on the car."""
+    args = args if isinstance(args, Mapping) else {}
+    if name == "get_health_report":
+        report = {
+            "health": reply.get("health"),
+            "checkpoints": reply.get("checkpoints"),
+            "numbers": reply.get("numbers"),
+            "cause": reply.get("cause"),
+        }
+        return await harness.step(config, "healthReport", "Read the health report and the log checkpoints", {}, _wrap(report))
+    if name == "get_map_tour":
+        tour = reply.get("tour") or TOUR.map_tour(plan, map_tables)
+        return await harness.step(config, "mapTour", "Walk the map, table family by family", {}, _wrap(tour))
+    if name == "get_map_table":
+        table = str(args.get("table") or "")
+        rpm = args.get("rpm") if isinstance(args.get("rpm"), (int, float)) else None
+        return await harness.step(
+            config, "mapTable", f"Read {table or 'a table'}", {"table": table, **({"rpm": rpm} if rpm is not None else {})},
+            _wrap(TOUR.read_table(map_tables, table, rpm)),
+        )
+    proposal = K.propose(
+        str(args.get("title") or ""), str(args.get("claim") or ""), str(args.get("why") or ""), str(args.get("source_hint") or "")
+    )
+    return await harness.step(config, "proposeKnowledge", "Note a new fact for review", {"title": args.get("title")}, _wrap(proposal))
 
 
 async def _show_chart(

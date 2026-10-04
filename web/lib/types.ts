@@ -234,6 +234,40 @@ export type Picture =
     }
   | { kind: "maf_gap"; title: string; x: number[]; before: number[]; after: number[]; gapPct: number; unit: string };
 
+/** Did the log meet the drive brief? One row per checkpoint; `met` null when the log can't say. */
+export type Checkpoint = { id: string; label: string; value: string; met: boolean | null };
+
+/** The engine's health checks, as the shop's report shows them. */
+export type HealthReport = {
+  line: string | null;
+  rows: { system: string; id: string; label: string; value: string; word: string; tone: string }[];
+};
+
+/** The whole map at a high level: one row per table family and its status this round. */
+export type MapTour = {
+  headline: string;
+  families: {
+    family: string;
+    title: string;
+    what: string;
+    card: string;
+    tables: string[];
+    status: "this-round" | "locked" | "fine" | "read-only";
+    reason: string;
+    unlocks: string | null;
+  }[];
+};
+
+/** The drive brief a shop hands its customer. */
+export type DriveBrief = {
+  title: string;
+  intro: string;
+  sections: { title: string; steps: string[] }[];
+  checkpoints: string[];
+  recipe: DriveRecipe | null;
+  gauges: GaugeTable | null;
+};
+
 /** The typed reply card, read from the AG-UI STATE_SNAPSHOT. */
 export type ReplyCard = {
   say: string;
@@ -258,6 +292,10 @@ export type ReplyCard = {
   /** The Open steps as they stand after this reply. */
   openSteps: OpenStep[];
   harness: HarnessSummary | null;
+  /** The shop's report (tuning-shop D4-D6). */
+  checkpoints?: Checkpoint[] | null;
+  health?: HealthReport | null;
+  tour?: MapTour | null;
   /** At most one picture, plus the map grid when the step is a Flash. */
   pictures?: Picture[] | null;
   /** The explainer's record, when a model wrote the sentence above. */

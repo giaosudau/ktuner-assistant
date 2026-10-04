@@ -54,7 +54,14 @@ export default function Page() {
   const scroller = useRef<HTMLDivElement>(null);
   const pinned = useRef(true);
 
-  useEffect(() => setSide(window.innerWidth >= 1024), []);
+  // The sidebar follows the breakpoint: open beside the chat on a desktop, a closed drawer on a phone.
+  useEffect(() => {
+    const wide = window.matchMedia("(min-width: 1024px)");
+    setSide(wide.matches);
+    const follow = (event: MediaQueryListEvent) => setSide(event.matches);
+    wide.addEventListener("change", follow);
+    return () => wide.removeEventListener("change", follow);
+  }, []);
   const closeOnPhone = useCallback(() => {
     if (window.innerWidth < 1024) setSide(false);
   }, []);
@@ -97,6 +104,10 @@ export default function Page() {
       pinned.current = true;
       chat.showGuide();
     },
+    onEdit: (id, words) => {
+      pinned.current = true;
+      void chat.editAndResend(id, words);
+    },
   };
 
   const phase = phaseOf(loop);
@@ -132,6 +143,7 @@ export default function Page() {
         onClose={closeOnPhone}
         onToggle={() => setSide(false)}
         onFlashBasemap={() => void chat.flash("", "revert", { version: 1 })}
+        onGuide={() => chat.showGuide()}
       />
       <div className="scrim" onClick={() => setSide(false)} aria-hidden="true" />
 

@@ -261,7 +261,9 @@ def banned_issues(prose: str, plan: Mapping[str, Any] | None = None) -> list[str
                 value = float(raw)
             except ValueError:
                 continue
-            if value > ceiling:
+            # Only a number written as pressure ("24 psi") can break the ceiling; "3,793 rpm" next to
+            # "+0.1 psi" is an rpm, not a boost.
+            if value > ceiling and re.match(r"\s*psi\b", text[match.end():match.end() + 8], re.IGNORECASE):
                 window = text[max(0, match.start() - 40):match.end() + 40]
                 if _BOOST_NUMBER.search(window):
                     issues.append(

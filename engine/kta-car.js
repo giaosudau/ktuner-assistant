@@ -2144,6 +2144,20 @@
     //    opened beside it as a free habit (the Baseline stays the step: the habit
     //    is scored against it).
     var baselineStep = stepByKey(steps, 'baseline');
+    // A Drive that already is the Baseline drive (Cool, 2 pulls) sets the Baseline itself: the
+    // owner is never asked for the drive they just did (tuning-shop live run, 4 Oct). Judged by the
+    // step's own rule, recorded as settled by this Drive.
+    if (!baselineStep && sum) {
+      var own = stepOf('baseline').judge(sum);
+      if (own && doneStatus(own.status)) {
+        baselineStep = {
+          key: 'baseline', title: stepOf('baseline').title, status: 'done', why: own.why,
+          id: null, askedOn: driveId, askedAt: isNum(sum.start) ? sum.start : null, lastAskedOn: null,
+          settledBy: driveId, settledAt: isNum(sum.start) ? sum.start : null
+        };
+        steps.push(baselineStep);
+      }
+    }
     var cause = (dg && dg.id === 'lugging') ? dg.habit : null;
     // Opened beside the step, never instead of it: the free habit, and the two
     // channels to add in TunerView while the owner is there anyway.

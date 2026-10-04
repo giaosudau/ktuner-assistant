@@ -128,7 +128,7 @@ async function run() {
       assert.match(await line.textContent(), /^Worked for .+ · Checked \d+ things?/);
       assert.equal(await lastAi().locator('[data-testid="harness"]').getAttribute('open'), null);
       await line.click();
-      const tool = lastAi().locator('[data-step="flashPlan"]');
+      const tool = lastAi().locator('[data-step="flashPlan"]').first(); // the agent may read the plan again
       await tool.locator('summary').click();
       assert.match(await tool.locator('pre[data-io="inputs"]').textContent(), /\S/);
       assert.match(await tool.locator('pre[data-io="output"]').textContent(), /headline/);

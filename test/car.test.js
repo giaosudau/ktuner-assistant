@@ -1454,7 +1454,7 @@ const reask = (key) => asked(K.carNextStep(synth([{ id: 'a' }, { id: 'b' }]), 'b
 const firstAsk = {
   undo: () => asked(K.carNextStep(synth([{ id: 'a' }, { id: 'b', verdict: 'stop' }]), 'b', [])),
   logger: () => asked(K.carNextStep(synth([{ id: 'a' }, { id: 'b', flat: ['kControl'] }]), 'b', [])),
-  baseline: () => asked(K.carNextStep(synth([{ id: 'a' }, { id: 'b' }]), 'b', [])),
+  baseline: () => asked(K.carNextStep(synth([{ id: 'a' }, { id: 'b', hardPulls: 0 }]), 'b', [])),
   habit: () => {
     let s = K.carEmpty();
     for (const id of OWNER_NINE.slice(0, 7)) s = ingest(s, id).state;
@@ -1509,6 +1509,16 @@ test('A1: the first ask tells the owner each step in the same words, whichever w
     assert.deepEqual(got, Object.assign({ key, title: FIRST_TITLE[key] }, ASKED[key],
       key === 'habit' ? { proves: ASKED.habit.proves + ' (today 6.9 %, +0.16)' } : {}), key);
   }
+});
+
+test('A Drive that already is the Baseline drive sets the Baseline: never asked for the drive just done', () => {
+  const out = K.carNextStep(synth([{ id: 'a' }, { id: 'b' }]), 'b', []);
+  assert.notEqual(out.step.key, 'baseline');
+  const base = out.openSteps.find((st) => st.key === 'baseline');
+  assert.equal(base.status, 'done');
+  assert.equal(base.settledBy, 'b');
+  // A hot Drive with no pulls still gets the Baseline step.
+  assert.equal(K.carNextStep(synth([{ id: 'a' }, { id: 'b', hardPulls: 0 }]), 'b', []).step.key, 'baseline');
 });
 
 test('A1: an Open step still open is re-asked in its compact words', () => {

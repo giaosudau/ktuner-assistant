@@ -541,15 +541,129 @@ def gauge_table(
 # table name anywhere (only the Flash plan names those).
 # ---------------------------------------------------------------------------
 def log_guide(limits: Mapping[str, Any]) -> dict[str, Any]:
-    """How to log a drive the chat can read (chat CA-08): the Baseline recipe and the gauges to watch.
+    """The drive brief a shop hands its customer (tuning-shop D4; kc-drive-brief, kc-log-gate).
 
-    The same recipe and gauge rows the Baseline Next step uses, so the chat never words its own.
+    Sections in the order the owner drives them, every number from the engine's limits or the
+    sourced cards, and the checkpoints the log will be read against (the same ones
+    `log_checkpoints` scores after the upload).
     """
+    cool = n(lim(limits, "CAR_RULES.coolIat", 42), 0)
+    pull_iat = n(lim(limits, "DRIVE_LIMITS.pullIatGood", 48), 0)
+    sections = [
+        {"title": "Before you drive, in TunerView", "steps": [
+            "Turn on every gauge in the table below, plus AFR Command and MAF Hz if your app offers them.",
+            f"Set the logging rate as fast as it goes: {BRIEF_RATE_HZ} samples a second or more.",
+            "Mount the phone where you won't touch it, and start the log before you set off.",
+        ]},
+        {"title": "When and where", "steps": [
+            f"Before 8 am, or after an hour parked in shade, so the intake reads under {cool} °C.",
+            "Pick a straight, empty road where full throttle is legal and safe. Never in traffic.",
+        ]},
+        {"title": "Warm up, then cruise", "steps": [
+            f"Drive about 10 minutes normally, until coolant reads {BRIEF_WARM_ECT} °C or more.",
+            "Then cruise steady at a few different speeds, light throttle, several minutes in all: your fuel trims are read from this.",
+        ]},
+        {"title": "The two pulls", "steps": [
+            "Put the gearbox in S.",
+            "From a steady 50 km/h, press the pedal all the way down and hold it until 100 km/h, then lift.",
+            f"Cruise calmly about a minute so the intake cools, check it reads under {pull_iat} °C, then do the second pull the same way.",
+        ]},
+        {"title": "Finish", "steps": [
+            f"Keep at least {BRIEF_MOVING_S // 60} minutes of moving time in the log in all.",
+            "Idle a minute, stop the log, export it as CSV, and attach it here.",
+        ]},
+    ]
+    checkpoints = [
+        f"Logged {BRIEF_RATE_HZ} times a second or faster",
+        f"{BRIEF_MOVING_S // 60} minutes or more of moving",
+        "Every gauge moving",
+        "AFR Command and MAF Hz in the log",
+        f"Engine warm (coolant {BRIEF_WARM_ECT} °C or more)",
+        f"Cool intake while moving (under {cool} °C)",
+        "2 full-throttle pulls",
+        f"Pulls started under {pull_iat} °C intake",
+    ]
     return {
         "title": "One Cool drive with 2 pulls",
+        "intro": (
+            "This is the drive a tuner asks for first: everything later is compared with it, so it has to be cool, warm-engined "
+            "and repeatable. About 20 minutes."
+        ),
+        "sections": sections,
+        "checkpoints": checkpoints,
         "recipe": drive_recipe("baseline", limits, channels_open=True),
         "gauges": gauge_table(["iat", "kc", "afr", "trims"], limits),
     }
+
+
+#: The drive brief's own bars (kc-log-gate, kc-drive-brief; drive-check-tuner-analysis.md §4 Gate 0).
+BRIEF_RATE_HZ = 10
+BRIEF_MOVING_S = 600
+BRIEF_WARM_ECT = 80
+
+
+def log_checkpoints(
+    quality: Mapping[str, Any] | None,
+    heat: Mapping[str, Any] | None,
+    summary: Mapping[str, Any] | None,
+    limits: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """Did this log meet the drive brief? One row per checkpoint: label, what the log shows, met or not.
+
+    `met` is True / False, or None when the log can't say (no pulls to time, a gauge not logged).
+    Every number is the engine's (insight `quality` and `heat`, the Drive summary).
+    """
+    q = (quality or {}).get("quality") or {}
+    h = (heat or {}).get("heat") or {}
+    s = summary or {}
+    rate = (quality or {}).get("samples_per_second")
+    moving = q.get("movingSeconds")
+    missing = [channel_name(k) for k in q.get("missing") or []]
+    flat = [channel_name(k) for k in q.get("flat") or []]
+    cool_iat = lim(limits, "CAR_RULES.coolIat", 42)
+    pull_iat_max = lim(limits, "DRIVE_LIMITS.pullIatGood", 48)
+    pulls = s.get("hardPulls")
+    ect, iat_moving, pull_iat = h.get("ectMax"), h.get("iatMoving"), h.get("pullIat")
+
+    def row(cid: str, label: str, value: str, met: bool | None) -> dict[str, Any]:
+        return {"id": cid, "label": label, "value": value, "met": met}
+
+    return [
+        row("rate", f"Logged {BRIEF_RATE_HZ} times a second or faster",
+            f"{n(rate, 1)} a second" if rate is not None else "unknown", None if rate is None else rate >= BRIEF_RATE_HZ),
+        row("moving", f"{BRIEF_MOVING_S // 60} minutes or more of moving",
+            f"{n(moving / 60 if moving is not None else None, 0)} min", None if moving is None else moving >= BRIEF_MOVING_S),
+        row("gauges", "Every gauge moving", "all moving" if not flat else "stuck: " + join_names(flat), not flat),
+        row("channels", "AFR Command and MAF Hz in the log",
+            "both logged" if not missing else "missing: " + join_names(missing), not missing),
+        row("warm", f"Engine warm (coolant {BRIEF_WARM_ECT} °C or more)",
+            f"{n(ect)} °C peak" if ect is not None else "not logged", None if ect is None else ect >= BRIEF_WARM_ECT),
+        row("cool", f"Cool intake while moving (under {n(cool_iat)} °C)",
+            f"{n(iat_moving)} °C" if iat_moving is not None else "not logged",
+            None if iat_moving is None else iat_moving < cool_iat),
+        row("pulls", "2 full-throttle pulls", f"{pulls if pulls is not None else 0} hard pulls",
+            None if pulls is None else pulls >= 2),
+        row("pullIat", f"Pulls started under {n(pull_iat_max)} °C intake",
+            f"{n(pull_iat)} °C" if pull_iat is not None else "no pull to time",
+            None if pull_iat is None or not pulls else pull_iat <= pull_iat_max),
+    ]
+
+
+def health_rows(overview: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """The engine's health checks as the report shows them: system, check, value, verdict word."""
+    if not overview or not overview.get("checks"):
+        return None
+    gates = {"fuel": "Fuel", "air": "Air & boost", "spark": "Spark", "heat": "Heat", "cvt": "CVT"}
+    tones = {"good": "good", "watch": "watch", "stop": "stop", "nodata": "none"}
+    rows = []
+    for check in overview["checks"]:
+        status = str(check.get("status"))
+        word, tone = VERDICT_WORDS.get(status, VERDICT_WORDS["nodata"]), tones.get(status, "none")
+        rows.append(
+            {"system": gates.get(str(check.get("gate")), str(check.get("gate") or "")), "id": check.get("id"),
+             "label": check.get("label"), "value": check.get("value"), "word": word, "tone": tone}
+        )
+    return {"line": overview.get("verdict_text"), "rows": rows}
 
 
 def drive_recipe(
@@ -733,6 +847,28 @@ def cause_line(diagnose: Mapping[str, Any] | None) -> str | None:
 # the drive recipe or the gauge table it asked for, and the Drive whose upload will
 # settle it. A repeated step is one short line, never a second essay.
 # ---------------------------------------------------------------------------
+def backfill_step(drive_id: str, newest_id: str) -> dict[str, Any]:
+    """An older log uploaded after newer ones: history only, the current steps stand (tuning-shop D7)."""
+    mine, newest = drive_stamp(drive_id), drive_stamp(newest_id)
+    return {
+        "kind": "none",
+        "key": "backfill",
+        "title": "Added to your history",
+        "body": (
+            f"This log is from {mine}, older than your latest ({newest}). It joins your Car history and "
+            "your Baseline, and leaves your current steps exactly as they are: only a newer drive can settle them."
+        ),
+        "recipe": None,
+        "gauges": None,
+        "same": False,
+        "proves": "nothing",
+        "upload": "your next drive, as your current steps ask",
+        "uploadWhen": "your next drive, as your current steps ask",
+        "flashPlan": None,
+        "also": None,
+    }
+
+
 def next_step_card(
     step: Mapping[str, Any] | None,
     plan: Mapping[str, Any] | None = None,

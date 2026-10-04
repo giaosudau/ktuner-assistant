@@ -78,6 +78,67 @@
    "body": "The old keep-torque-under-a-number warning is removed; no torque limit is used for this car. What the logs can judge is fluid heat and slip. Watch starts at 90 °C of fluid temperature, and Stop at 100 °C is provisional, not yet seen on this car, whose peak is 95 °C. No pulls with the fluid at or above 90 °C, and never brake-launch: failures owners report come from launching and heavy low-end torque, not from steady pulls. Slip shows as revs jumping without speed, with zero such events across all drives here. The fluid is the Honda HCF-2 grade, changed on the severe schedule on a tuned car in hot traffic."
   },
   {
+   "id": "kc-drive-brief",
+   "title": "The Baseline drive brief, step by step",
+   "kind": "play",
+   "topics": [
+    "logging",
+    "baseline",
+    "drive",
+    "pulls",
+    "tunerview"
+   ],
+   "applies-when": "Before the first log, after a Flash or Install, or whenever the owner asks how to log a drive the app can read.",
+   "numbers": [
+    {
+     "name": "brief-morning",
+     "value": 8.0,
+     "unit": "am"
+    },
+    {
+     "name": "brief-cool-iat",
+     "value": 42.0,
+     "unit": "°C"
+    },
+    {
+     "name": "brief-pull-iat",
+     "value": 48.0,
+     "unit": "°C"
+    },
+    {
+     "name": "brief-warm-ect",
+     "value": 80.0,
+     "unit": "°C"
+    },
+    {
+     "name": "brief-moving-min",
+     "value": 10.0,
+     "unit": "min"
+    },
+    {
+     "name": "brief-rate",
+     "value": 10.0,
+     "unit": "Hz"
+    },
+    {
+     "name": "brief-pull-from",
+     "value": 50.0,
+     "unit": "km/h"
+    },
+    {
+     "name": "brief-pull-to",
+     "value": 100.0,
+     "unit": "km/h"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/drive-check-tuner-analysis.md",
+    "section": "§4 Gate 0 and #5; afr-tuning-research.md §2 Step A"
+   },
+   "status": "current",
+   "body": "Log it like a shop asks. Before you drive: in TunerView turn on every gauge the app reads (AFR Command and MAF Hz included) and set the fastest rate it offers, 10 Hz or more. Go before 8 am or after an hour parked in shade, so the intake is under 42 °C. Drive 10 minutes normally until coolant is above 80 °C. Cruise steady at several speeds for trims. Then, on a straight, empty, legal road, in S: from a 50 km/h roll press the pedal fully and hold it to 100 km/h, then lift. Cruise a minute to cool and do the second pull, starting with intake under 48 °C. Keep at least 10 minutes of moving time in the log, then export the CSV."
+  },
+  {
    "id": "kc-e10",
    "title": "E10 needs no extra fuel and no trim offset",
    "kind": "fact",
@@ -310,6 +371,36 @@
    },
    "status": "current",
    "body": "Non-Si ECUs raise Knock Control on purpose above about 5,200 rpm. Starter and base maps can switch this off with a checkbox, while some locked tunes keep it. Those rises say nothing about fuel quality or heat, so they are excluded from fuel and heat verdicts. This owner rarely revs past 5,200 rpm, with only two rises on one drive up there. A rise at high revs alone never opens a step and never changes a Verdict. Judge the tank by what the score does in normal driving and in traffic, where heat and lugging are the real movers."
+  },
+  {
+   "id": "kc-log-gate",
+   "title": "Is the log good enough to read?",
+   "kind": "rule",
+   "topics": [
+    "logging",
+    "quality",
+    "gauges",
+    "tunerview"
+   ],
+   "applies-when": "Every upload, before any verdict; when a log settles nothing.",
+   "numbers": [
+    {
+     "name": "gate-rate",
+     "value": 10.0,
+     "unit": "Hz"
+    },
+    {
+     "name": "gate-moving",
+     "value": 10.0,
+     "unit": "min"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/drive-check-tuner-analysis.md",
+    "section": "§4 Gate 0"
+   },
+   "status": "current",
+   "body": "A tuner checks the log before the car. Four things make a log readable: a fast enough rate (10 samples a second or more), at least 10 minutes of moving time, no gauge stuck on one number while the revs move, and AFR Command and MAF Hz in the gauge list. Without AFR Command the mixture can only be judged against the map's target, not what the ECU actually asked for; without MAF Hz the airflow sensor's headroom can't be checked. A log that misses the gate is not a failure of the car: fix the logger and drive the brief again."
   },
   {
    "id": "kc-maf-housing",
@@ -650,6 +741,149 @@
    "body": "After any Flash, drive calm for 10 minutes before any hard acceleration: steady speeds, no pulls, engine fully warm. Watch the trims first and the score second. Hard driving waits until a calm stretch shows trims within 5 percent; that is what proves the new map measures air correctly. Save the earlier file under its own name before flashing, so Undo is one flash back. If the trims never settle, or a new Stop appears on the Shakedown itself, flash back and say so: the Flash is not credited until a drive proves it."
   },
   {
+   "id": "kc-table-boost",
+   "title": "The boost tables in KTuner",
+   "kind": "ktuner-howto",
+   "topics": [
+    "boost",
+    "turbo",
+    "tables",
+    "ktuner",
+    "map"
+   ],
+   "applies-when": "The owner asks what a boost table does, wants more boost, or a boost change is in the plan.",
+   "numbers": [
+    {
+     "name": "boost-plateau-map",
+     "value": 21.0,
+     "unit": "psi"
+    },
+    {
+     "name": "boost-plateau-rpm",
+     "value": 4000.0,
+     "unit": "rpm"
+    },
+    {
+     "name": "final-boost-top",
+     "value": 23.4,
+     "unit": "psi"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/e10-ignition-boost-simple-tune.md",
+    "section": "§3"
+   },
+   "status": "current",
+   "body": "The three Boost Target tables (Normal and ECO, each Low and High cam) are rpm by load tables of the boost the ECU aims for; on this map Normal plateaus at 21 psi from 4,000 rpm, and ECO keeps factory-like boost. Final Boost Target is the target after the ECU arbitrates, topping out near 23.4. Boost By Gear Limits is flat, so no gear limit is active. Cylinder Fill Limitation caps air per cylinder: this ECU is torque-based, so raising boost alone can be blocked by fill or torque limits. Low-rpm torque is what hurts the CVT, so good maps keep boost down there. Change the paired tables together."
+  },
+  {
+   "id": "kc-table-ignition",
+   "title": "Ignition tables: read them, don't add timing on the street",
+   "kind": "rule",
+   "topics": [
+    "ignition",
+    "timing",
+    "spark",
+    "knock",
+    "tables",
+    "ktuner"
+   ],
+   "applies-when": "The owner asks about ignition, timing or knock-sensitivity tables, or asks for more timing.",
+   "numbers": [
+    {
+     "name": "ign-step-min",
+     "value": 1.0,
+     "unit": "deg"
+    },
+    {
+     "name": "ign-step",
+     "value": 2.0,
+     "unit": "deg"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/e10-ignition-boost-simple-tune.md",
+    "section": "§2; ktuner-only-tuning.md §1"
+   },
+   "status": "current",
+   "body": "Ignition Base (Low and High cam) is the main spark map by rpm and load; Ignition Max is a ceiling; Ethanol Ign Adj adds timing for ethanol; the Knock Sens tables set how sensitive knock detection is. KTuner's own formula: final timing is the ignition table plus the knock limit, minus the timing Knock Control pulls. Best timing can't be seen from a street log, so the street rule is: start from a professional basemap, log Knock Control trends over several pulls, and only ever remove timing, in steps of 1 to 2 degrees, where retard collects. Never add timing or lower knock sensitivity without a dyno. This app reads these tables but doesn't edit them."
+  },
+  {
+   "id": "kc-table-maf",
+   "title": "The airflow (MAF Scaling) table comes first",
+   "kind": "ktuner-howto",
+   "topics": [
+    "maf",
+    "afm",
+    "airflow",
+    "trims",
+    "tables",
+    "ktuner",
+    "intake"
+   ],
+   "applies-when": "Trims are off, an intake was fitted, or the owner asks what MAF Scaling does.",
+   "numbers": [
+    {
+     "name": "maf-points",
+     "value": 103.0,
+     "unit": "points"
+    },
+    {
+     "name": "maf-good",
+     "value": 5.0,
+     "unit": "%"
+    },
+    {
+     "name": "maf-normal",
+     "value": 10.0,
+     "unit": "%"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/afr-tuning-research.md",
+    "section": "§2 Step A and §3"
+   },
+   "status": "current",
+   "body": "MAF Scaling turns the airflow sensor's frequency into grams of air, over 103 points. Every fuel calculation starts from it, which is why tuners fix airflow before anything else. Presets exist per intake housing: Factory, and Race presets for the larger housings; Custom is the one you edit. A tuner corrects it from steady part-throttle trims, bin by bin, applying only part of the correction each round and keeping the curve smooth, then flashes and logs again until trims sit within about 5 percent. Up to about 10 percent is commonly called normal; beyond that the table, or the preset, is wrong."
+  },
+  {
+   "id": "kc-table-wot",
+   "title": "WOT Enrich is the full-throttle mixture target",
+   "kind": "ktuner-howto",
+   "topics": [
+    "afr",
+    "mixture",
+    "lambda",
+    "wot",
+    "tables",
+    "ktuner"
+   ],
+   "applies-when": "The owner asks about AFR, lambda or WOT Enrich, or a mixture change is in the plan.",
+   "numbers": [
+    {
+     "name": "wot-target-top",
+     "value": 11.0,
+     "unit": "AFR"
+    },
+    {
+     "name": "wot-step-max",
+     "value": 0.2,
+     "unit": "AFR"
+    },
+    {
+     "name": "trims-gate",
+     "value": 5.0,
+     "unit": "%"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/afr-tuning-research.md",
+    "section": "§2 Step C and §3"
+   },
+   "status": "current",
+   "body": "WOT Enrich (KTuner calls it Nominal Lambda for Component Protection) holds the mixture the ECU aims for, by rpm and load, Low and High cam. Cruise and light load stay at 14.7 for the catalyst; the highest load columns ask 11.0. It is a target, not a fix: change it only after the airflow table is right, with trims within 5 percent, and in steps of 0.2 AFR or less, watching Knock Control on every pull. Leaner at full throttle trades knock and exhaust heat margin for a little power; richer than asked is safe. Low and High are changed together."
+  },
+  {
    "id": "kc-trim-cause",
    "title": "The trim pattern names one cause",
    "kind": "play",
@@ -730,6 +964,28 @@
    },
    "status": "current",
    "body": "Trims within 5 percent either way are fine, and beyond 10 percent either way is a Stop. On this car warm cruise trims sit at a median of 0.8 percent negative, with the middle band from 3.1 percent negative to 1.6 percent positive, all on E10, so there is no E10 offset to subtract. The one fault drive sat at 28 percent negative median total trim, far outside anything healthy. A Stop here means the ECU cannot measure air correctly, so hard driving waits until a calm drive shows trims back within 5 percent. The cause comes from the trim pattern, never from the size of the number alone."
+  },
+  {
+   "id": "kc-tune-order",
+   "title": "The order a tuner works in",
+   "kind": "rule",
+   "topics": [
+    "tuning",
+    "order",
+    "safety",
+    "airflow",
+    "fuel",
+    "ignition",
+    "boost"
+   ],
+   "applies-when": "Before any map change, and when the owner asks why one table comes before another.",
+   "numbers": [],
+   "source": {
+    "doc": "docs/research/ktuner-only-tuning.md",
+    "section": "§2"
+   },
+   "status": "current",
+   "body": "Every log is read in the same order. First, is the log usable. Second, safety: anything lean under boost, a step up in Knock Control, fuel pressure under target, or heat — stop and find the cause. Third, air before fuel: trims against airflow show whether the airflow table matches the intake; never fix a scaling error with fuel targets. Fourth, fuel against its target under boost. Spark is the ECU's job: rising Knock Control means less margin, and the remedy is fuel, heat or boost, not more timing on the street. Then boost, actual against target. One change, one reflash, one log under the same conditions."
   }
  ],
  "postings": {
@@ -739,7 +995,11 @@
    "kc-expectations",
    "kc-ranges",
    "kc-rich-wot",
+   "kc-table-wot",
    "kc-trims"
+  ],
+  "000": [
+   "kc-table-boost"
   ],
   "0w": [
    "kc-oil"
@@ -751,27 +1011,37 @@
    "kc-oil",
    "kc-ranges",
    "kc-rich-wot",
+   "kc-table-ignition",
    "kc-trims"
   ],
   "10": [
+   "kc-drive-brief",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-ranges",
    "kc-rich-wot",
    "kc-shakedown",
+   "kc-table-maf",
    "kc-trim-cause",
    "kc-trims"
   ],
   "100": [
-   "kc-cvt"
+   "kc-cvt",
+   "kc-drive-brief"
+  ],
+  "103": [
+   "kc-table-maf"
   ],
   "11": [
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-wot"
   ],
   "12": [
    "kc-rich-wot"
   ],
   "14": [
-   "kc-e10"
+   "kc-e10",
+   "kc-table-wot"
   ],
   "15": [
    "kc-trim-cause"
@@ -793,7 +1063,9 @@
    "kc-expectations",
    "kc-heat-soak",
    "kc-oil",
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-ignition",
+   "kc-table-wot"
   ],
   "20": [
    "kc-oil"
@@ -805,11 +1077,13 @@
    "kc-oil"
   ],
   "21": [
-   "kc-expectations"
+   "kc-expectations",
+   "kc-table-boost"
   ],
   "23": [
    "kc-expectations",
-   "kc-heat-soak"
+   "kc-heat-soak",
+   "kc-table-boost"
   ],
   "240": [
    "kc-expectations"
@@ -837,15 +1111,20 @@
   ],
   "4": [
    "kc-e10",
-   "kc-expectations"
+   "kc-expectations",
+   "kc-table-boost"
   ],
   "41": [
    "kc-oil"
+  ],
+  "42": [
+   "kc-drive-brief"
   ],
   "43": [
    "kc-maf-housing"
   ],
   "48": [
+   "kc-drive-brief",
    "kc-heat-soak"
   ],
   "49": [
@@ -859,8 +1138,13 @@
    "kc-maf-housing",
    "kc-ranges",
    "kc-shakedown",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause",
    "kc-trims"
+  ],
+  "50": [
+   "kc-drive-brief"
   ],
   "500": [
    "kc-oil"
@@ -909,7 +1193,8 @@
    "kc-e10",
    "kc-heat-soak",
    "kc-ranges",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-wot"
   ],
   "700": [
    "kc-oil"
@@ -927,11 +1212,13 @@
    "kc-expectations"
   ],
   "8": [
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-trims"
   ],
   "80": [
+   "kc-drive-brief",
    "kc-ranges"
   ],
   "9": [
@@ -953,18 +1240,25 @@
   "a": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
    "kc-ranges",
    "kc-rich-wot",
    "kc-shakedown",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
   ],
   "about": [
    "kc-e10",
@@ -973,11 +1267,15 @@
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot"
   ],
   "above": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-high-rpm",
    "kc-ranges",
    "kc-rich-wot"
@@ -990,6 +1288,18 @@
    "kc-cvt",
    "kc-maf-housing"
   ],
+  "active": [
+   "kc-table-boost"
+  ],
+  "actual": [
+   "kc-tune-order"
+  ],
+  "actually": [
+   "kc-log-gate"
+  ],
+  "add": [
+   "kc-table-ignition"
+  ],
   "added": [
    "kc-rich-wot"
   ],
@@ -998,47 +1308,75 @@
   ],
   "adds": [
    "kc-expectations",
-   "kc-heat-soak"
+   "kc-heat-soak",
+   "kc-table-ignition"
+  ],
+  "adj": [
+   "kc-table-ignition"
+  ],
+  "afm": [
+   "kc-table-maf"
   ],
   "afr": [
-   "kc-rich-wot"
+   "kc-drive-brief",
+   "kc-log-gate",
+   "kc-rich-wot",
+   "kc-table-wot"
   ],
   "after": [
    "kc-after-flash",
+   "kc-drive-brief",
    "kc-heat-soak",
    "kc-maf-housing",
    "kc-p0420",
    "kc-shakedown",
+   "kc-table-boost",
+   "kc-table-wot",
    "kc-trim-cause"
   ],
   "afternoon": [
    "kc-heat-soak"
   ],
   "again": [
-   "kc-after-flash"
+   "kc-after-flash",
+   "kc-log-gate",
+   "kc-table-maf"
   ],
   "against": [
    "kc-e10",
    "kc-expectations",
    "kc-heat-soak",
+   "kc-log-gate",
    "kc-oil",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-tune-order"
+  ],
+  "aims": [
+   "kc-table-boost",
+   "kc-table-wot"
   ],
   "air": [
    "kc-expectations",
    "kc-heat-soak",
    "kc-maf-housing",
    "kc-shakedown",
+   "kc-table-boost",
+   "kc-table-maf",
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
   ],
   "airbox": [
    "kc-maf-housing"
   ],
   "airflow": [
    "kc-e10",
+   "kc-log-gate",
    "kc-maf-housing",
-   "kc-trim-cause"
+   "kc-table-maf",
+   "kc-table-wot",
+   "kc-trim-cause",
+   "kc-tune-order"
   ],
   "alarm": [
    "kc-after-flash"
@@ -1051,38 +1389,52 @@
   ],
   "alone": [
    "kc-high-rpm",
+   "kc-table-boost",
    "kc-trims"
   ],
   "already": [
    "kc-expectations"
   ],
+  "am": [
+   "kc-drive-brief"
+  ],
   "an": [
    "kc-after-flash",
+   "kc-drive-brief",
    "kc-expectations",
    "kc-heat-soak",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-maf"
   ],
   "and": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
    "kc-ranges",
    "kc-rich-wot",
    "kc-shakedown",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
   ],
   "another": [
-   "kc-heat-soak"
+   "kc-heat-soak",
+   "kc-tune-order"
   ],
   "answer": [
    "kc-expectations"
@@ -1090,20 +1442,28 @@
   "any": [
    "kc-cvt",
    "kc-heat-soak",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-ranges",
    "kc-shakedown",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
   ],
   "anything": [
    "kc-maf-housing",
-   "kc-trims"
+   "kc-table-maf",
+   "kc-trims",
+   "kc-tune-order"
   ],
   "apart": [
    "kc-heat-soak"
   ],
   "api": [
    "kc-oil"
+  ],
+  "app": [
+   "kc-drive-brief",
+   "kc-table-ignition"
   ],
   "appears": [
    "kc-p0420",
@@ -1112,9 +1472,18 @@
   "applies": [
    "kc-rich-wot"
   ],
+  "applying": [
+   "kc-table-maf"
+  ],
+  "arbitrates": [
+   "kc-table-boost"
+  ],
   "are": [
    "kc-high-rpm",
    "kc-ranges",
+   "kc-table-boost",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause",
    "kc-trims"
   ],
@@ -1127,31 +1496,44 @@
    "kc-ranges"
   ],
   "ask": [
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-table-wot"
   ],
   "asked": [
-   "kc-rich-wot"
+   "kc-log-gate",
+   "kc-rich-wot",
+   "kc-table-wot"
   ],
   "asks": [
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
    "kc-rich-wot",
-   "kc-shakedown"
+   "kc-shakedown",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
+   "kc-tune-order"
   ],
   "at": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-p0420",
    "kc-ranges",
    "kc-rich-wot",
+   "kc-table-boost",
+   "kc-table-wot",
    "kc-trim-cause",
    "kc-trims"
   ],
@@ -1171,20 +1553,37 @@
    "kc-trims"
   ],
   "base": [
-   "kc-high-rpm"
+   "kc-high-rpm",
+   "kc-table-ignition"
+  ],
+  "based": [
+   "kc-table-boost"
   ],
   "baseline": [
-   "kc-after-flash"
+   "kc-after-flash",
+   "kc-drive-brief"
+  ],
+  "basemap": [
+   "kc-table-ignition"
+  ],
+  "be": [
+   "kc-log-gate",
+   "kc-table-boost",
+   "kc-table-ignition"
   ],
   "because": [
    "kc-after-flash"
   ],
   "before": [
    "kc-after-flash",
+   "kc-drive-brief",
    "kc-heat-soak",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
-   "kc-shakedown"
+   "kc-shakedown",
+   "kc-table-maf",
+   "kc-tune-order"
   ],
   "begins": [
    "kc-heat-soak"
@@ -1199,23 +1598,33 @@
    "kc-trim-cause"
   ],
   "best": [
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-ignition"
   ],
   "between": [
    "kc-heat-soak"
   ],
   "beyond": [
    "kc-maf-housing",
+   "kc-table-maf",
    "kc-trim-cause",
    "kc-trims"
+  ],
+  "bin": [
+   "kc-table-maf"
   ],
   "blames": [
    "kc-rich-wot"
   ],
+  "blocked": [
+   "kc-table-boost"
+  ],
   "boost": [
    "kc-expectations",
    "kc-heat-soak",
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-boost",
+   "kc-tune-order"
   ],
   "both": [
    "kc-p0420"
@@ -1226,16 +1635,38 @@
   "brand": [
    "kc-maf-housing"
   ],
+  "brief": [
+   "kc-drive-brief",
+   "kc-log-gate"
+  ],
   "burns": [
    "kc-e10"
   ],
+  "but": [
+   "kc-table-ignition"
+  ],
   "by": [
+   "kc-drive-brief",
    "kc-e10",
-   "kc-high-rpm"
+   "kc-high-rpm",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot"
   ],
   "c": [
    "kc-cvt",
+   "kc-drive-brief",
    "kc-heat-soak"
+  ],
+  "calculation": [
+   "kc-table-maf"
+  ],
+  "called": [
+   "kc-table-maf"
+  ],
+  "calls": [
+   "kc-table-wot"
   ],
   "calm": [
    "kc-after-flash",
@@ -1245,10 +1676,19 @@
    "kc-trim-cause",
    "kc-trims"
   ],
+  "cam": [
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-wot"
+  ],
   "can": [
    "kc-cvt",
+   "kc-drive-brief",
    "kc-high-rpm",
-   "kc-p0420"
+   "kc-log-gate",
+   "kc-p0420",
+   "kc-table-boost",
+   "kc-table-ignition"
   ],
   "cancel": [
    "kc-trim-cause"
@@ -1256,10 +1696,14 @@
   "cannot": [
    "kc-trims"
   ],
+  "caps": [
+   "kc-table-boost"
+  ],
   "car": [
    "kc-cvt",
    "kc-expectations",
    "kc-heat-soak",
+   "kc-log-gate",
    "kc-oil",
    "kc-p0420",
    "kc-ranges",
@@ -1276,14 +1720,19 @@
    "kc-oil"
   ],
   "catalyst": [
-   "kc-p0420"
+   "kc-p0420",
+   "kc-table-wot"
   ],
   "catted": [
    "kc-p0420"
   ],
   "cause": [
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
+  ],
+  "ceiling": [
+   "kc-table-ignition"
   ],
   "cel": [
    "kc-p0420"
@@ -1297,10 +1746,14 @@
   "change": [
    "kc-after-flash",
    "kc-expectations",
-   "kc-trim-cause"
+   "kc-table-boost",
+   "kc-table-wot",
+   "kc-trim-cause",
+   "kc-tune-order"
   ],
   "changed": [
    "kc-cvt",
+   "kc-table-wot",
    "kc-trim-cause"
   ],
   "changes": [
@@ -1316,6 +1769,12 @@
   ],
   "checkbox": [
    "kc-high-rpm"
+  ],
+  "checked": [
+   "kc-log-gate"
+  ],
+  "checks": [
+   "kc-log-gate"
   ],
   "clamp": [
    "kc-maf-housing"
@@ -1336,30 +1795,62 @@
    "kc-p0420",
    "kc-trim-cause"
   ],
+  "collects": [
+   "kc-table-ignition"
+  ],
+  "columns": [
+   "kc-table-wot"
+  ],
   "come": [
    "kc-cvt",
    "kc-expectations"
   ],
   "comes": [
-   "kc-trims"
+   "kc-table-maf",
+   "kc-trims",
+   "kc-tune-order"
   ],
   "command": [
+   "kc-drive-brief",
+   "kc-log-gate",
    "kc-rich-wot"
+  ],
+  "commonly": [
+   "kc-table-maf"
+  ],
+  "component": [
+   "kc-table-wot"
+  ],
+  "conditions": [
+   "kc-tune-order"
   ],
   "control": [
    "kc-high-rpm",
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-ignition",
+   "kc-table-wot",
+   "kc-tune-order"
   ],
   "cool": [
+   "kc-drive-brief",
    "kc-heat-soak",
    "kc-ranges"
+  ],
+  "coolant": [
+   "kc-drive-brief"
   ],
   "cooler": [
    "kc-expectations"
   ],
+  "correction": [
+   "kc-table-maf"
+  ],
   "correctly": [
    "kc-shakedown",
    "kc-trims"
+  ],
+  "corrects": [
+   "kc-table-maf"
   ],
   "cost": [
    "kc-ranges"
@@ -1376,23 +1867,36 @@
    "kc-shakedown"
   ],
   "cruise": [
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
+   "kc-table-wot",
    "kc-trims"
+  ],
+  "csv": [
+   "kc-drive-brief"
   ],
   "curve": [
    "kc-e10",
    "kc-maf-housing",
+   "kc-table-maf",
    "kc-trim-cause"
   ],
   "curves": [
    "kc-maf-housing"
   ],
+  "custom": [
+   "kc-table-maf"
+  ],
   "cut": [
    "kc-ranges"
   ],
   "cvt": [
-   "kc-cvt"
+   "kc-cvt",
+   "kc-table-boost"
+  ],
+  "cylinder": [
+   "kc-table-boost"
   ],
   "danger": [
    "kc-rich-wot"
@@ -1401,10 +1905,14 @@
    "kc-oil"
   ],
   "degrees": [
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-ignition"
   ],
   "delivers": [
    "kc-e10"
+  ],
+  "detection": [
+   "kc-table-ignition"
   ],
   "disabled": [
    "kc-p0420"
@@ -1413,6 +1921,7 @@
    "kc-p0420"
   ],
   "do": [
+   "kc-drive-brief",
    "kc-high-rpm",
    "kc-maf-housing"
   ],
@@ -1420,18 +1929,29 @@
    "kc-after-flash",
    "kc-high-rpm",
    "kc-rich-wot",
+   "kc-table-boost",
+   "kc-table-maf",
    "kc-trim-cause"
   ],
+  "doesn": [
+   "kc-table-ignition"
+  ],
+  "don": [
+   "kc-table-ignition"
+  ],
   "down": [
-   "kc-oil"
+   "kc-oil",
+   "kc-table-boost"
   ],
   "downpipe": [
    "kc-p0420"
   ],
   "drive": [
    "kc-after-flash",
+   "kc-drive-brief",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-ranges",
@@ -1457,13 +1977,18 @@
   "drops": [
    "kc-e10"
   ],
+  "dyno": [
+   "kc-table-ignition"
+  ],
   "e10": [
    "kc-e10",
    "kc-rich-wot",
    "kc-trims"
   ],
   "each": [
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-boost",
+   "kc-table-maf"
   ],
   "earlier": [
    "kc-shakedown",
@@ -1473,17 +1998,26 @@
    "kc-oil"
   ],
   "eco": [
-   "kc-expectations"
+   "kc-expectations",
+   "kc-table-boost"
   ],
   "economy": [
    "kc-e10"
   ],
   "ecu": [
    "kc-e10",
-   "kc-trims"
+   "kc-log-gate",
+   "kc-table-boost",
+   "kc-table-wot",
+   "kc-trims",
+   "kc-tune-order"
   ],
   "ecus": [
    "kc-high-rpm"
+  ],
+  "edit": [
+   "kc-table-ignition",
+   "kc-table-maf"
   ],
   "efficiency": [
    "kc-p0420"
@@ -1495,10 +2029,14 @@
    "kc-trims"
   ],
   "else": [
-   "kc-e10"
+   "kc-e10",
+   "kc-table-maf"
   ],
   "emissions": [
    "kc-p0420"
+  ],
+  "empty": [
+   "kc-drive-brief"
   ],
   "end": [
    "kc-cvt",
@@ -1515,14 +2053,24 @@
    "kc-shakedown",
    "kc-trim-cause"
   ],
+  "enough": [
+   "kc-log-gate"
+  ],
+  "enrich": [
+   "kc-table-wot"
+  ],
   "entry": [
    "kc-p0420"
+  ],
+  "error": [
+   "kc-tune-order"
   ],
   "estimate": [
    "kc-e10"
   ],
   "ethanol": [
-   "kc-e10"
+   "kc-e10",
+   "kc-table-ignition"
   ],
   "events": [
    "kc-cvt",
@@ -1530,13 +2078,19 @@
    "kc-ranges"
   ],
   "ever": [
-   "kc-e10"
+   "kc-e10",
+   "kc-table-ignition"
   ],
   "every": [
    "kc-after-flash",
+   "kc-drive-brief",
    "kc-heat-soak",
+   "kc-log-gate",
    "kc-rich-wot",
-   "kc-trim-cause"
+   "kc-table-maf",
+   "kc-table-wot",
+   "kc-trim-cause",
+   "kc-tune-order"
   ],
   "everywhere": [
    "kc-ranges",
@@ -1549,7 +2103,11 @@
    "kc-high-rpm"
   ],
   "exhaust": [
-   "kc-expectations"
+   "kc-expectations",
+   "kc-table-wot"
+  ],
+  "exist": [
+   "kc-table-maf"
   ],
   "exists": [
    "kc-after-flash"
@@ -1560,14 +2118,22 @@
   "explains": [
    "kc-expectations"
   ],
+  "export": [
+   "kc-drive-brief"
+  ],
   "extra": [
    "kc-e10"
   ],
   "factory": [
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-table-boost",
+   "kc-table-maf"
   ],
   "fails": [
    "kc-p0420"
+  ],
+  "failure": [
+   "kc-log-gate"
   ],
   "failures": [
    "kc-cvt"
@@ -1579,6 +2145,12 @@
   "far": [
    "kc-maf-housing",
    "kc-trims"
+  ],
+  "fast": [
+   "kc-log-gate"
+  ],
+  "fastest": [
+   "kc-drive-brief"
   ],
   "fault": [
    "kc-rich-wot",
@@ -1599,8 +2171,16 @@
    "kc-shakedown",
    "kc-trim-cause"
   ],
+  "fill": [
+   "kc-table-boost"
+  ],
   "final": [
-   "kc-expectations"
+   "kc-expectations",
+   "kc-table-boost",
+   "kc-table-ignition"
+  ],
+  "find": [
+   "kc-tune-order"
   ],
   "finding": [
    "kc-after-flash"
@@ -1610,20 +2190,30 @@
    "kc-trims"
   ],
   "first": [
+   "kc-drive-brief",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
    "kc-shakedown",
-   "kc-trim-cause"
+   "kc-table-maf",
+   "kc-trim-cause",
+   "kc-tune-order"
   ],
   "fitted": [
    "kc-maf-housing",
    "kc-p0420",
+   "kc-table-maf",
    "kc-trim-cause"
   ],
   "five": [
    "kc-heat-soak",
    "kc-oil"
+  ],
+  "fix": [
+   "kc-log-gate",
+   "kc-table-maf",
+   "kc-table-wot",
+   "kc-tune-order"
   ],
   "flanges": [
    "kc-p0420",
@@ -1631,15 +2221,20 @@
   ],
   "flash": [
    "kc-after-flash",
+   "kc-drive-brief",
    "kc-maf-housing",
    "kc-shakedown",
    "kc-trim-cause"
+  ],
+  "flashes": [
+   "kc-table-maf"
   ],
   "flashing": [
    "kc-shakedown"
   ],
   "flat": [
-   "kc-expectations"
+   "kc-expectations",
+   "kc-table-boost"
   ],
   "floor": [
    "kc-e10",
@@ -1658,30 +2253,50 @@
   "for": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
    "kc-rich-wot",
    "kc-shakedown",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause"
+  ],
+  "formula": [
+   "kc-table-ignition"
   ],
   "forty": [
    "kc-maf-housing"
   ],
+  "four": [
+   "kc-log-gate"
+  ],
+  "fourth": [
+   "kc-tune-order"
+  ],
   "frequency": [
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-table-maf"
   ],
   "fresh": [
    "kc-after-flash"
   ],
   "from": [
    "kc-cvt",
+   "kc-drive-brief",
    "kc-expectations",
    "kc-high-rpm",
    "kc-maf-housing",
    "kc-ranges",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
    "kc-trim-cause",
    "kc-trims"
   ],
@@ -1698,13 +2313,17 @@
    "kc-high-rpm",
    "kc-ranges",
    "kc-rich-wot",
-   "kc-trims"
+   "kc-table-maf",
+   "kc-trims",
+   "kc-tune-order"
   ],
   "full": [
    "kc-rich-wot",
+   "kc-table-wot",
    "kc-trim-cause"
   ],
   "fully": [
+   "kc-drive-brief",
    "kc-shakedown"
   ],
   "gains": [
@@ -1716,11 +2335,29 @@
   "gasoline": [
    "kc-e10"
   ],
+  "gate": [
+   "kc-log-gate"
+  ],
+  "gauge": [
+   "kc-drive-brief",
+   "kc-log-gate"
+  ],
+  "gauges": [
+   "kc-log-gate"
+  ],
+  "gear": [
+   "kc-table-boost"
+  ],
   "give": [
    "kc-after-flash"
   ],
+  "go": [
+   "kc-drive-brief"
+  ],
   "good": [
-   "kc-expectations"
+   "kc-expectations",
+   "kc-log-gate",
+   "kc-table-boost"
   ],
   "grade": [
    "kc-cvt",
@@ -1729,7 +2366,11 @@
   "grades": [
    "kc-oil"
   ],
+  "grams": [
+   "kc-table-maf"
+  ],
   "h": [
+   "kc-drive-brief",
    "kc-oil"
   ],
   "habits": [
@@ -1760,7 +2401,8 @@
    "kc-cvt"
   ],
   "headroom": [
-   "kc-expectations"
+   "kc-expectations",
+   "kc-log-gate"
   ],
   "healthy": [
    "kc-trims"
@@ -1770,7 +2412,9 @@
    "kc-cvt",
    "kc-expectations",
    "kc-heat-soak",
-   "kc-high-rpm"
+   "kc-high-rpm",
+   "kc-table-wot",
+   "kc-tune-order"
   ],
   "heavy": [
    "kc-cvt"
@@ -1787,12 +2431,24 @@
    "kc-after-flash",
    "kc-expectations",
    "kc-high-rpm",
-   "kc-p0420"
+   "kc-p0420",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-wot"
   ],
   "higher": [
    "kc-expectations",
    "kc-ranges",
    "kc-trim-cause"
+  ],
+  "highest": [
+   "kc-table-wot"
+  ],
+  "hold": [
+   "kc-drive-brief"
+  ],
+  "holds": [
+   "kc-table-wot"
   ],
   "honda": [
    "kc-cvt",
@@ -1806,17 +2462,31 @@
    "kc-ranges"
   ],
   "hour": [
+   "kc-drive-brief",
    "kc-heat-soak"
   ],
   "housing": [
    "kc-maf-housing",
+   "kc-table-maf",
    "kc-trim-cause"
   ],
   "housings": [
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-table-maf"
+  ],
+  "how": [
+   "kc-drive-brief",
+   "kc-table-ignition"
   ],
   "hp": [
    "kc-expectations"
+  ],
+  "hurts": [
+   "kc-table-boost"
+  ],
+  "hz": [
+   "kc-drive-brief",
+   "kc-log-gate"
   ],
   "idle": [
    "kc-expectations",
@@ -1826,20 +2496,34 @@
    "kc-after-flash",
    "kc-shakedown"
   ],
+  "ign": [
+   "kc-table-ignition"
+  ],
   "ignition": [
-   "kc-oil"
+   "kc-oil",
+   "kc-table-ignition",
+   "kc-tune-order"
   ],
   "in": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-oil",
    "kc-p0420",
    "kc-rich-wot",
-   "kc-trim-cause"
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-wot",
+   "kc-trim-cause",
+   "kc-tune-order"
+  ],
+  "included": [
+   "kc-drive-brief"
   ],
   "infer": [
    "kc-maf-housing"
@@ -1851,36 +2535,49 @@
    "kc-p0420"
   ],
   "install": [
+   "kc-drive-brief",
    "kc-trim-cause"
   ],
   "intake": [
+   "kc-drive-brief",
    "kc-heat-soak",
    "kc-maf-housing",
-   "kc-trim-cause"
+   "kc-table-maf",
+   "kc-trim-cause",
+   "kc-tune-order"
   ],
   "intercooler": [
    "kc-heat-soak"
   ],
   "into": [
    "kc-e10",
-   "kc-p0420"
+   "kc-p0420",
+   "kc-table-maf"
   ],
   "is": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-heat-soak",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
    "kc-ranges",
    "kc-rich-wot",
    "kc-shakedown",
-   "kc-trims"
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
+   "kc-trims",
+   "kc-tune-order"
   ],
   "it": [
    "kc-after-flash",
+   "kc-drive-brief",
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-maf-housing",
@@ -1888,6 +2585,8 @@
    "kc-p0420",
    "kc-rich-wot",
    "kc-shakedown",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause"
   ],
   "its": [
@@ -1896,11 +2595,15 @@
    "kc-expectations",
    "kc-oil",
    "kc-ranges",
-   "kc-shakedown"
+   "kc-shakedown",
+   "kc-tune-order"
   ],
   "itself": [
    "kc-e10",
    "kc-shakedown"
+  ],
+  "job": [
+   "kc-tune-order"
   ],
   "judge": [
    "kc-cvt",
@@ -1910,6 +2613,7 @@
   "judged": [
    "kc-after-flash",
    "kc-e10",
+   "kc-log-gate",
    "kc-rich-wot"
   ],
   "judgement": [
@@ -1931,56 +2635,79 @@
   "kc": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
    "kc-ranges",
    "kc-rich-wot",
    "kc-shakedown",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
   ],
   "keep": [
    "kc-cvt",
+   "kc-drive-brief",
    "kc-high-rpm",
    "kc-maf-housing",
-   "kc-p0420"
+   "kc-p0420",
+   "kc-table-boost"
   ],
   "keeping": [
-   "kc-oil"
+   "kc-oil",
+   "kc-table-maf"
+  ],
+  "keeps": [
+   "kc-table-boost"
   ],
   "kiểm": [
    "kc-p0420"
   ],
   "km": [
+   "kc-drive-brief",
    "kc-oil"
   ],
   "knock": [
    "kc-after-flash",
    "kc-high-rpm",
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-ignition",
+   "kc-table-wot",
+   "kc-tune-order"
   ],
   "ktuner": [
    "kc-e10",
    "kc-maf-housing",
-   "kc-p0420"
+   "kc-p0420",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot"
   ],
   "labelled": [
    "kc-ranges"
   ],
   "lambda": [
    "kc-e10",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-wot"
   ],
   "lands": [
    "kc-e10"
   ],
   "larger": [
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-table-maf"
   ],
   "later": [
    "kc-after-flash",
@@ -2002,16 +2729,27 @@
    "kc-p0420"
   ],
   "lean": [
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-tune-order"
   ],
   "leaner": [
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-wot"
+  ],
+  "least": [
+   "kc-drive-brief",
+   "kc-log-gate"
   ],
   "left": [
    "kc-expectations"
   ],
+  "legal": [
+   "kc-drive-brief"
+  ],
   "less": [
-   "kc-e10"
+   "kc-e10",
+   "kc-table-wot",
+   "kc-tune-order"
   ],
   "let": [
    "kc-oil"
@@ -2019,17 +2757,37 @@
   "level": [
    "kc-ranges"
   ],
+  "lift": [
+   "kc-drive-brief"
+  ],
+  "light": [
+   "kc-table-wot"
+  ],
+  "like": [
+   "kc-drive-brief",
+   "kc-table-boost"
+  ],
   "limit": [
-   "kc-cvt"
+   "kc-cvt",
+   "kc-table-boost",
+   "kc-table-ignition"
+  ],
+  "limitation": [
+   "kc-table-boost"
   ],
   "limits": [
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-boost"
+  ],
+  "list": [
+   "kc-log-gate"
   ],
   "litre": [
    "kc-e10"
   ],
   "little": [
-   "kc-e10"
+   "kc-e10",
+   "kc-table-wot"
   ],
   "live": [
    "kc-rich-wot"
@@ -2039,17 +2797,34 @@
   ],
   "load": [
    "kc-rich-wot",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-wot",
    "kc-trim-cause"
   ],
   "locked": [
    "kc-high-rpm"
   ],
+  "log": [
+   "kc-drive-brief",
+   "kc-log-gate",
+   "kc-table-ignition",
+   "kc-tune-order"
+  ],
   "logged": [
    "kc-ranges",
    "kc-rich-wot"
   ],
+  "logger": [
+   "kc-log-gate"
+  ],
+  "logging": [
+   "kc-drive-brief",
+   "kc-log-gate"
+  ],
   "logs": [
-   "kc-cvt"
+   "kc-cvt",
+   "kc-table-maf"
   ],
   "long": [
    "kc-after-flash"
@@ -2060,25 +2835,34 @@
   "low": [
    "kc-cvt",
    "kc-oil",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-wot",
    "kc-trim-cause"
   ],
   "lower": [
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-ignition"
   ],
   "lugging": [
    "kc-high-rpm",
    "kc-oil"
   ],
   "maf": [
-   "kc-maf-housing"
+   "kc-drive-brief",
+   "kc-log-gate",
+   "kc-maf-housing",
+   "kc-table-maf"
   ],
   "main": [
-   "kc-p0420"
+   "kc-p0420",
+   "kc-table-ignition"
   ],
   "maintenance": [
    "kc-oil"
   ],
   "make": [
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-rich-wot"
   ],
@@ -2094,19 +2878,34 @@
   "map": [
    "kc-e10",
    "kc-expectations",
+   "kc-log-gate",
    "kc-rich-wot",
    "kc-shakedown",
-   "kc-trim-cause"
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-trim-cause",
+   "kc-tune-order"
   ],
   "maps": [
    "kc-e10",
-   "kc-high-rpm"
+   "kc-high-rpm",
+   "kc-table-boost"
+  ],
+  "margin": [
+   "kc-table-wot",
+   "kc-tune-order"
   ],
   "mass": [
    "kc-e10"
   ],
   "match": [
    "kc-trim-cause"
+  ],
+  "matches": [
+   "kc-tune-order"
+  ],
+  "max": [
+   "kc-table-ignition"
   ],
   "maximum": [
    "kc-ranges"
@@ -2119,7 +2918,8 @@
    "kc-expectations",
    "kc-oil",
    "kc-ranges",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
   ],
   "measure": [
    "kc-trims"
@@ -2140,19 +2940,30 @@
   "middle": [
    "kc-trims"
   ],
+  "minus": [
+   "kc-table-ignition"
+  ],
   "minute": [
+   "kc-drive-brief",
    "kc-trim-cause"
   ],
   "minutes": [
    "kc-after-flash",
+   "kc-drive-brief",
    "kc-heat-soak",
+   "kc-log-gate",
    "kc-shakedown"
   ],
   "mismatch": [
    "kc-trim-cause"
   ],
+  "misses": [
+   "kc-log-gate"
+  ],
   "mixture": [
+   "kc-log-gate",
    "kc-rich-wot",
+   "kc-table-wot",
    "kc-trims"
   ],
   "model": [
@@ -2165,13 +2976,21 @@
    "kc-p0420"
   ],
   "more": [
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
-   "kc-oil"
+   "kc-log-gate",
+   "kc-oil",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-tune-order"
   ],
   "most": [
    "kc-expectations",
    "kc-maf-housing"
+  ],
+  "move": [
+   "kc-log-gate"
   ],
   "movers": [
    "kc-high-rpm"
@@ -2180,7 +2999,9 @@
    "kc-p0420"
   ],
   "moving": [
-   "kc-heat-soak"
+   "kc-drive-brief",
+   "kc-heat-soak",
+   "kc-log-gate"
   ],
   "must": [
    "kc-p0420"
@@ -2197,7 +3018,8 @@
   ],
   "near": [
    "kc-e10",
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-table-boost"
   ],
   "nearly": [
    "kc-expectations"
@@ -2219,8 +3041,10 @@
    "kc-oil",
    "kc-ranges",
    "kc-shakedown",
+   "kc-table-ignition",
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
   ],
   "new": [
    "kc-after-flash",
@@ -2240,20 +3064,30 @@
    "kc-cvt",
    "kc-e10",
    "kc-expectations",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-ranges",
    "kc-rich-wot",
    "kc-shakedown",
+   "kc-table-boost",
    "kc-trim-cause",
    "kc-trims"
+  ],
+  "nominal": [
+   "kc-table-wot"
   ],
   "non": [
    "kc-high-rpm"
   ],
   "normal": [
    "kc-expectations",
-   "kc-high-rpm"
+   "kc-high-rpm",
+   "kc-table-boost",
+   "kc-table-maf"
+  ],
+  "normally": [
+   "kc-drive-brief"
   ],
   "not": [
    "kc-after-flash",
@@ -2261,20 +3095,25 @@
    "kc-expectations",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
    "kc-ranges",
    "kc-rich-wot",
    "kc-shakedown",
-   "kc-trim-cause"
+   "kc-table-wot",
+   "kc-trim-cause",
+   "kc-tune-order"
   ],
   "nothing": [
    "kc-e10",
-   "kc-high-rpm"
+   "kc-high-rpm",
+   "kc-log-gate"
   ],
   "number": [
    "kc-cvt",
+   "kc-log-gate",
    "kc-trims"
   ],
   "obd": [
@@ -2282,18 +3121,28 @@
   ],
   "of": [
    "kc-cvt",
+   "kc-drive-brief",
    "kc-expectations",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-ranges",
    "kc-rich-wot",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trims"
   ],
   "off": [
    "kc-high-rpm",
    "kc-maf-housing",
    "kc-p0420",
+   "kc-table-maf",
    "kc-trim-cause"
+  ],
+  "offers": [
+   "kc-drive-brief"
   ],
   "offset": [
    "kc-e10",
@@ -2314,27 +3163,40 @@
   "on": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
    "kc-ranges",
    "kc-shakedown",
-   "kc-trims"
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-wot",
+   "kc-trims",
+   "kc-tune-order"
   ],
   "one": [
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-shakedown",
+   "kc-table-maf",
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
   ],
   "only": [
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause"
   ],
   "open": [
@@ -2347,23 +3209,34 @@
   "or": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
    "kc-ranges",
    "kc-rich-wot",
    "kc-shakedown",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
+  ],
+  "order": [
+   "kc-tune-order"
   ],
   "out": [
    "kc-expectations",
    "kc-oil",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-boost"
   ],
   "outside": [
    "kc-trims"
@@ -2371,14 +3244,18 @@
   "over": [
    "kc-expectations",
    "kc-heat-soak",
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-ignition",
+   "kc-table-maf"
   ],
   "own": [
    "kc-after-flash",
    "kc-e10",
-   "kc-shakedown"
+   "kc-shakedown",
+   "kc-table-ignition"
   ],
   "owner": [
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-high-rpm",
@@ -2386,7 +3263,12 @@
    "kc-oil",
    "kc-p0420",
    "kc-rich-wot",
-   "kc-trim-cause"
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
+   "kc-trim-cause",
+   "kc-tune-order"
   ],
   "owners": [
    "kc-cvt"
@@ -2400,10 +3282,17 @@
   "paddle": [
    "kc-oil"
   ],
+  "paired": [
+   "kc-table-boost"
+  ],
   "parameters": [
    "kc-p0420"
   ],
+  "parked": [
+   "kc-drive-brief"
+  ],
   "part": [
+   "kc-table-maf",
    "kc-trim-cause"
   ],
   "pass": [
@@ -2424,17 +3313,22 @@
    "kc-heat-soak"
   ],
   "pedal": [
+   "kc-drive-brief",
    "kc-oil"
   ],
   "per": [
    "kc-e10",
-   "kc-oil"
+   "kc-oil",
+   "kc-table-boost",
+   "kc-table-maf"
   ],
   "percent": [
    "kc-e10",
    "kc-expectations",
    "kc-maf-housing",
    "kc-shakedown",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause",
    "kc-trims"
   ],
@@ -2451,31 +3345,59 @@
   "plain": [
    "kc-oil"
   ],
+  "plan": [
+   "kc-table-boost",
+   "kc-table-wot"
+  ],
+  "plateaus": [
+   "kc-table-boost"
+  ],
+  "plus": [
+   "kc-table-ignition"
+  ],
   "point": [
    "kc-ranges"
   ],
   "points": [
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-maf"
   ],
   "positive": [
    "kc-trims"
   ],
   "power": [
    "kc-expectations",
-   "kc-heat-soak"
+   "kc-heat-soak",
+   "kc-table-wot"
   ],
   "prefer": [
    "kc-p0420"
   ],
   "preset": [
    "kc-maf-housing",
+   "kc-table-maf",
    "kc-trim-cause"
+  ],
+  "presets": [
+   "kc-table-maf"
+  ],
+  "press": [
+   "kc-drive-brief"
   ],
   "pressing": [
    "kc-oil"
   ],
+  "pressure": [
+   "kc-tune-order"
+  ],
   "problem": [
    "kc-heat-soak"
+  ],
+  "professional": [
+   "kc-table-ignition"
+  ],
+  "protection": [
+   "kc-table-wot"
   ],
   "prove": [
    "kc-heat-soak",
@@ -2493,20 +3415,25 @@
   "psi": [
    "kc-expectations",
    "kc-heat-soak",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-boost"
   ],
   "pull": [
+   "kc-drive-brief",
    "kc-expectations",
    "kc-heat-soak",
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-table-wot"
   ],
   "pulled": [
    "kc-ranges"
   ],
   "pulls": [
    "kc-cvt",
+   "kc-drive-brief",
    "kc-heat-soak",
-   "kc-shakedown"
+   "kc-shakedown",
+   "kc-table-ignition"
   ],
   "pure": [
    "kc-e10"
@@ -2518,13 +3445,18 @@
    "kc-after-flash",
    "kc-e10",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-ranges"
   ],
   "race": [
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-table-maf"
   ],
   "raise": [
    "kc-high-rpm"
+  ],
+  "raising": [
+   "kc-table-boost"
   ],
   "range": [
    "kc-maf-housing"
@@ -2534,6 +3466,10 @@
   ],
   "rarely": [
    "kc-high-rpm"
+  ],
+  "rate": [
+   "kc-drive-brief",
+   "kc-log-gate"
   ],
   "rated": [
    "kc-expectations",
@@ -2546,15 +3482,24 @@
    "kc-ranges"
   ],
   "read": [
+   "kc-drive-brief",
    "kc-heat-soak",
-   "kc-maf-housing"
+   "kc-log-gate",
+   "kc-maf-housing",
+   "kc-table-ignition",
+   "kc-tune-order"
+  ],
+  "readable": [
+   "kc-log-gate"
   ],
   "reading": [
    "kc-rich-wot"
   ],
   "reads": [
+   "kc-drive-brief",
    "kc-ranges",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-ignition"
   ],
   "real": [
    "kc-high-rpm"
@@ -2568,8 +3513,17 @@
   "recorded": [
    "kc-shakedown"
   ],
+  "reflash": [
+   "kc-tune-order"
+  ],
   "relearn": [
    "kc-after-flash"
+  ],
+  "remedy": [
+   "kc-tune-order"
+  ],
+  "remove": [
+   "kc-table-ignition"
   ],
   "removed": [
    "kc-cvt"
@@ -2587,7 +3541,8 @@
    "kc-oil"
   ],
   "retard": [
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-ignition"
   ],
   "rev": [
    "kc-oil"
@@ -2598,6 +3553,7 @@
   "revs": [
    "kc-cvt",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-oil"
   ],
   "rich": [
@@ -2605,9 +3561,11 @@
    "kc-rich-wot"
   ],
   "richer": [
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-wot"
   ],
   "right": [
+   "kc-table-wot",
    "kc-trim-cause"
   ],
   "rise": [
@@ -2618,15 +3576,33 @@
    "kc-high-rpm",
    "kc-oil"
   ],
+  "rising": [
+   "kc-tune-order"
+  ],
   "risk": [
    "kc-p0420"
+  ],
+  "road": [
+   "kc-drive-brief"
+  ],
+  "roll": [
+   "kc-drive-brief"
   ],
   "ron95": [
    "kc-e10"
   ],
+  "round": [
+   "kc-table-maf"
+  ],
   "rpm": [
    "kc-high-rpm",
-   "kc-oil"
+   "kc-oil",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-wot"
+  ],
+  "rule": [
+   "kc-table-ignition"
   ],
   "run": [
    "kc-heat-soak",
@@ -2637,16 +3613,29 @@
    "kc-maf-housing"
   ],
   "s": [
+   "kc-drive-brief",
    "kc-e10",
    "kc-heat-soak",
-   "kc-oil"
+   "kc-log-gate",
+   "kc-oil",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-tune-order"
   ],
   "safe": [
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-wot"
+  ],
+  "safety": [
+   "kc-tune-order"
   ],
   "same": [
    "kc-e10",
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-tune-order"
+  ],
+  "samples": [
+   "kc-log-gate"
   ],
   "sat": [
    "kc-trims"
@@ -2659,7 +3648,9 @@
    "kc-shakedown"
   ],
   "scaling": [
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-table-maf",
+   "kc-tune-order"
   ],
   "schedule": [
    "kc-cvt"
@@ -2675,8 +3666,11 @@
    "kc-shakedown"
   ],
   "second": [
+   "kc-drive-brief",
+   "kc-log-gate",
    "kc-oil",
-   "kc-shakedown"
+   "kc-shakedown",
+   "kc-tune-order"
   ],
   "seconds": [
    "kc-ranges"
@@ -2686,14 +3680,30 @@
   ],
   "seen": [
    "kc-cvt",
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-ignition"
+  ],
+  "sens": [
+   "kc-table-ignition"
+  ],
+  "sensitive": [
+   "kc-table-ignition"
+  ],
+  "sensitivity": [
+   "kc-table-ignition"
   ],
   "sensor": [
    "kc-e10",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-p0420",
    "kc-rich-wot",
+   "kc-table-maf",
    "kc-trim-cause"
+  ],
+  "set": [
+   "kc-drive-brief",
+   "kc-table-ignition"
   ],
   "sets": [
    "kc-after-flash"
@@ -2703,17 +3713,31 @@
    "kc-shakedown"
   ],
   "settles": [
-   "kc-after-flash"
+   "kc-after-flash",
+   "kc-log-gate"
+  ],
+  "several": [
+   "kc-drive-brief",
+   "kc-table-ignition"
   ],
   "severe": [
    "kc-cvt"
+  ],
+  "shade": [
+   "kc-drive-brief"
   ],
   "shakedown": [
    "kc-after-flash",
    "kc-shakedown"
   ],
+  "shop": [
+   "kc-drive-brief"
+  ],
   "should": [
    "kc-heat-soak"
+  ],
+  "show": [
+   "kc-tune-order"
   ],
   "shows": [
    "kc-cvt",
@@ -2734,6 +3758,7 @@
   "sit": [
    "kc-e10",
    "kc-maf-housing",
+   "kc-table-maf",
    "kc-trims"
   ],
   "sits": [
@@ -2746,7 +3771,11 @@
   "slip": [
    "kc-cvt"
   ],
+  "smooth": [
+   "kc-table-maf"
+  ],
   "so": [
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-high-rpm",
@@ -2754,6 +3783,8 @@
    "kc-oil",
    "kc-ranges",
    "kc-shakedown",
+   "kc-table-boost",
+   "kc-table-ignition",
    "kc-trims"
   ],
   "soak": [
@@ -2774,11 +3805,16 @@
   "spacer": [
    "kc-p0420"
   ],
+  "spark": [
+   "kc-table-ignition",
+   "kc-tune-order"
+  ],
   "speed": [
    "kc-cvt",
    "kc-oil"
   ],
   "speeds": [
+   "kc-drive-brief",
    "kc-shakedown"
   ],
   "sport": [
@@ -2786,7 +3822,8 @@
   ],
   "start": [
    "kc-after-flash",
-   "kc-heat-soak"
+   "kc-heat-soak",
+   "kc-table-ignition"
   ],
   "started": [
    "kc-heat-soak"
@@ -2795,15 +3832,20 @@
    "kc-expectations",
    "kc-high-rpm"
   ],
+  "starting": [
+   "kc-drive-brief"
+  ],
   "starts": [
    "kc-after-flash",
    "kc-cvt",
    "kc-ranges",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-maf"
   ],
   "stay": [
    "kc-oil",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-wot"
   ],
   "stayed": [
    "kc-ranges"
@@ -2813,12 +3855,20 @@
   ],
   "steady": [
    "kc-cvt",
-   "kc-shakedown"
+   "kc-drive-brief",
+   "kc-shakedown",
+   "kc-table-maf"
   ],
   "step": [
+   "kc-drive-brief",
    "kc-high-rpm",
    "kc-p0420",
-   "kc-shakedown"
+   "kc-shakedown",
+   "kc-tune-order"
+  ],
+  "steps": [
+   "kc-table-ignition",
+   "kc-table-wot"
   ],
   "stock": [
    "kc-expectations",
@@ -2830,13 +3880,22 @@
    "kc-ranges",
    "kc-shakedown",
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
+  ],
+  "straight": [
+   "kc-drive-brief"
   ],
   "street": [
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-table-ignition",
+   "kc-tune-order"
   ],
   "stretch": [
    "kc-shakedown"
+  ],
+  "stuck": [
+   "kc-log-gate"
   ],
   "subtract": [
    "kc-trims"
@@ -2856,17 +3915,39 @@
   "switching": [
    "kc-p0420"
   ],
+  "t": [
+   "kc-log-gate",
+   "kc-table-ignition"
+  ],
+  "table": [
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
+   "kc-tune-order"
+  ],
+  "tables": [
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot"
+  ],
   "tank": [
    "kc-high-rpm"
   ],
   "target": [
    "kc-e10",
    "kc-expectations",
-   "kc-rich-wot"
+   "kc-log-gate",
+   "kc-rich-wot",
+   "kc-table-boost",
+   "kc-table-wot",
+   "kc-tune-order"
   ],
   "targets": [
    "kc-rich-wot",
-   "kc-trim-cause"
+   "kc-trim-cause",
+   "kc-tune-order"
   ],
   "temperature": [
    "kc-cvt"
@@ -2885,37 +3966,53 @@
   ],
   "than": [
    "kc-oil",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-wot"
   ],
   "that": [
    "kc-after-flash",
    "kc-cvt",
    "kc-e10",
    "kc-expectations",
+   "kc-log-gate",
    "kc-oil",
    "kc-ranges",
    "kc-shakedown",
+   "kc-table-maf",
    "kc-trims"
   ],
   "the": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-p0420",
    "kc-ranges",
    "kc-rich-wot",
    "kc-shakedown",
+   "kc-table-boost",
+   "kc-table-ignition",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
+  ],
+  "them": [
+   "kc-table-ignition"
   ],
   "then": [
+   "kc-drive-brief",
    "kc-p0420",
-   "kc-trim-cause"
+   "kc-table-maf",
+   "kc-trim-cause",
+   "kc-tune-order"
   ],
   "theory": [
    "kc-oil"
@@ -2924,14 +4021,22 @@
    "kc-high-rpm",
    "kc-oil",
    "kc-rich-wot",
+   "kc-table-boost",
    "kc-trims"
+  ],
+  "these": [
+   "kc-table-ignition"
   ],
   "they": [
    "kc-high-rpm",
    "kc-maf-housing"
   ],
+  "things": [
+   "kc-log-gate"
+  ],
   "third": [
-   "kc-oil"
+   "kc-oil",
+   "kc-tune-order"
   ],
   "this": [
    "kc-after-flash",
@@ -2942,6 +4047,8 @@
    "kc-oil",
    "kc-ranges",
    "kc-rich-wot",
+   "kc-table-boost",
+   "kc-table-ignition",
    "kc-trims"
   ],
   "those": [
@@ -2949,11 +4056,18 @@
    "kc-oil"
   ],
   "three": [
-   "kc-heat-soak"
+   "kc-heat-soak",
+   "kc-table-boost"
   ],
   "throttle": [
    "kc-rich-wot",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause"
+  ],
+  "time": [
+   "kc-drive-brief",
+   "kc-log-gate"
   ],
   "timed": [
    "kc-heat-soak"
@@ -2962,27 +4076,41 @@
    "kc-maf-housing"
   ],
   "timing": [
-   "kc-ranges"
+   "kc-ranges",
+   "kc-table-ignition",
+   "kc-tune-order"
   ],
   "to": [
    "kc-after-flash",
+   "kc-drive-brief",
    "kc-expectations",
    "kc-heat-soak",
+   "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
    "kc-ranges",
    "kc-rich-wot",
+   "kc-table-ignition",
+   "kc-table-maf",
    "kc-trim-cause",
    "kc-trims"
   ],
+  "together": [
+   "kc-table-boost",
+   "kc-table-wot"
+  ],
   "top": [
    "kc-oil"
+  ],
+  "topping": [
+   "kc-table-boost"
   ],
   "tops": [
    "kc-expectations"
   ],
   "torque": [
-   "kc-cvt"
+   "kc-cvt",
+   "kc-table-boost"
   ],
   "total": [
    "kc-trims"
@@ -2999,6 +4127,9 @@
   "toward": [
    "kc-after-flash"
   ],
+  "trades": [
+   "kc-table-wot"
+  ],
   "traffic": [
    "kc-after-flash",
    "kc-cvt",
@@ -3006,40 +4137,68 @@
    "kc-oil",
    "kc-ranges"
   ],
+  "trends": [
+   "kc-table-ignition"
+  ],
   "trim": [
    "kc-e10",
    "kc-trim-cause",
    "kc-trims"
   ],
   "trims": [
+   "kc-drive-brief",
    "kc-e10",
    "kc-maf-housing",
    "kc-shakedown",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
   ],
   "trying": [
    "kc-maf-housing"
   ],
   "tune": [
    "kc-heat-soak",
-   "kc-maf-housing"
+   "kc-maf-housing",
+   "kc-tune-order"
   ],
   "tuned": [
    "kc-cvt",
    "kc-oil"
   ],
+  "tuner": [
+   "kc-log-gate",
+   "kc-table-maf",
+   "kc-tune-order"
+  ],
+  "tuners": [
+   "kc-table-maf"
+  ],
+  "tunerview": [
+   "kc-drive-brief",
+   "kc-log-gate"
+  ],
   "tunes": [
    "kc-high-rpm"
   ],
   "tuning": [
-   "kc-p0420"
+   "kc-p0420",
+   "kc-tune-order"
   ],
   "turbine": [
    "kc-expectations"
   ],
   "turbo": [
-   "kc-expectations"
+   "kc-expectations",
+   "kc-table-boost"
+  ],
+  "turn": [
+   "kc-drive-brief"
+  ],
+  "turns": [
+   "kc-table-maf"
   ],
   "two": [
    "kc-heat-soak",
@@ -3050,10 +4209,12 @@
   ],
   "under": [
    "kc-cvt",
+   "kc-drive-brief",
    "kc-heat-soak",
    "kc-p0420",
    "kc-ranges",
-   "kc-shakedown"
+   "kc-shakedown",
+   "kc-tune-order"
   ],
   "undo": [
    "kc-shakedown",
@@ -3066,8 +4227,10 @@
    "kc-trim-cause"
   ],
   "until": [
+   "kc-drive-brief",
    "kc-maf-housing",
    "kc-shakedown",
+   "kc-table-maf",
    "kc-trims"
   ],
   "up": [
@@ -3075,10 +4238,18 @@
    "kc-expectations",
    "kc-high-rpm",
    "kc-oil",
-   "kc-trim-cause"
+   "kc-table-maf",
+   "kc-trim-cause",
+   "kc-tune-order"
+  ],
+  "upload": [
+   "kc-log-gate"
   ],
   "us": [
    "kc-e10"
+  ],
+  "usable": [
+   "kc-tune-order"
   ],
   "use": [
    "kc-oil"
@@ -3092,6 +4263,7 @@
   "verdict": [
    "kc-after-flash",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-rich-wot"
   ],
   "verdicts": [
@@ -3104,6 +4276,9 @@
    "kc-shakedown",
    "kc-trims"
   ],
+  "wants": [
+   "kc-table-boost"
+  ],
   "warm": [
    "kc-shakedown",
    "kc-trims"
@@ -3112,7 +4287,8 @@
    "kc-cvt"
   ],
   "was": [
-   "kc-shakedown"
+   "kc-shakedown",
+   "kc-table-maf"
   ],
   "wastegate": [
    "kc-expectations"
@@ -3123,6 +4299,9 @@
    "kc-rich-wot",
    "kc-shakedown"
   ],
+  "watching": [
+   "kc-table-wot"
+  ],
   "way": [
    "kc-trims"
   ],
@@ -3130,39 +4309,58 @@
    "kc-after-flash",
    "kc-cvt",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-ranges",
-   "kc-shakedown"
+   "kc-shakedown",
+   "kc-table-boost",
+   "kc-table-maf"
   ],
   "whatever": [
    "kc-rich-wot"
   ],
+  "when": [
+   "kc-log-gate",
+   "kc-tune-order"
+  ],
+  "whenever": [
+   "kc-drive-brief"
+  ],
   "where": [
    "kc-high-rpm",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-ignition"
   ],
   "wherever": [
    "kc-p0420"
   ],
   "whether": [
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-tune-order"
   ],
   "which": [
    "kc-maf-housing",
    "kc-oil",
    "kc-ranges",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-maf"
   ],
   "while": [
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-log-gate",
    "kc-oil"
   ],
   "whose": [
    "kc-cvt"
   ],
+  "why": [
+   "kc-table-maf",
+   "kc-tune-order"
+  ],
   "with": [
    "kc-after-flash",
    "kc-cvt",
+   "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
    "kc-heat-soak",
@@ -3170,25 +4368,35 @@
    "kc-oil",
    "kc-p0420",
    "kc-rich-wot",
+   "kc-table-wot",
    "kc-trim-cause",
-   "kc-trims"
+   "kc-trims",
+   "kc-tune-order"
   ],
   "within": [
    "kc-maf-housing",
    "kc-shakedown",
+   "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause",
    "kc-trims"
   ],
   "without": [
    "kc-cvt",
-   "kc-rich-wot"
+   "kc-log-gate",
+   "kc-rich-wot",
+   "kc-table-ignition"
+  ],
+  "works": [
+   "kc-tune-order"
   ],
   "worse": [
    "kc-trim-cause"
   ],
   "wot": [
    "kc-e10",
-   "kc-rich-wot"
+   "kc-rich-wot",
+   "kc-table-wot"
   ],
   "would": [
    "kc-ranges"
@@ -3198,10 +4406,15 @@
   ],
   "wrong": [
    "kc-maf-housing",
+   "kc-table-maf",
    "kc-trim-cause"
   ],
   "yet": [
    "kc-cvt"
+  ],
+  "you": [
+   "kc-drive-brief",
+   "kc-table-maf"
   ],
   "zero": [
    "kc-cvt"

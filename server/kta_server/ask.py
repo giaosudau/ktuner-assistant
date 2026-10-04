@@ -99,12 +99,14 @@ async def answer_question(
             "I never edit ignition timing or knock sensitivity, so I won't suggest it: from a street log I cannot "
             "check that change safely, and a wrong one costs an engine. Nothing changes in your map."
         )
-        return out
+        if not settings.has_llm:
+            return out
 
     if not has_drives and intent in ("boost", "heat"):
         out["kind"] = "no-drive"
         out["answer"] = "Upload a Drive first: every answer here is read off your Drives, not guessed."
-        return out
+        if not settings.has_llm:
+            return out
 
     # What the answers below lean on: the engine's Next step and Flash plan for this window.
     plan = step = None
@@ -119,10 +121,11 @@ async def answer_question(
 
     if intent == "boost":
         out["answer"] = _boost_answer(plan)
-        return out
 
     cards: list[dict[str, Any]] = []
-    if intent == "heat":
+    if intent in ("boost", "refuse") or out.get("kind") == "no-drive":
+        pass
+    elif intent == "heat":
         pair = heat_pair(state.get("drives") or {}, win["ids"])
         card = K.get("kc-heat-soak")
         if pair:
@@ -155,7 +158,9 @@ async def answer_question(
     out["citations"] = _cite(*cards)
     out["nextStep"] = step.get("title") if step else None
 
-    if has_drives and settings.has_llm and cards:
+    # AI-native (tuning-shop D1): with a model, every question goes through the agent, which picks the
+    # tools and writes the answer; the built-in answer above is the checked fallback.
+    if settings.has_llm:
         await _explain(out, text, state, latest_id, plan, step, worker, store, settings, llm_caller)
     return out
 
@@ -175,9 +180,10 @@ async def _explain(out, text, state, latest_id, plan, step, worker, store, setti
     """Let the agent put the built-in answer in its own words, checked; else the built-in answer stands."""
     drive = {"id": latest_id, "summary": (state.get("drives") or {}).get(latest_id), "map": None}
     reply = {"say": out["answer"], "window": out["window"], "nextStep": step, "flashPlan": plan}
+    harness = Harness()
     try:
         result = await agent_node.run_agent(
-            drive, reply, worker, store, settings, Harness(), None, llm_caller, question=text
+            drive, reply, worker, store, settings, harness, None, llm_caller, question=text
         )
     except Exception as exc:  # noqa: BLE001 - the explainer never breaks an answer
         result = {"verified": False, "fallback": "error", "issues": [str(exc)]}
@@ -186,6 +192,9 @@ async def _explain(out, text, state, latest_id, plan, step, worker, store, setti
         out["citations"] = result.get("citations") or out["citations"]
         out["pictures"] = result.get("pictures") or []
     out["agent"] = {"verified": bool(result.get("verified")), "fallback": result.get("fallback"), "issues": list(result.get("issues") or [])}
+    # What the agent did, for the chat's work row and the unchecked thinking block.
+    out["harness"] = {**harness.summary(), "steps": harness.as_list()}
+    out["thinking"] = result.get("thinking")
 
 
 __all__ = ["answer_question", "classify", "heat_pair"]

@@ -9,12 +9,9 @@
  */
 import { useState } from "react";
 
-import type { LoopState } from "../lib/api";
 import type {
   CarProfile,
-  FlashPlan,
   GaugeTable,
-  HousingOption,
   NextStep,
   OwnerQuestion,
   ProfileDraft,
@@ -143,70 +140,6 @@ export function QuestionCard({
           </div>
         </>
       )}
-    </section>
-  );
-}
-
-// ------------------------------------------------- what can change now
-const LEVER: Record<string, { word: string; tone: string; icon: string; open: boolean }> = {
-  planned: { word: "In the plan", tone: "good", icon: "zap", open: true },
-  "not-needed": { word: "Not needed", tone: "none", icon: "check", open: false },
-  locked: { word: "Locked", tone: "none", icon: "lock", open: false },
-  held: { word: "On hold", tone: "watch", icon: "lock", open: false },
-  deferred: { word: "Later", tone: "none", icon: "lock", open: false },
-};
-
-export function OptionsCard({ plan, housing }: { plan: FlashPlan; housing?: HousingOption | null }) {
-  const [all, setAll] = useState(false);
-  const levers = plan.levers ?? [];
-  const shown = all ? levers : levers.slice(0, 4);
-  return (
-    <section className="section" data-testid="flash-plan" data-kind={plan.kind}>
-      <h3 className="card-h">
-        <Icon name="wrench" />
-        What can change in your map now
-      </h3>
-      <p>{plan.headline}</p>
-      {plan.route === "preset" ? (
-        <p className="small" data-testid="housing-route">
-          {housing?.option ? (
-            <>
-              Whenever you flash an edited map again: <b>MAF Scaling → {housing.option}</b>. {housing.detail}
-            </>
-          ) : (
-            housing?.detail ?? "Answer which intake housing is fitted, and I add the MAF Scaling option for it."
-          )}
-        </p>
-      ) : null}
-      {plan.blocked ? (
-        <p className="small" data-testid="blocked">
-          Checked twice before you saw it: {plan.blocked.disagree ? "the two checks disagreed" : "both checks refused it"}. {plan.blocked.reason}
-        </p>
-      ) : null}
-      {levers.length ? (
-        <ul className="opt-list" aria-label="Options">
-          {shown.map((l) => {
-            const s = LEVER[l.status] ?? LEVER.locked;
-            return (
-              <li key={l.id} className={`opt${s.open ? " open" : ""}`} data-status={l.status}>
-                <span className="ico">
-                  <Icon name={s.icon} />
-                </span>
-                <span>
-                  <b>{l.title}</b> <Pill tone={s.tone} word={s.word} />
-                </span>
-                <span className="why">{l.reason}</span>
-                {l.unlocks && !s.open ? <span className="unlock">Unlocks when: {l.unlocks}</span> : null}
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
-      {levers.length > 4 ? (
-        <button type="button" className="link-btn" style={{ marginTop: 10 }} onClick={() => setAll(!all)}>
-          {all ? "Show fewer" : `Show all ${levers.length} options`}
-        </button>
-      ) : null}
     </section>
   );
 }
@@ -413,40 +346,6 @@ export function ProfileCard({
         <button type="button" className="btn primary" data-testid="setup-confirm" disabled={busy} onClick={() => onSave(fields)}>
           Save to my car
         </button>
-      </div>
-    </section>
-  );
-}
-
-// ----------------------------------------------------------- how to log
-export function LogGuideCard({ guide }: { guide: LoopState["logGuide"] }) {
-  if (!guide) return null;
-  return (
-    <section className="card next" data-testid="log-guide">
-      <div className="card-h" style={{ marginBottom: 0 }}>
-        <Icon name="route" />
-        <span className="grow">How to log it</span>
-        <Pill tone="none" word="Drive" />
-      </div>
-      <h3>{guide.title}</h3>
-      {guide.recipe?.intro ? <p className="small">{guide.recipe.intro}</p> : null}
-      {guide.recipe?.steps.length ? (
-        <ol className="numbered">
-          {guide.recipe.steps.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ol>
-      ) : null}
-      {guide.gauges?.rows.length ? (
-        <>
-          <div className="sub-h">Gauges to have on in TunerView</div>
-          <GaugeTableView table={guide.gauges} />
-        </>
-      ) : null}
-      <div className="proves">
-        <span>
-          <b>Then:</b> in TunerView, export the log as CSV and attach it here with <b>+</b>, or drop the file on this page.
-        </span>
       </div>
     </section>
   );

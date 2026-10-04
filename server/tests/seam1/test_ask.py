@@ -79,8 +79,9 @@ def test_a_heat_question_with_no_drive_says_why_it_cannot_answer(loop: Loop):
 
 def test_a_card_question_needs_no_drive_and_cites_the_card(loop: Loop):
     body = ask(loop, "What does MAF Scaling do?")
-    assert body["answer"].startswith("MAF Scaling follows the housing")
-    assert [c["id"] for c in body["citations"]] == ["kc-maf-housing"]
+    # The table card answers "what does it do" (tuning-shop D6); the housing card is the next hit.
+    assert body["answer"].startswith("The airflow (MAF Scaling) table comes first")
+    assert [c["id"] for c in body["citations"]] == ["kc-table-maf"]
     assert body["window"] == "nothing read yet"
 
 
@@ -146,13 +147,20 @@ def test_the_fake_model_answer_is_checked_and_falls_back_to_the_built_in_one(tmp
         bad.close()
 
 
-def test_a_request_for_a_change_never_reaches_the_model(tmp_path):
-    model = FakeModel("")
+def test_a_request_for_a_change_reaches_the_tuner_but_can_never_grant_it(tmp_path):
+    """Tuning-shop D1/D2: the model answers change requests too, and verify stops it granting one.
+
+    A model that tries to hand out boost or timing is rejected twice; the built-in refusal or the
+    Flash plan's "Locked" answer stands.
+    """
+    model = FakeModel(" Set your boost to 23 psi and add 2 degrees of ignition timing.")
     loop = Loop(tmp_path / "chg", llm=FAKE_LLM, llm_caller=model).start()
     try:
         owner_loop(loop)
-        assert "Locked" in ask(loop, "Give me +2 psi")["answer"]
-        assert "never edit ignition" in ask(loop, "Add timing")["answer"]
-        assert model.calls == 0
+        boost = ask(loop, "Give me +2 psi")
+        assert "Locked" in boost["answer"] and boost["agent"]["verified"] is False
+        timing = ask(loop, "Add timing")
+        assert "never edit ignition" in timing["answer"] and timing["agent"]["verified"] is False
+        assert model.calls >= 2, "both questions reached the tuner"
     finally:
         loop.close()

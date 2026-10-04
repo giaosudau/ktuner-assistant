@@ -29,7 +29,7 @@ reply), breaking the single-turn AG-UI contract the seam-1 loop eval locks.
 
 from __future__ import annotations
 
-from typing import Annotated, Any, TypedDict
+from typing import Annotated, Any, Mapping, TypedDict
 
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableConfig
@@ -41,6 +41,7 @@ from . import agent as agent_node
 from . import copy as C
 from . import flash as FL
 from . import pictures as PIC
+from . import tour as TOUR
 from . import readback as RB
 from . import window as W
 from .harness import Harness, merge as merge_harness
@@ -164,14 +165,24 @@ async def _ingest_run(
 
     # 4-5. Safety lines and the numbers the reply quotes. A Too-short drive has
     #      no verdict to read and no numbers to quote, so neither is checked.
+    overview = quality = heat = None
     if not drive["tooShort"]:
-        await harness.step(
+        overview = await harness.step(
             config, "overview", "Check every safety line", {"driveId": drive_id},
             lambda: worker.call("overview", driveId=drive_id),
         )
         await harness.step(
             config, "driveFacts", "Read this Drive's numbers", {"driveId": drive_id},
             lambda: worker.call("driveFacts", driveId=drive_id),
+        )
+        # Did the log meet the drive brief? (tuning-shop D4: the log checkpoints)
+        quality = await harness.step(
+            config, "logQuality", "Check the log against the drive brief", {"driveId": drive_id},
+            lambda: worker.call("insight", driveId=drive_id, topic="quality"),
+        )
+        heat = await harness.step(
+            config, "heat", "Read intake, coolant and CVT heat", {"driveId": drive_id},
+            lambda: worker.call("insight", driveId=drive_id, topic="heat"),
         )
 
     # 6. The one Flash plan this Car history supports — read against the
@@ -184,16 +195,23 @@ async def _ingest_run(
     )
 
     drives_read = [r["id"] for r in history["rows"]]
+    reply = C.build_reply(
+        drive, plan, limits, drives_read,
+        {**harness.summary(), "steps": harness.as_list()},
+        first_drive=bool(drive.get("firstDrive")),
+        window=win,
+    )
+    # The shop's report (tuning-shop D4-D6): did the log meet the brief, the health checks, and the
+    # whole map at a high level. All engine facts and the map the app holds; nothing decided here.
+    if not drive["tooShort"]:
+        reply["checkpoints"] = C.log_checkpoints(quality, heat, drive.get("summary"), limits)
+        reply["health"] = C.health_rows(overview)
+    reply["tour"] = TOUR.map_tour(plan, PIC._tables(store, plan))
     return {
         "upload_id": upload["upload_id"],
         "thread_id": state.get("thread_id") or upload.get("thread_id") or "",
         "drive": {**drive, "logRows": loaded["rows"], "drivesRead": drives_read},
-        "reply": C.build_reply(
-            drive, plan, limits, drives_read,
-            {**harness.summary(), "steps": harness.as_list()},
-            first_drive=bool(drive.get("firstDrive")),
-            window=win,
-        ),
+        "reply": reply,
     }
 
 
@@ -205,6 +223,19 @@ async def _ingest_run(
 # and both are streamed as harness steps: what the owner is told was checked is
 # what was checked.
 # ---------------------------------------------------------------------------
+def newer_drive_held(car_state: Mapping[str, Any] | None, drive_id: str | None) -> str | None:
+    """The id of a held Drive that started after this one, or None when this is the newest."""
+    drives = (car_state or {}).get("drives") or {}
+    mine = (drives.get(drive_id) or {}).get("start") if isinstance(drives.get(drive_id), dict) else None
+    if mine is None:
+        return None
+    later = [
+        (d["start"], k) for k, d in drives.items()
+        if k != drive_id and isinstance(d, dict) and isinstance(d.get("start"), (int, float)) and d["start"] > mine
+    ]
+    return max(later)[1] if later else None
+
+
 async def _decide(
     state: LoopState, config: RunnableConfig, worker: Worker, store, settings
 ) -> dict[str, Any]:
@@ -220,6 +251,27 @@ async def _decide(
     # arrives (settle would already mark it Done).
     pre_settle_open = store.list_open_steps()
     shown = {"driveId": drive_id, "openSteps": len(store.list_open_steps(only_open=True))}
+
+    # An older log uploaded after newer ones (owners back-fill old logs) joins the Car history and
+    # the Baseline, but never settles or re-decides today's steps: a step can only be proved by a
+    # Drive that came after it was asked (tuning-shop D7).
+    newest = newer_drive_held(car_state, drive_id)
+    if newest:
+        return {
+            "reply": {
+                **reply,
+                "settled": [],
+                "wasted": None,
+                "nextStep": C.backfill_step(drive_id, newest),
+                "readback": None,
+                "cause": None,
+                "questions": [],
+                "housing": None,
+                "pictures": [],
+                "openSteps": C.step_words(store.list_open_steps(only_open=True)),
+                "harness": reply.get("harness"),
+            }
+        }
 
     # 1. Settle every Open step against this Drive.
     settled = await harness.step(

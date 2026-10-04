@@ -244,3 +244,19 @@ def test_every_drive_of_the_nine_is_read_against_the_same_open_steps(replayed: L
     assert again.card["nextStep"]["key"] == replies["sep05-0756"].card["nextStep"]["key"]
     assert again.card["say"] == replies["sep05-0756"].card["say"]
     assert len(replayed.store.car_state(None)["drives"]) == 8
+
+
+def test_an_older_log_uploaded_later_joins_history_and_leaves_the_steps_alone(loop: Loop):
+    """Tuning-shop D7: the owner back-fills an old log; today's steps are never 'proved' by it."""
+    loop.upload_and_reply("aug30-1601")
+    newest = loop.upload_and_reply("sep01-0813")
+    before = loop.get("/api/state").json()["openSteps"]
+    older = loop.upload_and_reply("aug22-0903")
+    step = older.card["nextStep"]
+    assert step["key"] == "backfill"
+    assert "older than your latest" in step["body"]
+    assert older.card["settled"] == []
+    assert loop.get("/api/state").json()["openSteps"] == before, "the current steps stand"
+    assert newest.card["nextStep"]["key"] != "backfill"
+    # It still joined the Car history.
+    assert any(r["id"].startswith("20260822") for r in loop.get("/api/state").json()["carHistory"])

@@ -119,7 +119,7 @@ def test_a_correct_reply_passes_and_tool_calls_stream_as_harness_steps(tmp_path:
     insight = [s for s in reply.harness_steps() if s["name"] == "insight"][-1]
     assert insight["inputs"] == {"driveId": reply.snapshot()["drive"]["id"], "topic": "knock"}
     assert insight["output"]["knock_control"]["steps_up"] > 0
-    assert reply.harness_line().startswith("Checked 11 things · ")
+    assert reply.harness_line().startswith("Checked 13 things · ")
 
     # No thinking was returned, so no unchecked block.
     assert reply.thinking() == []
@@ -134,7 +134,7 @@ def test_no_key_uses_the_built_in_reply_and_the_loop_is_unchanged(loop: Loop):
     assert reply.thinking() == []
     assert "agent" not in reply.card
     assert reply.step_names() == [
-        "readLog", "ingestUpload", "carHistory", "overview", "driveFacts", "flashPlan",
+        "readLog", "ingestUpload", "carHistory", "overview", "driveFacts", "logQuality", "heat", "flashPlan",
         "settleOpenSteps", "nextStep", "ownerQuestions",
     ]
 

@@ -159,3 +159,11 @@ _CASES = json.loads((Path(__file__).parent / "banned_advice_cases.json").read_te
 def test_shared_banned_advice_case(case):
     facts = V.numbers_in(case["text"]) + list(V.FREE)
     assert check(case["text"], facts=facts)["ok"] == (case["expect"] == "allowed")
+
+
+def test_an_rpm_next_to_a_psi_figure_is_not_read_as_boost():
+    """Live finding (4 Oct): "+0.1 psi at 3,793 rpm" was rejected as 3793 psi of boost."""
+    plan = {"ceilingPsi": 21}
+    assert V.banned_issues("Boost overshoot stayed at +0.1 psi at 3,793 rpm.", plan) == []
+    assert V.banned_issues("Boost peaked at 13.9 psi; the table plateaus at 21 psi from 4,000 rpm.", plan) == []
+    assert V.banned_issues("You could run 24 psi of boost.", plan), "a real psi above the ceiling still fails"

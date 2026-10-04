@@ -8,8 +8,9 @@ import {
   type CarProfile,
   type DriveWindow,
   type FlashPlan,
-  type GaugeTable,
-  type DriveRecipe,
+  type DriveBrief,
+  type HarnessSummary,
+  type Picture,
   type InstallRow,
   type OpenStep,
   type OwnerQuestion,
@@ -46,7 +47,7 @@ export type LoopState = {
   openSteps: OpenStep[];
   unansweredQuestions: PendingQuestion[];
   flashPlan: FlashPlan | null;
-  logGuide?: { title: string; recipe: DriveRecipe | null; gauges: GaugeTable | null } | null;
+  logGuide?: DriveBrief | null;
 };
 
 export async function readLoop(): Promise<LoopState | null> {
@@ -74,7 +75,13 @@ export type AskAnswer = {
   draft?: ProfileDraft;
   window?: string;
   citations?: { id: string; title: string }[];
-  nextStep?: ReplyCard["nextStep"];
+  nextStep?: ReplyCard["nextStep"] | string | null;
+  /** What the tuner did to answer, and its own unchecked thinking. */
+  harness?: HarnessSummary | null;
+  thinking?: string | null;
+  /** The picture the tuner chose for this answer, drawn from the engine's data. */
+  pictures?: Picture[] | null;
+  agent?: { verified: boolean; fallback: string | null; issues: string[] } | null;
 };
 
 export const ask = (text: string) => post<AskAnswer>("/api/ask", { text }, "The question did not go through");

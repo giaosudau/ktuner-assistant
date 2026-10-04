@@ -13,13 +13,21 @@ import { Pill } from "./Pill";
 
 type Phase = "car" | "baseline" | "read" | "plan" | "verify";
 
-const JOURNEY: { id: Phase; title: string; sub: string }[] = [
-  { id: "car", title: "Your car", sub: "Model, parts, fuel, the map you flashed" },
-  { id: "baseline", title: "Baseline log", sub: "One Cool drive with 2 pulls" },
-  { id: "read", title: "Read & decide", sub: "Is it OK, what can change" },
-  { id: "plan", title: "Plan & flash", sub: "The cells to type, then flash" },
-  { id: "verify", title: "Verify", sub: "The drive that proves it" },
+/** A round at the shop: log the brief, read it, change and flash, prove it with the next log. */
+const STAGES: { id: string; title: string }[] = [
+  { id: "log", title: "Log" },
+  { id: "read", title: "Read" },
+  { id: "change", title: "Change & flash" },
+  { id: "prove", title: "Prove it" },
 ];
+const STAGE_OF: Record<Phase, number> = { car: -1, baseline: 0, read: 1, plan: 2, verify: 3 };
+const NEED: Record<Phase, string> = {
+  car: "Tell me about your car in the chat: model, gearbox, fuel, parts and the KTuner map you flashed.",
+  baseline: "Drive the brief (one cool drive with 2 pulls) and attach the TunerView log.",
+  read: "Read your report and ask me anything about it. When you're ready, drive the next step and attach the log.",
+  plan: "Type the change into KTuner, flash it, and tell me here you flashed it.",
+  verify: "Drive the Shakedown: 10 calm minutes, no hard driving. Then attach the log so I can check the car runs what you flashed.",
+};
 
 /** Where the owner is, read from the loop the server holds — never guessed from the thread. */
 export function phaseOf(loop: api.LoopState | null): Phase {
@@ -44,6 +52,7 @@ export function Sidebar({
   onClose,
   onToggle,
   onFlashBasemap,
+  onGuide,
   busy,
 }: {
   loop: api.LoopState | null;
@@ -52,10 +61,11 @@ export function Sidebar({
   onClose: () => void;
   onToggle: () => void;
   onFlashBasemap: () => void;
+  onGuide: () => void;
   busy: boolean;
 }) {
   const phase = phaseOf(loop);
-  const at = JOURNEY.findIndex((j) => j.id === phase);
+  const stageAt = STAGE_OF[phase];
   const car = loop?.carProfile;
   const active = loop?.activeMapVersion;
   const picker = useRef<HTMLInputElement>(null);
@@ -138,34 +148,60 @@ export function Sidebar({
           ) : null}
         </div>
 
-        <div className="side-h">Tuning journey</div>
-        <ol className="journey" data-testid="journey" data-phase={phase}>
-          {JOURNEY.map((j, i) => (
-            <li key={j.id} className={i < at ? "done" : i === at ? "now" : ""} aria-current={i === at ? "step" : undefined}>
-              <span className="dot">{i < at ? <Icon name="check" className="icon" /> : null}</span>
-              <span>
-                {j.title}
-                {i === at ? <span className="sub">{j.sub}</span> : null}
-              </span>
-            </li>
-          ))}
-        </ol>
+        <div className="side-h">This round</div>
+        <div className="round" data-testid="journey" data-phase={phase}>
+          <div className="round-h">
+            Round {(loop?.flashes.length ?? 0) + 1}
+            <span className="muted"> · on {active ? active.label : "Map version 1"}</span>
+          </div>
+          <ol className="stages" aria-label="Where this round is">
+            {STAGES.map((stage, i) => (
+              <li key={stage.id} className={i < stageAt ? "done" : i === stageAt ? "now" : ""} aria-current={i === stageAt ? "step" : undefined}>
+                <span className="bar" />
+                <span className="name">{stage.title}</span>
+              </li>
+            ))}
+          </ol>
+          <div className="need" data-testid="need">
+            <b>What I need from you</b>
+            <span>{NEED[phase]}</span>
+            {phase === "baseline" || phase === "verify" || phase === "read" ? (
+              <button type="button" className="btn ghost" data-testid="show-brief" onClick={() => { onGuide(); onClose(); }} disabled={busy}>
+                <Icon name="route" />
+                Show the drive brief
+              </button>
+            ) : null}
+          </div>
+        </div>
 
-        {waiting.length || steps.length ? <div className="side-h">Open steps</div> : null}
-        <ul className="steps-list" data-testid="open-steps">
-          {waiting.map((q) => (
-            <li key={q.id} data-status="you">
-              <Pill tone="watch" word="Waiting for you" />
-              <div>{q.title}</div>
-            </li>
-          ))}
-          {steps.map((s) => (
-            <li key={s.key} data-status={s.status}>
-              <Pill tone={s.tone} word={s.word} />
-              <div>{s.title}</div>
-            </li>
-          ))}
-        </ul>
+        {waiting.length ? (
+          <>
+            <div className="side-h">Waiting for your answer</div>
+            <ul className="steps-list" data-testid="waiting">
+              {waiting.map((q) => (
+                <li key={q.id} data-status="you">
+                  <div className="st-title">{q.title}</div>
+                  <div className="st-why">Answer it in the reply where I asked.</div>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+        {steps.length ? (
+          <>
+            <div className="side-h">Your next drive can settle</div>
+            <ul className="steps-list" data-testid="open-steps">
+              {steps.map((st) => (
+                <li key={st.key} data-status={st.status}>
+                  <div className="st-title">
+                    {st.title} <Pill tone={st.tone} word={st.word} />
+                  </div>
+                  {st.why ? <div className="st-why">{st.why}</div> : null}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
       </div>
 
       <div className="side-foot">

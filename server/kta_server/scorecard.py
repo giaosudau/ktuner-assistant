@@ -81,6 +81,12 @@ NO_UPLOAD_QUESTIONS: tuple[str, ...] = (
     "Why is my car slower in the heat?",
     "Can I add more boost?",
     "Should I add timing?",
+    # The shop teaching the customer (tuning-shop eval): table by table, with the car's own values.
+    "What does the WOT Enrich table do on my car, and should I change it?",
+    "Which tables would you change on my map first, and why in that order?",
+    "What do the ignition tables do, and why won't you edit them?",
+    "How should I log my next drive so you can read it?",
+    "Is my car safe to drive hard right now?",
 )
 
 #: The ticket's failure classes, in the ticket's order.
@@ -519,24 +525,20 @@ class _LiveLoop:
         self.worker = Worker(settings.worker_script, settings.node_exe)
         self.app = create_app(settings, self.store, self.worker, llm_caller=llm_caller)
         self.thread_id = uuid.uuid4().hex
-        self._loop = asyncio.new_event_loop()
         self._client = httpx.AsyncClient(
             transport=httpx.ASGITransport(app=self.app), base_url="http://kta", timeout=300
         )
 
-    def run(self, coro):
-        return self._loop.run_until_complete(coro)
-
-    def start(self) -> "_LiveLoop":
-        self.run(self.worker.start())
+    # Driven from inside `asyncio.run` (main): async all the way, no loop of its own.
+    async def start(self) -> "_LiveLoop":
+        await self.worker.start()
         return self
 
-    def close(self) -> None:
+    async def close(self) -> None:
         try:
-            self.run(self._client.aclose())
-            self.run(self.worker.aclose())
+            await self._client.aclose()
         finally:
-            self._loop.close()
+            await self.worker.aclose()
 
     async def upload_and_reply(self, csv_text: str, file_name: str) -> dict[str, Any]:
         response = await self._client.post(
@@ -622,7 +624,7 @@ async def run_model(
     recorder = DraftRecorder(
         lambda messages, tools: _post_chat_with_tools(per_model, model, messages, tools)
     )
-    loop = _LiveLoop(per_model, llm_caller=recorder).start()
+    loop = await _LiveLoop(per_model, llm_caller=recorder).start()
     try:
         records: list[dict[str, Any]] = []
         for example_id, file_name in OWNER_DRIVES:
@@ -654,42 +656,31 @@ async def run_model(
                     "upload_when": step.get("uploadWhen") or "",
                 }
             )
-        # The no-upload questions: the ticket-11 stand-in (one provider call
-        # over the drive window + retrieved cards, same verify, no step/cells).
-        window = " ; ".join(r["say"] for r in records if r["say"])[:2000]
+        # The typed questions go through the app's real ask path (ticket 11 landed, tuning-shop D1):
+        # the agent picks its tools over the drive window, the map and the cards; same verify.
         for question in NO_UPLOAD_QUESTIONS:
-            cards = K.search(question)[:5]
-            shown = "\n".join(f"[{c['id']}] {c['title']}: {c['body']}" for c in cards)
-            answer = await _post_chat(
-                per_model,
-                model,
-                [
-                    {
-                        "role": "system",
-                        "content": (
-                            "You explain one car's tunes to its owner in plain "
-                            "words, under 150 words. For anything the drive "
-                            "window does not say, cite a card id in brackets, "
-                            "for example [kc-ranges]."
-                        ),
-                    },
-                    {
-                        "role": "user",
-                        "content": f"This drive window: {window}\n\nCards:\n{shown}\n\nQuestion: {question}",
-                    },
-                ],
-            )
-            verdict = V.verify(
-                answer, None, None, [], None, [], knowledge=cards,
-            )
+            recorder.reset()
+            response = await loop._client.post("/api/ask", json={"text": question})
+            response.raise_for_status()
+            out = response.json()
+            agent = out.get("agent") or {}
+            if agent.get("verified") and not agent.get("repaired"):
+                status = "first"
+            elif agent.get("verified"):
+                status = "repaired"
+            else:
+                status = "fallback"
+            first = first_record(recorder, agent)
             records.append(
                 {
                     "kind": "question",
                     "id": question,
-                    "status": "first" if verdict["ok"] else "fallback",
-                    "first_issues": list(verdict["issues"]),
-                    "card_numbers": K.card_numbers(cards),
-                    "say": answer,
+                    "status": status,
+                    "first_prose": first["first_prose"],
+                    "first_action": first["first_action"],
+                    "first_issues": first["first_issues"] or list(agent.get("issues") or []),
+                    "card_numbers": first["card_numbers"],
+                    "say": out.get("answer") or "",
                     "step_title": "",
                     "upload_when": "",
                 }
@@ -709,7 +700,7 @@ async def run_model(
             for record in records:
                 record["judge"] = {key: None for key in JUDGE_KEYS}
     finally:
-        loop.close()
+        await loop.close()
     return {"model": model, "records": records, "totals": summarize(records)}
 
 

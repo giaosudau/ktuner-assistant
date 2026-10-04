@@ -74,12 +74,12 @@ def test_api_state_carries_the_car_history_the_baseline_and_the_open_steps(loop:
     assert body["baseline"] == {"value": 0.49, "n": 2}
     assert body["flashPlan"]["kind"] == "no-change"
     # Ticket 04: every Open step carries its own status, and the panel shows the
-    # ones still to do — so the Baseline (still waiting for a Cool Drive with 2
-    # pulls), the two channels to add, and the logger the 05 Sep Drive opened.
-    assert [s["key"] for s in body["openSteps"]] == ["baseline", "channels", "logger"]
-    assert {s["status"] for s in body["openSteps"]} == {"wait", "open"}
+    # ones still to do. 01 Sep is itself a Cool Drive with 2 pulls, so it set the
+    # Baseline (tuning-shop live run); left: the two channels to add, and the
+    # logger the 05 Sep Drive opened.
+    assert [s["key"] for s in body["openSteps"]] == ["channels", "logger"]
     assert body["openSteps"][0]["why"], "each Open step says why it is where it is"
-    assert body["openSteps"][0]["title"].startswith("Baseline")
+    assert body["openSteps"][0]["title"].startswith("Log AFR Command")
     # Every seam a later ticket needs is present, even if empty for now.
     for key in ("carProfile", "mapVersions", "installs", "flashes", "answers", "unansweredQuestions", "hasLlm"):
         assert key in body

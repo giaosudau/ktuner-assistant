@@ -418,13 +418,26 @@ export function useChat() {
     [add, guard, patch],
   );
 
+  /** Edit a sent message, as in ChatGPT/Claude: the thread from that message on is replaced by the new turn. */
+  const editAndResend = useCallback(
+    async (id: string, text: string) => {
+      if (running.current) return;
+      setMessages((all) => {
+        const at = all.findIndex((m) => m.id === id);
+        return at < 0 ? all : all.slice(0, at);
+      });
+      await send(text);
+    },
+    [send],
+  );
+
   const newChat = useCallback(() => {
     if (running.current) return;
     threadId.current = nextId("thread");
     setMessages([]);
   }, []);
 
-  return { messages, loop, busy, ready, send, saveCar, editCar, showGuide, answer, flash, newChat, refresh };
+  return { messages, loop, busy, ready, send, saveCar, editCar, showGuide, answer, flash, newChat, refresh, editAndResend };
 }
 
 /** A small preview of an attached picture, kept with the message. */

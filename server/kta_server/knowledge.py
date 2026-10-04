@@ -24,6 +24,8 @@ from typing import Any, Mapping, Sequence
 ROOT = Path(__file__).resolve().parents[2]
 CARDS_DIR = ROOT / "knowledge" / "cards"
 INDEX_PATH = ROOT / "knowledge" / "index.json"
+#: Facts the agent needed and no card held (tuning-shop D8). Never cited until a reviewer approves them.
+PROPOSED_DIR = ROOT / "knowledge" / "proposed"
 
 KINDS = ("fact", "rule", "play", "owner-question", "ktuner-howto")
 
@@ -270,11 +272,55 @@ def card_numbers(cards: Sequence[Mapping[str, Any]]) -> list[float]:
     return out
 
 
-__all__ = ["CARDS_DIR", "CardError", "MAX_HITS", "build_index", "card_numbers", "check_numbers", "current_cards", "get", "load_cards", "parse_card", "search", "validate_cards"]
+def _slug(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:60] or "fact"
+
+
+def propose(title: str, claim: str, why: str, source_hint: str = "") -> dict[str, Any]:
+    """Record a fact the agent needed but no card holds. It is not citable until `approve` turns it into a card.
+
+    The proposal keeps the agent honest: it says "I've noted it to check" instead of asserting an
+    unsourced fact, and the knowledge base grows from real owner questions.
+    """
+    title, claim = title.strip(), claim.strip()
+    if not title or not claim:
+        return {"ok": False, "error": "A proposal needs a title and a claim."}
+    PROPOSED_DIR.mkdir(parents=True, exist_ok=True)
+    pid = "kp-" + _slug(title)
+    path = PROPOSED_DIR / f"{pid}.md"
+    if path.exists():
+        return {"ok": True, "id": pid, "status": "already proposed, awaiting review"}
+    path.write_text(
+        "---\n"
+        f"id: {pid}\ntitle: {title}\nstatus: proposed\nwhy: {why.strip()}\nsource-hint: {source_hint.strip() or 'none given'}\n"
+        "---\n" + claim + "\n",
+        encoding="utf-8",
+    )
+    return {"ok": True, "id": pid, "status": "proposed, awaiting review; not citable yet"}
+
+
+def proposals() -> list[dict[str, str]]:
+    """Every proposal awaiting review."""
+    out = []
+    for path in sorted(PROPOSED_DIR.glob("kp-*.md")) if PROPOSED_DIR.exists() else []:
+        head = path.read_text(encoding="utf-8").split("---")[1]
+        meta = dict(line.split(": ", 1) for line in head.strip().splitlines() if ": " in line)
+        out.append({"id": meta.get("id", path.stem), "title": meta.get("title", ""), "why": meta.get("why", ""), "path": str(path)})
+    return out
+
+
+__all__ = ["CARDS_DIR", "PROPOSED_DIR", "CardError", "propose", "proposals", "MAX_HITS", "build_index", "card_numbers", "check_numbers", "current_cards", "get", "load_cards", "parse_card", "search", "validate_cards"]
 
 
 if __name__ == "__main__":
-    if "--dump-index" in sys.argv:
+    if "--proposals" in sys.argv:
+        # Review loop: read each proposal, source it, then write it as a card in knowledge/cards/
+        # (with source-doc and source-section) and delete the proposal; the build checks it.
+        for item in proposals():
+            print(f"{item['id']}: {item['title']}  (why: {item['why']})  {item['path']}")
+        if not proposals():
+            print("no proposals awaiting review")
+    elif "--dump-index" in sys.argv:
         INDEX_PATH.write_text(json.dumps(build_index(load_cards()), ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
         print(f"wrote {INDEX_PATH}")
     else:
