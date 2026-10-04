@@ -117,3 +117,45 @@ _Avoid_: knock retard (that's the channel name), knock, timing loss
 **Baseline**:
 This car's own normal value for a measure, judged from its cool drives; limits are set as distance from the baseline, not from forum numbers.
 _Avoid_: normal range, default, community limit
+
+### The shop
+
+**Round**:
+One turn of the shop's loop: log the brief, read it, change and flash, prove it with the next log. Rounds are counted from Flashes (Round N = Flashes so far + 1), not from the Map version number, because an Undo returns to an earlier version.
+_Avoid_: iteration, cycle, session
+
+**Drive brief**:
+The drive the shop asks for, written as a customer brief: where and when, warm-up, the cruise for trims, the pulls (gear mode, from what speed, how far, the break between), how long, which gauges and how fast to log, and the checkpoints the log will be read against.
+_Avoid_: recipe (that's one step's list), instructions, procedure
+
+**Log checkpoints**:
+After an upload, whether the log met the Drive brief, one line each: logging rate, moving time, every gauge moving, AFR Command and MAF Hz logged, engine warm, cool intake, two pulls, pull-start intake. Met, not met, or can't say.
+_Avoid_: log quality score, gate (inside replies)
+
+**Health report**:
+The engine's checks of a Drive grouped by system (Fuel, Air & boost, Spark, Heat, CVT), each with its value and Verdict word.
+_Avoid_: dashboard, diagnostics, scan
+
+**Map tour**:
+The whole map at a high level, family by family in the order a tuner works (airflow, full-throttle mixture, boost, ignition, knock sensitivity, left to the basemap), each with its status this Round: this round, locked (why, and what unlocks it), no change needed, or read-only.
+_Avoid_: map overview, table list
+
+**Read-only table**:
+A table the assistant reads and explains but never proposes a value for (ignition, knock sensitivity, and the tables left to the basemap).
+_Avoid_: locked table (Locked means "not this round, here's what unlocks it")
+
+**Fuel tag**:
+The fuel in the tank when a log was recorded (E10 RON95 III or E10 RON97 III), chosen by the owner when attaching the log.
+_Avoid_: fuel setting, octane mode
+
+**Premium-fuel test**:
+The comparison of two fuels on matched Drives (both with hard pulls, intake within 8 °C, same Map slot) by the Fuel-quality score and the timing it costs; a gap of 0.5° or less is inside KTuner's logging step, so no measurable difference.
+_Avoid_: fuel A/B, octane test
+
+**Map slot**:
+Which of the maps KTuner can switch between on the fly a Drive ran on, chosen by the owner when attaching the log. Drives on different slots are never compared.
+_Avoid_: map mode, profile, preset (that's a MAF Scaling choice)
+
+**Knowledge proposal**:
+A fact the assistant needed but no knowledge card holds; recorded for review in `knowledge/proposed/` instead of being stated, and never cited until a reviewer sources it into a card.
+_Avoid_: learned fact, memory

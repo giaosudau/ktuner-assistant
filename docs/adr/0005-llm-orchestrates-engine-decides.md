@@ -29,7 +29,14 @@ positives, not model mistakes.
 4. **Unknown facts become proposals, not claims.** `propose_knowledge` writes
    `knowledge/proposed/kp-*.md`; a reviewer sources it into a card (`python -m kta_server.knowledge
    --proposals`) before it can be cited.
-5. **Measured, not assumed:** the live scorecard (`kta_server.scorecard`) replays the 9 drives and
+5. **Hard map rules, in code:** a table the reply names must exist in this car's map data;
+   advising a change to a table the checked plan doesn't change fails; an advised before → after
+   must equal a plan cell; a psi figure above the ceiling passes only as an advice-free reference a
+   cited card holds. An eval (`test_map_recommendations.py`) audits every cell of every plan the
+   engine produces against `data/ktuner-maps-digitized.json`: real editable table, inside the
+   table, `before` equal to the map's value in its own decimals, `after` in the right direction by
+   at most one step, both checks accepting.
+6. **Measured, not assumed:** the live scorecard (`kta_server.scorecard`) replays the 9 drives and
    8 owner questions through each model and reports first-pass, repaired and fallback rates by
    failure class.
 

@@ -114,3 +114,11 @@ the text.
 - Server/engine rule changes (except the read-only additions a ticket names).
 - Multiple chats per car (New chat clears the local thread; the Car history is one).
 - Voice, Vietnamese copy, accounts.
+
+## Added 4 Oct (tuning shop)
+
+- Typed answers stream their tool steps live, like Drive replies.
+- Edit and resend any sent message (the thread from there is replaced).
+- The table viewer (2D grid / 3D surface) from the map tour and the KTuner card.
+- Fuel and map slot pickers on an attached log; the tags show on the owner's message.
+- The sidebar is the shop ticket (Round, stage, what I need from you); the journey stepper is gone.

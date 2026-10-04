@@ -1,5 +1,9 @@
 # Spec: The tuning loop — a chat that reads every Drive and gives one Next step
 
+> **4 Oct 2026:** the engine, graph, Map version and safety decisions below still bind. Superseded: the
+> "Chat UI" section (now `.scratch/chat-app/spec.md`) and the model's narrator role in ticket 08 (now
+> `.scratch/tuning-shop/spec.md` and ADR 0005: the LLM orchestrates and teaches).
+
 *Status: ready-for-agent · Sources: grilling Rounds 1–4 (2 Oct 2026), `prototypes/next-step/` (the loop on the owner's 9 real drives), `docs/research/tuner-play-panel.md` (decisions T1–T8), `docs/research/owner-voices.md`, `docs/research/fact-check.md` (wins on any number), `CONTEXT.md`, ADR 0001, ADR 0002, ADR 0003. Builds on `.scratch/car-history/` (tickets 01–10, all done).*
 *Vocabulary: every capitalised term (Drive, Car history, Car profile, Install, Flash, Flash plan, Map, Map version, KTuner basemap, Flash readback, Shakedown drive, Cool drive, Too-short drive, Unexplained change, Verdict, Baseline, Fuel-quality score, Next step, Open step, Drives to proof, Wasted drive, Key moment) is defined in `CONTEXT.md`. Use those words in code names, copy and tests.*
 

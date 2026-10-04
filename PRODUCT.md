@@ -49,7 +49,12 @@ screen, collapsible, like Claude / ChatGPT / Cursor.
   only renders (ADR 0002, 0004). Map changes are checked by two independent checks (ADR 0003).
 - Never edits ignition, knock-sensitivity or protection tables; never promises power; emissions
   advice carries the đăng kiểm warning.
-- Works with no LLM key (built-in replies).
+- Works with no LLM key (built-in replies). With a key, the LLM orchestrates every reply and
+  question (ADR 0005); it never decides a verdict or writes a cell.
+- The shop's report on every log: Log checkpoints against the Drive brief, the Health report, the
+  Map tour; any table viewable in 2D/3D before flashing.
+- Logs are tagged with their fuel (E10 RON95 III / RON97 III) and KTuner map slot; the premium-fuel
+  test compares matched drives by Knock Control.
 
 ## Brand Commitments
 
