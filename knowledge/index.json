@@ -427,6 +427,73 @@
    "body": "Owners of the same engine read IAT2 differently: on some ECUs it is the air after the intercooler, on others the air before it. An owner showed a Southeast Asian ECU reading it after the intercooler, matching another tuning tool, while another owner reports before. So the shop never assumes which side IAT2 is on for this car. Until it is confirmed, intercooler health is not judged from IAT2 alone. A clue in your own log: air before the intercooler, straight off the turbo, runs far hotter on a long pull than air after it."
   },
   {
+   "id": "kc-ignition-formula",
+   "title": "How the ECU sets final ignition, with KTuner's own example",
+   "kind": "ktuner-howto",
+   "topics": [
+    "ignition",
+    "retard",
+    "formula",
+    "tables",
+    "ktuner",
+    "datalog"
+   ],
+   "applies-when": "The owner asks how timing is decided, why Actual Ign is lower than the table, or what Knock Retard means.",
+   "numbers": [
+    {
+     "name": "ign-table-example",
+     "value": 21.0,
+     "unit": "deg"
+    },
+    {
+     "name": "ign-limit-example",
+     "value": 2.0,
+     "unit": "deg"
+    },
+    {
+     "name": "ign-sum-example",
+     "value": 23.0,
+     "unit": "deg"
+    },
+    {
+     "name": "kc-example",
+     "value": 0.38,
+     "unit": "score"
+    },
+    {
+     "name": "retard-table-example",
+     "value": 10.0,
+     "unit": "deg"
+    },
+    {
+     "name": "retard-example",
+     "value": 3.8,
+     "unit": "deg"
+    },
+    {
+     "name": "retard-logged-example",
+     "value": 3.5,
+     "unit": "deg"
+    },
+    {
+     "name": "final-example",
+     "value": 19.2,
+     "unit": "deg"
+    },
+    {
+     "name": "final-logged-example",
+     "value": 19.0,
+     "unit": "deg"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/ktuner-help-pages.md",
+    "section": "§1"
+   },
+   "status": "current",
+   "body": "KTuner's help gives the rule: ignition table plus knock ignition limitation, minus knock retard, is the final timing, and the ECU uses the lesser of that and the table, so it never runs more than the table. Knock retard is Knock Control times the knock retard table. Their example: 21 plus 2 is 23 degrees; Knock Control 0.38 times a table value of 10 is 3.8 degrees of retard, so the final is 19.2. The log rounds both: retard shows as 3.5 and ignition as 19. So follow three gauges together, Actual Ign, Knock Control and Knock Retard, and never read meaning into a half-degree change. Intake-temperature corrections can also ride in the knock limit in the background."
+  },
+  {
    "id": "kc-log-gate",
    "title": "Is the log good enough to read?",
    "kind": "rule",
@@ -1222,6 +1289,7 @@
    "kc-e10",
    "kc-expectations",
    "kc-fuel-test",
+   "kc-ignition-formula",
    "kc-maf-wot-calibration",
    "kc-ranges",
    "kc-rich-wot",
@@ -1249,6 +1317,7 @@
   ],
   "10": [
    "kc-drive-brief",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
@@ -1292,12 +1361,14 @@
    "kc-expectations"
   ],
   "19": [
-   "kc-heat-soak"
+   "kc-heat-soak",
+   "kc-ignition-formula"
   ],
   "2": [
    "kc-cvt",
    "kc-expectations",
    "kc-heat-soak",
+   "kc-ignition-formula",
    "kc-maf-wot-calibration",
    "kc-oil",
    "kc-ranges",
@@ -1316,11 +1387,13 @@
   ],
   "21": [
    "kc-expectations",
+   "kc-ignition-formula",
    "kc-table-boost"
   ],
   "23": [
    "kc-expectations",
    "kc-heat-soak",
+   "kc-ignition-formula",
    "kc-table-boost"
   ],
   "240": [
@@ -1334,6 +1407,7 @@
   ],
   "3": [
    "kc-e10",
+   "kc-ignition-formula",
    "kc-ranges",
    "kc-rich-wot",
    "kc-trims"
@@ -1346,6 +1420,9 @@
   ],
   "35": [
    "kc-heat-soak"
+  ],
+  "38": [
+   "kc-ignition-formula"
   ],
   "39": [
    "kc-heat-soak"
@@ -1377,6 +1454,7 @@
    "kc-expectations",
    "kc-fuel-test",
    "kc-high-rpm",
+   "kc-ignition-formula",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
    "kc-ranges",
@@ -1465,6 +1543,7 @@
    "kc-e10",
    "kc-expectations",
    "kc-fuel-test",
+   "kc-ignition-formula",
    "kc-trims"
   ],
   "80": [
@@ -1497,6 +1576,7 @@
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
@@ -1554,6 +1634,7 @@
    "kc-table-boost"
   ],
   "actual": [
+   "kc-ignition-formula",
    "kc-tune-order"
   ],
   "actually": [
@@ -1688,6 +1769,9 @@
    "kc-expectations",
    "kc-tune-one-thing"
   ],
+  "also": [
+   "kc-ignition-formula"
+  ],
   "am": [
    "kc-drive-brief"
   ],
@@ -1714,6 +1798,7 @@
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
@@ -1807,6 +1892,7 @@
   "as": [
    "kc-cvt",
    "kc-fuel-test",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-ranges"
   ],
@@ -1829,6 +1915,7 @@
    "kc-expectations",
    "kc-fuel-test",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
@@ -1889,6 +1976,9 @@
    "kc-shakedown",
    "kc-trim-cause",
    "kc-trims"
+  ],
+  "background": [
+   "kc-ignition-formula"
   ],
   "band": [
    "kc-oil",
@@ -1994,6 +2084,7 @@
    "kc-tune-order"
   ],
   "both": [
+   "kc-ignition-formula",
    "kc-misfire-gauges",
    "kc-p0420"
   ],
@@ -2075,6 +2166,7 @@
    "kc-drive-brief",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-open-loop-wot",
@@ -2150,6 +2242,7 @@
   "change": [
    "kc-after-flash",
    "kc-expectations",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
@@ -2258,6 +2351,7 @@
   "control": [
    "kc-fuel-test",
    "kc-high-rpm",
+   "kc-ignition-formula",
    "kc-ranges",
    "kc-table-ignition",
    "kc-table-wot",
@@ -2292,6 +2386,9 @@
   "correction": [
    "kc-maf-data-rules",
    "kc-table-maf"
+  ],
+  "corrections": [
+   "kc-ignition-formula"
   ],
   "correctly": [
    "kc-shakedown",
@@ -2368,12 +2465,22 @@
    "kc-oil",
    "kc-wot-lean-timing"
   ],
+  "datalog": [
+   "kc-ignition-formula"
+  ],
+  "decided": [
+   "kc-ignition-formula"
+  ],
   "decides": [
    "kc-open-loop-wot",
    "kc-tune-one-thing"
   ],
+  "degree": [
+   "kc-ignition-formula"
+  ],
   "degrees": [
    "kc-fuel-test",
+   "kc-ignition-formula",
    "kc-ranges",
    "kc-table-ignition"
   ],
@@ -2507,6 +2614,7 @@
   "ecu": [
    "kc-e10",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-misfire-gauges",
    "kc-open-loop-wot",
@@ -2615,6 +2723,9 @@
   "exactly": [
    "kc-after-flash"
   ],
+  "example": [
+   "kc-ignition-formula"
+  ],
   "excluded": [
    "kc-high-rpm"
   ],
@@ -2708,6 +2819,7 @@
   ],
   "final": [
    "kc-expectations",
+   "kc-ignition-formula",
    "kc-table-boost",
    "kc-table-ignition"
   ],
@@ -2786,6 +2898,9 @@
   "fluid": [
    "kc-cvt"
   ],
+  "follow": [
+   "kc-ignition-formula"
+  ],
   "follows": [
    "kc-maf-housing",
    "kc-p0420"
@@ -2815,6 +2930,7 @@
    "kc-wot-lean-timing"
   ],
   "formula": [
+   "kc-ignition-formula",
    "kc-table-ignition"
   ],
   "forty": [
@@ -2917,6 +3033,7 @@
   ],
   "gauges": [
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-misfire-gauges"
   ],
@@ -2930,6 +3047,9 @@
   ],
   "give": [
    "kc-after-flash"
+  ],
+  "gives": [
+   "kc-ignition-formula"
   ],
   "go": [
    "kc-drive-brief",
@@ -2963,6 +3083,7 @@
   ],
   "half": [
    "kc-heat-soak",
+   "kc-ignition-formula",
    "kc-rich-wot"
   ],
   "happened": [
@@ -3016,6 +3137,9 @@
   ],
   "held": [
    "kc-ranges"
+  ],
+  "help": [
+   "kc-ignition-formula"
   ],
   "here": [
    "kc-cvt",
@@ -3078,6 +3202,7 @@
   ],
   "how": [
    "kc-drive-brief",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration",
    "kc-table-ignition",
@@ -3112,9 +3237,11 @@
    "kc-shakedown"
   ],
   "ign": [
+   "kc-ignition-formula",
    "kc-table-ignition"
   ],
   "ignition": [
+   "kc-ignition-formula",
    "kc-oil",
    "kc-table-ignition",
    "kc-tune-one-thing",
@@ -3136,6 +3263,7 @@
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration",
@@ -3178,6 +3306,7 @@
    "kc-drive-brief",
    "kc-fuel-test",
    "kc-heat-soak",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
@@ -3191,6 +3320,7 @@
   ],
   "into": [
    "kc-e10",
+   "kc-ignition-formula",
    "kc-p0420",
    "kc-table-maf",
    "kc-tune-one-thing"
@@ -3204,6 +3334,7 @@
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
@@ -3231,6 +3362,7 @@
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
@@ -3307,6 +3439,7 @@
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
@@ -3356,6 +3489,7 @@
    "kc-after-flash",
    "kc-fuel-test",
    "kc-high-rpm",
+   "kc-ignition-formula",
    "kc-misfire-gauges",
    "kc-ranges",
    "kc-table-ignition",
@@ -3366,6 +3500,7 @@
   "ktuner": [
    "kc-e10",
    "kc-fuel-test",
+   "kc-ignition-formula",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
@@ -3446,6 +3581,9 @@
    "kc-table-wot",
    "kc-tune-order"
   ],
+  "lesser": [
+   "kc-ignition-formula"
+  ],
   "let": [
    "kc-oil",
    "kc-tune-one-thing"
@@ -3472,10 +3610,12 @@
   ],
   "limit": [
    "kc-cvt",
+   "kc-ignition-formula",
    "kc-table-boost",
    "kc-table-ignition"
   ],
   "limitation": [
+   "kc-ignition-formula",
    "kc-table-boost"
   ],
   "limits": [
@@ -3515,6 +3655,7 @@
    "kc-drive-brief",
    "kc-fuel-test",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration",
@@ -3576,6 +3717,7 @@
   ],
   "lower": [
    "kc-fuel-test",
+   "kc-ignition-formula",
    "kc-rich-wot",
    "kc-table-ignition"
   ],
@@ -3668,8 +3810,12 @@
    "kc-maf-housing",
    "kc-trim-cause"
   ],
+  "meaning": [
+   "kc-ignition-formula"
+  ],
   "means": [
    "kc-expectations",
+   "kc-ignition-formula",
    "kc-maf-wot-calibration",
    "kc-oil",
    "kc-open-loop-wot",
@@ -3714,6 +3860,7 @@
    "kc-maf-data-rules"
   ],
   "minus": [
+   "kc-ignition-formula",
    "kc-table-ignition"
   ],
   "minute": [
@@ -3770,6 +3917,7 @@
    "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-oil",
    "kc-table-boost",
@@ -3840,6 +3988,7 @@
    "kc-fuel-test",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
    "kc-oil",
@@ -3956,6 +4105,7 @@
    "kc-expectations",
    "kc-fuel-test",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
@@ -4079,6 +4229,7 @@
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
@@ -4127,6 +4278,7 @@
    "kc-after-flash",
    "kc-e10",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-misfire-gauges",
    "kc-open-loop-wot",
    "kc-shakedown",
@@ -4140,6 +4292,7 @@
    "kc-fuel-test",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
@@ -4255,6 +4408,7 @@
    "kc-misfire-gauges"
   ],
   "plus": [
+   "kc-ignition-formula",
    "kc-table-ignition"
   ],
   "point": [
@@ -4404,6 +4558,7 @@
    "kc-drive-brief",
    "kc-heat-soak",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
@@ -4486,6 +4641,7 @@
    "kc-maf-data-rules"
   ],
   "retard": [
+   "kc-ignition-formula",
    "kc-ranges",
    "kc-table-ignition"
   ],
@@ -4509,6 +4665,9 @@
    "kc-maf-wot-calibration",
    "kc-rich-wot",
    "kc-table-wot"
+  ],
+  "ride": [
+   "kc-ignition-formula"
   ],
   "right": [
    "kc-table-wot",
@@ -4550,6 +4709,7 @@
    "kc-tune-one-thing"
   ],
   "rounds": [
+   "kc-ignition-formula",
    "kc-maf-data-rules"
   ],
   "route": [
@@ -4566,6 +4726,7 @@
    "kc-table-wot"
   ],
   "rule": [
+   "kc-ignition-formula",
    "kc-table-ignition",
    "kc-wot-lean-timing"
   ],
@@ -4584,6 +4745,7 @@
   "runs": [
    "kc-heat-soak",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-maf-housing"
   ],
   "s": [
@@ -4591,6 +4753,7 @@
    "kc-e10",
    "kc-fuel-test",
    "kc-heat-soak",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
@@ -4698,7 +4861,8 @@
    "kc-table-ignition"
   ],
   "sets": [
-   "kc-after-flash"
+   "kc-after-flash",
+   "kc-ignition-formula"
   ],
   "settle": [
    "kc-after-flash",
@@ -4755,6 +4919,7 @@
    "kc-cvt",
    "kc-fuel-test",
    "kc-high-rpm",
+   "kc-ignition-formula",
    "kc-oil",
    "kc-shakedown",
    "kc-trims"
@@ -4805,6 +4970,7 @@
    "kc-expectations",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
@@ -4992,6 +5158,7 @@
    "kc-table-ignition"
   ],
   "table": [
+   "kc-ignition-formula",
    "kc-maf-wot-calibration",
    "kc-open-loop-wot",
    "kc-table-boost",
@@ -5001,6 +5168,7 @@
    "kc-tune-order"
   ],
   "tables": [
+   "kc-ignition-formula",
    "kc-maf-wot-calibration",
    "kc-table-boost",
    "kc-table-ignition",
@@ -5031,6 +5199,7 @@
   ],
   "temperature": [
    "kc-cvt",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration"
   ],
@@ -5052,6 +5221,7 @@
   ],
   "than": [
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-maf-wot-calibration",
    "kc-oil",
    "kc-rich-wot",
@@ -5063,6 +5233,7 @@
    "kc-e10",
    "kc-expectations",
    "kc-fuel-test",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration",
@@ -5085,6 +5256,7 @@
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
@@ -5105,6 +5277,9 @@
    "kc-tune-one-thing",
    "kc-tune-order",
    "kc-wot-lean-timing"
+  ],
+  "their": [
+   "kc-ignition-formula"
   ],
   "them": [
    "kc-table-ignition"
@@ -5174,6 +5349,7 @@
   ],
   "three": [
    "kc-heat-soak",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-table-boost"
   ],
@@ -5202,10 +5378,12 @@
    "kc-heat-soak"
   ],
   "times": [
+   "kc-ignition-formula",
    "kc-maf-housing"
   ],
   "timing": [
    "kc-fuel-test",
+   "kc-ignition-formula",
    "kc-ranges",
    "kc-table-ignition",
    "kc-tune-one-thing",
@@ -5232,6 +5410,7 @@
    "kc-wot-lean-timing"
   ],
   "together": [
+   "kc-ignition-formula",
    "kc-table-boost",
    "kc-table-wot"
   ],
@@ -5434,6 +5613,9 @@
   "used": [
    "kc-cvt"
   ],
+  "uses": [
+   "kc-ignition-formula"
+  ],
   "usual": [
    "kc-fuel-test",
    "kc-maf-data-rules"
@@ -5442,6 +5624,7 @@
    "kc-trim-cause"
   ],
   "value": [
+   "kc-ignition-formula",
    "kc-open-loop-wot"
   ],
   "verdict": [
@@ -5498,6 +5681,7 @@
    "kc-cvt",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-misfire-gauges",
@@ -5564,6 +5748,7 @@
    "kc-cvt"
   ],
   "why": [
+   "kc-ignition-formula",
    "kc-open-loop-wot",
    "kc-table-maf",
    "kc-tune-order",
@@ -5578,6 +5763,7 @@
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration",
    "kc-oil",
