@@ -25,8 +25,27 @@ Eval: `eval.md`. Every row is committed as its own commit (author giaosudau).
 | TS-18 | D12 Recommendation eval | done | `test_map_recommendations.py` (6 overshoot levels) |
 | TS-19 | Retire the old browser app | done | engine + server suites green after the move |
 
+| TS-20 | Knowledge from the forum and the MAF tool: research note + 7 cards | done | `docs/research/forum-afr-maf-research.md`; `kc-open-loop-wot`, `kc-maf-wot-calibration`, `kc-maf-data-rules`, `kc-misfire-gauges`, `kc-iat2-side`, `kc-wot-lean-timing`, `kc-tune-one-thing`; `test_knowledge.py` green |
+| TS-21 | D24 One car editor (bug F4: Edit car adds a card per click) | todo | "Edit car" twice → one editor; an older unsaved card can't save |
+| TS-22 | D19 + D23 Front desk intents and a knowledge-search floor (bug F1) | todo | `owner-queries.md` §A as a seam test: "Hello I want to tune my car" never returns a card, at every stage |
+| TS-23 | D20 Recap on a new chat and as the answer to a greeting | todo | seam test per stage; browser "New chat" shows the Recap before typing |
+| TS-24 | D21 Agent prompt from the Car file, not a hard-coded car | todo | prompt test: a different profile → a different car sentence; no profile → asks which car |
+| TS-25 | D22 Say what you read (bug F2) | todo | an answer that read no Drive has no Drive line; the window line names the car file's total and the Flash it starts from |
+| TS-26 | D18 Chats stored in SQLite and listed (bug F6) | todo | routes + seam tests; reload and "New chat" keep the old chat in the list; delete never removes a Drive |
+| TS-27 | D25 Suggested replies on every turn (bug F5) | todo | `owner-queries.md` §C; chips only under the latest message |
+| TS-28 | D17 Car file panel (bug F7) | todo | browser 1280 + 390 |
+| TS-29 | D26 Logger setup + D27 goal at intake | todo | brief names the owner's missing gauges; goal stored and reorders options only |
+| TS-30 | D28 phase 1 Open-loop check + full-throttle error vs AFR Command | todo | engine test on a log with STFT flat under boost; Health report row |
+| TS-31 | `kta-knowledge approve`: the reviewer step D8 names | todo | a proposal becomes a card only with a source doc + section |
+
 ## Next
 
+Build order: TS-21 (bug, smallest) → TS-22 → TS-23 → TS-24 → TS-25 → TS-26 → TS-27 → TS-28 →
+TS-29 → TS-30 → TS-31. The front desk (TS-21 to TS-27) comes before any new tuning feature: an
+owner who is greeted with a table lecture never uploads the log that every round needs.
+
+- Pre-existing failure found on 4 Oct (also red on the base commit): `tests/test_scorecard.py::
+  test_a_table_outside_the_plan_is_a_wrong_cell` classifies the issue as "other".
 - D15 phase 2: slot-aware Map versions.
 - Citation-support judge.
 - Ignition "remove timing" proposals once the load axis is digitized.

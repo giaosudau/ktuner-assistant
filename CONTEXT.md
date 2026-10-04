@@ -67,6 +67,18 @@ _Avoid_: garage, vehicle settings, account
 A part fitted to or removed from the car, recorded with its date; like a Flash, it explains a change in the drives that follow.
 _Avoid_: mod (that is the part itself), upgrade
 
+**Car file**:
+Everything the shop keeps about the one car: the Car profile, its Installs, Map versions and Flashes, the Logger setup, the Car history and where the car is in its Round. Every chat reads it; no chat owns it.
+_Avoid_: garage, account, project
+
+**Logger setup**:
+What the owner's TunerView logged last time: the gauges seen, the logging rate, and what was missing (AFR Command, MAF Hz); the Drive brief opens with what to fix.
+_Avoid_: logger config, settings
+
+**Goal**:
+What the owner wants from the car: daily, spirited or economy. It reorders options and wording, never unlocks a change.
+_Avoid_: mode, profile, stage
+
 ### The loop
 
 **Next step**:
@@ -119,6 +131,23 @@ This car's own normal value for a measure, judged from its cool drives; limits a
 _Avoid_: normal range, default, community limit
 
 ### The shop
+
+**Chat**:
+One conversation with the shop, kept and listed; its title comes from its first message. Deleting a chat never deletes a Drive, a Flash or a Map version.
+_Avoid_: session, thread (in owner-facing words), ticket
+
+**Front desk**:
+How the shop answers before any tuning: a greeting, a vague opener or a car change is answered with the car, the stage and the options, never with a knowledge card.
+_Avoid_: router, intent handler (in owner-facing words)
+
+**Recap**:
+The first reply of a new Chat for a known car: the car in one line, Round N on its Map version, the last Drive and its Verdict, the Next step and what it waits for.
+_Avoid_: summary, dashboard, welcome back card
+
+**Suggested replies**:
+Up to three chips under the latest reply: one for the stage's action and up to two follow-ups built from what the reply said.
+_Avoid_: quick actions, prompts, recommendations
+
 
 **Round**:
 One turn of the shop's loop: log the brief, read it, change and flash, prove it with the next log. Rounds are counted from Flashes (Round N = Flashes so far + 1), not from the Map version number, because an Undo returns to an earlier version.
