@@ -59,10 +59,18 @@ export async function readLoop(): Promise<LoopState | null> {
   }
 }
 
-export async function uploadCsv(file: File, threadId: string): Promise<{ uploadId: string }> {
+/** What the owner tags a log with: the fuel in the tank and the KTuner map slot it ran on. */
+export type LogTags = { fuel: string; slot: number };
+export const FUELS = ["E10 RON95 III", "E10 RON97 III"] as const;
+
+export async function uploadCsv(file: File, threadId: string, tags?: LogTags): Promise<{ uploadId: string }> {
   const body = new FormData();
   body.append("file", file, file.name);
   body.append("threadId", threadId);
+  if (tags) {
+    body.append("fuel", tags.fuel);
+    body.append("slot", String(tags.slot));
+  }
   const response = await fetch(`${SERVER_URL}/upload`, { method: "POST", body });
   if (!response.ok) throw new Error(`The upload did not go through (${response.status}).`);
   return (await response.json()) as { uploadId: string };
@@ -191,6 +199,15 @@ export async function mapTable(name: string): Promise<MapTable> {
   if (!response.ok) throw new Error(payload?.detail ?? "That table could not be read.");
   return payload as MapTable;
 }
+
+/** The premium-fuel test: matched drives on two fuels, judged by Knock Control. */
+export type FuelTest = {
+  status: "measured" | "cant-tell";
+  why: string | null;
+  line: string;
+  iatMatch: number;
+  pairs: { a: string; b: string; fuelA: string; fuelB: string; iatGap: number; kcPeakA: number; kcPeakB: number; timingA: number | null; timingB: number | null }[];
+};
 
 export async function mapFamilies(): Promise<MapFamily[]> {
   const response = await fetch(`${SERVER_URL}/api/map/table`, { cache: "no-store" });

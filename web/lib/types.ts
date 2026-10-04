@@ -292,6 +292,9 @@ export type ReplyCard = {
   /** The Open steps as they stand after this reply. */
   openSteps: OpenStep[];
   harness: HarnessSummary | null;
+  /** The fuel and map slot the owner tagged this log with, and the premium-fuel test once two fuels are in. */
+  tags?: { fuel: string | null; slot: number } | null;
+  fuelTest?: import("./api").FuelTest | null;
   /** The shop's report (tuning-shop D4-D6). */
   checkpoints?: Checkpoint[] | null;
   health?: HealthReport | null;

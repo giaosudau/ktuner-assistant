@@ -155,6 +155,14 @@ def TOOLS() -> list[dict[str, Any]]:
             ["table"],
         ),
         fn(
+            "get_fuel_test",
+            "Is the premium fuel (E10 RON97 III) worth it over E10 RON95 III on this car? The engine pairs Drives tagged with "
+            "each fuel that both had hard pulls, intake within 8 °C, same map slot, and compares Knock Control and the timing it "
+            "costs. Comes with the card on how to run the test.",
+            {},
+            [],
+        ),
+        fn(
             "propose_knowledge",
             "When you need a fact that no knowledge card holds, do NOT state it as fact. Propose it here for the "
             "knowledge base instead (a reviewer checks and sources it before it can be cited), and tell the owner "
@@ -571,7 +579,7 @@ async def run_agent(
                 submitted = call
                 continue
             if call["name"] in SHOP_TOOLS:
-                output = await _shop_tool(call["name"], call["args"], reply, plan, map_tables, harness, config)
+                output = await _shop_tool(call["name"], call["args"], reply, plan, map_tables, harness, config, worker, store)
                 facts.extend(V.collect_numbers(output))
                 # The table cards the tour and the table reader point to come with their text: read, so citable.
                 for card in (output.get("cards") or []) if isinstance(output, Mapping) else []:
@@ -676,12 +684,12 @@ async def run_agent(
         )
 
 
-SHOP_TOOLS = ("get_health_report", "get_map_tour", "get_map_table", "propose_knowledge")
+SHOP_TOOLS = ("get_health_report", "get_map_tour", "get_map_table", "get_fuel_test", "propose_knowledge")
 
 
 async def _shop_tool(
     name: str, args: Mapping[str, Any], reply: Mapping[str, Any], plan: Mapping[str, Any] | None,
-    map_tables: Mapping[str, Any], harness: Harness, config: Any,
+    map_tables: Mapping[str, Any], harness: Harness, config: Any, worker: Any = None, store: Any = None,
 ) -> Any:
     """The tuning-shop tools: the report, the map tour, a whole table, a knowledge proposal. Read-only on the car."""
     args = args if isinstance(args, Mapping) else {}
@@ -706,6 +714,13 @@ async def _shop_tool(
             config, "mapTable", f"Read {table or 'a table'}", {"table": table, **({"rpm": rpm} if rpm is not None else {})},
             _wrap(read),
         )
+    if name == "get_fuel_test":
+        async def run() -> Any:
+            test = await worker.call("fuelTest", state=store.car_state(None) or {}, tags=store.drive_tags())
+            from . import copy as C
+
+            return {**test, "line": C.fuel_test_line(test), "cards": _cards_for(["kc-fuel-test"])}
+        return await harness.step(config, "fuelTest", "Compare the fuels on matched drives", {}, run)
     proposal = K.propose(
         str(args.get("title") or ""), str(args.get("claim") or ""), str(args.get("why") or ""), str(args.get("source_hint") or "")
     )

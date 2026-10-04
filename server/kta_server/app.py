@@ -151,6 +151,8 @@ def create_app(
         file: UploadFile = File(...),
         threadId: str | None = Form(default=None),
         now: int | None = Form(default=None),
+        fuel: str | None = Form(default=None),
+        slot: int | None = Form(default=None),
     ) -> dict[str, Any]:
         raw = await file.read()
         if not raw:
@@ -162,6 +164,8 @@ def create_app(
             raw,
             thread_id=threadId,
             received_at=now or settings.now_ms(),
+            fuel=(fuel or "").strip() or None,
+            map_slot=slot if slot and 1 <= slot <= 9 else None,
         )
         return {"uploadId": upload_id, "fileName": file.filename, "bytes": len(raw), "threadId": threadId}
 
@@ -422,6 +426,12 @@ def create_app(
             raise HTTPException(status_code=400, detail="Ask me in words first.")
         state = store.car_state(None) or {}
         return await answer_question(text, worker, store, settings, _latest_drive(state), llm_caller)
+
+    @app.get("/api/fuel-test")
+    async def api_fuel_test() -> dict[str, Any]:
+        """Is the premium fuel worth it? Matched drives on each fuel, judged by Knock Control (tuning-shop)."""
+        out = await worker.call("fuelTest", state=store.car_state(None) or {}, tags=store.drive_tags())
+        return {**out, "line": C.fuel_test_line(out)}
 
     @app.post("/api/ask/stream")
     async def api_ask_stream(request: Request) -> StreamingResponse:

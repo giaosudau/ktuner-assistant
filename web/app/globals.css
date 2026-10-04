@@ -2068,3 +2068,27 @@ dialog.tv::backdrop {
     width: 100%;
   }
 }
+
+/* log tags on an attached CSV */
+.log-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+.log-tags label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.log-tags select {
+  min-height: 30px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-2);
+  background: var(--bg-raised);
+  color: var(--ink);
+  font-size: 13px;
+}

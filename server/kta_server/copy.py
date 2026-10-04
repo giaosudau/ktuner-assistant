@@ -649,6 +649,34 @@ def log_checkpoints(
     ]
 
 
+#: KTuner logs knock retard in 0.5° steps (ktuner-only-tuning.md §1): a smaller gap between fuels is noise.
+FUEL_SAME_DEG = 0.5
+
+
+def fuel_test_line(test: Mapping[str, Any] | None) -> str:
+    """The premium-fuel verdict in one sentence, from the engine's matched pairs (kc-fuel-test)."""
+    test = test or {}
+    if test.get("status") != "measured" or not test.get("pairs"):
+        return "Can't tell yet: " + str(test.get("why") or "no matched drives on two fuels.")
+    pairs = test["pairs"]
+    p = pairs[0]
+    ta, tb = p.get("timingA"), p.get("timingB")
+    count = plural(len(pairs), "matched pair", "matched pairs")
+    peaks = f"Knock Control peak {n(p['kcPeakA'], 2)} on {p['fuelA']} vs {n(p['kcPeakB'], 2)} on {p['fuelB']}"
+    if ta is None or tb is None:
+        return f"{peaks}, on {count} within {n(test.get('iatMatch'))} °C intake."
+    if abs(ta - tb) <= FUEL_SAME_DEG:
+        return (
+            f"No measurable difference yet: {peaks} ({n(ta, 1)}° vs {n(tb, 1)}° of timing pulled), inside KTuner's "
+            f"{FUEL_SAME_DEG}° logging step, on {count} within {n(test.get('iatMatch'))} °C intake."
+        )
+    better = p["fuelA"] if ta < tb else p["fuelB"]
+    return (
+        f"{better} kept more timing: {peaks} ({n(ta, 1)}° vs {n(tb, 1)}° of timing pulled), on {count} within "
+        f"{n(test.get('iatMatch'))} °C intake."
+    )
+
+
 def health_rows(overview: Mapping[str, Any] | None) -> dict[str, Any] | None:
     """The engine's health checks as the report shows them: system, check, value, verdict word."""
     if not overview or not overview.get("checks"):

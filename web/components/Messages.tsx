@@ -17,7 +17,7 @@ import { Chart } from "./Chart";
 import { Icon, Mark } from "./Icons";
 import type { FlashAct } from "./KTunerCard";
 import { Markdown } from "./Markdown";
-import { CheckpointsCard, DriveBriefCard, HealthCard, MapTourCard } from "./ShopCards";
+import { CheckpointsCard, DriveBriefCard, FuelTestCard, HealthCard, MapTourCard } from "./ShopCards";
 
 export type Actions = {
   busy: boolean;
@@ -88,6 +88,7 @@ export function UserMessage({ msg, a }: { msg: UserMsg; a: Actions }) {
             <span className="fname">{msg.file.name}</span>
             <span className="fmeta">
               {msg.file.kind === "csv" ? "TunerView log" : "Screenshot"} · {sizeOf(msg.file.size)}
+              {msg.file.tags ? ` · ${msg.file.tags.fuel} · map slot ${msg.file.tags.slot}` : ""}
             </span>
           </span>
         </div>
@@ -227,6 +228,7 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
       {card?.checkpoints?.length ? <CheckpointsCard rows={card.checkpoints} /> : null}
       {card ? <ReportCard card={card} fileName={turn.fileName} /> : null}
       {card?.health?.rows.length ? <HealthCard report={card.health} /> : null}
+      {card?.fuelTest ? <FuelTestCard test={card.fuelTest} /> : null}
       {pictures.map((p, i) => (
         <Chart key={`${p.kind}-${i}`} picture={p} />
       ))}

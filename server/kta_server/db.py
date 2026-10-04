@@ -41,7 +41,10 @@ CREATE TABLE IF NOT EXISTS uploads (
   thread_id    TEXT,
   drive_id     TEXT,
   in_history   INTEGER NOT NULL DEFAULT 0,
-  raw_csv      BLOB    NOT NULL
+  raw_csv      BLOB    NOT NULL,
+  -- What the owner tagged the log with: the fuel in the tank and the KTuner map slot.
+  fuel         TEXT,
+  map_slot     INTEGER
 );
 CREATE INDEX IF NOT EXISTS uploads_by_thread ON uploads(thread_id, received_at);
 
@@ -207,6 +210,10 @@ class Store:
         flash_cols = {row["name"] for row in c.execute("PRAGMA table_info(flashes)")}
         if "restores" not in flash_cols:
             c.execute("ALTER TABLE flashes ADD COLUMN restores INTEGER")
+        uploads = {row["name"] for row in c.execute("PRAGMA table_info(uploads)")}
+        for column, decl in (("fuel", "TEXT"), ("map_slot", "INTEGER")):
+            if uploads and column not in uploads:
+                c.execute(f"ALTER TABLE uploads ADD COLUMN {column} {decl}")
         steps = {row["name"] for row in c.execute("PRAGMA table_info(open_steps)")}
         for column, decl in _OPEN_STEP_COLUMNS.items():
             if column not in steps:
@@ -270,11 +277,14 @@ class Store:
         raw_csv: bytes,
         thread_id: str | None = None,
         received_at: int | None = None,
+        fuel: str | None = None,
+        map_slot: int | None = None,
     ) -> dict[str, Any]:
         at = received_at if received_at is not None else _now()
         self._exec(
-            "INSERT INTO uploads (id, file_name, received_at, bytes, thread_id, raw_csv) VALUES (?, ?, ?, ?, ?, ?)",
-            (upload_id, file_name, at, len(raw_csv), thread_id, raw_csv),
+            "INSERT INTO uploads (id, file_name, received_at, bytes, thread_id, raw_csv, fuel, map_slot) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (upload_id, file_name, at, len(raw_csv), thread_id, raw_csv, fuel, map_slot),
         )
         return {"upload_id": upload_id, "file_name": file_name, "bytes": len(raw_csv), "received_at": at}
 
@@ -295,6 +305,15 @@ class Store:
             "in_history": bool(row["in_history"]),
             "csv": row["raw_csv"],
         }
+
+    def drive_tags(self) -> dict[str, dict[str, Any]]:
+        """Each Drive's fuel and map slot, as the owner tagged its upload (the latest upload wins)."""
+        out: dict[str, dict[str, Any]] = {}
+        for r in self._all(
+            "SELECT drive_id, fuel, map_slot FROM uploads WHERE drive_id IS NOT NULL ORDER BY received_at"
+        ):
+            out[r["drive_id"]] = {"fuel": r["fuel"], "slot": r["map_slot"] or 1}
+        return out
 
     def bind_upload_drive(self, upload_id: str, drive_id: str, in_history: bool) -> None:
         self._exec(

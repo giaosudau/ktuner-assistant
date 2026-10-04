@@ -7,6 +7,7 @@
  */
 import { useEffect, useRef } from "react";
 
+import { FUELS, type LogTags } from "../lib/api";
 import { sizeOf } from "../lib/useChat";
 import { Icon } from "./Icons";
 
@@ -31,6 +32,8 @@ export function Composer({
   busy,
   placeholder,
   autoFocus,
+  tags,
+  setTags,
 }: {
   text: string;
   setText: (v: string) => void;
@@ -42,6 +45,8 @@ export function Composer({
   busy: boolean;
   placeholder: string;
   autoFocus?: boolean;
+  tags: LogTags;
+  setTags: (t: LogTags) => void;
 }) {
   const area = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
@@ -84,6 +89,30 @@ export function Composer({
               <Icon name="x" />
             </button>
           </div>
+          {isCsv ? (
+            <div className="log-tags" data-testid="log-tags">
+              <label>
+                Fuel in the tank
+                <select value={tags.fuel} onChange={(e) => setTags({ ...tags, fuel: e.target.value })} data-testid="tag-fuel">
+                  {FUELS.map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label title="KTuner can switch between maps on the fly: which one was this drive on?">
+                Map slot
+                <select value={tags.slot} onChange={(e) => setTags({ ...tags, slot: Number(e.target.value) })} data-testid="tag-slot">
+                  {[1, 2, 3, 4].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          ) : null}
         </div>
       ) : null}
       <label className="sr-only" htmlFor="composer-text">

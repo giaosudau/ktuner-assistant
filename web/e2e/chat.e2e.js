@@ -67,7 +67,8 @@ async function run() {
   page.on('pageerror', (e) => errors.push(String(e && e.message)));
   const noOverflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   const lastAi = () => page.locator('[data-testid="assistant-message"]').last();
-  const idle = () => page.waitForFunction(() => !document.querySelector('.spinner'), undefined, { timeout: 120000 });
+  // A live model reply can take minutes on a free provider; the built-in reply takes seconds.
+  const idle = () => page.waitForFunction(() => !document.querySelector('[data-testid="thread"] .spinner, [data-testid="empty"] .spinner'), undefined, { timeout: 300000 });
 
   try {
     await step('the chat opens on a phone as one composer with + and send, nothing else to fill in', async () => {

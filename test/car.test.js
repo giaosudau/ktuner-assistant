@@ -1587,3 +1587,17 @@ test('the History file carries restores and merges them without a phantom Map ve
   const id = s.flashes[s.flashes.length - 1].id;
   assert.equal(K.carDeleteFlash(s, id).mapRestores.length, 0);
 });
+
+// ---- The premium-fuel test (tuning-shop) ----
+test('Fuel test: matched pulls on both fuels are paired; otherwise it says why it cannot tell yet', () => {
+  const s = synth([{ id: 'a' }, { id: 'b' }, { id: 'c', hardPulls: 0 }]);
+  assert.equal(K.carFuelTest(s, {}).status, 'cant-tell');
+  assert.match(K.carFuelTest(s, { a: { fuel: 'E10 RON95 III' } }).why, /Only E10 RON95 III/);
+  const out = K.carFuelTest(s, { a: { fuel: 'E10 RON95 III', slot: 1 }, b: { fuel: 'E10 RON97 III', slot: 1 }, c: { fuel: 'E10 RON97 III', slot: 1 } });
+  assert.equal(out.status, 'measured');
+  assert.deepEqual(out.pairs.map((p) => [p.a, p.b]), [['a', 'b']], 'the drive without a pull is never paired');
+  // A different map slot is never compared like for like.
+  const slots = K.carFuelTest(s, { a: { fuel: 'E10 RON95 III', slot: 1 }, b: { fuel: 'E10 RON97 III', slot: 2 } });
+  assert.equal(slots.status, 'cant-tell');
+  assert.match(slots.why, /same map slot/);
+});

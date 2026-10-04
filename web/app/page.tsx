@@ -12,6 +12,7 @@ import { Icon } from "../components/Icons";
 import { Message, type Actions } from "../components/Messages";
 import { phaseOf, Sidebar } from "../components/Sidebar";
 import { TableViewer } from "../components/TableViewer";
+import { FUELS, type LogTags } from "../lib/api";
 import { useChat } from "../lib/useChat";
 
 const EXAMPLE =
@@ -49,10 +50,29 @@ export default function Page() {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [side, setSide] = useState(true);
+  // Closed on first paint: a phone never sees the drawer slide away; a desktop opens it at once.
+  const [side, setSide] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [theme, toggleTheme] = useTheme();
   const [viewing, setViewing] = useState<string | null>(null);
+  // The fuel and map slot the next log is tagged with: the last ones used (a per-viewer convenience).
+  const [tags, setTags] = useState<LogTags>({ fuel: FUELS[0], slot: 1 });
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("kta-tags") ?? "null") as LogTags | null;
+      if (saved?.fuel) setTags(saved);
+    } catch {
+      /* defaults */
+    }
+  }, []);
+  const changeTags = (next: LogTags) => {
+    setTags(next);
+    try {
+      localStorage.setItem("kta-tags", JSON.stringify(next));
+    } catch {
+      /* fine */
+    }
+  };
   const scroller = useRef<HTMLDivElement>(null);
   const pinned = useRef(true);
 
@@ -78,12 +98,12 @@ export default function Page() {
     (words = text, attached = file) => {
       if (busy) return;
       pinned.current = true;
-      void chat.send(words, attached);
+      void chat.send(words, attached, tags);
       setText("");
       setFile(null);
       setError(null);
     },
-    [busy, chat, file, text],
+    [busy, chat, file, text, tags],
   );
 
   const actions: Actions = {
@@ -128,6 +148,8 @@ export default function Page() {
         error={error}
         setError={setError}
         onSend={() => submit()}
+        tags={tags}
+        setTags={changeTags}
         busy={busy}
         placeholder={placeholder}
         autoFocus

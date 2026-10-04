@@ -29,7 +29,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as api from "./api";
 import { AGENT_URL, type CarProfile, type HarnessStep, type HarnessSummary, type OwnerQuestion, type ProfileDraft, type ReplyCard, type Turn } from "./types";
 
-export type FileRef = { name: string; kind: "csv" | "image"; size: number; thumb?: string };
+export type FileRef = { name: string; kind: "csv" | "image"; size: number; thumb?: string; tags?: api.LogTags };
 export type UserMsg = { id: string; role: "user"; text: string; file?: FileRef };
 export type AiMsg = {
   id: string;
@@ -152,9 +152,9 @@ export function useChat() {
 
   // ---------------------------------------------------------------- a Drive
   const runDrive = useCallback(
-    async (file: File, text: string, msgId: string) => {
+    async (file: File, text: string, msgId: string, tags?: api.LogTags) => {
       try {
-        const { uploadId } = await api.uploadCsv(file, threadId.current);
+        const { uploadId } = await api.uploadCsv(file, threadId.current, tags);
         const order: string[] = [];
         const open = new Map<string, { name: string; args: string; output?: unknown; done: boolean }>();
         const lines: string[] = [];
@@ -270,7 +270,7 @@ export function useChat() {
 
   // ------------------------------------------------------------------ send
   const send = useCallback(
-    async (text: string, file?: File | null) => {
+    async (text: string, file?: File | null, tags?: api.LogTags) => {
       const words = text.trim();
       if (!words && !file) return;
       const kind = file ? (/\.csv$/i.test(file.name) || file.type === "text/csv" ? "csv" : "image") : null;
@@ -279,14 +279,14 @@ export function useChat() {
         id: nextId("u"),
         role: "user",
         text: words,
-        file: file && kind ? { name: file.name, kind, size: file.size, thumb } : undefined,
+        file: file && kind ? { name: file.name, kind, size: file.size, thumb, tags: kind === "csv" ? tags : undefined } : undefined,
       };
 
       await guard(async () => {
         const id = nextId("a");
         if (file && kind === "csv") {
           add(user, { id, role: "assistant", kind: "drive", turn: { id, fileName: file.name, running: true, card: null, harness: null, lines: [] } });
-          await runDrive(file, words, id);
+          await runDrive(file, words, id, tags);
           return;
         }
         if (file) {

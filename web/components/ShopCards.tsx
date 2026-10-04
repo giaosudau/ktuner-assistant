@@ -5,6 +5,7 @@
  * the whole map at a high level, and the drive brief itself. Every row is the server's; the
  * cards only lay it out. A family in the map tour can be opened as a question to the tuner.
  */
+import type { FuelTest } from "../lib/api";
 import type { Checkpoint, DriveBrief, FlashPlan, HealthReport, HousingOption, MapTour } from "../lib/types";
 import { GaugeTableView } from "./Cards";
 import { Icon } from "./Icons";
@@ -64,6 +65,37 @@ export function HealthCard({ report }: { report: HealthReport }) {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+// ------------------------------------------------------- the premium-fuel test
+export function FuelTestCard({ test }: { test: FuelTest }) {
+  return (
+    <section className="card" data-testid="fuel-test">
+      <h3 className="card-h">
+        <Icon name="gauge" />
+        <span className="grow">Premium fuel test</span>
+        <Pill tone={test.status === "measured" ? "good" : "none"} word={test.status === "measured" ? "Measured" : "Can't tell yet"} />
+      </h3>
+      <p>{test.line}</p>
+      {test.pairs.length ? (
+        <ul className="checks">
+          {test.pairs.map((p) => (
+            <li key={`${p.a}-${p.b}`}>
+              <span className="tick na" aria-hidden="true">
+                <Icon name="route" />
+              </span>
+              <span className="label">
+                {p.fuelA} vs {p.fuelB}
+              </span>
+              <span className="val">
+                {p.kcPeakA} / {p.kcPeakB} · {p.iatGap} °C apart
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </section>
   );
 }

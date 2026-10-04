@@ -357,6 +357,53 @@
   };
 
   // ---------------------------------------------------------------------------
+  // The premium-fuel test (tuning-shop, 4 Oct): is E10 RON97 III worth it over RON95 III?
+  //
+  // Judged only by what the fuel changes — the ECU's knock margin (Knock Control) and the
+  // timing it costs — on matched drives: both with hard pulls, intake within 8 °C
+  // (drive-check-tuner-analysis.md §4 #10), the same map slot. owner-voices.md §2 #7 and §4:
+  // "better fuel is judged by knock control, tank against tank". `tags` maps a Drive id to
+  // { fuel, slot } as the owner tagged the upload.
+  // ---------------------------------------------------------------------------
+  var FUEL_IAT_MATCH = 8;
+  KTA.carFuelTest = function (state, tags) {
+    var s = normalize(state), hidden = {};
+    s.hidden.forEach(function (id) { hidden[id] = true; });
+    var t = tags || {};
+    var drives = Object.keys(s.drives).map(function (id) { return s.drives[id]; })
+      .filter(function (d) { return !hidden[d.id] && !d.tooShort && t[d.id] && t[d.id].fuel; })
+      .sort(function (a, b) { return (a.start || 0) - (b.start || 0); });
+    var byFuel = {};
+    drives.forEach(function (d) { (byFuel[t[d.id].fuel] = byFuel[t[d.id].fuel] || []).push(d); });
+    var grades = Object.keys(byFuel).sort().map(function (fuel) {
+      return {
+        fuel: fuel,
+        drives: byFuel[fuel].map(function (d) {
+          return { id: d.id, slot: t[d.id].slot || 1, kcPeak: d.kcPeak, iatMoving: d.iatMoving, hardPulls: d.hardPulls || 0,
+            accel5070: d.accel5070 ? d.accel5070.seconds : null };
+        })
+      };
+    });
+    var pairs = [];
+    if (grades.length >= 2) {
+      var a = grades[0], b = grades[1];
+      a.drives.forEach(function (x) {
+        b.drives.forEach(function (y) {
+          if (x.hardPulls < 1 || y.hardPulls < 1 || x.slot !== y.slot) return;
+          if (!isNum(x.iatMoving) || !isNum(y.iatMoving) || Math.abs(x.iatMoving - y.iatMoving) > FUEL_IAT_MATCH) return;
+          if (!isNum(x.kcPeak) || !isNum(y.kcPeak)) return;
+          pairs.push({ a: x.id, b: y.id, fuelA: a.fuel, fuelB: b.fuel, iatGap: Math.round(Math.abs(x.iatMoving - y.iatMoving)),
+            kcPeakA: x.kcPeak, kcPeakB: y.kcPeak, accelA: x.accel5070, accelB: y.accel5070 });
+        });
+      });
+    }
+    var why = null;
+    if (grades.length < 2) why = grades.length ? 'Only ' + grades[0].fuel + ' is tagged so far: log the same drive on the other fuel.' : 'No Drive is tagged with its fuel yet.';
+    else if (!pairs.length) why = 'No matched pair yet: each fuel needs a Drive with a hard pull, intake within ' + FUEL_IAT_MATCH + ' °C of the other, on the same map slot.';
+    return { status: pairs.length ? 'measured' : 'cant-tell', why: why, iatMatch: FUEL_IAT_MATCH, grades: grades, pairs: pairs };
+  };
+
+  // ---------------------------------------------------------------------------
   // Map versions, Flashes and the Map a drive ran on (never guessed from the log)
   // ---------------------------------------------------------------------------
   var CHANGED = { afm: 1, boost: 1, fuel: 1, other: 1 };

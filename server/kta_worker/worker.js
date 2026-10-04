@@ -663,6 +663,13 @@ var OPS = {
   },
 
   /** Every number a tuner reads off this Drive, as flat key → value facts. */
+  /** The premium-fuel test: the engine pairs matched drives; the worker adds the timing each peak costs. */
+  fuelTest: function (args) {
+    var out = KTA.carFuelTest(stateOf(args), args.tags || {});
+    out.pairs.forEach(function (p) { p.timingA = timingCostDeg(p.kcPeakA); p.timingB = timingCostDeg(p.kcPeakB); });
+    return out;
+  },
+
   driveFacts: function (args) {
     var entry = cacheGet(need(args, 'driveId', 'string'));
     if (!entry.report) fail('no-report', 'Drive ' + args.driveId + ' has no drive report loaded.');

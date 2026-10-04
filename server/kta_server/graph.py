@@ -207,6 +207,15 @@ async def _ingest_run(
         reply["checkpoints"] = C.log_checkpoints(quality, heat, drive.get("summary"), limits)
         reply["health"] = C.health_rows(overview)
     reply["tour"] = TOUR.map_tour(plan, PIC._tables(store, plan))
+    # The premium-fuel test, once this Drive is tagged and two fuels are in the history.
+    tags = store.drive_tags()
+    if (tags.get(drive.get("id") or "") or {}).get("fuel") and len({t["fuel"] for t in tags.values() if t.get("fuel")}) >= 2:
+        fuel_test = await harness.step(
+            config, "fuelTest", "Compare the fuels on matched drives", {"drives": len(tags)},
+            lambda: worker.call("fuelTest", state=store.car_state(None) or {}, tags=tags),
+        )
+        reply["fuelTest"] = {**fuel_test, "line": C.fuel_test_line(fuel_test)}
+    reply["tags"] = tags.get(drive.get("id") or "")
     return {
         "upload_id": upload["upload_id"],
         "thread_id": state.get("thread_id") or upload.get("thread_id") or "",
