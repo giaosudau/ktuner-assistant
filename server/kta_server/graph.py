@@ -1,4 +1,16 @@
-"""The graph one upload runs through: ingest → decide → agent → built-in reply.
+"""The chat's graph: every turn, an upload or a typed message, runs through it.
+
+    START ─┬─ mode "chat" ──► chat ──► suggest ──► END          (a typed message)
+           └─ an upload ────► ingest ─► decide ─► agent ─► reply ─► END
+
+The typed path (tuning-shop D19–D25, `chat.py`): the `chat` node is the front
+agent — the model reads the message with tools, shows cards the chat declared
+(AG-UI frontend tools), or hands off to the tuner — and `suggest` writes the
+follow-up chips. Both leave their result in state, so it reaches the chat as an
+AG-UI STATE_SNAPSHOT, and the conversation is kept per thread by the
+checkpointer (SQLite in the app), so the agent remembers the chat.
+
+The upload path is unchanged: ingest → decide → agent → built-in reply.
 
 The LLM node (`agent`) slots in between `decide` and `reply` (spec): it may not
 change the Next step. Every node is deterministic except the agent's prose, and
@@ -52,6 +64,13 @@ class LoopState(TypedDict, total=False):
     """What the chat sends in and reads back out (AG-UI `state`)."""
 
     messages: Annotated[list, add_messages]
+    #: "chat" for a typed message (with `text`); an upload run sends `upload_id`.
+    mode: str
+    text: str
+    #: The typed path's answer: prose, the cards it showed (`ui`), citations, suggestions.
+    answer: dict
+    #: The chat's declared cards (AG-UI frontend tools), merged in by ag_ui_langgraph.
+    tools: list
     upload_id: str
     thread_id: str
     drive: dict
@@ -81,17 +100,82 @@ def build_graph(worker: Worker, store, settings, checkpointer=None, llm_caller=N
     async def reply(state: LoopState, config: RunnableConfig) -> dict[str, Any]:
         return await _reply(state, config, store)
 
+    async def chat(state: LoopState, config: RunnableConfig) -> dict[str, Any]:
+        return await _chat(state, config, worker, store, settings, llm_caller)
+
+    async def suggest(state: LoopState, config: RunnableConfig) -> dict[str, Any]:
+        return await _suggest(state, config, store, worker, settings, llm_caller)
+
     graph = StateGraph(LoopState)
+    graph.add_node("chat", chat)
+    graph.add_node("suggest", suggest)
     graph.add_node("ingest", ingest)
     graph.add_node("decide", decide)
     graph.add_node("agent", agent)
     graph.add_node("reply", reply)
-    graph.add_edge(START, "ingest")
+    graph.add_conditional_edges(START, _route, {"chat": "chat", "ingest": "ingest"})
+    graph.add_edge("chat", "suggest")
+    graph.add_edge("suggest", END)
     graph.add_edge("ingest", "decide")
     graph.add_edge("decide", "agent")
     graph.add_edge("agent", "reply")
     graph.add_edge("reply", END)
     return graph.compile(checkpointer=checkpointer or MemorySaver())
+
+
+def _route(state: LoopState) -> str:
+    """A typed message goes to the front agent; an upload to the Drive pipeline."""
+    return "chat" if state.get("mode") == "chat" and not state.get("upload_id") else "ingest"
+
+
+# ---------------------------------------------------------------------------
+# chat: the front agent answers a typed message (chat.py)
+# ---------------------------------------------------------------------------
+def _history(messages: list) -> list[dict[str, str]]:
+    """The chat so far as plain turns, without the message being answered now."""
+    out = []
+    for m in messages[:-1] if messages else []:
+        role = {"human": "user", "ai": "assistant"}.get(getattr(m, "type", ""), "")
+        content = m.content if isinstance(getattr(m, "content", None), str) else ""
+        if role and content.strip():
+            out.append({"role": role, "content": content})
+    return out
+
+
+async def _chat(state: LoopState, config: RunnableConfig, worker: Worker, store, settings, llm_caller) -> dict[str, Any]:
+    from . import chat as CH
+    from . import loopstate as LS
+
+    messages = list(state.get("messages") or [])
+    text = str(state.get("text") or "").strip()
+    if not text and messages and getattr(messages[-1], "type", "") == "human":
+        text = str(messages[-1].content or "").strip()
+    loop = await LS.loop_state(store, worker, settings)
+    harness = Harness()
+    out = await CH.chat_turn(
+        text or "hello", loop, worker, store, settings,
+        history=_history(messages), ui_tools=CH.ui_tools_from(state), llm_caller=llm_caller,
+        harness=harness, config=config,
+    )
+    out["basis"] = CH.basis(out, loop)
+    base = f"chat-{len(messages)}-{settings.now_ms()}"
+    await harness.say(config, base, str(out.get("answer") or ""))
+    await harness.summary_event(config, out.get("harness") or harness.summary())
+    return {
+        "answer": out,
+        "upload_id": None,
+        "messages": [AIMessage(content=str(out.get("answer") or ""), id=base)],
+    }
+
+
+async def _suggest(state: LoopState, config: RunnableConfig, store, worker: Worker, settings, llm_caller) -> dict[str, Any]:
+    from . import chat as CH
+    from . import loopstate as LS
+
+    answer = dict(state.get("answer") or {})
+    loop = await LS.loop_state(store, worker, settings)
+    answer["suggestions"] = answer.get("suggestions") or await CH.suggest(str(state.get("text") or ""), answer, loop, settings, llm_caller)
+    return {"answer": answer, "mode": None, "text": None}
 
 
 # ---------------------------------------------------------------------------

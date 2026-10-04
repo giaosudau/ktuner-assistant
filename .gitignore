@@ -21,3 +21,5 @@ __pycache__/
 .impeccable/review/
 web/tsconfig.tsbuildinfo
 .claude/launch.json
+server/*.db-wal
+server/*.db-shm

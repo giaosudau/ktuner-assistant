@@ -22,6 +22,7 @@ dependencies = [
     # POST /upload is multipart.
     "python-multipart==0.0.32",
     "httpx==0.28.1",
+    "langgraph-checkpoint-sqlite>=3",
 ]
 
 [dependency-groups]

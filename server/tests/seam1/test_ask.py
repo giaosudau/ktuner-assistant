@@ -110,11 +110,17 @@ class FakeModel:
         self.tail, self.calls = tail, 0
 
     async def __call__(self, messages, tools):
+        names = {t["function"]["name"] for t in tools}
+        if "ask_tuner" in names:  # the front agent: a tuning question goes to the tuner
+            return tool_turn(("ask_tuner", {"question": messages[-1]["content"]}))
+        if "suggest_replies" in names:
+            return tool_turn(("suggest_replies", {"items": [{"label": "How do I log a cool drive?", "action": "guide"}]}))
         if messages[1]["content"].startswith("The owner asks"):
             self.calls += 1  # uploads call the model too; only typed questions count
         system = messages[0]["content"]
         key = system.split("(key: ")[1].split(")")[0]
-        sentence = system.split("Start with this sentence: ")[1].split("\nThe Flash plan")[0]
+        marker = "Start with this sentence: " if "Start with this sentence: " in system else "only if it answers what they asked: "
+        sentence = system.split(marker)[1].split("\nThe Flash plan")[0]
         if not any(m.get("role") == "tool" for m in messages):
             return tool_turn(("search_knowledge", {"query": "heat soak"}))
         return submit_turn(sentence + self.tail, key)

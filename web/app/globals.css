@@ -2092,3 +2092,72 @@ dialog.tv::backdrop {
   color: var(--ink);
   font-size: 13px;
 }
+
+/* the front desk: the Recap, the one car editor brought into view, the chat list */
+.recap-lines {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px 16px;
+  margin: 10px 0 0;
+}
+.recap-lines div {
+  min-width: 0;
+}
+.recap-lines dt {
+  font-size: 12px;
+}
+.recap-lines dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.msg-ai.focus .card {
+  box-shadow: 0 0 0 2px var(--accent);
+  transition: box-shadow 0.4s var(--ease);
+}
+.chat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.chat-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: var(--radius-sm);
+}
+.chat-row:hover,
+.chat-row.on {
+  background: var(--bg-hover);
+}
+.chat-row .side-item {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+}
+.chat-row .side-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chat-row .icon-btn {
+  opacity: 0;
+  flex: none;
+}
+.chat-row:hover .icon-btn,
+.chat-row:focus-within .icon-btn,
+.chat-row.on .icon-btn {
+  opacity: 1;
+}
+@media (hover: none) {
+  .chat-row .icon-btn {
+    opacity: 1;
+  }
+}
+.cap-list {
+  margin: 4px 0 10px;
+  padding-left: 18px;
+}
+.cap-list li {
+  margin: 4px 0;
+}

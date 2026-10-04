@@ -146,6 +146,11 @@ def classify_issue(issue: str, card_numbers: Sequence[float] = ()) -> str:
         "not in the Flash plan" in text
         or "not the Flash plan's" in text
         or "not in this reply's Flash plan" in text
+        # The hard map rules (tuning-shop D11): an invented table, advice on a table the plan
+        # doesn't change, or a before → after that is not a plan cell.
+        or "KTuner map doesn't have" in text
+        or "Flash plan doesn't change" in text
+        or "not a cell of the checked Flash plan" in text
     ):
         return "wrong cell"
     if "Remove it or say why not to" in text:

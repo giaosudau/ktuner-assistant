@@ -27,14 +27,16 @@ make run
 |---|---|---|
 | Engine | `engine/` (JavaScript) | every verdict, Open step, Next step, Flash plan and map cell |
 | Worker | `server/kta_worker/` (Node) | the only process that runs the engine; JSON in, compact JSON out |
-| Server | `server/kta_server/` (Python, FastAPI, LangGraph) | the loop graph, the agent, verify, knowledge, SQLite |
+| Server | `server/kta_server/` (Python, FastAPI, LangGraph) | the chat graph (front agent → tuner hand-off, and the Drive pipeline), verify, knowledge, SQLite (+ chat memory) |
 | Chat | `web/` (Next.js) | the conversation, cards, table viewer |
 | Knowledge | `knowledge/cards/` | sourced cards the agent must cite |
 
 The LLM orchestrates: it picks tools, reasons and teaches. It never decides a verdict or writes a
 map cell. Every reply passes `verify` (numbers from tools, real tables only, only the checked plan's
 cells, banned advice, citations) and every map change passes two independent checks (ADR 0003).
-See `docs/adr/0005-llm-orchestrates-engine-decides.md`.
+See `docs/adr/0005-llm-orchestrates-engine-decides.md` and `docs/adr/0006-agentic-chat-front-agent.md`
+(every typed message: a front agent with tools, the chat's cards as AG-UI frontend tools, model-written
+suggestions checked in code, and the conversation kept per chat by LangGraph's SQLite checkpointer).
 
 ## Test and eval
 

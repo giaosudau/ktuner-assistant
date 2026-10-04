@@ -281,14 +281,24 @@ export function ProfileCard({
   saved,
   busy,
   onSave,
+  onEdit,
 }: {
   draft: ProfileDraft;
   spec: ProfileSpec | null;
   saved?: string;
   busy: boolean;
   onSave: (fields: CarProfile) => void;
+  /** Open the one car editor (shown on a saved card). */
+  onEdit?: () => void;
 }) {
   const [fields, setFields] = useState<CarProfile>({ ...draft.fields, parts: [...draft.fields.parts] });
+  if (saved === "Replaced by the card below.") {
+    return (
+      <section className="card" data-testid="profile-card-replaced">
+        <p className="small muted">This car card was replaced by the one below.</p>
+      </section>
+    );
+  }
   if (saved) {
     return (
       <section className="card" data-testid="profile-card">
@@ -301,6 +311,12 @@ export function ProfileCard({
               {fields.parts.length ? fields.parts.map(partName).join(", ") : "No parts listed"} · {fields.basemap}
             </span>
           </span>
+          {onEdit ? (
+            <button type="button" className="btn ghost" data-testid="profile-card-edit" disabled={busy} onClick={onEdit} style={{ marginLeft: "auto" }}>
+              <Icon name="edit" />
+              Edit
+            </button>
+          ) : null}
         </div>
       </section>
     );
