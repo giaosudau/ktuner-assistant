@@ -361,3 +361,15 @@ def test_the_table_viewer_reads_any_table_of_the_map_version(loop: Loop):
     assert table["editable_here"] is False
     assert table["changes"] == []
     assert loop.get("/api/map/table?name=Not_A_Table").status_code == 404
+
+
+def test_the_table_viewer_outlines_the_planned_cells_by_either_spelling(proposing: Loop):
+    """The KTuner card names tables as KTuner shows them; the viewer finds them and outlines the plan's cells."""
+    plan = propose(proposing)
+    display = plan["ktunerCard"]["groups"][0]["tables"][0]  # "Boost Target 1 Normal L"
+    body = proposing.get(f"/api/map/table?name={display}").json()
+    assert body["table"] == display.replace(" ", "_")
+    cells = plan["ktunerCard"]["groups"][0]["cells"]
+    assert len(body["changes"]) == len(cells)
+    for change in body["changes"]:
+        assert body["rpm_axis"][change["row"]] in {c["rpm"] for c in cells}

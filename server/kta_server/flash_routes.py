@@ -75,6 +75,8 @@ def register_flash_routes(app: FastAPI, store, worker, settings) -> None:
                     for f in TOUR.FAMILIES
                 ],
             }
+        # The KTuner card spells tables as KTuner shows them ("Boost Target 1 Normal L"); the map data by id.
+        name = name if name in tables else name.replace(" ", "_")
         table = TOUR.read_table(tables, name)
         if table.get("error"):
             raise HTTPException(status_code=404, detail=table["error"])
@@ -85,7 +87,7 @@ def register_flash_routes(app: FastAPI, store, worker, settings) -> None:
             card = (plan or {}).get("ktunerCard") or {}
             axis = table.get("rpm_axis") or []
             for group in card.get("groups") or []:
-                if name not in (group.get("tables") or []):
+                if name not in [str(t).replace(" ", "_") for t in group.get("tables") or []]:
                     continue
                 for cell in group.get("cells") or []:
                     if cell.get("rpm") in axis:
