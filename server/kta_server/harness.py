@@ -65,6 +65,8 @@ class Harness:
     """Collects the steps of one run and streams each as it happens."""
 
     steps: list[Step] = field(default_factory=list)
+    #: Called with each step as it starts and ends, for streams outside LangGraph (a typed question).
+    on_step: Callable[[str, str, str], Awaitable[None]] | None = None
 
     @property
     def seconds(self) -> float:
@@ -95,6 +97,8 @@ class Harness:
         """
         cm = _manager(config)
         shown = dict(inputs)
+        if self.on_step:
+            await self.on_step("start", name, title)
         started = time.perf_counter()
         result = await call()
         ms = int((time.perf_counter() - started) * 1000)
@@ -102,6 +106,8 @@ class Harness:
         run = await cm.on_tool_start({"name": name, "args": shown}, title, name=name, inputs=shown)
         await run.on_tool_end(ToolMessage(content=json.dumps(output, default=str), name=name, tool_call_id=str(run.run_id)))
         self.steps.append(Step(name=name, title=title, inputs=shown, output=output, ms=ms))
+        if self.on_step:
+            await self.on_step("end", name, title)
         return result
 
     async def say(self, config: RunnableConfig | None, message_id: str, text: str) -> None:

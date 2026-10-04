@@ -22,6 +22,8 @@ built and again on the first `GET /api/state`.
 
 from __future__ import annotations
 
+import asyncio
+import json
 import uuid
 from contextlib import asynccontextmanager
 from typing import Any
@@ -29,7 +31,7 @@ from typing import Any
 from ag_ui_langgraph import LangGraphAgent, add_langgraph_fastapi_endpoint
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 
 from .ask import answer_question
 from .config import Settings, load_settings
@@ -420,6 +422,40 @@ def create_app(
             raise HTTPException(status_code=400, detail="Ask me in words first.")
         state = store.car_state(None) or {}
         return await answer_question(text, worker, store, settings, _latest_drive(state), llm_caller)
+
+    @app.post("/api/ask/stream")
+    async def api_ask_stream(request: Request) -> StreamingResponse:
+        """The same answer as `/api/ask`, streamed: one JSON line per tool step as the tuner works, then the answer."""
+        try:
+            body = await request.json()
+        except Exception as exc:  # noqa: BLE001 - any bad body is the same message
+            raise HTTPException(status_code=400, detail="Ask me in words first.") from exc
+        text = str(body.get("text") or "").strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="Ask me in words first.")
+        queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue()
+
+        async def on_step(phase: str, name: str, title: str) -> None:
+            await queue.put({"type": "step", "phase": phase, "name": name, "title": title})
+
+        async def run() -> None:
+            try:
+                state = store.car_state(None) or {}
+                out = await answer_question(text, worker, store, settings, _latest_drive(state), llm_caller, on_step)
+                await queue.put({"type": "answer", "answer": out})
+            except Exception as exc:  # noqa: BLE001 - the stream always ends with a line the chat can show
+                await queue.put({"type": "error", "message": str(exc)})
+            finally:
+                await queue.put(None)
+
+        task = asyncio.create_task(run())
+
+        async def lines():
+            while (item := await queue.get()) is not None:
+                yield json.dumps(item, ensure_ascii=False) + "\n"
+            await task
+
+        return StreamingResponse(lines(), media_type="application/x-ndjson")
 
     @app.post("/api/screenshot")
     async def api_screenshot(file: UploadFile = File(...), text: str = Form(default="")) -> dict[str, Any]:

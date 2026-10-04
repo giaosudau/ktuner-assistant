@@ -55,6 +55,9 @@ export type AiMsg = {
   outcome?: api.FlashOutcome;
   /** a Flash card in this message was acted on: what the owner said */
   acted?: string;
+  /** the tool the tuner is running right now, while a typed answer streams */
+  live?: string;
+  liveCount?: number;
 };
 export type Msg = UserMsg | AiMsg;
 
@@ -307,9 +310,14 @@ export function useChat() {
         }
         add(user, { id, role: "assistant", kind: "ask", pending: true });
         try {
-          patch(id, { pending: false, answer: await api.ask(words) });
+          let count = 0;
+          const answer = await api.askStream(words, (title) => {
+            count += 1;
+            patch(id, { live: title, liveCount: count });
+          });
+          patch(id, { pending: false, live: undefined, answer });
         } catch (e) {
-          patch(id, { pending: false, error: (e as Error).message });
+          patch(id, { pending: false, live: undefined, error: (e as Error).message });
         }
       });
     },

@@ -86,6 +86,39 @@ export type AskAnswer = {
 
 export const ask = (text: string) => post<AskAnswer>("/api/ask", { text }, "The question did not go through");
 
+/**
+ * The same answer, streamed: `onStep` hears each tool the tuner runs as it starts, so the
+ * work row is live like a Drive reply's; resolves with the answer.
+ */
+export async function askStream(text: string, onStep: (title: string, name: string) => void): Promise<AskAnswer> {
+  const response = await fetch(`${SERVER_URL}/api/ask/stream`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!response.ok || !response.body) {
+    const payload = await response.json().catch(() => null);
+    throw new Error(payload?.detail ?? `The question did not go through (${response.status}).`);
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const event = JSON.parse(line) as { type: string; phase?: string; name?: string; title?: string; answer?: AskAnswer; message?: string };
+      if (event.type === "step" && event.phase === "start") onStep(event.title ?? "", event.name ?? "");
+      else if (event.type === "answer" && event.answer) return event.answer;
+      else if (event.type === "error") throw new Error(event.message ?? "The question did not go through.");
+    }
+    if (done) throw new Error("The answer was cut off. Send it again.");
+  }
+}
+
 export const draftFromWords = (text: string) =>
   post<AskAnswer>("/api/ask", { text, flow: "setup" }, "I could not read that").then((out) => out.draft as ProfileDraft);
 

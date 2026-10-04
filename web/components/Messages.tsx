@@ -189,11 +189,12 @@ function WorkRow({ turn }: { turn: Turn }) {
 }
 
 // ------------------------------------------------------------ assistant turns
-function Typing() {
+function Typing({ live, count }: { live?: string; count?: number }) {
   return (
-    <div className="work-live" data-testid="thinking">
+    <div className="work-live" data-testid="thinking" aria-live="polite">
       <span className="spinner" />
-      <span className="shimmer">Thinking…</span>
+      <span className="shimmer">{live ? `${live}…` : "Thinking…"}</span>
+      {count ? <span className="muted">· {count} checked</span> : null}
     </div>
   );
 }
@@ -249,7 +250,7 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
 
 function Body({ msg, a }: { msg: AiMsg; a: Actions }) {
   if (msg.kind === "drive") return <DriveReply msg={msg} a={a} />;
-  if (msg.pending) return <Typing />;
+  if (msg.pending) return <Typing live={msg.live} count={msg.liveCount} />;
   if (msg.error) return <div className="err">{msg.error}</div>;
 
   if (msg.kind === "profile" && msg.draft) {

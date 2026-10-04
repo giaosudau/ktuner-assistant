@@ -249,8 +249,13 @@ def system_prompt(drive: Mapping[str, Any], reply: Mapping[str, Any], question: 
             "engine's and the map checks', not yours. Rules:",
             "1. Take every number from the tools. Quote numbers as the tools return them (rounding is fine). Do not compute new "
             "numbers: no differences, sums, averages or percentages of your own.",
-            f"2. Name exactly one Next step: {step.get('title') or 'nothing'} (key: {step.get('key')}). Never add, remove or "
-            f"change it. The drive whose upload settles it: {step.get('uploadWhen') or ''}",
+            (
+                f"2. Name exactly one Next step: {step.get('title')} (key: {step.get('key')}). Never add, remove or "
+                f"change it. The drive whose upload settles it: {step.get('uploadWhen') or ''}"
+                if step.get("key")
+                else "2. There is no Next step yet (no Drive read). Name none; submit with an empty action_key. "
+                "If the owner needs a next move, it is the drive brief: log one Cool drive with 2 pulls."
+            ),
             "3. Name only Flash plan cells, with the plan's exact values. You may READ and explain any table with "
             "get_map_table, but never propose a value for a table the plan doesn't change.",
             "4. Never suggest lowering knock sensitivity, adding ignition timing, raising boost, or editing an AFM/MAF curve "
@@ -593,9 +598,12 @@ async def run_agent(
                 results.append({"tool_call_id": call["id"], "role": "tool", "name": call["name"], "content": f"Tool failed: {exc}"})
         if submitted is not None:
             args = submitted["args"] if isinstance(submitted["args"], Mapping) else {}
+            action_key = args.get("action_key")
+            if isinstance(action_key, str) and action_key.strip().lower() in ("", "none", "null", "nothing"):
+                action_key = None  # "no step" spelled as a word is still no step
             verdict = V.verify(
                 str(args.get("prose") or ""),
-                args.get("action_key"),
+                action_key,
                 decided.get("key"),
                 facts,
                 plan,

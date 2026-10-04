@@ -8,6 +8,8 @@ refused with the reason. Built-in with no key; the fake model covers the agent.
 
 from __future__ import annotations
 
+import json
+
 from conftest import Loop
 
 from test_knowledge_cards import FAKE_LLM, Script, submit_turn, tool_turn
@@ -162,5 +164,22 @@ def test_a_request_for_a_change_reaches_the_tuner_but_can_never_grant_it(tmp_pat
         timing = ask(loop, "Add timing")
         assert "never edit ignition" in timing["answer"] and timing["agent"]["verified"] is False
         assert model.calls >= 2, "both questions reached the tuner"
+    finally:
+        loop.close()
+
+
+def test_a_typed_answer_streams_its_tool_steps_then_the_answer(tmp_path):
+    """The tuner's work shows live on a typed question too: one line per step, then the answer."""
+    loop = Loop(tmp_path / "stream", llm=FAKE_LLM, llm_caller=FakeModel(" [kc-heat-soak]")).start()
+    try:
+        owner_loop(loop)
+        response = loop.run(loop._client.post("/api/ask/stream", json={"text": "Why is my car slower in the heat?"}))
+        assert response.status_code == 200
+        lines = [json.loads(line) for line in response.text.splitlines() if line.strip()]
+        steps = [line for line in lines if line["type"] == "step"]
+        assert steps and {s["phase"] for s in steps} == {"start", "end"}
+        assert any(s["name"] == "knowledge" for s in steps), "the fake model's knowledge look-up shows as a step"
+        assert lines[-1]["type"] == "answer"
+        assert lines[-1]["answer"]["agent"]["verified"] is True
     finally:
         loop.close()

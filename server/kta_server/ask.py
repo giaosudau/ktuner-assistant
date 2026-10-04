@@ -83,7 +83,7 @@ def _cite(*cards: Mapping[str, Any] | None) -> list[dict[str, str]]:
 
 
 async def answer_question(
-    text: str, worker: Any, store: Any, settings: Any, latest_id: str | None, llm_caller: Any = None
+    text: str, worker: Any, store: Any, settings: Any, latest_id: str | None, llm_caller: Any = None, on_step: Any = None
 ) -> dict[str, Any]:
     """The reply to one typed question: `{ kind, intent, answer, window, citations, nextStep, agent }`."""
     intent = classify(text)
@@ -161,7 +161,7 @@ async def answer_question(
     # AI-native (tuning-shop D1): with a model, every question goes through the agent, which picks the
     # tools and writes the answer; the built-in answer above is the checked fallback.
     if settings.has_llm:
-        await _explain(out, text, state, latest_id, plan, step, worker, store, settings, llm_caller)
+        await _explain(out, text, state, latest_id, plan, step, worker, store, settings, llm_caller, on_step)
     return out
 
 
@@ -176,11 +176,11 @@ def _boost_answer(plan: Mapping[str, Any] | None) -> str:
     return f"I can't hand you more boost on request. The Flash plan today: {head} " + " ".join(parts) + " Nothing changes in your map."
 
 
-async def _explain(out, text, state, latest_id, plan, step, worker, store, settings, llm_caller) -> None:
+async def _explain(out, text, state, latest_id, plan, step, worker, store, settings, llm_caller, on_step=None) -> None:
     """Let the agent put the built-in answer in its own words, checked; else the built-in answer stands."""
     drive = {"id": latest_id, "summary": (state.get("drives") or {}).get(latest_id), "map": None}
     reply = {"say": out["answer"], "window": out["window"], "nextStep": step, "flashPlan": plan}
-    harness = Harness()
+    harness = Harness(on_step=on_step)
     try:
         result = await agent_node.run_agent(
             drive, reply, worker, store, settings, harness, None, llm_caller, question=text
