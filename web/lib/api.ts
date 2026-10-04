@@ -48,7 +48,29 @@ export type LoopState = {
   unansweredQuestions: PendingQuestion[];
   flashPlan: FlashPlan | null;
   logGuide?: DriveBrief | null;
+  /** Where the car is, the Recap and the stage's suggested replies (the front desk). */
+  stage?: string;
+  recap?: Recap | null;
+  suggestions?: Suggestion[];
+  capabilities?: Capability[];
 };
+
+/** A suggested reply: send words, open the drive brief, attach a log, or fill the example. */
+export type Suggestion = { label: string; action: "send" | "guide" | "attach" | "example" | "edit-car"; text?: string; icon?: string };
+
+/** Where the car is, for a new chat or a greeting: who, the round, the last drive, what's open. */
+export type Recap = {
+  car: string;
+  parts: string;
+  map: string;
+  round: number;
+  stage: string;
+  stageLine: string;
+  lines: { label: string; value: string }[];
+};
+
+/** What the assistant can do, with its limit. */
+export type Capability = { id: string; status: "can" | "partly" | "cannot"; title: string; says: string; limit?: string };
 
 export async function readLoop(): Promise<LoopState | null> {
   try {
@@ -90,7 +112,20 @@ export type AskAnswer = {
   /** The picture the tuner chose for this answer, drawn from the engine's data. */
   pictures?: Picture[] | null;
   agent?: { verified: boolean; fallback: string | null; issues: string[] } | null;
+  /** The front desk's extras: the Recap, the drive brief, chips, and what the answer read. */
+  intent?: string;
+  suggestions?: Suggestion[];
+  basis?: string | null;
+  /** The cards the agent chose to show (AG-UI frontend tools), with the server's own data in them. */
+  ui?: UiCard[];
 };
+
+/** One card the agent showed: the server validated it and filled it from the Car file. */
+export type UiCard =
+  | { tool: "show_recap"; recap: Recap }
+  | { tool: "show_car_editor"; draft: ProfileDraft }
+  | { tool: "show_drive_brief" }
+  | { tool: "show_capabilities"; capabilities: Capability[] };
 
 export const ask = (text: string) => post<AskAnswer>("/api/ask", { text }, "The question did not go through");
 
@@ -126,9 +161,6 @@ export async function askStream(text: string, onStep: (title: string, name: stri
     if (done) throw new Error("The answer was cut off. Send it again.");
   }
 }
-
-export const draftFromWords = (text: string) =>
-  post<AskAnswer>("/api/ask", { text, flow: "setup" }, "I could not read that").then((out) => out.draft as ProfileDraft);
 
 export const saveProfile = (fields: CarProfile) =>
   post<{ profile: CarProfile; installs: InstallRow[]; line: string }>("/api/profile", { fields }, "The profile did not save");
@@ -212,4 +244,50 @@ export type FuelTest = {
 export async function mapFamilies(): Promise<MapFamily[]> {
   const response = await fetch(`${SERVER_URL}/api/map/table`, { cache: "no-store" });
   return response.ok ? ((await response.json()) as { families: MapFamily[] }).families : [];
+}
+
+// ------------------------------------------------------------------- chats
+/** One chat in the sidebar list: kept on the server like any chat app (tuning-shop D18). */
+export type ChatRow = { id: string; title: string; updated_at: number; messages: number };
+
+export async function listChats(): Promise<ChatRow[]> {
+  try {
+    const response = await fetch(`${SERVER_URL}/api/threads`, { cache: "no-store" });
+    return response.ok ? ((await response.json()) as { threads: ChatRow[] }).threads : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function readChat<M>(id: string): Promise<{ id: string; title: string; messages: M[] } | null> {
+  try {
+    const response = await fetch(`${SERVER_URL}/api/threads/${encodeURIComponent(id)}`, { cache: "no-store" });
+    return response.ok ? ((await response.json()) as { id: string; title: string; messages: M[] }) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveChat(id: string, messages: unknown[]): Promise<void> {
+  await fetch(`${SERVER_URL}/api/threads/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ messages }),
+  });
+}
+
+/** The last save as the page goes away: a keepalive request the browser finishes after unload. */
+export function saveChatOnLeave(id: string, messages: unknown[]): void {
+  const body = JSON.stringify({ messages });
+  if (body.length > 60000) return; // keepalive bodies are capped at 64 KB; the regular save has it
+  void fetch(`${SERVER_URL}/api/threads/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body,
+    keepalive: true,
+  }).catch(() => undefined);
+}
+
+export async function deleteChat(id: string): Promise<void> {
+  await fetch(`${SERVER_URL}/api/threads/${encodeURIComponent(id)}`, { method: "DELETE" });
 }

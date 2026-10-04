@@ -6,13 +6,15 @@
  *
  *   CSV attached   → POST /upload, then one AG-UI run → a Drive reply that streams
  *   image attached → POST /api/screenshot
- *   words, no car  → the Car profile card, filled from the words
- *   words          → POST /api/ask
+ *   words          → POST /api/ask/stream: the front desk answers a greeting, a car
+ *                    change or "what can you do"; words about a car fill the one
+ *                    car editor; anything else goes to the tuner
  *   a chip         → POST /api/answer, /api/flash/*
  *
- * The thread lives in this browser (localStorage) like any chat app; the Car
- * history, Map versions and answers live on the server and are re-read after
- * every turn so the sidebar mirrors the loop.
+ * Chats are kept on the server (SQLite) and listed in the sidebar like any chat
+ * app; this browser remembers only which chat is open. The Car file (profile,
+ * history, Map versions, answers) lives on the server too, and is re-read after
+ * every turn so the sidebar mirrors the loop. No chat ever holds a car fact.
  */
 import {
   HttpAgent,
@@ -27,6 +29,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import * as api from "./api";
+import { UI_TOOLS } from "./uiTools";
 import { AGENT_URL, type CarProfile, type HarnessStep, type HarnessSummary, type OwnerQuestion, type ProfileDraft, type ReplyCard, type Turn } from "./types";
 
 export type FileRef = { name: string; kind: "csv" | "image"; size: number; thumb?: string; tags?: api.LogTags };
@@ -41,9 +44,10 @@ export type AiMsg = {
   turn?: Turn;
   /** ask */
   answer?: api.AskAnswer;
-  /** profile */
+  /** profile: the one car editor in the thread. `rev` remounts it when the draft is replaced. */
   draft?: ProfileDraft;
   saved?: string;
+  rev?: number;
   /** note */
   text?: string;
   detail?: string;
@@ -61,24 +65,36 @@ export type AiMsg = {
 };
 export type Msg = UserMsg | AiMsg;
 
-const STORE = "kta-chat-v1";
+/** The chat that was open, so a reload comes back to it (the chats themselves live on the server). */
+const CURRENT = "kta-chat-current";
+/** Where earlier builds kept the one chat, in this browser only: moved to the server once. */
+const LEGACY = "kta-chat-v1";
 let counter = 0;
 const nextId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(counter += 1)}`;
 
-function load(): { threadId: string; messages: Msg[] } | null {
+/** A turn cut off by a reload can't resume: say so instead of spinning forever. */
+function settle(messages: Msg[]): Msg[] {
+  return messages.map((m) =>
+    m.role === "assistant" && (m.pending || m.turn?.running)
+      ? { ...m, pending: false, turn: m.turn ? { ...m.turn, running: false, live: undefined } : m.turn, error: m.error ?? "Interrupted by a reload. Send it again." }
+      : m,
+  );
+}
+
+function readLocal(key: string): string | null {
   try {
-    const raw = localStorage.getItem(STORE);
-    if (!raw) return null;
-    const saved = JSON.parse(raw) as { threadId: string; messages: Msg[] };
-    // A turn cut off by a reload can't resume: say so instead of spinning forever.
-    saved.messages = saved.messages.map((m) =>
-      m.role === "assistant" && (m.pending || m.turn?.running)
-        ? { ...m, pending: false, turn: m.turn ? { ...m.turn, running: false, live: undefined } : m.turn, error: m.error ?? "Interrupted by a reload. Send it again." }
-        : m,
-    );
-    return saved;
+    return localStorage.getItem(key);
   } catch {
     return null;
+  }
+}
+
+function writeLocal(key: string, value: string | null) {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {
+    /* private window: the open chat is forgotten on reload, the chats stay on the server */
   }
 }
 
@@ -98,26 +114,69 @@ export function useChat() {
   const [loop, setLoop] = useState<api.LoopState | null>(null);
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [chats, setChats] = useState<api.ChatRow[]>([]);
+  const [chatId, setChatId] = useState<string>("");
+  /** The message to bring into view (the one car editor when "Edit car" is pressed again). */
+  const [focus, setFocus] = useState<{ id: string; at: number } | null>(null);
   const threadId = useRef(nextId("thread"));
   const running = useRef(false);
 
   // --------------------------------------------------------------- persistence
+  const refreshChats = useCallback(async () => setChats(await api.listChats()), []);
   useEffect(() => {
-    const saved = load();
-    if (saved) {
-      threadId.current = saved.threadId;
-      setMessages(saved.messages);
-    }
-    setReady(true);
-  }, []);
+    void (async () => {
+      // An earlier build kept the one chat in this browser: move it to the server once.
+      const legacy = readLocal(LEGACY);
+      if (legacy) {
+        try {
+          const old = JSON.parse(legacy) as { threadId: string; messages: Msg[] };
+          if (old?.threadId && old.messages?.length) {
+            await api.saveChat(old.threadId, settle(old.messages));
+            writeLocal(CURRENT, old.threadId);
+          }
+          writeLocal(LEGACY, null);
+        } catch {
+          /* unreadable: nothing to move */
+        }
+      }
+      const open = readLocal(CURRENT);
+      if (open) {
+        const chat = await api.readChat<Msg>(open);
+        if (chat) {
+          threadId.current = chat.id;
+          setMessages(settle(chat.messages));
+        }
+      }
+      setChatId(threadId.current);
+      setReady(true);
+      void refreshChats();
+    })();
+  }, [refreshChats]);
+  // Saved after every change: at once when a turn is done, a moment later while a reply streams
+  // (so it isn't written on every token), and once more as the page goes away.
+  const latest = useRef<{ id: string; messages: Msg[] }>({ id: "", messages: [] });
   useEffect(() => {
     if (!ready) return;
-    try {
-      localStorage.setItem(STORE, JSON.stringify({ threadId: threadId.current, messages }));
-    } catch {
-      /* private window: the thread lives for this page only */
-    }
-  }, [messages, ready]);
+    writeLocal(CURRENT, threadId.current);
+    if (!messages.length) return;
+    const id = threadId.current;
+    latest.current = { id, messages };
+    const timer = setTimeout(
+      () => {
+        void api.saveChat(id, messages).then(refreshChats).catch((e) => console.warn("This chat was not saved:", e));
+      },
+      busy ? 600 : 0,
+    );
+    return () => clearTimeout(timer);
+  }, [messages, ready, busy, refreshChats]);
+  useEffect(() => {
+    const flush = () => {
+      const { id, messages: last } = latest.current;
+      if (id && last.length) api.saveChatOnLeave(id, last);
+    };
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
+  }, []);
 
   const refresh = useCallback(async () => setLoop(await api.readLoop()), []);
   useEffect(() => {
@@ -268,6 +327,79 @@ export function useChat() {
     [patchTurn],
   );
 
+  // ------------------------------------------------------------ a typed message
+  /**
+   * One chat turn through the agent graph (AG-UI): the front agent reads the message with tools,
+   * shows the cards it chooses (declared here as frontend tools), or hands off to the tuner; its
+   * answer and the suggested replies arrive as shared state. The conversation is remembered by
+   * the server per chat, so only the new message is sent.
+   */
+  const runChat = useCallback(
+    async (words: string, msgId: string) => {
+      let failure: string | undefined;
+      let answer: api.AskAnswer | null = null;
+      let count = 0;
+      let thinking = "";
+      try {
+        const agent = new HttpAgent({
+          url: AGENT_URL,
+          agentId: "kta-tune-assist",
+          threadId: threadId.current,
+          description: "KTuner Assistant",
+          initialState: { mode: "chat", text: words, thread_id: threadId.current, upload_id: null },
+        });
+        agent.addMessage({ id: nextId("m"), role: "user", content: words });
+        agent.subscribe({
+          onEvent({ event }) {
+            switch (event.type) {
+              case "TOOL_CALL_START": {
+                const e = event as ToolCallStartEvent;
+                count += 1;
+                patch(msgId, { live: e.toolCallName, liveCount: count });
+                break;
+              }
+              case "CUSTOM": {
+                const e = event as CustomEvent;
+                if (e.name === "thinking" && typeof e.value === "string") thinking += e.value;
+                break;
+              }
+              case "STATE_SNAPSHOT": {
+                const snapshot = (event as StateSnapshotEvent).snapshot as { answer?: api.AskAnswer } | undefined;
+                if (snapshot?.answer) {
+                  answer = snapshot.answer;
+                  patch(msgId, { pending: false, live: undefined, answer });
+                }
+                break;
+              }
+              case "RUN_ERROR":
+                failure = (event as RunErrorEvent).message;
+                break;
+              default:
+                break;
+            }
+          },
+          onRunFailed: ({ error }) => {
+            failure = error.message;
+          },
+        });
+        await agent.runAgent({ runId: nextId("run"), tools: UI_TOOLS, context: [], forwardedProps: {} });
+      } catch (error) {
+        failure = (error as Error).message;
+      }
+      const got = answer as api.AskAnswer | null;
+      if (!got) {
+        patch(msgId, { pending: false, live: undefined, error: failure ?? "No answer came back. Send it again." });
+        return;
+      }
+      patch(msgId, { pending: false, live: undefined, answer: thinking && !got.thinking ? { ...got, thinking } : got });
+      // The car editor is the one card in the thread: the agent's call fills it, never a second one.
+      const editor = got.ui?.find((c) => c.tool === "show_car_editor");
+      if (editor && "draft" in editor) openEditor(editor.draft);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [patch],
+  );
+
   // ------------------------------------------------------------------ send
   const send = useCallback(
     async (text: string, file?: File | null, tags?: api.LogTags) => {
@@ -298,30 +430,11 @@ export function useChat() {
           }
           return;
         }
-        const current = loop ?? (await api.readLoop());
-        if (!current?.carProfile) {
-          add(user, { id, role: "assistant", kind: "profile", pending: true });
-          try {
-            patch(id, { pending: false, draft: await api.draftFromWords(words) });
-          } catch (e) {
-            patch(id, { pending: false, error: (e as Error).message });
-          }
-          return;
-        }
         add(user, { id, role: "assistant", kind: "ask", pending: true });
-        try {
-          let count = 0;
-          const answer = await api.askStream(words, (title) => {
-            count += 1;
-            patch(id, { live: title, liveCount: count });
-          });
-          patch(id, { pending: false, live: undefined, answer });
-        } catch (e) {
-          patch(id, { pending: false, live: undefined, error: (e as Error).message });
-        }
+        await runChat(words, id);
       });
     },
-    [add, guard, loop, patch, runDrive],
+    [add, guard, patch, runDrive, runChat],
   );
 
   // ------------------------------------------------------------- Car profile
@@ -352,15 +465,29 @@ export function useChat() {
     [add, guard, patch],
   );
 
+  /**
+   * The one car editor, in the thread (tuning-shop D24). If an editor is already open in this
+   * chat, it takes the new draft and comes into view; only when none is open is one added.
+   * Pressing "Edit car" twice never makes two cards.
+   */
+  const openEditor = useCallback((draft: ProfileDraft) => {
+    let target = "";
+    setMessages((all) => {
+      const open = [...all].reverse().find((m) => m.role === "assistant" && m.kind === "profile" && !m.saved && m.draft);
+      if (open) {
+        target = open.id;
+        return all.map((m) => (m.id === open.id && m.role === "assistant" ? { ...m, draft, rev: (m.rev ?? 1) + 1 } : m));
+      }
+      target = nextId("a");
+      return [...all, { id: target, role: "assistant", kind: "profile", draft, rev: 1 } as AiMsg];
+    });
+    setTimeout(() => target && setFocus({ id: target, at: Date.now() }), 0);
+  }, []);
+
   const editCar = useCallback(() => {
     if (!loop?.carProfile) return;
-    add({
-      id: nextId("a"),
-      role: "assistant",
-      kind: "profile",
-      draft: { fields: { ...loop.carProfile, parts: [...loop.carProfile.parts] }, filled: {}, missing: [], prefilled: [] },
-    });
-  }, [add, loop]);
+    openEditor({ fields: { ...loop.carProfile, parts: [...loop.carProfile.parts] }, filled: {}, missing: [], prefilled: [] });
+  }, [loop, openEditor]);
 
   const showGuide = useCallback(() => {
     add(
@@ -442,10 +569,41 @@ export function useChat() {
   const newChat = useCallback(() => {
     if (running.current) return;
     threadId.current = nextId("thread");
+    setChatId(threadId.current);
     setMessages([]);
-  }, []);
+    void refreshChats();
+  }, [refreshChats]);
 
-  return { messages, loop, busy, ready, send, saveCar, editCar, showGuide, answer, flash, newChat, refresh, editAndResend };
+  const openChat = useCallback(
+    async (id: string) => {
+      if (running.current || id === threadId.current) return;
+      const chat = await api.readChat<Msg>(id);
+      if (!chat) return;
+      threadId.current = chat.id;
+      setChatId(chat.id);
+      setMessages(settle(chat.messages));
+    },
+    [],
+  );
+
+  const removeChat = useCallback(
+    async (id: string) => {
+      if (running.current) return;
+      await api.deleteChat(id);
+      if (id === threadId.current) {
+        threadId.current = nextId("thread");
+        setChatId(threadId.current);
+        setMessages([]);
+      }
+      void refreshChats();
+    },
+    [refreshChats],
+  );
+
+  return {
+    messages, loop, busy, ready, send, saveCar, editCar, showGuide, answer, flash, newChat, refresh, editAndResend,
+    chats, chatId, openChat, removeChat, focus,
+  };
 }
 
 /** A small preview of an attached picture, kept with the message. */

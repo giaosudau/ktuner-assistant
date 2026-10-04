@@ -54,7 +54,15 @@ export function Sidebar({
   onFlashBasemap,
   onGuide,
   busy,
+  chats = [],
+  chatId,
+  onOpenChat,
+  onDeleteChat,
 }: {
+  chats?: api.ChatRow[];
+  chatId?: string;
+  onOpenChat?: (id: string) => void;
+  onDeleteChat?: (id: string) => void;
   loop: api.LoopState | null;
   onNewChat: () => void;
   onEditCar: () => void;
@@ -102,6 +110,43 @@ export function Sidebar({
       </nav>
 
       <div className="side-scroll">
+        {chats.length ? (
+          <>
+            <div className="side-h">Chats</div>
+            <ul className="chat-list" data-testid="chat-list">
+              {chats.map((c) => (
+                <li key={c.id} className={`chat-row${c.id === chatId ? " on" : ""}`}>
+                  <button
+                    type="button"
+                    className="side-item"
+                    title={c.title}
+                    aria-current={c.id === chatId ? "page" : undefined}
+                    disabled={busy}
+                    onClick={() => {
+                      onOpenChat?.(c.id);
+                      onClose();
+                    }}
+                  >
+                    <Icon name="chat" />
+                    <span>{c.title}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    aria-label={`Delete chat: ${c.title}`}
+                    title="Delete this chat (your drives and maps stay)"
+                    disabled={busy}
+                    onClick={() => {
+                      if (window.confirm(`Delete the chat "${c.title}"? Your drives, flashes and car profile stay.`)) onDeleteChat?.(c.id);
+                    }}
+                  >
+                    <Icon name="trash" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
         <div className="side-h">Your car</div>
         <div className="car-sum" data-testid="car-summary">
           {car ? (

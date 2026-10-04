@@ -9,10 +9,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Composer, refuse } from "../components/Composer";
 import { Icon } from "../components/Icons";
-import { Message, type Actions } from "../components/Messages";
+import { Message, RecapCard, type Actions } from "../components/Messages";
 import { phaseOf, Sidebar } from "../components/Sidebar";
 import { TableViewer } from "../components/TableViewer";
-import { FUELS, type LogTags } from "../lib/api";
+import { FUELS, type LogTags, type Suggestion } from "../lib/api";
 import { useChat } from "../lib/useChat";
 
 const EXAMPLE =
@@ -106,6 +106,27 @@ export default function Page() {
     [busy, chat, file, text, tags],
   );
 
+  // "Edit car" pressed again brings the one open car editor into view instead of adding a card.
+  useEffect(() => {
+    if (!chat.focus) return;
+    const el = document.querySelector(`[data-msg-id="${chat.focus.id}"]`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    (el?.querySelector("input, button") as HTMLElement | null)?.focus({ preventScroll: true });
+  }, [chat.focus]);
+
+  /** A suggested reply: send its words, show the brief, attach a log, edit the car, or fill the example. */
+  const onChip = (chip: Suggestion) => {
+    pinned.current = true;
+    if (chip.action === "send") submit(chip.text ?? chip.label, null);
+    else if (chip.action === "guide") chat.showGuide();
+    else if (chip.action === "attach") (document.querySelector('[data-testid="file-input"]') as HTMLInputElement | null)?.click();
+    else if (chip.action === "edit-car") chat.editCar();
+    else if (chip.action === "example") {
+      setText(EXAMPLE);
+      document.getElementById("composer-text")?.focus();
+    }
+  };
+
   const actions: Actions = {
     busy,
     loop,
@@ -131,6 +152,9 @@ export default function Page() {
       pinned.current = true;
       void chat.editAndResend(id, words);
     },
+    onChip,
+    onEditCar: () => chat.editCar(),
+    focus: chat.focus,
   };
 
   const phase = phaseOf(loop);
@@ -169,6 +193,10 @@ export default function Page() {
         onToggle={() => setSide(false)}
         onFlashBasemap={() => void chat.flash("", "revert", { version: 1 })}
         onGuide={() => chat.showGuide()}
+        chats={chat.chats}
+        chatId={chat.chatId}
+        onOpenChat={(id) => void chat.openChat(id)}
+        onDeleteChat={(id) => void chat.removeChat(id)}
       />
       <div className="scrim" onClick={() => setSide(false)} aria-hidden="true" />
 
@@ -228,37 +256,25 @@ export default function Page() {
               </>
             ) : (
               <>
-                <h1>What are we tuning today?</h1>
-                <p>Attach your latest TunerView log, or ask about your car.</p>
+                <h1>Welcome back.</h1>
+                <p>Here&apos;s your car and where we are. Attach your latest log, or just ask.</p>
+                {loop?.recap ? <RecapCard recap={loop.recap} /> : null}
               </>
             )}
             {composer}
-            <div className="chips">
-              {phase === "car" ? (
-                <button type="button" className="chip" data-testid="use-example" onClick={() => {
-                    setText(EXAMPLE);
-                    document.getElementById("composer-text")?.focus();
-                  }}>
-                  <Icon name="car" />
-                  Use an example description
+            <div className="chips" data-testid="welcome-chips">
+              {(loop?.suggestions ?? []).map((chip) => (
+                <button
+                  key={chip.label}
+                  type="button"
+                  className="chip"
+                  data-testid={chip.action === "example" ? "use-example" : undefined}
+                  onClick={() => onChip(chip)}
+                >
+                  <Icon name={chip.icon ?? "help"} />
+                  {chip.label}
                 </button>
-              ) : null}
-              <button type="button" className="chip" onClick={actions.onGuide}>
-                <Icon name="route" />
-                How should I log a drive?
-              </button>
-              {car && loop?.hasDrives ? (
-                <>
-                  <button type="button" className="chip" onClick={() => submit("Why is my car slower in the heat?", null)}>
-                    <Icon name="help" />
-                    Why is it slower in the heat?
-                  </button>
-                  <button type="button" className="chip" onClick={() => submit("Is my knock control OK?", null)}>
-                    <Icon name="gauge" />
-                    Is my knock control OK?
-                  </button>
-                </>
-              ) : null}
+              ))}
             </div>
           </div>
         ) : (

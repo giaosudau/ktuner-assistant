@@ -153,9 +153,44 @@ async function run() {
       assert.equal(await noOverflow(), 0);
     });
 
+    await step('hello is greeted with the car and where we are, never a table lecture', async () => {
+      const before = await page.locator('[data-testid="assistant-message"]').count();
+      await page.click('.scrim').catch(() => undefined);
+      await page.fill('[data-testid="composer-text"]', 'Hello I want to tune my car');
+      await page.keyboard.press('Enter');
+      await page.waitForFunction((n) => document.querySelectorAll('[data-testid="assistant-message"]').length > n, before);
+      await idle();
+      const reply = lastAi();
+      await reply.locator('[data-testid="recap"]').waitFor();
+      const text = await reply.textContent();
+      assert.ok(!/Boost_Target|Ignition_Base|boost tables/i.test(text), 'no table lecture for a greeting');
+      assert.ok((await reply.locator('[data-testid="suggestions"] .chip').count()) >= 1, 'suggested replies under it');
+    });
+
+    await step('Edit car twice gives one car editor in the thread, never two', async () => {
+      for (let i = 0; i < 2; i += 1) {
+        if (await page.locator('[data-testid="open-sidebar"]').isVisible()) await page.click('[data-testid="open-sidebar"]');
+        await page.click('[data-testid="profile-edit"]');
+        await page.waitForSelector('[data-testid="setup-form"]');
+      }
+      assert.equal(await page.locator('[data-testid="setup-form"]').count(), 1);
+    });
+
     await step('the thread survives a reload', async () => {
       const count = await page.locator('[data-testid="assistant-message"]').count();
       await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('[data-testid="thread"] [data-testid="assistant-message"]');
+      assert.equal(await page.locator('[data-testid="assistant-message"]').count(), count);
+    });
+
+    await step('a new chat keeps the old one in the list, and it opens again', async () => {
+      const count = await page.locator('[data-testid="assistant-message"]').count();
+      if (await page.locator('[data-testid="open-sidebar"]').isVisible()) await page.click('[data-testid="open-sidebar"]');
+      await page.click('[data-testid="new-chat"]');
+      await page.waitForSelector('[data-testid="empty"]');
+      if (await page.locator('[data-testid="open-sidebar"]').isVisible()) await page.click('[data-testid="open-sidebar"]');
+      await page.waitForSelector('[data-testid="chat-list"] li');
+      await page.click('[data-testid="chat-list"] li .side-item');
       await page.waitForSelector('[data-testid="thread"] [data-testid="assistant-message"]');
       assert.equal(await page.locator('[data-testid="assistant-message"]').count(), count);
     });
