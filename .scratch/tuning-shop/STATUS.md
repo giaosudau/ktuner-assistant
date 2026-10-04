@@ -26,23 +26,26 @@ Eval: `eval.md`. Every row is committed as its own commit (author giaosudau).
 | TS-19 | Retire the old browser app | done | engine + server suites green after the move |
 
 | TS-20 | Knowledge from the forum and the MAF tool: research note + 7 cards | done | `docs/research/forum-afr-maf-research.md`; `kc-open-loop-wot`, `kc-maf-wot-calibration`, `kc-maf-data-rules`, `kc-misfire-gauges`, `kc-iat2-side`, `kc-wot-lean-timing`, `kc-tune-one-thing`; `test_knowledge.py` green |
-| TS-21 | D24 One car editor (bug F4: Edit car adds a card per click) | todo | "Edit car" twice → one editor; an older unsaved card can't save |
-| TS-22 | D19 + D23 Front desk intents and a knowledge-search floor (bug F1) | todo | `owner-queries.md` §A as a seam test: "Hello I want to tune my car" never returns a card, at every stage |
-| TS-23 | D20 Recap on a new chat and as the answer to a greeting | todo | seam test per stage; browser "New chat" shows the Recap before typing |
-| TS-24 | D21 Agent prompt from the Car file, not a hard-coded car | todo | prompt test: a different profile → a different car sentence; no profile → asks which car |
-| TS-25 | D22 Say what you read (bug F2) | todo | an answer that read no Drive has no Drive line; the window line names the car file's total and the Flash it starts from |
-| TS-26 | D18 Chats stored in SQLite and listed (bug F6) | todo | routes + seam tests; reload and "New chat" keep the old chat in the list; delete never removes a Drive |
-| TS-27 | D25 Suggested replies on every turn (bug F5) | todo | `owner-queries.md` §C; chips only under the latest message |
-| TS-28 | D17 Car file panel (bug F7) | todo | browser 1280 + 390 |
+| TS-21 | D24 One car editor, in the chat (bug F4) | done | browser: "Edit car twice gives one car editor in the thread"; `test_the_editor_only_takes_parts_from_the_list` |
+| TS-22 | D19 + D23 Front agent (LangGraph `chat` node, tools, hand-off) and a knowledge-search floor (bug F1) | done | `test_chat_agent.py`; browser "hello is greeted with the car… never a table lecture"; ADR 0006 |
+| TS-23 | D20 Recap on a new chat and as the answer to a greeting | done | `test_hello_from_a_returning_owner_shows_the_recap`; browser |
+| TS-24 | D21 Agent prompt from the Car file, not a hard-coded car | done | `agent.car_sentence`; no profile → asks which car |
+| TS-25 | D22 Say what you read (bug F2) | done | `chat.basis`; no-key greeting has no Drive line |
+| TS-26 | D18 Chats stored in SQLite and listed, conversation in the LangGraph checkpointer (bug F6) | done | `test_chats_are_saved_listed_renamed_and_deleted_without_touching_drives`, `test_the_conversation_survives_a_restart_in_sqlite`; browser reload + new chat |
+| TS-27 | D25 Suggested replies on every turn, model-written and checked (bug F5) | done | `test_checked_chips_drop_unknown_actions_numbers_and_requests_for_more`; browser |
+| TS-28 | D17 Car file as one record (Logger setup, goal) | todo | the Recap and the one editor already show it in the chat |
 | TS-29 | D26 Logger setup + D27 goal at intake | todo | brief names the owner's missing gauges; goal stored and reorders options only |
 | TS-30 | D28 phase 1 Open-loop check + full-throttle error vs AFR Command | todo | engine test on a log with STFT flat under boost; Health report row |
 | TS-31 | `kta-knowledge approve`: the reviewer step D8 names | todo | a proposal becomes a card only with a source doc + section |
+| TS-32 | D29 Capabilities as data + `show_capabilities` card | done | `test_what_can_you_do_says_what_it_cant`; prompts of both agents |
+| TS-33 | D30 The chat's cards as AG-UI frontend tools, validated server-side | done | `web/lib/uiTools.ts`; `chat.ui_card` |
+| TS-34 | D31 KTuner Help: `kc-ignition-formula` + four proposals | done | `docs/research/ktuner-help-pages.md`; `test_knowledge.py` |
 
 ## Next
 
-Build order: TS-21 (bug, smallest) → TS-22 → TS-23 → TS-24 → TS-25 → TS-26 → TS-27 → TS-28 →
-TS-29 → TS-30 → TS-31. The front desk (TS-21 to TS-27) comes before any new tuning feature: an
-owner who is greeted with a table lecture never uploads the log that every round needs.
+Next: TS-28 → TS-29 → TS-30 → TS-31; source the four KTuner Help proposals (D31); run the live
+scorecard on the front agent with the owner's real models (deepseek, qwen) using
+`owner-queries.md` §A–B.
 
 - Pre-existing failure found on 4 Oct (also red on the base commit): `tests/test_scorecard.py::
   test_a_table_outside_the_plan_is_a_wrong_cell` classifies the issue as "other".

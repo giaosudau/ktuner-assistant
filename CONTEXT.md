@@ -132,20 +132,24 @@ _Avoid_: normal range, default, community limit
 
 ### The shop
 
+**Capabilities**:
+What the assistant can do, can do with a limit, and can't do, kept as one list the agents, the cards and the owner all read.
+_Avoid_: features, skills
+
 **Chat**:
 One conversation with the shop, kept and listed; its title comes from its first message. Deleting a chat never deletes a Drive, a Flash or a Map version.
 _Avoid_: session, thread (in owner-facing words), ticket
 
-**Front desk**:
-How the shop answers before any tuning: a greeting, a vague opener or a car change is answered with the car, the stage and the options, never with a knowledge card.
-_Avoid_: router, intent handler (in owner-facing words)
+**Front agent**:
+The model that reads every typed message first and decides with tools: show where the car is, open the car editor, show the drive brief, say what the shop can and can't do, or hand the question to the tuner. A greeting is never answered with a knowledge card.
+_Avoid_: router, front desk (that is its no-key fallback), intent handler
 
 **Recap**:
 The first reply of a new Chat for a known car: the car in one line, Round N on its Map version, the last Drive and its Verdict, the Next step and what it waits for.
 _Avoid_: summary, dashboard, welcome back card
 
 **Suggested replies**:
-Up to three chips under the latest reply: one for the stage's action and up to two follow-ups built from what the reply said.
+Up to three chips under the latest reply, written by the model from the reply and the stage and checked by the app; else the stage's own.
 _Avoid_: quick actions, prompts, recommendations
 
 
