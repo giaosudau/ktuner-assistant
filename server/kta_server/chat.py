@@ -36,7 +36,7 @@ from . import knowledge as K
 from . import profile as P
 from . import verify as V
 from .ask import answer_question
-from .harness import Harness
+from .harness import Harness, merge as merge_harness
 
 #: Provider calls one front turn may spend, the hand-off and one repair included.
 MAX_CALLS = 8
@@ -267,12 +267,21 @@ async def chat_turn(
                 question = str(args.get("question") or text)
                 await harness.step(config, "handoff", "Hand the question to the tuner", {"question": question}, _wrap({"to": "tuner"}))
                 out = await answer_question(question, worker, store, settings, latest, llm_caller, on_step, config)
+                # The work row shows the whole turn: front steps plus the
+                # tuner's own steps, merged into one trace (harness lessons).
+                out["harness"] = merge_harness([
+                    {**harness.summary(), "steps": harness.as_list()},
+                    out.get("harness"),
+                ])
                 out["ui"] = cards
                 out["front"] = {"handoff": True, "thinking": "\n\n".join(thinking) or None}
                 return out
             if name == "submit_reply":
                 prose = str(args.get("prose") or "")
-                verdict = V.verify(prose, None, None, facts, None, [], knowledge=list(seen_cards.values()), question=True)
+                verdict = V.verify(
+                    prose, None, None, facts, None, [], knowledge=list(seen_cards.values()),
+                    question=True, max_words=150,
+                )
                 if verdict["ok"]:
                     return {
                         "ok": True, "kind": "desk", "answer": prose, "ui": cards, "window": None, "readDrives": False,
@@ -337,7 +346,9 @@ def _latest_drive(loop: Mapping[str, Any]) -> str | None:
 
 
 # ---------------------------------------------------------------------------
-# With no model: the deterministic front desk, the same answer shape
+# With no model: the deterministic front desk, the same answer shape.
+# No-key fallback only: `sort_intent`/`classify` run here, never in front of
+# the model. With a key `chat_turn` routes through the front agent above.
 # ---------------------------------------------------------------------------
 async def _without_model(
     text: str, loop: Mapping[str, Any], worker: Any, store: Any, settings: Any, latest: str | None,

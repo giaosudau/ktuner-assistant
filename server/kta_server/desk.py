@@ -7,6 +7,11 @@ opener, "what can you do", a part or fuel change, something outside tuning —
 from the Car file alone: no model, no knowledge search, the same answer every
 time. Everything else goes on to the tuner (`ask.answer_question`).
 
+No-key fallback only: with a model configured the front agent (`chat.py`)
+routes every typed message with tools and `ask_tuner`; `sort_intent`/`reply`
+here run only on the `_without_model` path, never as a pre-filter in front
+of the model.
+
 It also holds what the assistant can do, can't do, and isn't sure of
 (`CAPABILITIES`): the one list the greeting, the "can you …" answers, the
 agent's prompt and the suggested replies are all written from.
@@ -193,7 +198,11 @@ _DOMAIN = re.compile(
 
 
 def sort_intent(text: str) -> str:
-    """`greeting`, `capabilities`, `capability`, `car-change`, `fuel-change`, `flashed`, `out-of-scope` or `question`."""
+    """`greeting`, `capabilities`, `capability`, `car-change`, `fuel-change`, `flashed`, `out-of-scope` or `question`.
+
+    No-key fallback only (`chat._without_model`): with a key the front agent
+    routes every typed message with tools, never this regex.
+    """
     words = text.strip()
     tokens = [t.lower() for t in _TOKEN.findall(words)]
     if not tokens:

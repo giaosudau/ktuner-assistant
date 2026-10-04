@@ -59,6 +59,11 @@ from . import window as W
 from .harness import Harness, merge as merge_harness
 from .worker import Worker, WorkerError
 
+#: LLM spend cap for one upload run (ingest→decide→agent→reply): mirrors the
+#: tuner agent's own budget, so the upload path can never spend more than one
+#: agent turn. The chat path caps separately (`chat.MAX_CALLS`).
+UPLOAD_MAX_CALLS = agent_node.MAX_CALLS
+
 
 class LoopState(TypedDict, total=False):
     """What the chat sends in and reads back out (AG-UI `state`)."""
@@ -174,7 +179,24 @@ async def _suggest(state: LoopState, config: RunnableConfig, store, worker: Work
 
     answer = dict(state.get("answer") or {})
     loop = await LS.loop_state(store, worker, settings)
-    answer["suggestions"] = answer.get("suggestions") or await CH.suggest(str(state.get("text") or ""), answer, loop, settings, llm_caller)
+    harness = Harness()
+    if answer.get("suggestions"):
+        return {"answer": answer, "mode": None, "text": None}
+
+    async def run() -> Any:
+        return await CH.suggest(str(state.get("text") or ""), answer, loop, settings, llm_caller)
+
+    chips = await harness.step(
+        config, "suggest", "Suggest follow-up replies",
+        {"text": str(state.get("text") or "")[:120]},
+        run,
+    )
+    answer["suggestions"] = answer.get("suggestions") or chips
+    # The suggest step joins the turn's trace, so the work row shows it.
+    answer["harness"] = merge_harness([
+        answer.get("harness"),
+        {**harness.summary(), "steps": harness.as_list()},
+    ])
     return {"answer": answer, "mode": None, "text": None}
 
 
@@ -463,6 +485,9 @@ async def _questions(worker, store, car_state, window_state, drive_id, open_step
 # failure keeps the built-in reply. With no key this node returns nothing and
 # the loop is byte-identical to the built-in path. A Too-short drive has no
 # numbers to explain, so the built-in line stands there too.
+#
+# Spend: one upload run spends at most UPLOAD_MAX_CALLS provider calls
+# (mirrors `agent.MAX_CALLS`), tools and repair included.
 # ---------------------------------------------------------------------------
 async def _agent(
     state: LoopState, config: RunnableConfig, worker: Worker, store, settings, llm_caller=None
@@ -503,7 +528,7 @@ async def _agent(
         "fallback": result.get("fallback"),
         "issues": list(result.get("issues") or []),
         "thinking": result.get("thinking"),
-        "llmCalls": result.get("llm_calls", 0),
+        "llmCalls": min(int(result.get("llm_calls", 0) or 0), UPLOAD_MAX_CALLS),
         "citations": list(result.get("citations") or []),
     }
     return {"agent": merged["agent"], "reply": merged}
@@ -543,4 +568,4 @@ async def _reply(state: LoopState, config: RunnableConfig, store) -> dict[str, A
     }
 
 
-__all__ = ["LoopState", "build_graph"]
+__all__ = ["LoopState", "UPLOAD_MAX_CALLS", "build_graph"]

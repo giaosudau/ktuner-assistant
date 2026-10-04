@@ -296,7 +296,9 @@ def system_prompt(
                 "Open by answering the owner's question directly in your own words. This checked note may help, use it "
                 f"only if it answers what they asked: {reply.get('say')}"
                 if question
-                else f"Start with this sentence: {reply.get('say')}"
+                else "Open in your own words with the verdict: lead with what the verdict means for this Drive, "
+                f"in your own words (the checked line says it like this: {reply.get('say')}). "
+                "Do not copy it verbatim."
             ),
             f"The Flash plan this round: {plan_line}",
             "6. Finish by calling submit_reply once with your prose and the decided step's key. The app checks every number, "

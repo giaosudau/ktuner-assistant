@@ -42,7 +42,12 @@ DRIVE_TOOLS = {"overview", "driveFacts", "insight", "channelStats", "timingCell"
 
 
 def classify(text: str) -> str:
-    """`refuse` (ignition or knock-sensitivity edits), `boost` (a change), `heat`, or `knowledge`."""
+    """`refuse` (ignition or knock-sensitivity edits), `boost` (a change), `heat`, or `knowledge`.
+
+    No-key fallback only: builds the checked built-in answer `answer_question`
+    falls back to. With a key the front agent + `ask_tuner` route the message
+    and the tuner agent answers; this regex never pre-filters a model turn.
+    """
     if (_TIMING.search(text) or _KNOCK_SENS.search(text)) and _MORE.search(text):
         return "refuse"
     if _BOOST.search(text) and _BOOST_UP.search(text):
@@ -58,6 +63,10 @@ def _query(text: str) -> str:
 
 def relevant_cards(query: str) -> list[dict[str, Any]]:
     """Cards that are about the question, not merely sharing a word with it (tuning-shop D23).
+
+    No-key fallback only: the no-model answer picks its cite from here. With a
+    key the tuner agent runs its own `search_knowledge`; this floor never
+    pre-filters what the model may read.
 
     A card counts only if a query word is in its title or its topics; a word buried in a body is not
     enough to answer with that card. An empty query (only vague words) matches nothing.
@@ -109,7 +118,14 @@ async def answer_question(
     text: str, worker: Any, store: Any, settings: Any, latest_id: str | None, llm_caller: Any = None, on_step: Any = None,
     config: Any = None,
 ) -> dict[str, Any]:
-    """The reply to one typed question: `{ kind, intent, answer, window, citations, nextStep, agent }`."""
+    """The reply to one typed question: `{ kind, intent, answer, window, citations, nextStep, agent }`.
+
+    Routing: with a key the front agent already decided this is a tuning
+    question (`ask_tuner`); the tuner agent below writes the answer and the
+    `classify`/keyword path below is only its checked fallback. With no key
+    the `classify` path is the whole answer. `classify` never pre-filters a
+    model turn: every keyed question reaches `_explain`.
+    """
     intent = classify(text)
     state = store.car_state(None) or {}
     installs = store.list_installs()
@@ -143,13 +159,15 @@ async def answer_question(
         step = C.next_step_card(decided["step"], plan, worker.limits, decided["openSteps"])
     next_line = f" Next step: {step['title']}." if step and step.get("title") else ""
 
-    if intent == "boost":
+    # A no-drive answer stays Upload-first even with a key: the tuner may still
+    # try, but its fallback is the Upload line, never a "Can't tell yet" overwrite.
+    if out.get("kind") != "no-drive" and intent == "boost":
         out["answer"] = _boost_answer(plan)
 
     cards: list[dict[str, Any]] = []
     if intent in ("boost", "refuse") or out.get("kind") == "no-drive":
         pass
-    elif intent == "heat":
+    elif intent == "heat" and out.get("kind") != "no-drive":
         pair = heat_pair(state.get("drives") or {}, win["ids"])
         card = K.get("kc-heat-soak")
         if pair:

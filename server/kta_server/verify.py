@@ -26,6 +26,7 @@ from .knowledge import card_numbers as _card_numbers
 FREE = (1.5, 14.7, 95.0, 92.0, 10.0)
 
 _LIST_MARKER = re.compile(r"^\s*\d+[.)]\s", re.MULTILINE)
+_TOKEN = re.compile(r"[^\W_]+", re.UNICODE)
 _NUMBER = re.compile(
     r"(?<![A-Za-z0-9_.])"  # not part of a word, a version or a decimal
     r"([-+\u2212]?\d{1,3}(?:,\d{3})+(?:\.\d+)?|[-+\u2212]?\d+(?:\.\d+)?)"
@@ -311,6 +312,101 @@ def picture_issues(prose: str, pictures: Sequence[Mapping[str, Any]] | None) -> 
     ]
 
 
+# ---------------------------------------------------------------------------
+# Citation support (agentic fix-spec Wave 1): a cited card must support the
+# sentence that cites it. Minimal check: the sentence shares a word with the
+# card's title or topics. Unknown `[id]` already fails above; a supported cite
+# passes, an attached-but-unrelated cite fails so "based on facts" holds.
+# Skipped for stub cards with no words (unit-test fixtures) and for the
+# engine-decided "Next step:" line, which never needs a card.
+# ---------------------------------------------------------------------------
+_SUPPORT_STOP = {
+    "the", "and", "for", "with", "that", "this", "from", "your", "you", "are",
+    "was", "were", "have", "has", "will", "would", "should", "could", "about",
+    "into", "over", "after", "before", "between", "than", "then", "them",
+    "they", "their", "there", "what", "when", "where", "which", "while",
+    "also", "only", "just", "like", "more", "most", "such", "any", "all",
+    "out", "our", "car", "not", "but", "its", "per",
+}
+_SENT_SPLIT = re.compile(r"(?<=[.!?])\s+")
+_NEXT_STEP_LINE = re.compile(r"^\s*next step\s*:", re.IGNORECASE)
+
+
+def _word_tokens(text: str) -> set[str]:
+    return {t.lower() for t in _TOKEN.findall(text or "") if len(t) > 2} - _SUPPORT_STOP
+
+
+def citation_support_issues(
+    prose: str, knowledge: Sequence[Mapping[str, Any]] | None,
+) -> list[str]:
+    """Sentences whose `[card]` the card's own title/topics do not support."""
+    if not knowledge:
+        return []
+    by_id = {str(c.get("id")): c for c in knowledge}
+    if not citation_ids(prose):
+        return []
+    issues: list[str] = []
+    seen: set[str] = set()
+    # A cite after a full stop ("fine. [kc-x]") splits off its sentence:
+    # glue a words-only citation fragment back onto what it cites.
+    raw = _SENT_SPLIT.split(str(prose or "").strip())
+    sentences: list[str] = []
+    for fragment in raw:
+        if (
+            sentences
+            and citation_ids(fragment)
+            and not _word_tokens(_CITATION.sub(" ", fragment))
+        ):
+            sentences[-1] = f"{sentences[-1]} {fragment}"
+        else:
+            sentences.append(fragment)
+    for sentence in sentences:
+        if not sentence.strip() or _NEXT_STEP_LINE.search(sentence):
+            continue
+        cids = citation_ids(sentence)
+        if not cids:
+            continue
+        # The bracket itself must not count: "oil [kc-heat-soak]" shares
+        # heat/soak only through the id, not the sentence.
+        sent_tokens = _word_tokens(_CITATION.sub(" ", sentence))
+        for cid in cids:
+            if cid in seen:
+                continue
+            card = by_id.get(cid)
+            if card is None:
+                continue  # unknown ids already fail in verify()
+            card_tokens = _word_tokens(
+                f"{card.get('title') or ''} {' '.join(card.get('topics') or [])} {card.get('body') or ''}"
+            )
+            if not card_tokens:
+                continue  # stub card in unit tests: no words to judge by
+            if sent_tokens and not (sent_tokens & card_tokens):
+                issues.append(
+                    f"The reply cites [{cid}] for a sentence the card does not support. "
+                    "Cite the card only where its topic answers, or call propose_knowledge."
+                )
+                seen.add(cid)
+    return issues
+
+
+def word_count(prose: str) -> int:
+    """Words in a draft reply, by whitespace."""
+    return len(str(prose or "").split())
+
+
+def length_issues(prose: str, max_words: int | None) -> list[str]:
+    """The reply must fit its budget (280 tuner / 150 front): code, not prompt."""
+    if max_words is None:
+        return []
+    count = word_count(prose)
+    if count <= max_words:
+        return []
+    return [
+        f"The reply is {count} words, over the {max_words}-word budget. "
+        "Say the same in fewer words."
+    ]
+
+
 def verify(
     prose: str,
     action_key: str | None,
@@ -321,6 +417,7 @@ def verify(
     knowledge: Sequence[Mapping[str, Any]] | None = None,
     pictures: Sequence[Mapping[str, Any]] | None = None,
     question: bool = False,
+    max_words: int | None = 280,
 ) -> dict[str, Any]:
     """Judge one draft reply. Returns `{"ok": bool, "issues": [...]}`.
 
@@ -328,6 +425,8 @@ def verify(
     * when `knowledge` holds the cards this run read, a number may instead
       come from a cited card's numbers — citing `[id]` — and an unknown `[id]`
       fails;
+    * a cited card must support its sentence (title/topic overlap);
+    * the reply must fit `max_words` (280 tuner / 150 front);
     * `action_key` must be the decided Next step's key — the agent may not add,
       remove or change the Next step;
     * every submitted cell must match a Flash plan cell exactly;
@@ -339,6 +438,7 @@ def verify(
     text = str(prose or "")
     if not text.strip():
         issues.append("The reply is empty.")
+    issues.extend(length_issues(text, max_words))
 
     cited_numbers: list[float] = []
     if knowledge is not None:
@@ -398,6 +498,8 @@ def verify(
 
     issues.extend(picture_issues(text, pictures))
     issues.extend(banned_issues(text, plan, cited_numbers))
+    if knowledge is not None:
+        issues.extend(citation_support_issues(text, knowledge))
     return {"ok": not issues, "issues": issues}
 
 
@@ -458,7 +560,9 @@ __all__ = [
     "FREE",
     "banned_issues",
     "citation_ids",
+    "citation_support_issues",
     "collect_numbers",
+    "length_issues",
     "number_allowed",
     "numbers_in",
     "picture_issues",
@@ -470,4 +574,5 @@ __all__ = [
     "known_tables",
     "map_issues",
     "verify",
+    "word_count",
 ]
