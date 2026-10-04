@@ -260,7 +260,31 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
 
 function Body({ msg, a }: { msg: AiMsg; a: Actions }) {
   if (msg.kind === "drive") return <DriveReply msg={msg} a={a} />;
-  if (msg.pending) return <Typing live={msg.live} count={msg.liveCount} />;
+  if (msg.pending) {
+    // A typed answer streams its work row like a Drive reply does: the harness
+    // steps so far and the prose as it arrives, not just the live tool's name.
+    if (!msg.harness?.steps?.length && !msg.lines?.length) return <Typing live={msg.live} count={msg.liveCount} />;
+    const live: Turn = {
+      id: msg.id,
+      fileName: "",
+      running: true,
+      card: null,
+      lines: msg.lines ?? [],
+      harness: msg.harness ?? null,
+      live: msg.live,
+    };
+    const say = (msg.lines ?? []).filter((l) => l.trim()).join("\n\n");
+    return (
+      <>
+        <WorkRow turn={live} />
+        {say ? (
+          <div data-testid="ask-answer">
+            <Markdown text={say} />
+          </div>
+        ) : null}
+      </>
+    );
+  }
   if (msg.error) return <div className="err">{msg.error}</div>;
 
   if (msg.kind === "profile" && msg.draft) {
@@ -291,7 +315,9 @@ function Body({ msg, a }: { msg: AiMsg; a: Actions }) {
       running: false,
       card: null,
       lines: [],
-      harness: ans.harness ?? null,
+      // The deterministic front desk carries no harness of its own: fall back to
+      // the streamed steps, so every typed answer shows what was checked.
+      harness: ans.harness ?? msg.harness ?? null,
       thinking: ans.thinking ?? undefined,
     };
     return (

@@ -19,7 +19,9 @@
 import {
   HttpAgent,
   type CustomEvent,
+  type MessagesSnapshotEvent,
   type RunErrorEvent,
+  type StateDeltaEvent,
   type StateSnapshotEvent,
   type TextMessageContentEvent,
   type ToolCallArgsEvent,
@@ -29,6 +31,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import * as api from "./api";
+import { answerFromDelta, takeAnswer } from "./chatEvents";
 import { UI_TOOLS } from "./uiTools";
 import { AGENT_URL, type CarProfile, type HarnessStep, type HarnessSummary, type OwnerQuestion, type ProfileDraft, type ReplyCard, type Turn } from "./types";
 
@@ -62,6 +65,10 @@ export type AiMsg = {
   /** the tool the tuner is running right now, while a typed answer streams */
   live?: string;
   liveCount?: number;
+  /** a typed answer streams its harness steps like a Drive reply does (the live work row) */
+  harness?: HarnessSummary | null;
+  /** a typed answer streams its prose like a Drive reply's lines, until the answer lands */
+  lines?: string[];
 };
 export type Msg = UserMsg | AiMsg;
 
@@ -340,6 +347,27 @@ export function useChat() {
       let answer: api.AskAnswer | null = null;
       let count = 0;
       let thinking = "";
+      // A typed answer streams the same harness events as a Drive reply: the steps it
+      // checked (TOOL_CALL_*), the prose (TEXT_MESSAGE_CONTENT), its own unchecked
+      // thinking and the collapsed summary (CUSTOM), and the typed answer in shared
+      // state (STATE_SNAPSHOT, or a STATE_DELTA patch carrying it).
+      const order: string[] = [];
+      const open = new Map<string, { name: string; args: string; output?: unknown; done: boolean }>();
+      const lines: string[] = [];
+      let harness: HarnessSummary | null = null;
+      const started = Date.now();
+
+      const steps = (): HarnessStep[] =>
+        order.flatMap((id) => {
+          const s = open.get(id);
+          return s ? [{ name: s.name, title: s.name, inputs: safeJson(s.args), output: s.done ? s.output : { pending: true }, ms: 0 }] : [];
+        });
+      const liveHarness = (): HarnessSummary => ({
+        checked: order.length,
+        seconds: (Date.now() - started) / 1000,
+        line: "",
+        steps: steps(),
+      });
       try {
         const agent = new HttpAgent({
           url: AGENT_URL,
@@ -352,21 +380,94 @@ export function useChat() {
         agent.subscribe({
           onEvent({ event }) {
             switch (event.type) {
+              case "TEXT_MESSAGE_START": {
+                // One paragraph per message (the reply, then its window): the drive
+                // path keeps one line per message the same way.
+                lines.push("");
+                patch(msgId, { lines: [...lines] });
+                break;
+              }
+              case "TEXT_MESSAGE_CONTENT": {
+                const { delta } = event as TextMessageContentEvent;
+                if (delta) {
+                  if (!lines.length) lines.push("");
+                  lines[lines.length - 1] += delta;
+                  patch(msgId, { lines: [...lines] });
+                }
+                break;
+              }
+              case "TEXT_MESSAGE_END": {
+                patch(msgId, { lines: [...lines] });
+                break;
+              }
               case "TOOL_CALL_START": {
                 const e = event as ToolCallStartEvent;
+                order.push(e.toolCallId);
+                open.set(e.toolCallId, { name: e.toolCallName, args: "", done: false });
                 count += 1;
-                patch(msgId, { live: e.toolCallName, liveCount: count });
+                patch(msgId, { live: e.toolCallName, liveCount: count, harness: liveHarness() });
+                break;
+              }
+              case "TOOL_CALL_ARGS": {
+                const e = event as ToolCallArgsEvent;
+                const s = open.get(e.toolCallId);
+                if (s) s.args += e.delta;
+                break;
+              }
+              case "TOOL_CALL_END": {
+                // The call's args are complete (RESULT still follows with its output):
+                // refresh the live step list so the work row reads the full inputs.
+                patch(msgId, { harness: liveHarness() });
+                break;
+              }
+              case "TOOL_CALL_RESULT": {
+                const e = event as ToolCallResultEvent;
+                const s = open.get(e.toolCallId);
+                if (s) {
+                  s.output = safeJson(typeof e.content === "string" ? e.content : JSON.stringify(e.content));
+                  s.done = true;
+                }
+                patch(msgId, { harness: liveHarness() });
                 break;
               }
               case "CUSTOM": {
                 const e = event as CustomEvent;
-                if (e.name === "thinking" && typeof e.value === "string") thinking += e.value;
+                if (e.name === "harness") {
+                  harness = { ...(e.value as HarnessSummary), steps: steps() };
+                  patch(msgId, { harness });
+                } else if (e.name === "thinking" && typeof e.value === "string") {
+                  thinking += e.value;
+                }
+                break;
+              }
+              case "MESSAGES_SNAPSHOT": {
+                // The checkpoint truth for the streamed prose: adopt it only when no
+                // deltas arrived, so the two never double up.
+                if (!answer && !lines.length) {
+                  const messages = (event as MessagesSnapshotEvent).messages as { role?: string; content?: unknown }[] | undefined;
+                  const said = (messages ?? [])
+                    .filter((m) => m?.role === "assistant" && typeof m.content === "string" && m.content.trim())
+                    .map((m) => m.content as string);
+                  if (said.length) {
+                    lines.push(...said);
+                    patch(msgId, { lines: [...lines] });
+                  }
+                }
+                break;
+              }
+              case "STATE_DELTA": {
+                const got = answerFromDelta((event as StateDeltaEvent).delta);
+                if (got) {
+                  answer = got;
+                  patch(msgId, { pending: false, live: undefined, answer });
+                }
                 break;
               }
               case "STATE_SNAPSHOT": {
                 const snapshot = (event as StateSnapshotEvent).snapshot as { answer?: api.AskAnswer } | undefined;
-                if (snapshot?.answer) {
-                  answer = snapshot.answer;
+                const got = snapshot?.answer ? takeAnswer(snapshot.answer) : null;
+                if (got) {
+                  answer = got;
                   patch(msgId, { pending: false, live: undefined, answer });
                 }
                 break;
@@ -391,9 +492,16 @@ export function useChat() {
         patch(msgId, { pending: false, live: undefined, error: failure ?? "No answer came back. Send it again." });
         return;
       }
-      patch(msgId, { pending: false, live: undefined, answer: thinking && !got.thinking ? { ...got, thinking } : got });
+      const filled: api.AskAnswer = {
+        ...got,
+        // The deterministic front desk carries no harness of its own: the streamed
+        // steps still say what was checked.
+        harness: got.harness ?? harness ?? (order.length ? liveHarness() : null),
+        thinking: thinking && !got.thinking ? thinking : (got.thinking ?? undefined),
+      };
+      patch(msgId, { pending: false, live: undefined, answer: filled });
       // The car editor is the one card in the thread: the agent's call fills it, never a second one.
-      const editor = got.ui?.find((c) => c.tool === "show_car_editor");
+      const editor = filled.ui?.find((c) => c.tool === "show_car_editor");
       if (editor && "draft" in editor) openEditor(editor.draft);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
