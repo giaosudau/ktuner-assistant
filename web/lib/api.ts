@@ -168,3 +168,31 @@ export async function importHistory(file: File): Promise<string> {
 }
 
 export const historyUrl = `${SERVER_URL}/api/history`;
+
+/** One table of the Map version, for the 2D/3D viewer, with the checked plan's cells on it. */
+export type MapTable = {
+  version: number;
+  table: string;
+  family: string | null;
+  editable_here: boolean;
+  rows: number;
+  cols: number;
+  rpm_axis: number[];
+  min: number;
+  max: number;
+  values: (number | string)[][];
+  changes: { row: number; col: number; before: string; after: string; unit?: string }[];
+};
+export type MapFamily = { id: string; title: string; editable: boolean; tables: string[] };
+
+export async function mapTable(name: string): Promise<MapTable> {
+  const response = await fetch(`${SERVER_URL}/api/map/table?name=${encodeURIComponent(name)}`, { cache: "no-store" });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(payload?.detail ?? "That table could not be read.");
+  return payload as MapTable;
+}
+
+export async function mapFamilies(): Promise<MapFamily[]> {
+  const response = await fetch(`${SERVER_URL}/api/map/table`, { cache: "no-store" });
+  return response.ok ? ((await response.json()) as { families: MapFamily[] }).families : [];
+}

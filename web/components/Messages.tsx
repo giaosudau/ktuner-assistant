@@ -28,6 +28,7 @@ export type Actions = {
   onSuggest: (text: string) => void;
   onGuide: () => void;
   onEdit: (msgId: string, text: string) => void;
+  onViewTable: (table: string) => void;
 };
 
 export function UserMessage({ msg, a }: { msg: UserMsg; a: Actions }) {
@@ -234,10 +235,10 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
         <QuestionCard key={q.id} question={q} busy={a.busy} onAnswer={(choice) => a.onAnswer(msg.id, q, choice)} />
       ))}
       {card?.tour ? (
-        <MapTourCard tour={card.tour} plan={card.flashPlan} housing={card.housing} onAsk={a.onSuggest} busy={a.busy} />
+        <MapTourCard tour={card.tour} plan={card.flashPlan} housing={card.housing} onAsk={a.onSuggest} onView={a.onViewTable} busy={a.busy} />
       ) : null}
       {card?.nextStep ? (
-        <NextStepCard step={card.nextStep} acted={msg.acted} busy={a.busy} onFlash={(...args) => a.onFlash(msg.id, ...args)} />
+        <NextStepCard step={card.nextStep} acted={msg.acted} busy={a.busy} onFlash={(...args) => a.onFlash(msg.id, ...args)} onView={a.onViewTable} />
       ) : null}
       {turn.error ? (
         <div className="err" data-testid="reply-error">
@@ -322,7 +323,7 @@ function Body({ msg, a }: { msg: AiMsg; a: Actions }) {
             <QuestionCard key={q.id} question={q} busy={a.busy} onAnswer={(choice) => a.onAnswer(msg.id, q, choice)} />
           ))}
         {r.nextStep ? (
-          <NextStepCard step={r.nextStep} acted={msg.acted} busy={a.busy} onFlash={(...args) => a.onFlash(msg.id, ...args)} />
+          <NextStepCard step={r.nextStep} acted={msg.acted} busy={a.busy} onFlash={(...args) => a.onFlash(msg.id, ...args)} onView={a.onViewTable} />
         ) : null}
       </>
     );

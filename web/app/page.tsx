@@ -11,6 +11,7 @@ import { Composer, refuse } from "../components/Composer";
 import { Icon } from "../components/Icons";
 import { Message, type Actions } from "../components/Messages";
 import { phaseOf, Sidebar } from "../components/Sidebar";
+import { TableViewer } from "../components/TableViewer";
 import { useChat } from "../lib/useChat";
 
 const EXAMPLE =
@@ -51,6 +52,7 @@ export default function Page() {
   const [side, setSide] = useState(true);
   const [dragging, setDragging] = useState(false);
   const [theme, toggleTheme] = useTheme();
+  const [viewing, setViewing] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const pinned = useRef(true);
 
@@ -104,6 +106,7 @@ export default function Page() {
       pinned.current = true;
       chat.showGuide();
     },
+    onViewTable: (table) => setViewing(table),
     onEdit: (id, words) => {
       pinned.current = true;
       void chat.editAndResend(id, words);
@@ -256,6 +259,7 @@ export default function Page() {
           </>
         )}
 
+        <TableViewer table={viewing} onClose={() => setViewing(null)} />
         {dragging ? (
           <div className="drop" aria-hidden="true">
             <div>

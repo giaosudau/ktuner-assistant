@@ -182,11 +182,13 @@ export function NextStepCard({
   acted,
   busy,
   onFlash,
+  onView,
 }: {
   step: NextStep;
   acted?: string;
   busy: boolean;
   onFlash: FlashAct;
+  onView?: (table: string) => void;
 }) {
   const k = KIND[step.kind] ?? KIND.none;
   const ktuner = step.kind === "flash" ? step.flashPlan?.ktunerCard : null;
@@ -200,7 +202,17 @@ export function NextStepCard({
       <h3>{step.title}</h3>
       {step.body ? <p>{step.body}</p> : null}
 
-      {ktuner?.kind === "change" ? <KTunerCard card={ktuner} acted={acted} busy={busy} onFlash={onFlash} /> : null}
+      {ktuner?.kind === "change" ? (
+        <>
+          {onView && ktuner.groups[0]?.tables[0] ? (
+            <button type="button" className="btn ghost" style={{ margin: "4px 0 10px" }} data-testid="review-table" onClick={() => onView(ktuner.groups[0].tables[0])}>
+              <Icon name="chart" />
+              Review the change in the whole table (2D / 3D)
+            </button>
+          ) : null}
+          <KTunerCard card={ktuner} acted={acted} busy={busy} onFlash={onFlash} />
+        </>
+      ) : null}
       {ktuner?.kind === "undo" ? <UndoFlash card={ktuner} acted={acted} busy={busy} onFlash={onFlash} /> : null}
 
       {step.recipe?.steps.length ? (

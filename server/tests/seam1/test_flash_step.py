@@ -349,3 +349,15 @@ def test_an_air_flow_curve_change_is_checked_and_drawn_by_point(proposing: Loop)
     jump = dict(plan, afmAfter=[v * 1.12 if k == 20 else v for k, v in enumerate(before)])
     refused = proposing.run(F.check_both(proposing.worker, version, F.change_from_plan(jump, base)))
     assert not refused["ok"] and refused["engine"] == refused["python"] == "maf-step"
+
+
+def test_the_table_viewer_reads_any_table_of_the_map_version(loop: Loop):
+    """Tuning-shop: the owner reviews a whole table (2D/3D) before typing anything into KTuner."""
+    families = loop.get("/api/map/table").json()["families"]
+    assert [f["id"] for f in families][:3] == ["airflow", "mixture", "boost"]
+    assert "Ignition_Base_L" in next(f for f in families if f["id"] == "ignition")["tables"]
+    table = loop.get("/api/map/table?name=Ignition_Base_L").json()
+    assert table["rows"] == 20 and table["cols"] == 20 and len(table["rpm_axis"]) == 20
+    assert table["editable_here"] is False
+    assert table["changes"] == []
+    assert loop.get("/api/map/table?name=Not_A_Table").status_code == 404

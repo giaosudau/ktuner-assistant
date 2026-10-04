@@ -81,12 +81,14 @@ export function MapTourCard({
   plan,
   housing,
   onAsk,
+  onView,
   busy,
 }: {
   tour: MapTour;
   plan?: FlashPlan | null;
   housing?: HousingOption | null;
   onAsk: (question: string) => void;
+  onView: (table: string) => void;
   busy: boolean;
 }) {
   return (
@@ -138,6 +140,14 @@ export function MapTourCard({
                 >
                   Explain these tables
                 </button>
+                {f.tables.length ? (
+                  <>
+                    {" · "}
+                    <button type="button" className="link-btn" data-testid={`tour-view-${f.family}`} onClick={() => onView(f.tables[0])}>
+                      View {f.tables.length > 1 ? `the ${f.tables.length} tables` : "the table"} (2D / 3D)
+                    </button>
+                  </>
+                ) : null}
               </span>
             </li>
           );

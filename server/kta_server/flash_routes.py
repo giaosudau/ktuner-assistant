@@ -14,7 +14,9 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from . import flash as F
+from . import tour as TOUR
 from . import window as W
+from .mapdata import basemap_tables
 
 SHAKEDOWN_LINE = "Your next Drive is a Shakedown drive: 10 calm minutes, no hard driving."
 
@@ -54,6 +56,44 @@ def register_flash_routes(app: FastAPI, store, worker, settings) -> None:
             ),
             "ktunerBasemap": worker.ktuner_basemap,
         }
+
+    @app.get("/api/map/table")
+    async def api_map_table(name: str = "", version: int | None = None) -> dict[str, Any]:
+        """One table of a Map version as KTuner draws it, for the 2D/3D viewer, with the checked plan's
+        changes on it. With no `name`: the table families and the tables the car's map holds."""
+        car_state = store.car_state(None) or {}
+        active = (await worker.call("mapVersions", state=car_state))["active"]
+        number = version or active["n"]
+        held = store.map_version(number) or {}
+        tables = held.get("tables") or (basemap_tables() if number == 1 else {})
+        if not name:
+            return {
+                "version": number,
+                "families": [
+                    {"id": f["id"], "title": f["title"], "editable": f["editable"],
+                     "tables": [t for t in f["tables"] if t in tables]}
+                    for f in TOUR.FAMILIES
+                ],
+            }
+        table = TOUR.read_table(tables, name)
+        if table.get("error"):
+            raise HTTPException(status_code=404, detail=table["error"])
+        # The checked plan's cells on this table (only for the active version: that's what it is written on).
+        changes: list[dict[str, Any]] = []
+        if number == active["n"]:
+            _state, plan, _change, _version, _active = await _current(store, worker, settings.now_ms())
+            card = (plan or {}).get("ktunerCard") or {}
+            axis = table.get("rpm_axis") or []
+            for group in card.get("groups") or []:
+                if name not in (group.get("tables") or []):
+                    continue
+                for cell in group.get("cells") or []:
+                    if cell.get("rpm") in axis:
+                        changes.append({
+                            "row": axis.index(cell["rpm"]), "col": int(cell["col"]) - 1,
+                            "before": cell.get("before"), "after": cell.get("after"), "unit": cell.get("unit"),
+                        })
+        return {"version": number, **table, "changes": changes}
 
     @app.post("/api/flash/confirm")
     async def api_flash_confirm(request: Request) -> dict[str, Any]:
