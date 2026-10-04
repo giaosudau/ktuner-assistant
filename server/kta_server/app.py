@@ -25,15 +25,17 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
+from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Any
 
+import aiosqlite
 from ag_ui_langgraph import LangGraphAgent, add_langgraph_fastapi_endpoint
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 
-from .ask import answer_question
 from .config import Settings, load_settings
 from .db import Store
 from .screenshot import IMAGE_TYPES, MAX_BYTES, answer_screenshot
@@ -41,6 +43,8 @@ from .flash_routes import register_flash_routes
 from .graph import build_graph
 from .mapdata import KTUNER_BASEMAP_SOURCE, basemap_tables
 from . import copy as C
+from . import chat as CH
+from . import loopstate as LS
 from . import flash as FL
 from . import readback as RB
 from . import profile as P
@@ -82,20 +86,8 @@ def ensure_map_version_one_full(store: Store, name: str) -> dict[str, Any]:
 
 
 async def _unanswered_questions(store: Store, worker: Worker, settings: Settings) -> list[dict[str, Any]]:
-    """Every unanswered owner question, oldest Drive first — "Waiting for you".
-
-    Asked once per Drive through the engine (never the model) and stored when
-    asked; answering stores the answer and the Car history re-derives. Quiet:
-    at most the three first questions, one per Drive that earned them.
-    """
-    asked = store.list_asked_questions()
-    saved_ids = set(store.list_question_answers().keys())
-    return [
-        {"id": q["id"], "title": q["title"], "askedOn": q.get("askedOn"),
-         "askedOnStamp": C.drive_stamp(q.get("askedOn")) if q.get("askedOn") else None}
-        for q in asked
-        if q["id"] not in saved_ids
-    ]
+    """Every unanswered owner question, oldest Drive first — "Waiting for you" (`loopstate`)."""
+    return await LS.unanswered_questions(store)
 
 
 def _latest_drive(state: dict[str, Any]) -> str | None:
@@ -124,6 +116,9 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         app.state.settings, app.state.store, app.state.worker = settings, store, worker
+        chat_db = Path(settings.db_path).with_name(Path(settings.db_path).stem + "-chat.db")
+        saver = AsyncSqliteSaver(aiosqlite.connect(str(chat_db)))
+        app.state.graph.checkpointer = saver
         try:
             await worker.start()
         except WorkerError as exc:
@@ -131,6 +126,8 @@ def create_app(
             print(f"[kta] the engine worker is not up: {exc.message}")
         yield
         await worker.aclose()
+        if getattr(saver.conn, "_thread", None) is not None:
+            await saver.conn.close()
 
     app = FastAPI(title="Civic FE Tune Assist", version="0.1.0", lifespan=lifespan)
 
@@ -140,7 +137,7 @@ def create_app(
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.cors_origins),
-        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
 
@@ -170,48 +167,15 @@ def create_app(
         return {"uploadId": upload_id, "fileName": file.filename, "bytes": len(raw), "threadId": threadId}
 
     # ----------------------------------------------------------------- state
+    async def loop_state() -> dict[str, Any]:
+        return await LS.loop_state(store, worker, settings)
+
     @app.get("/api/state")
     async def api_state() -> dict[str, Any]:
-        # First use counts too: if the worker was down when the app was built,
-        # Map version 1 is seeded now, and still before any Drive is read.
-        ensure_map_version_one(store, worker.ktuner_basemap)
-        car_state = store.car_state(None) or {}
-        installs = store.list_installs()
-        history = await worker.call("carHistory", state=car_state, installs=installs)
-        # The Flash plan reads the window, like every reply: a change from
-        # before the last Flash or Install never proposes a cell for the car
-        # as it is now.
-        rows = history["rows"]
-        latest = rows[-1]["id"] if rows else None
-        win = W.drive_window(rows, car_state.get("flashes"), installs, latest)
-        # Written on the active Map version's own cells and passed by both map
-        # checks (ADR 0003) before it can reach a KTuner card.
-        plan = await FL.checked_plan(
-            worker, store, car_state, W.windowed_state(car_state, win["ids"]), settings.now_ms()
-        )
-        active = store.map_version((history.get("activeMapVersion") or {}).get("n") or 1) or {}
-        active.pop("tables", None)
-        return {
-            "carProfile": store.car_profile(),
-            "profileSpec": P.profile_spec(worker.ktuner_basemap),
-            "hasDrives": bool(rows),
-            "driveWindow": C.window_card(win),
-            "ktunerBasemap": worker.ktuner_basemap,
-            "carHistory": history["rows"],
-            "baseline": history["baseline"],
-            "flashes": store.list_flashes(),
-            "installs": installs,
-            "mapVersions": store.list_map_versions(),
-            "activeMapVersion": active,
-            "openSteps": C.step_words(store.list_open_steps(only_open=True)),
-            "answers": store.list_answers(),
-            "questionAnswers": store.list_question_answers(),
-            "unansweredQuestions": await _unanswered_questions(store, worker, settings),
-            "drives": store.list_drives(),
-            "flashPlan": plan,
-            "hasLlm": settings.has_llm,
-            "logGuide": C.log_guide(worker.limits),
-        }
+        return await loop_state()
+
+    async def finish_answer(text: str, out: dict[str, Any], loop: dict[str, Any]) -> dict[str, Any]:
+        return await CH.finish(text, out, loop, settings, llm_caller)
 
     # ------------------------------------------------------- owner questions
     @app.post("/api/answer")
@@ -407,10 +371,10 @@ def create_app(
     async def api_ask(request: Request) -> dict[str, Any]:
         """A typed question with no Drive uploaded.
 
-        A setup flow fills the Car profile draft. Any other question is answered
-        by `ask.answer_question` over the drive window and the knowledge cards
-        (ticket 11); a question that needs Drives with none held is answered
-        with "upload a drive first".
+        A setup flow fills the Car profile draft. Any other message runs the same
+        turn as the chat graph's `chat` node (`chat.chat_turn`, ADR 0006): the
+        front agent answers it or hands it to the tuner (`ask.answer_question`),
+        then the suggested replies are added. For clients that don't speak AG-UI.
         """
         try:
             body = await request.json()
@@ -424,8 +388,9 @@ def create_app(
             return {"ok": True, "kind": "profile-draft", "draft": P.draft_from_text(text, worker.ktuner_basemap)}
         if not text:
             raise HTTPException(status_code=400, detail="Ask me in words first.")
-        state = store.car_state(None) or {}
-        return await answer_question(text, worker, store, settings, _latest_drive(state), llm_caller)
+        loop = await loop_state()
+        out = await CH.chat_turn(text, loop, worker, store, settings, llm_caller=llm_caller)
+        return await finish_answer(text, out, loop)
 
     @app.get("/api/fuel-test")
     async def api_fuel_test() -> dict[str, Any]:
@@ -450,9 +415,9 @@ def create_app(
 
         async def run() -> None:
             try:
-                state = store.car_state(None) or {}
-                out = await answer_question(text, worker, store, settings, _latest_drive(state), llm_caller, on_step)
-                await queue.put({"type": "answer", "answer": out})
+                loop = await loop_state()
+                out = await CH.chat_turn(text, loop, worker, store, settings, llm_caller=llm_caller, on_step=on_step)
+                await queue.put({"type": "answer", "answer": await finish_answer(text, out, loop)})
             except Exception as exc:  # noqa: BLE001 - the stream always ends with a line the chat can show
                 await queue.put({"type": "error", "message": str(exc)})
             finally:
@@ -477,6 +442,46 @@ def create_app(
         state = store.car_state(None) or {}
         return await answer_screenshot(raw, mime, text.strip(), worker, store, settings, _latest_drive(state), llm_caller)
 
+    # ------------------------------------------------------------------ chats
+    # Chats are kept and listed like any chat app (tuning-shop D18). A chat holds
+    # the conversation only: the Car file never lives in one, and deleting a chat
+    # never deletes a Drive, a Flash or a Map version.
+    @app.get("/api/threads")
+    async def api_threads() -> dict[str, Any]:
+        return {"threads": store.list_threads()}
+
+    @app.get("/api/threads/{thread_id}")
+    async def api_thread(thread_id: str) -> dict[str, Any]:
+        thread = store.thread(thread_id)
+        if thread is None:
+            raise HTTPException(status_code=404, detail="There is no such chat.")
+        return thread
+
+    @app.put("/api/threads/{thread_id}")
+    async def api_thread_save(thread_id: str, request: Request) -> dict[str, Any]:
+        try:
+            body = await request.json()
+        except Exception as exc:  # noqa: BLE001 - any bad body is the same message
+            raise HTTPException(status_code=400, detail="A chat is a list of messages.") from exc
+        messages = body.get("messages")
+        if not isinstance(messages, list):
+            raise HTTPException(status_code=400, detail="A chat is a list of messages.")
+        return store.save_thread(thread_id, messages, title=body.get("title"))
+
+    @app.patch("/api/threads/{thread_id}")
+    async def api_thread_rename(thread_id: str, request: Request) -> dict[str, Any]:
+        body = await request.json()
+        title = str(body.get("title") or "").strip()
+        if not title:
+            raise HTTPException(status_code=400, detail="A chat needs a title.")
+        if not store.rename_thread(thread_id, title[:80]):
+            raise HTTPException(status_code=404, detail="There is no such chat.")
+        return {"ok": True, "id": thread_id, "title": title[:80]}
+
+    @app.delete("/api/threads/{thread_id}")
+    async def api_thread_delete(thread_id: str) -> dict[str, Any]:
+        return {"ok": store.delete_thread(thread_id), "id": thread_id}
+
     # The Flash step and the History file (ticket 13).
     register_flash_routes(app, store, worker, settings)
 
@@ -493,7 +498,12 @@ def create_app(
     # One graph per app, cloned per request by the library. The checkpointer
     # keeps each chat thread's messages between turns. `llm_caller` is the
     # scripted fake model the seam-1 tests use instead of the network.
+    # The conversation is kept per thread in SQLite beside the app's database (LangGraph's
+    # checkpointer), so the front agent remembers the chat after a restart (tuning-shop D18).
+    # The saver needs a running event loop, so it is swapped in when the app starts (lifespan);
+    # until then, and in tests that never start it, the graph keeps an in-memory one.
     graph = build_graph(worker, store, settings, llm_caller=llm_caller)
+    app.state.graph = graph
     agent = LangGraphAgent(name=AGENT_NAME, graph=graph, emit_raw_events=False)
     add_langgraph_fastapi_endpoint(app, agent, path="/agent")
 

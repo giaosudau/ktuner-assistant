@@ -32,7 +32,13 @@ _SLOW = re.compile(r"\b(slow|slower|sluggish|weak|weaker|power|performance|lose|
 _STOP = {
     "what", "does", "how", "why", "with", "that", "this", "the", "and", "for", "are", "can", "you", "tell", "about",
     "mean", "means", "should", "would", "when", "where", "which", "have", "from", "your", "mine", "car",
+    # Words that say nothing about the topic (tuning-shop D23): "I want to tune my car" matches no card.
+    "want", "tune", "tuning", "tuned", "help", "hello", "please", "need", "know", "like", "just", "get", "make",
+    "really", "thing", "things", "some", "something", "anything", "much", "very", "could", "will", "into", "there",
 }
+
+#: Tools whose output is read off the owner's Drives: an answer that called one "read your Drives" (D22).
+DRIVE_TOOLS = {"overview", "driveFacts", "insight", "channelStats", "timingCell", "pull", "carHistory", "healthReport", "fuelTest"}
 
 
 def classify(text: str) -> str:
@@ -48,6 +54,23 @@ def classify(text: str) -> str:
 
 def _query(text: str) -> str:
     return " ".join(t for t in re.findall(r"[^\W_]+", text.lower()) if len(t) > 2 and t not in _STOP)
+
+
+def relevant_cards(query: str) -> list[dict[str, Any]]:
+    """Cards that are about the question, not merely sharing a word with it (tuning-shop D23).
+
+    A card counts only if a query word is in its title or its topics; a word buried in a body is not
+    enough to answer with that card. An empty query (only vague words) matches nothing.
+    """
+    tokens = set(query.split())
+    if not tokens:
+        return []
+    out = []
+    for card in K.search(query):
+        head = set(re.findall(r"[^\W_]+", f"{card.get('title', '')} {' '.join(card.get('topics') or [])}".lower()))
+        if tokens & head:
+            out.append(card)
+    return out
 
 
 def _sentences(body: str, count: int) -> str:
@@ -83,7 +106,8 @@ def _cite(*cards: Mapping[str, Any] | None) -> list[dict[str, str]]:
 
 
 async def answer_question(
-    text: str, worker: Any, store: Any, settings: Any, latest_id: str | None, llm_caller: Any = None, on_step: Any = None
+    text: str, worker: Any, store: Any, settings: Any, latest_id: str | None, llm_caller: Any = None, on_step: Any = None,
+    config: Any = None,
 ) -> dict[str, Any]:
     """The reply to one typed question: `{ kind, intent, answer, window, citations, nextStep, agent }`."""
     intent = classify(text)
@@ -145,7 +169,7 @@ async def answer_question(
                 f"in this window, and it holds fewer than that.{next_line}"
             )
     else:
-        hits = K.search(_query(text))
+        hits = relevant_cards(_query(text))
         if hits:
             top = hits[0]
             out["answer"] = f"{top['title']}. {_sentences(top['body'], 2)}{_ref(top)}{next_line}"
@@ -157,11 +181,13 @@ async def answer_question(
             )
     out["citations"] = _cite(*cards)
     out["nextStep"] = step.get("title") if step else None
+    # Which answers were read off the owner's Drives (D22): the heat pair and the Flash plan's answer.
+    out["readDrives"] = bool(has_drives and (intent == "boost" or (intent == "heat" and cards)))
 
     # AI-native (tuning-shop D1): with a model, every question goes through the agent, which picks the
     # tools and writes the answer; the built-in answer above is the checked fallback.
     if settings.has_llm:
-        await _explain(out, text, state, latest_id, plan, step, worker, store, settings, llm_caller, on_step)
+        await _explain(out, text, state, latest_id, plan, step, worker, store, settings, llm_caller, on_step, config)
     return out
 
 
@@ -176,14 +202,14 @@ def _boost_answer(plan: Mapping[str, Any] | None) -> str:
     return f"I can't hand you more boost on request. The Flash plan today: {head} " + " ".join(parts) + " Nothing changes in your map."
 
 
-async def _explain(out, text, state, latest_id, plan, step, worker, store, settings, llm_caller, on_step=None) -> None:
+async def _explain(out, text, state, latest_id, plan, step, worker, store, settings, llm_caller, on_step=None, config=None) -> None:
     """Let the agent put the built-in answer in its own words, checked; else the built-in answer stands."""
     drive = {"id": latest_id, "summary": (state.get("drives") or {}).get(latest_id), "map": None}
     reply = {"say": out["answer"], "window": out["window"], "nextStep": step, "flashPlan": plan}
     harness = Harness(on_step=on_step)
     try:
         result = await agent_node.run_agent(
-            drive, reply, worker, store, settings, harness, None, llm_caller, question=text
+            drive, reply, worker, store, settings, harness, config, llm_caller, question=text
         )
     except Exception as exc:  # noqa: BLE001 - the explainer never breaks an answer
         result = {"verified": False, "fallback": "error", "issues": [str(exc)]}
@@ -194,6 +220,8 @@ async def _explain(out, text, state, latest_id, plan, step, worker, store, setti
     out["agent"] = {"verified": bool(result.get("verified")), "fallback": result.get("fallback"), "issues": list(result.get("issues") or [])}
     # What the agent did, for the chat's work row and the unchecked thinking block.
     out["harness"] = {**harness.summary(), "steps": harness.as_list()}
+    if result.get("verified") and any(str(st.get("name")) in DRIVE_TOOLS for st in out["harness"]["steps"]):
+        out["readDrives"] = True
     out["thinking"] = result.get("thinking")
 
 

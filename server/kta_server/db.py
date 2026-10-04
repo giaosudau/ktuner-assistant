@@ -149,7 +149,11 @@ CREATE INDEX IF NOT EXISTS open_steps_by_status ON open_steps(status, opened_at)
 CREATE TABLE IF NOT EXISTS threads (
   id          TEXT PRIMARY KEY,
   created_at  INTEGER NOT NULL,
-  updated_at  INTEGER NOT NULL
+  updated_at  INTEGER NOT NULL,
+  -- A chat as the owner sees it (tuning-shop D18): its title and every message
+  -- with its card, as the chat drew it. Never a fact about the car.
+  title       TEXT,
+  snapshot    TEXT
 );
 
 CREATE TABLE IF NOT EXISTS thread_messages (
@@ -214,6 +218,10 @@ class Store:
         for column, decl in (("fuel", "TEXT"), ("map_slot", "INTEGER")):
             if uploads and column not in uploads:
                 c.execute(f"ALTER TABLE uploads ADD COLUMN {column} {decl}")
+        threads = {row["name"] for row in c.execute("PRAGMA table_info(threads)")}
+        for column in ("title", "snapshot"):
+            if threads and column not in threads:
+                c.execute(f"ALTER TABLE threads ADD COLUMN {column} TEXT")
         steps = {row["name"] for row in c.execute("PRAGMA table_info(open_steps)")}
         for column, decl in _OPEN_STEP_COLUMNS.items():
             if column not in steps:
@@ -703,10 +711,72 @@ class Store:
         ]
 
     def list_threads(self) -> list[dict[str, Any]]:
-        return [
-            {"id": r["id"], "created_at": r["created_at"], "updated_at": r["updated_at"], "messages": len(self.list_messages(r["id"]))}
-            for r in self._all("SELECT * FROM threads ORDER BY updated_at DESC")
-        ]
+        """Every chat with something in it, newest first: what the sidebar lists."""
+        out = []
+        for r in self._all("SELECT id, created_at, updated_at, title, snapshot FROM threads ORDER BY updated_at DESC"):
+            messages = _loads_list(r["snapshot"])
+            count = len(messages) or len(self.list_messages(r["id"]))
+            if not count:
+                continue
+            out.append({
+                "id": r["id"], "title": r["title"] or _title_of(messages) or "New chat",
+                "created_at": r["created_at"], "updated_at": r["updated_at"], "messages": count,
+            })
+        return out
+
+    def thread(self, thread_id: str) -> dict[str, Any] | None:
+        row = self._one("SELECT id, created_at, updated_at, title, snapshot FROM threads WHERE id = ?", (thread_id,))
+        if row is None:
+            return None
+        messages = _loads_list(row["snapshot"])
+        return {
+            "id": row["id"], "title": row["title"] or _title_of(messages) or "New chat",
+            "created_at": row["created_at"], "updated_at": row["updated_at"], "messages": messages,
+        }
+
+    def save_thread(self, thread_id: str, messages: list[Any], title: str | None = None) -> dict[str, Any]:
+        """Store a chat as the owner sees it. The title is the owner's, else their first message."""
+        at = _now()
+        named = (title or "").strip()[:80] or None
+        self._exec(
+            "INSERT INTO threads (id, created_at, updated_at, title, snapshot) VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(id) DO UPDATE SET updated_at = excluded.updated_at, snapshot = excluded.snapshot, "
+            "title = COALESCE(excluded.title, threads.title)",
+            (thread_id, at, at, named, _json(messages)),
+        )
+        return {"ok": True, "id": thread_id, "title": named or _title_of(messages) or "New chat", "updated_at": at}
+
+    def rename_thread(self, thread_id: str, title: str) -> bool:
+        if self._one("SELECT id FROM threads WHERE id = ?", (thread_id,)) is None:
+            return False
+        self._exec("UPDATE threads SET title = ? WHERE id = ?", (title, thread_id))
+        return True
+
+    def delete_thread(self, thread_id: str) -> bool:
+        """Delete a chat and its messages. Drives, Flashes and Map versions belong to the car and stay."""
+        found = self._one("SELECT id FROM threads WHERE id = ?", (thread_id,)) is not None
+        self._exec("DELETE FROM thread_messages WHERE thread_id = ?", (thread_id,))
+        self._exec("DELETE FROM threads WHERE id = ?", (thread_id,))
+        return found
 
 
-__all__ = ["Store", "SCHEMA"]
+def _loads_list(raw: str | None) -> list[Any]:
+    try:
+        value = json.loads(raw) if raw else []
+    except json.JSONDecodeError:
+        return []
+    return value if isinstance(value, list) else []
+
+
+def _title_of(messages: list[Any]) -> str | None:
+    """A chat's title: the owner's first words, or the first file they attached."""
+    for m in messages:
+        if not isinstance(m, dict) or m.get("role") != "user":
+            continue
+        text = " ".join(str(m.get("text") or "").split())
+        if text:
+            return text if len(text) <= 60 else text[:57].rstrip() + "…"
+        name = (m.get("file") or {}).get("name") if isinstance(m.get("file"), dict) else None
+        if name:
+            return f"Log {name}"
+    return None

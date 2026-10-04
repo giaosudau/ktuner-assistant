@@ -224,8 +224,28 @@ def TOOLS() -> list[dict[str, Any]]:
     ]
 
 
-def system_prompt(drive: Mapping[str, Any], reply: Mapping[str, Any], question: str | None = None) -> str:
+def car_sentence(car: Mapping[str, Any] | None) -> str:
+    """The customer's car as the Car file holds it (tuning-shop D21) — never assumed."""
+    if not car:
+        return (
+            "The customer has not told you their car yet. Do not assume a model, fuel or parts: answer in general, "
+            "and ask them to tell you their car (model, gearbox, fuel, parts, KTuner map)."
+        )
+    parts = ", ".join(str(p).replace("-", " ") for p in car.get("parts") or []) or "no parts listed"
+    bits = [str(car.get(k)) for k in ("model", "engine", "transmission") if car.get(k)]
+    return (
+        f"The customer owns one car: {' '.join(bits) or 'a car'} on {car.get('fuel') or 'unknown fuel'}"
+        f"{', driven in ' + str(car['climate']) if car.get('climate') else ''}, KTuner map \"{car.get('basemap') or 'unknown'}\", "
+        f"with {parts}."
+    )
+
+
+def system_prompt(
+    drive: Mapping[str, Any], reply: Mapping[str, Any], question: str | None = None, car: Mapping[str, Any] | None = None,
+) -> str:
     """The tuner at the shop: orchestrates the tools and teaches; the engine and the map checks decide."""
+    from . import desk as D
+
     step = reply.get("nextStep") or {}
     plan = reply.get("flashPlan") or {}
     cells = V.plan_cells(plan)
@@ -247,11 +267,13 @@ def system_prompt(drive: Mapping[str, Any], reply: Mapping[str, Any], question: 
     )
     return "\n".join(
         [
-            "You are the tuner at a tuning shop that works over chat. The customer owns one car: Honda Civic FE 1.5T CVT on "
-            'Vietnam E10 RON95 fuel, KTuner map "Starter 21 Dual Tune 2", with intake, downpipe, exhaust, big intercooler and '
-            "CVT cooler. They tune on the street without a dyno, flash with KTuner, log with TunerView, and want the map fitted "
-            "to their car without hurting the engine or the CVT. Like any shop, you never expect the first change to be the "
-            "last one: every round is proved by the next log.",
+            "You are the tuner at a tuning shop that works over chat. " + car_sentence(car) + " They tune on the street "
+            "without a dyno, flash with KTuner, log with TunerView, and want the map fitted to their car without hurting the "
+            "engine or the gearbox. Like any shop, you never expect the first change to be the last one: every round is "
+            "proved by the next log.",
+            "What the shop can, can't, and isn't sure it can do. Say so plainly when asked for something outside it, and "
+            "point the owner to what you can do instead. When you are not sure, say you are not sure:",
+            *D.capability_lines(),
             "You orchestrate: decide which tools to call and in what order, reason from what they return, and write the "
             "answer. The engine has already read the whole log; the verdict, the Next step and every map cell are the "
             "engine's and the map checks', not yours. Rules:",
@@ -271,10 +293,11 @@ def system_prompt(drive: Mapping[str, Any], reply: Mapping[str, Any], question: 
             "5. Write in English, plain words for a car owner. Markdown: short paragraphs, bullet lists, **bold** for the "
             "one thing that matters. No tables (the app draws them). Under 280 words. "
             + (
-                "The checked built-in answer is your starting point; build on it and go further. "
-                if question else ""
-            )
-            + f"Start with this sentence: {reply.get('say')}",
+                "Open by answering the owner's question directly in your own words. This checked note may help, use it "
+                f"only if it answers what they asked: {reply.get('say')}"
+                if question
+                else f"Start with this sentence: {reply.get('say')}"
+            ),
             f"The Flash plan this round: {plan_line}",
             "6. Finish by calling submit_reply once with your prose and the decided step's key. The app checks every number, "
             "the step, every cell and every advice line before the owner sees them; a rejected draft gets one repair.",
@@ -286,6 +309,13 @@ def system_prompt(drive: Mapping[str, Any], reply: Mapping[str, Any], question: 
             "Your task: " + task,
         ]
     )
+
+
+def _car_of(store: Any) -> Mapping[str, Any] | None:
+    try:
+        return store.car_profile() if hasattr(store, "car_profile") else None
+    except Exception:  # noqa: BLE001 - a missing profile only costs the car sentence
+        return None
 
 
 def seed_facts(drive: Mapping[str, Any], reply: Mapping[str, Any], limits: Mapping[str, Any]) -> list[float]:
@@ -505,6 +535,9 @@ async def run_agent(
 ) -> dict[str, Any]:
     """Explain the decided reply (or, with `question`, answer the owner's typed question about it). Never raises: failures come back as fallback."""
     facts = seed_facts(drive, reply, worker.limits if getattr(worker, "limits", None) else {})
+    from . import desk as D
+
+    facts.extend(V.collect_numbers(D.capability_lines()))  # the shop's own can / can't lines may be quoted
     decided = reply.get("nextStep") or {}
     plan = reply.get("flashPlan")
 
@@ -531,7 +564,7 @@ async def run_agent(
         else "Explain this Drive's reply to its owner."
     )
     messages: list[Message] = [
-        {"role": "system", "content": system_prompt(drive, reply, question)},
+        {"role": "system", "content": system_prompt(drive, reply, question, _car_of(store))},
         # A screenshot rides only in the user turn, as a data URL; the model may look at it but may quote only tool numbers.
         {"role": "user", "content": [{"type": "text", "text": ask}, {"type": "image_url", "image_url": {"url": image}}] if image else ask},
     ]
