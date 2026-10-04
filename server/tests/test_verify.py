@@ -167,3 +167,43 @@ def test_an_rpm_next_to_a_psi_figure_is_not_read_as_boost():
     assert V.banned_issues("Boost overshoot stayed at +0.1 psi at 3,793 rpm.", plan) == []
     assert V.banned_issues("Boost peaked at 13.9 psi; the table plateaus at 21 psi from 4,000 rpm.", plan) == []
     assert V.banned_issues("You could run 24 psi of boost.", plan), "a real psi above the ceiling still fails"
+
+
+# -- map hard rules (tuning-shop, 4 Oct) --------------------------------------
+PLAN_BOOST = {
+    "ceilingPsi": 21,
+    "cells": [{"table": "Boost_Target_1_Normal_L", "row": 8, "col": 9, "before": 17.0, "after": 16.0}],
+}
+
+
+def test_an_invented_table_fails():
+    issues = V.map_issues("Lower Boost_Target_9_Turbo_L by one step.", PLAN_BOOST)
+    assert any("doesn't have" in i for i in issues)
+
+
+def test_teaching_any_real_table_passes_but_advising_a_change_outside_the_plan_fails():
+    assert V.map_issues("Ignition_Base_L is the main spark map; at 4,000 rpm it reads 1.5.", PLAN_BOOST) == []
+    assert any("doesn't change" in i for i in V.map_issues("Add 2 degrees to Ignition_Base_L at 4,000 rpm.", PLAN_BOOST))
+
+
+def test_an_advised_value_change_must_be_a_plan_cell():
+    assert V.map_issues("Change Boost_Target_1_Normal_L at 2,750 rpm column 9: 17.0 → 16.0 psi.", PLAN_BOOST) == []
+    bad = V.map_issues("Change Boost_Target_1_Normal_L at 2,750 rpm column 9: 17.0 → 15.0 psi.", PLAN_BOOST)
+    assert any("not a cell of the checked Flash plan" in i for i in bad)
+    # A reading with an arrow is not advice.
+    assert V.map_issues("Your score rose 0.49 → 0.65 in traffic.", PLAN_BOOST) == []
+
+
+def test_quoting_a_real_boost_value_above_the_ceiling_is_a_fact_not_advice():
+    """Live finding: Final Boost Target's 23.4 psi top was rejected as advice."""
+    assert V.banned_issues("Final Boost Target tops out near 23.4 psi on this map.", {"ceilingPsi": 21}, [23.4]) == []
+    # The same figure with no card behind it is a reading this map can't produce.
+    assert V.banned_issues("Boost peaked at 31 psi on this drive.", {"ceilingPsi": 21})
+    assert V.banned_issues("Raise boost to 23.4 psi.", {"ceilingPsi": 21})
+
+
+def test_a_typed_answer_may_name_no_step_but_never_a_different_one():
+    ok = V.verify("Heat soak costs this car performance.", None, "logger", [], None, [], question=True)
+    assert not any("as the step" in i for i in ok["issues"])
+    wrong = V.verify("Heat soak costs this car performance.", "habit", "logger", [], None, [], question=True)
+    assert any("as the step" in i for i in wrong["issues"])

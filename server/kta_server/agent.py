@@ -568,6 +568,9 @@ async def run_agent(
             if call["name"] in SHOP_TOOLS:
                 output = await _shop_tool(call["name"], call["args"], reply, plan, map_tables, harness, config)
                 facts.extend(V.collect_numbers(output))
+                # The table cards the tour and the table reader point to come with their text: read, so citable.
+                for card in (output.get("cards") or []) if isinstance(output, Mapping) else []:
+                    seen_cards[str(card["id"])] = card
                 results.append({"tool_call_id": call["id"], "role": "tool", "name": call["name"], "content": _slim_json(output)})
                 continue
             if call["name"] == "show_chart":
@@ -599,6 +602,7 @@ async def run_agent(
                 args.get("cells") or [],
                 knowledge=list(seen_cards.values()),
                 pictures=pictures,
+                question=bool(question),
             )
             messages.append(
                 {
@@ -637,7 +641,10 @@ async def run_agent(
         text = (strip_thinking(message.get("content")) or "").strip()
         if not text:
             return fail("empty", ["The model returned no text and no tool calls."])
-        verdict = V.verify(text, None, decided.get("key"), facts, plan, [], knowledge=list(seen_cards.values()), pictures=pictures)
+        verdict = V.verify(
+            text, None, decided.get("key"), facts, plan, [], knowledge=list(seen_cards.values()), pictures=pictures,
+            question=bool(question),
+        )
         if verdict["ok"]:  # pragma: no cover - plain text never names the step key
             return {
                 "prose": text,
@@ -679,19 +686,35 @@ async def _shop_tool(
         }
         return await harness.step(config, "healthReport", "Read the health report and the log checkpoints", {}, _wrap(report))
     if name == "get_map_tour":
-        tour = reply.get("tour") or TOUR.map_tour(plan, map_tables)
+        tour = dict(reply.get("tour") or TOUR.map_tour(plan, map_tables))
+        tour["cards"] = _cards_for([f.get("card") for f in tour.get("families") or []])
         return await harness.step(config, "mapTour", "Walk the map, table family by family", {}, _wrap(tour))
     if name == "get_map_table":
         table = str(args.get("table") or "")
         rpm = args.get("rpm") if isinstance(args.get("rpm"), (int, float)) else None
+        read = TOUR.read_table(map_tables, table, rpm)
+        read["cards"] = _cards_for([read.get("card")])
         return await harness.step(
             config, "mapTable", f"Read {table or 'a table'}", {"table": table, **({"rpm": rpm} if rpm is not None else {})},
-            _wrap(TOUR.read_table(map_tables, table, rpm)),
+            _wrap(read),
         )
     proposal = K.propose(
         str(args.get("title") or ""), str(args.get("claim") or ""), str(args.get("why") or ""), str(args.get("source_hint") or "")
     )
     return await harness.step(config, "proposeKnowledge", "Note a new fact for review", {"title": args.get("title")}, _wrap(proposal))
+
+
+def _cards_for(ids: list[Any]) -> list[dict[str, Any]]:
+    """The knowledge cards a tool output points to, with their text, once each."""
+    out, seen = [], set()
+    for cid in ids:
+        if not cid or cid in seen:
+            continue
+        seen.add(cid)
+        card = K.get(str(cid))
+        if card:
+            out.append({"id": card["id"], "title": card.get("title"), "body": card.get("body"), "numbers": card.get("numbers")})
+    return out
 
 
 async def _show_chart(

@@ -145,7 +145,7 @@ _BANNED_BASE = [
 #: Quoting a locked lever's title ("Boost +1 psi (24 psi map)") carries no verb
 #: and stays quotable; telling the owner to type it is what fails.
 _ADVICE_VERB = re.compile(
-    r"\b(raise|increase|add|flash|edit|adjust|change|bump|type|put|give|"
+    r"\b(raise|increase|add|flash|edit|adjust|change|bump|type|put|give|run|set|try|"
     r"t\u0103ng|th\xeam|ch\u1ec9nh|s\u1eeda|\u0111\u1ed5i|n\u1ea1p|flash)\b",
     re.IGNORECASE | re.UNICODE,
 )
@@ -231,7 +231,7 @@ def plan_has_afm_cells(plan: Mapping[str, Any] | None) -> bool:
     return False
 
 
-def banned_issues(prose: str, plan: Mapping[str, Any] | None = None) -> list[str]:
+def banned_issues(prose: str, plan: Mapping[str, Any] | None = None, references: Sequence[float] = ()) -> list[str]:
     """Advice the app never gives, in English and Vietnamese (negation-aware)."""
     issues: list[str] = []
     text = str(prose or "")
@@ -263,7 +263,14 @@ def banned_issues(prose: str, plan: Mapping[str, Any] | None = None) -> list[str
                 continue
             # Only a number written as pressure ("24 psi") can break the ceiling; "3,793 rpm" next to
             # "+0.1 psi" is an rpm, not a boost.
-            if value > ceiling and re.match(r"\s*psi\b", text[match.end():match.end() + 8], re.IGNORECASE):
+            if (
+                value > ceiling
+                and re.match(r"\s*psi\b", text[match.end():match.end() + 8], re.IGNORECASE)
+                # Above the ceiling, a psi figure is either advice (fails) or a reference value a
+                # cited card holds ("Final Boost Target tops out near 23.4 psi"). Anything else is a
+                # reading this map can't produce — a number borrowed from another quantity.
+                and (_advised(text, match.start()) or not number_allowed(value, references))
+            ):
                 window = text[max(0, match.start() - 40):match.end() + 40]
                 if _BOOST_NUMBER.search(window):
                     issues.append(
@@ -313,6 +320,7 @@ def verify(
     cells: Sequence[Mapping[str, Any]] | None = None,
     knowledge: Sequence[Mapping[str, Any]] | None = None,
     pictures: Sequence[Mapping[str, Any]] | None = None,
+    question: bool = False,
 ) -> dict[str, Any]:
     """Judge one draft reply. Returns `{"ok": bool, "issues": [...]}`.
 
@@ -359,7 +367,8 @@ def verify(
         )
         issues.append("These numbers are not in any tool result: " + ", ".join(bad[:8]) + ". " + hint)
 
-    if action_key != decided_key:
+    # A typed answer may name no step at all; it may never name a different one.
+    if action_key != decided_key and not (question and action_key in (None, "")):
         issues.append(
             f"The reply names {action_key!r} as the step, but this Drive's decided "
             f"Next step is {decided_key!r}. Name that step and no other."
@@ -385,17 +394,64 @@ def verify(
                         f"is not the Flash plan's ({planned.get(field)}). Quote the plan exactly."
                     )
 
-    for token in sorted(set(re.findall(r"\b[A-Z][A-Za-z0-9_]*_[A-Za-z0-9_]+\b", text))):
-        tables = plan_tables(plan)
-        if tables and token not in tables and not any(token in t or t in token for t in tables):
-            issues.append(
-                f"The reply names table {token!r}, which is not in this reply's Flash plan. "
-                "Only Flash plan tables may be named."
-            )
+    issues.extend(map_issues(text, plan))
 
     issues.extend(picture_issues(text, pictures))
-    issues.extend(banned_issues(text, plan))
+    issues.extend(banned_issues(text, plan, cited_numbers))
     return {"ok": not issues, "issues": issues}
+
+
+# ---------------------------------------------------------------------------
+# Map hard rules (tuning-shop, 4 Oct): a recommendation that names the wrong table,
+# an invented table, or a value the checked plan doesn't hold costs the owner's
+# trust and can cost an engine. Reading and teaching any real table is allowed;
+# advising a change is allowed only for what both map checks passed.
+# ---------------------------------------------------------------------------
+_TABLE_ID = re.compile(r"\b[A-Z][A-Za-z0-9+]*(?:_[A-Za-z0-9+]+)+\b")
+_CHANGE = re.compile(r"(-?\d+(?:\.\d+)?)\s*(?:→|->)\s*(-?\d+(?:\.\d+)?)")
+
+
+def known_tables() -> set[str]:
+    """Every table id the app's KTuner map data holds for this car."""
+    from .mapdata import basemap_tables
+
+    return set(basemap_tables())
+
+
+def _is_known(token: str, known: set[str]) -> bool:
+    # A family name the owner reads in KTuner ("WOT_Enrich", "Boost_Target_1_Normal") is fine.
+    return token in known or any(t.startswith(token + "_") for t in known)
+
+
+def map_issues(text: str, plan: Mapping[str, Any] | None) -> list[str]:
+    issues: list[str] = []
+    known = known_tables()
+    in_plan = sorted(set(plan_tables(plan)) | {str(c.get("table")) for c in plan_cells(plan) if c.get("table")})
+    for match in _TABLE_ID.finditer(text):
+        token = match.group(0)
+        if not _is_known(token, known):
+            issues.append(
+                f"The reply names table {token!r}, which this car's KTuner map doesn't have. "
+                "Name tables exactly as get_map_table / get_map_tour spell them."
+            )
+        elif _advised(text, match.start()) and not any(token == t or t.startswith(token + "_") for t in in_plan):
+            issues.append(
+                f"The reply advises changing {token!r}, which the checked Flash plan doesn't change. "
+                "Explain it, but only the Flash plan's tables may be changed."
+            )
+    cells = plan_cells(plan)
+    pairs = {(float(c["before"]), float(c["after"])) for c in cells
+             if isinstance(c.get("before"), (int, float)) and isinstance(c.get("after"), (int, float))}
+    for match in _CHANGE.finditer(text):
+        if not _advised(text, match.start()):
+            continue  # a reading ("score rose 0.49 → 0.65") or a quoted locked lever, not advice
+        pair = (float(match.group(1)), float(match.group(2)))
+        if not any(abs(pair[0] - b) <= 0.051 and abs(pair[1] - a) <= 0.051 for b, a in pairs):
+            issues.append(
+                f"The reply advises a change {match.group(0)} that is not a cell of the checked Flash plan. "
+                "Only the plan's own before → after values may be advised."
+            )
+    return issues
 
 
 __all__ = [
@@ -411,5 +467,7 @@ __all__ = [
     "plan_has_afm_cells",
     "plan_raises_boost",
     "plan_tables",
+    "known_tables",
+    "map_issues",
     "verify",
 ]
