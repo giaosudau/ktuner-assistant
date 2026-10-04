@@ -253,8 +253,8 @@ test('issue 01: the engine\'s internal status names never reach the screen', () 
   const vm = require('vm');
   vm.createContext(window);
   window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n-drive.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
   for (const lang of ['en', 'vi']) {
     const T = window.KTA_I18N[lang];
     assert.deepEqual([T.status.good, T.status.watch, T.status.stop, T.status.nodata], lang === 'en' ? ['OK', 'Watch', 'Stop', "Can't tell"] : ['Ổn', 'Theo dõi', 'Dừng', 'Không kết luận được']);
@@ -397,8 +397,8 @@ test('issue 02: every safety line states its basis in one line, EN+VI', () => {
   const fs = require('fs'), vm = require('vm');
   const window = {};
   vm.createContext(window); window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n-drive.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
   const seen = new Set();
   for (const id of ['aug30-1601', 'sep01-0813']) {
     const an = drive(id).report.an;
@@ -417,7 +417,7 @@ test('issue 02: every safety line states its basis in one line, EN+VI', () => {
 
 test('issue 02: the app answers E10 and the 21 psi map with the car\'s own numbers', () => {
   const fs = require('fs');
-  const en = fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8');
+  const en = fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8');
   assert.ok(!/2-4 ?% positive|2–4 ?% positive/.test(en), 'the refuted +3% E10 trim offset is gone');
   assert.ok(/-0\.8 ?%/.test(en), 'cruise median trim −0.8% is quoted');
   assert.ok(/0\.69|0\.73/.test(en), 'under-boost lambda vs target is quoted');
@@ -483,8 +483,8 @@ test('issue 07: a score that starts high gets its sentence, in both languages', 
   const fs = require('fs'), vm = require('vm');
   const window = {};
   vm.createContext(window); window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n-drive.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
   assert.ok(/10–15 calm minutes/.test(window.KTA_I18N.en.checks.kControl.display(kc.data, K.fmt)));
   assert.ok(/10–15 phút/.test(window.KTA_I18N.vi.checks.kControl.display(kc.data, K.fmt)));
 });
@@ -660,8 +660,8 @@ test('ticket 02: the app\'s own copy of every remedy names no table either, in b
   const fs = require('fs'), vm = require('vm');
   const window = {};
   vm.createContext(window); window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n-drive.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
   let fixes = 0;
   for (const lang of ['en', 'vi']) {
     ALL_LOGS().concat(ALL_SAMPLES()).forEach((log) => {
@@ -685,8 +685,8 @@ test('ticket 02: the app shows the after-flash sentence and the 5,200 rpm note i
   const fs = require('fs'), vm = require('vm');
   const window = {};
   vm.createContext(window); window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../app/i18n-drive.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
   const T = window.KTA_I18N;
   // The after-flash pattern: a sentence, not a status name, in both languages.
   for (const lang of ['en', 'vi']) {

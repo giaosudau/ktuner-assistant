@@ -1546,7 +1546,7 @@
   // operation says which step would have been settled instead — never as a
   // verdict on the owner.
   //
-  // The order the Next step is decided in (prototypes/next-step/, amended: the
+  // The order the Next step is decided in (the loop eval locks it; amended: the
   // Baseline before the habit) never reorders. Diagnose runs before all of it:
   // a cause seen today goes to the step its pattern names.
   //

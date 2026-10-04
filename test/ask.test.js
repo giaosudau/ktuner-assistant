@@ -6,8 +6,8 @@ const assert = require('node:assert/strict');
 const zlib = require('zlib');
 global.window = globalThis;
 const K = require('../engine/kta-ask.js');
-require('../app/i18n.js');
-require('../app/i18n-drive.js');
+require('../engine/text/i18n.js');
+require('../engine/text/i18n-drive.js');
 require('../data/example-aug30-1601.js');
 
 const T = window.KTA_I18N.en;

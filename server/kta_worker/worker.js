@@ -33,13 +33,13 @@
 var path = require('path');
 
 // ---------------------------------------------------------------------------
-// The engine, and the interface text its ask tools read (app/i18n*.js are
-// browser IIFEs that hang off window; nothing is modified, only loaded).
+// The engine, and the interface text its ask tools read (engine/text/i18n*.js
+// hang off window, a leftover of the retired browser app; only loaded).
 // ---------------------------------------------------------------------------
 globalThis.window = globalThis.window || {};
-require(path.join(__dirname, '..', '..', 'app', 'i18n.js'));
-require(path.join(__dirname, '..', '..', 'app', 'i18n-drive.js'));
-require(path.join(__dirname, '..', '..', 'app', 'i18n-map.js'));
+require(path.join(__dirname, '..', '..', 'engine', 'text', 'i18n.js'));
+require(path.join(__dirname, '..', '..', 'engine', 'text', 'i18n-drive.js'));
+require(path.join(__dirname, '..', '..', 'engine', 'text', 'i18n-map.js'));
 
 var KTA = require(path.join(__dirname, '..', '..', 'engine', 'kta-car.js'));
 require(path.join(__dirname, '..', '..', 'engine', 'kta-ask.js')); // adds KTA.ask

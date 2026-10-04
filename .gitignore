@@ -16,3 +16,8 @@ server/eval-results/
 __pycache__/
 .pytest_cache/
 *.pyc
+
+# Local review screenshots and build caches
+.impeccable/review/
+web/tsconfig.tsbuildinfo
+.claude/launch.json
