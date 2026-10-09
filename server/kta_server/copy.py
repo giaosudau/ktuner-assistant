@@ -747,7 +747,8 @@ def drive_recipe(
             "intro": "No map change: this is a physical check, not a flash.",
             "steps": [
                 "With the engine cold, check every clamp between the sensor and the engine is tight.",
-                "Check both flanges for black soot or a loose nut — a leak ahead of the sensor reads lean.",
+                "A lean reading under boost is a real lean (fuel pressure or the airflow sensor): a downpipe flange "
+                "leak never reads lean on the front A/F, it shows on the rear O2 / P0420.",
                 "Log your next drive, any kind, with the same gauges.",
             ],
         }

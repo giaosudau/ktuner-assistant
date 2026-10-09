@@ -1313,7 +1313,7 @@
       closedLoopSeconds: round(clSeconds, 1),
       maf: { axis: axis, cl: clBins, wot: wotBins, binsWithData: binsWithData, fpLimitedSeconds: round(fpLimited * dt, 1) },
       wot: { byRpm: byRpm, absErrAfr: wotAbsErr, signedErrAfr: wotSignedErr, leanestLambda: mixLean, leanestT: mixLeanT, fuelPressRatio: fp05 },
-      numbers: { overshoot: overshoot, undershoot: undershoot, mafMax: mafMax, knockMax: knockMax, iatMax: iatMax, ectMax: ectMax, cvtMax: cvtMax, lowBoost: lowBoost, kControlStart: kcStart, kControlEnd: kcEnd, kControlPeak: kcPeak, kControlPeakJudged: kcPeakJudged, kControlHighPeak: kcHighPeak, trimWorst: trimWorst, wotMeasuredAfr: mixMedAfr, wotMapAfr: mapWot, iatSoak: iatSoak },
+      numbers: { overshoot: overshoot, overshootRpm: overshootRpm, undershoot: undershoot, mafMax: mafMax, knockMax: knockMax, iatMax: iatMax, ectMax: ectMax, cvtMax: cvtMax, lowBoost: lowBoost, kControlStart: kcStart, kControlEnd: kcEnd, kControlPeak: kcPeak, kControlPeakJudged: kcPeakJudged, kControlHighPeak: kcHighPeak, trimWorst: trimWorst, wotMeasuredAfr: mixMedAfr, wotMapAfr: mapWot, iatSoak: iatSoak },
       knockScheduled: knockScheduled,
       gates: gates,
       verdict: verdict,

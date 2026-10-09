@@ -62,6 +62,7 @@
                                  // not an Unexplained change. A start above it still counts.
   var LEAN_WATCH = 0.5;          // AFR points leaner than the Map's full-load target
   var LEAN_STOP = 1.0;
+  var DP_LEAN_MAX = 12.0;        // AFR: a boost proof never passes leaner than this, whatever the target
   var LUG_OK = 4;               // under 4 % of moving time lugging: keep-the-revs-up is holding
   var LUG_RISE_OK = 0.03;       // a Fuel-quality score that ends within 0.03 of its start: holding
   var LUG_RISE_SEEN = 0.08;     // a rise of 0.08 or more: the lugging cause seen today
@@ -289,6 +290,9 @@
       kcStart: I.kc ? I.kc.start : null,
       kcEnd: I.kc ? I.kc.end : null,
       kcPeak: I.kc ? I.kc.peak : null,
+      // The peak the verdict reads: at or under 5,200 rpm, where the non-Si ECU
+      // does not raise the score on purpose (kta-engine kControlPeakJudged).
+      kcPeakJudged: rep.an && rep.an.numbers && isNum(rep.an.numbers.kControlPeakJudged) ? Math.round(rep.an.numbers.kControlPeakJudged * 100) / 100 : null,
       trimWorst: I.trims ? I.trims.worst : null,
       // What the trims looked like per load band, at idle, and in the first
       // minute: the shapes Diagnose reads (a housing mismatch pulls every band
@@ -317,6 +321,7 @@
       accel5070: acc,
       boostTarget: I.boost ? I.boost.peakTarget : null,
       overshoot: I.boost ? I.boost.overshoot : null,
+      overshootRpm: I.boost ? I.boost.overshootRpm : null,
       wgAtPeak: I.boost ? I.boost.wgAtPeak : null,
       mixLeanest: I.mix ? I.mix.leanest : null,
       mixTarget: I.mix ? I.mix.mapAfr : null,
@@ -360,12 +365,17 @@
   // The premium-fuel test (tuning-shop, 4 Oct): is E10 RON97 III worth it over RON95 III?
   //
   // Judged only by what the fuel changes — the ECU's knock margin (Knock Control) and the
-  // timing it costs — on matched drives: both with hard pulls, intake within 8 °C
-  // (drive-check-tuner-analysis.md §4 #10), the same map slot. owner-voices.md §2 #7 and §4:
-  // "better fuel is judged by knock control, tank against tank". `tags` maps a Drive id to
+  // timing it costs — on matched drives: both hot with hard pulls, intake within 8 °C
+  // (drive-check-tuner-analysis.md §4 #10), the same map slot, Knock Control settled.
+  // owner-voices.md §2 #7 and §4: "better fuel is judged by knock control, tank against tank".
+  // Hot only: cool drives sit at the score's floor on this map, so two fuels can never differ
+  // there (fuel-slot-strategy research). Settled: right after a Flash the score starts high
+  // (≈ 0.59) and is still re-learning. The peak compared is the judged one (≤ 5,200 rpm);
+  // the pair keeps the kcPeakA/B names its readers already use. `tags` maps a Drive id to
   // { fuel, slot } as the owner tagged the upload.
   // ---------------------------------------------------------------------------
   var FUEL_IAT_MATCH = 8;
+  var FUEL_KC_SETTLED = KTA.LIMITS.score.watch; // 0.56: a start above this is still settling
   KTA.carFuelTest = function (state, tags) {
     var s = normalize(state), hidden = {};
     s.hidden.forEach(function (id) { hidden[id] = true; });
@@ -379,8 +389,8 @@
       return {
         fuel: fuel,
         drives: byFuel[fuel].map(function (d) {
-          return { id: d.id, slot: t[d.id].slot || 1, kcPeak: d.kcPeak, iatMoving: d.iatMoving, hardPulls: d.hardPulls || 0,
-            accel5070: d.accel5070 ? d.accel5070.seconds : null };
+          return { id: d.id, slot: t[d.id].slot || 1, kcPeak: d.kcPeakJudged, kcStart: d.kcStart, hot: !!d.hot,
+            iatMoving: d.iatMoving, hardPulls: d.hardPulls || 0, accel5070: d.accel5070 ? d.accel5070.seconds : null };
         })
       };
     });
@@ -389,7 +399,8 @@
       var a = grades[0], b = grades[1];
       a.drives.forEach(function (x) {
         b.drives.forEach(function (y) {
-          if (x.hardPulls < 1 || y.hardPulls < 1 || x.slot !== y.slot) return;
+          if (x.hardPulls < 1 || y.hardPulls < 1 || x.slot !== y.slot || !x.hot || !y.hot) return;
+          if (!(x.kcStart <= FUEL_KC_SETTLED) || !(y.kcStart <= FUEL_KC_SETTLED)) return;
           if (!isNum(x.iatMoving) || !isNum(y.iatMoving) || Math.abs(x.iatMoving - y.iatMoving) > FUEL_IAT_MATCH) return;
           if (!isNum(x.kcPeak) || !isNum(y.kcPeak)) return;
           pairs.push({ a: x.id, b: y.id, fuelA: a.fuel, fuelB: b.fuel, iatGap: Math.round(Math.abs(x.iatMoving - y.iatMoving)),
@@ -399,7 +410,7 @@
     }
     var why = null;
     if (grades.length < 2) why = grades.length ? 'Only ' + grades[0].fuel + ' is tagged so far: log the same drive on the other fuel.' : 'No Drive is tagged with its fuel yet.';
-    else if (!pairs.length) why = 'No matched pair yet: each fuel needs a Drive with a hard pull, intake within ' + FUEL_IAT_MATCH + ' °C of the other, on the same map slot.';
+    else if (!pairs.length) why = 'No matched pair yet: each fuel needs a hot Drive with a hard pull, intake within ' + FUEL_IAT_MATCH + ' °C of the other, on the same map slot, with Knock Control settled (starting at ' + FUEL_KC_SETTLED.toFixed(2) + ' or under, not right after a Flash).';
     return { status: pairs.length ? 'measured' : 'cant-tell', why: why, iatMatch: FUEL_IAT_MATCH, grades: grades, pairs: pairs };
   };
 
@@ -1135,6 +1146,36 @@
     s.hidden.forEach(function (id) { hidden[id] = true; });
     return orderedSummaries(s).filter(function (d) { return !hidden[d.id]; });
   }
+  // The B2 downpipe trim lowers the Boost Target rows either side of each held
+  // overshoot past +2.5 psi: the ECU reads between two rows, so lowering both
+  // lowers the target right where it overshot (on an axis row exactly, that row).
+  // Ticket 05: every measured peak sat at 3,236–3,964 rpm, never in 2,500–3,000.
+  var DP_TITLE = 'Boost −1 psi where overshoot held';
+  function overshootRows(drives, axis) {
+    var want = {};
+    drives.forEach(function (d) {
+      var rpm = d.overshootRpm;
+      if (!(isNum(d.overshoot) && d.overshoot > KTA.LIMITS.overshoot.watch && isNum(rpm))) return;
+      var lo = null, hi = null;
+      axis.forEach(function (a) { if (a <= rpm) lo = a; if (a >= rpm && hi == null) hi = a; });
+      if (lo != null) want[lo] = true;
+      if (hi != null) want[hi] = true;
+    });
+    return axis.filter(function (a) { return want[a]; });
+  }
+  /** "3,500–4,000 rpm" from the rows themselves (neighbours on the axis join with a dash). */
+  function rowsLabel(rows, axis) {
+    var parts = [], from = null;
+    rows.forEach(function (r, k) {
+      if (from == null) from = r;
+      var next = rows[k + 1];
+      if (next == null || axis.indexOf(next) !== axis.indexOf(r) + 1) {
+        parts.push(KTA.fmt.num(from, 0) + (from === r ? '' : '–' + KTA.fmt.num(r, 0)));
+        from = null;
+      }
+    });
+    return parts.join(' and ') + ' rpm';
+  }
   function issueCause(d, baseline) {
     if (isNum(d.trimWorst) && Math.abs(d.trimWorst) > TRIM_OK) return 'trims';
     if (isNum(d.overshoot) && d.overshoot > 2.5) return 'overshoot';
@@ -1251,7 +1292,7 @@
         'Superseded by the open Stop: undo first.', 'Flash the previous map file, then a passing Shakedown drive.', NORMAL_BOOST_IDS.slice());
       lever('boostLow', 'boost', 'Boost lower at low rpm', 'locked',
         'Superseded by the open Stop: undo first.', 'Flash the previous map file, then a passing Shakedown drive.', NORMAL_BOOST_IDS.slice());
-      lever('downpipe', 'boost', 'Boost −1 psi at 2,500–3,250 rpm', 'locked',
+      lever('downpipe', 'boost', DP_TITLE, 'locked',
         'Superseded by the open Stop: undo first.', 'Flash the previous map file, then a passing Shakedown drive.', NORMAL_BOOST_IDS.slice());
       lever('hot', null, 'Hot days', 'no-edit',
         'No edit needed: ECO mode already runs the 18 psi targets (KTuner Starter 21 Dual Tune 2).', '—', []);
@@ -1326,15 +1367,23 @@
         });
       }
     }
-    if (isNum(overMax) && overMax > 2.5 && mapOk) {
+    var boostAxis = mapOk ? normals[NORMAL_BOOST_IDS[0]].rpm : [];
+    var dpRows = overshootRows(window, boostAxis);
+    var dpTitle = dpRows.length ? 'Boost −1 psi at ' + rowsLabel(dpRows, boostAxis) : DP_TITLE;
+    if (isNum(overMax) && overMax > 2.5 && mapOk && !dpRows.length) {
+      // Drives stored before the overshoot rpm was summarised cannot place the trim.
+      lever('downpipe', 'boost', DP_TITLE, 'locked',
+        'Overshoot ' + overMax.toFixed(1) + ' psi held, but these Drives do not say at which rpm, so the trim has no rows yet.',
+        'A Drive with pulls read again, so its overshoot carries its rpm.', NORMAL_BOOST_IDS.slice());
+    } else if (isNum(overMax) && overMax > 2.5 && mapOk) {
       cands.push({
         id: 'downpipe', leverId: 'downpipe', family: 'boost', gain: false, matches: ['overshoot'],
         evidence: {
           drives: window.filter(function (d) { return isNum(d.overshoot) && d.overshoot > 2.5; }).map(function (d) { return d.id; }),
-          text: 'Boost overshoot ' + overMax.toFixed(1) + ' psi, over the 2.5 psi hold.',
+          text: 'Boost overshoot ' + overMax.toFixed(1) + ' psi, over the 2.5 psi hold, at ' + rowsLabel(dpRows, boostAxis) + '.',
           basis: 'Data'
         },
-        proof: 'Two pulls hold overshoot under +2.5 psi with full-load mixture on target.'
+        proof: 'A Cool drive with 2 hard pulls: overshoot at or under +2.5 psi, full-load mixture at or richer than target and never leaner than 12.0, trims within ±5 %.'
       });
     }
     var revsProven = history.some(function (h) { return h.id === 'revs' && (h.verdict === 'keep' || h.verdict === 'partial'); });
@@ -1427,13 +1476,13 @@
     }
     if (!leverFor('downpipe')) {
       if (winner && winner.leverId === 'downpipe') {
-        lever('downpipe', 'boost', 'Boost −1 psi at 2,500–3,250 rpm', 'planned', 'In the plan below.', 'Two pulls prove it.', NORMAL_BOOST_IDS.slice());
+        lever('downpipe', 'boost', dpTitle, 'planned', 'In the plan below.', 'Two hard pulls on a Cool drive prove it.', NORMAL_BOOST_IDS.slice());
       } else {
         var heldDp = cands.filter(function (c) { return c.leverId === 'downpipe' && c.block; })[0];
         var defDp = deferred.filter(function (d) { return d.id === 'downpipe'; })[0];
-        if (heldDp) lever('downpipe', 'boost', 'Boost −1 psi at 2,500–3,250 rpm', heldDp.block.status, heldDp.block.reason, heldDp.block.unlocks, NORMAL_BOOST_IDS.slice());
-        else if (defDp) lever('downpipe', 'boost', 'Boost −1 psi at 2,500–3,250 rpm', 'deferred', 'After the first change (' + winner.id + ') is proven (P4: one family per Flash).', 'After the first change is proven.', NORMAL_BOOST_IDS.slice());
-        else lever('downpipe', 'boost', 'Boost −1 psi at 2,500–3,250 rpm', 'not-needed',
+        if (heldDp) lever('downpipe', 'boost', dpTitle, heldDp.block.status, heldDp.block.reason, heldDp.block.unlocks, NORMAL_BOOST_IDS.slice());
+        else if (defDp) lever('downpipe', 'boost', dpTitle, 'deferred', 'After the first change (' + winner.id + ') is proven (P4: one family per Flash).', 'After the first change is proven.', NORMAL_BOOST_IDS.slice());
+        else lever('downpipe', 'boost', dpTitle, 'not-needed',
           'Not needed: overshoot ' + (isNum(overMax) ? 'max ' + overMax.toFixed(1) : 'never over 2.5') + ' psi.',
           'Overshoot above 2.5 psi held on pulls.', NORMAL_BOOST_IDS.slice());
       }
@@ -1478,13 +1527,14 @@
     } else if (winner.family === 'boost') {
       var refId = NORMAL_BOOST_IDS[0];
       var ref = normals[refId];
-      var wantRows = winner.id === 'downpipe' ? [2500, 2750, 3000] : null; // downpipe overshoot band
+      var wantRows = winner.id === 'downpipe' ? dpRows : null; // where the overshoot held
       var gate = winner.id === 'downpipe' ? 8 : 6;
       var shape = [];
       ref.values.forEach(function (row, r) {
         if (wantRows ? wantRows.indexOf(ref.rpm[r]) < 0 : !(ref.rpm[r] >= 1250 && ref.rpm[r] <= 2250)) return;
         row.forEach(function (v, c) {
-          if (!(v >= gate)) return;
+          // The cell moves only when it clears the gate in all six tables, so the six still move together (P6).
+          if (!NORMAL_BOOST_IDS.every(function (id) { return normals[id].values[r][c] >= gate; })) return;
           shape.push({ rpm: ref.rpm[r], rpmRow: r, col: c + 1, of: row.length, delta: -1 });
         });
       });
@@ -1515,7 +1565,7 @@
       headline: winner.id === 'afmCurve'
         ? 'AFM Flow: ' + (trimMed < 0 ? '−' : '+') + Math.abs(trimMed).toFixed(1) + ' % everywhere the log corrects, because the median worst trim is ' + trimMed.toFixed(1) + ' %.'
         : winner.id === 'downpipe'
-          ? 'Boost targets, low rpm: −1 psi at 2,500–3,250 rpm, because overshoot held ' + overMax.toFixed(1) + ' psi.'
+          ? 'Boost targets: −1 psi at ' + rowsLabel(dpRows, boostAxis) + ', because overshoot held ' + overMax.toFixed(1) + ' psi there.'
           : 'Boost targets, low rpm: −1 psi at 1,250–2,250 rpm, because lugging persists after the habit was proven.',
       evidence: [Object.assign({ drives: winner.evidence.drives, text: winner.evidence.text }, { basis: basis })],
       basis: basis, proof: proof,
@@ -1722,11 +1772,13 @@
       }
     },
     install: {
-      key: 'install', title: 'Check the install: clamps and flanges', short: 'the install check',
-      would: 'a drive after checking the clamps and flanges', needs: ['stft', 'ltft'],
+      // Clamps and hoses, never "flanges": the front A/F is in the turbo outlet,
+      // so a downpipe flange leak never reads lean on it (ticket 12).
+      key: 'install', title: 'Check the install: clamps and hoses', short: 'the install check',
+      would: 'a drive after checking the clamps and hoses', needs: ['stft', 'ltft'],
       reask: 6, wasted: 6,
       ask: {
-        first: 'Check the install: clamps and flanges', title: 'Check the install: clamps and flanges',
+        first: 'Check the install: clamps and hoses', title: 'Check the install: clamps and hoses',
         kind: 'watch', gauges: ['trims', 'afr'], when: 'after your next drive, any kind',
         proves: 'trims back within ±' + TRIM_OK + ' % and the mixture on target'
       },
@@ -1752,22 +1804,32 @@
       ask: {
         first: 'Flash the downpipe trim, then two pulls', title: 'Flash the downpipe trim, then two pulls',
         kind: 'flash', gauges: ['boost', 'afr'], when: 'after two pulls on a cool morning',
-        proves: 'overshoot under +' + KTA.LIMITS.overshoot.watch.toFixed(1) + ' psi on pulls with the mixture on target'
+        proves: 'overshoot under +' + KTA.LIMITS.overshoot.watch.toFixed(1) + ' psi on 2 pulls, mixture on target (never leaner than ' +
+          DP_LEAN_MAX.toFixed(1) + ') and trims within ±' + TRIM_OK + ' %'
       },
+      // The proof (fix-spec D2): a Cool drive with 2 hard pulls, overshoot at or
+      // under +2.5 psi, full-load mixture at or richer than target and never
+      // leaner than 12.0, trims within ±5 %.
       judge: function (s) {
         if (!s) return judged('wait', 'Too short: the trim shows on pulls, and this drive had none to read.', 'it was too short');
         var dead = deadOf(s, ['boost', 'boostTarget']);
         if (dead) return judged('wait', 'Boost was dead in this log (' + dead + '), so the overshoot could not be read.', 'the logger lost ' + dead);
         var pulls = s.hardPulls || 0;
-        var lean = isNum(s.mixLeanest) && isNum(s.mixTarget) && s.mixLeanest >= s.mixTarget + LEAN_WATCH;
-        if (pulls > 0 && isNum(s.overshoot) && s.overshoot <= KTA.LIMITS.overshoot.watch && !lean) {
-          return judged('done', 'Overshoot +' + n1(s.overshoot) + ' psi on ' + pulls + ' pull' + (pulls === 1 ? '' : 's') + ': the trim holds.');
-        }
         if (pulls > 0 && isNum(s.overshoot) && s.overshoot > KTA.LIMITS.overshoot.watch) {
           return judged('fail', 'Overshoot still +' + n1(s.overshoot) + ' psi on ' + pulls + ' pull' + (pulls === 1 ? '' : 's') + '.');
         }
-        return judged('open', pulls ? 'Mixture ' + n1(s.mixLeanest) + ' against ' + n1(s.mixTarget) + ' asked: not yet.' : 'No pulls yet: the trim shows on pulls.',
-          pulls ? 'the mixture was still ' + n1(s.mixLeanest) : 'it had no pulls');
+        if (!s.cool) return judged('wait', 'Intake ' + n0(s.iatMoving) + ' °C while moving: the proof is a Cool Drive.', 'it was not a Cool Drive');
+        if (pulls < 2) return judged('open', (pulls ? 'Only 1 pull' : 'No pulls yet') + ': the trim is proven on 2.', pulls ? 'it had only 1 pull' : 'it had no pulls');
+        var lean = !isNum(s.mixLeanest) || (isNum(s.mixTarget) && s.mixLeanest > s.mixTarget) || s.mixLeanest > DP_LEAN_MAX;
+        if (lean) {
+          return judged('open', 'Mixture ' + n1(s.mixLeanest) + ' against ' + n1(s.mixTarget) + ' asked: not yet.', 'the mixture was ' + n1(s.mixLeanest));
+        }
+        if (!isNum(s.trimWorst) || Math.abs(s.trimWorst) > TRIM_OK) {
+          return judged('open', 'Trims ' + sg1(s.trimWorst) + ' %: not yet.', 'the trims were ' + sg1(s.trimWorst) + ' %');
+        }
+        if (!isNum(s.overshoot)) return judged('open', 'No overshoot read on the pulls: not yet.', 'the overshoot could not be read');
+        return judged('done', 'Overshoot +' + n1(s.overshoot) + ' psi on ' + pulls + ' pulls, mixture ' + n1(s.mixLeanest) +
+          ', trims ' + sg1(s.trimWorst) + ' %: the trim holds.');
       }
     }
   };
@@ -1948,10 +2010,10 @@
    * | Pattern | Cause | Step |
    * | Trims beyond ±10 % in every band from the first minute, after a change | MAF Scaling / housing mismatch | undo |
    * | Trims ≥ +8 % at idle/low airflow only, after a change | Unmetered air | install |
-   * | Leaner than target under boost, after a change | Exhaust leak ahead of the A/F sensor, or real lean | install |
+   * | Leaner than target under boost, after a change | Real lean, fuel pressure or the airflow sensor (downpipe flange leaks show on the rear O2 / P0420) | install |
    * | High retard with a flat score | Scheduled retard | never a finding (null) |
    * | Score rising mostly while lugging, hot | Lugging on hot E10 | habit |
-   * | Boost overshoot above +2.5 psi held, after a change | Faster spool | downpipe |
+   * | Boost overshoot above +2.5 psi held, after a change | Faster spool (a downpipe Install), else overshoot after the change | downpipe |
    *
    * Row 1's second half ("then MAF Scaling for the housing") is ticket 07's
    * question, not a curve edit: on a Stop drive the step stays Undo and the
@@ -2046,14 +2108,16 @@
       };
     }
 
-    // 3. Leaner than the map asks under boost, after a change: a leak ahead of
-    //    the A/F sensor reads lean, or the mixture really is lean. Flanges first.
+    // 3. Leaner than the map asks under boost, after a change: a real lean. The
+    //    front A/F threads into the turbo outlet and only the rear O2 sits in the
+    //    downpipe (ticket 12), so a downpipe flange leak never reads lean here:
+    //    it shows on the rear O2 / P0420. Fuel pressure or the airflow sensor.
     if (ch && (sum.hardPulls || 0) > 0 && isNum(sum.mixLeanest) && isNum(sum.mixTarget) &&
         sum.mixLeanest >= sum.mixTarget + LEAN_WATCH) {
       return {
-        id: 'exhaust-lean', cause: 'Exhaust leak ahead of the A/F sensor, or real lean', step: 'install', change: ch.kind,
+        id: 'real-lean', cause: 'Real lean, fuel pressure or the airflow sensor; downpipe flange leaks show on the rear O2 / P0420', step: 'install', change: ch.kind,
         sentence: 'Full-throttle mixture read ' + n1(sum.mixLeanest) + ' against ' + n1(sum.mixTarget) +
-          ' asked' + changeBit(ch) + ': check the flanges first, then the mixture.'
+          ' asked' + changeBit(ch) + ': a real lean from fuel pressure or the airflow sensor, not the exhaust, so no hard pulls until it reads on target.'
       };
     }
 
@@ -2070,14 +2134,16 @@
       };
     }
 
-    // 6. A held overshoot past +2.5 psi on pulls, after a change: the new pipe
-    //    spools faster. The Flash plan carries the trim; this names the cause.
+    // 6. A held overshoot past +2.5 psi on pulls, after a change. Only a downpipe
+    //    Install is named as faster spool; any other change is "after the change".
+    //    The Flash plan carries the trim; this names the cause.
     if (ch && (sum.hardPulls || 0) > 0 && isNum(sum.overshoot) &&
         sum.overshoot > KTA.LIMITS.overshoot.watch) {
       return {
-        id: 'spool', cause: 'Faster spool after the downpipe', step: 'downpipe', change: ch.kind,
-        sentence: 'Boost held +' + n1(sum.overshoot) + ' psi over target on pulls' +
-          changeBit(ch) + ': it spools faster now, so the plan asks for less boost where it spools early.'
+        id: 'spool', cause: ch.downpipe ? 'Faster spool after the downpipe' : 'Boost overshoot after the change', step: 'downpipe', change: ch.kind,
+        sentence: 'Boost held +' + n1(sum.overshoot) + ' psi over target on pulls' + changeBit(ch) +
+          (ch.downpipe ? ': it spools faster now, so the plan asks for less boost where it spools early.'
+            : ': boost runs past what the ECU asked, so the plan asks for less boost where it overshot.')
       };
     }
 
@@ -2235,7 +2301,7 @@
       return answer(undoStep(), ['undo'],
         missingChannels() ? ['channels'] : []);
     }
-    if (dg && (dg.id === 'unmetered-air' || dg.id === 'exhaust-lean')) {
+    if (dg && (dg.id === 'unmetered-air' || dg.id === 'real-lean')) {
       return answer(installStep(), ['install'],
         missingChannels() ? ['channels'] : []);
     }

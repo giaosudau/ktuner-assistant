@@ -659,7 +659,7 @@ test('ticket 02: the Flash plan still names the tables, and is the only thing th
   assert.ok(afm.cells.length === 0 && afm.afmPasteRow, 'the paste-ready row the owner types into KTuner');
   // An overshoot Watch plans the six boost targets, again by id and cell.
   const overs = [];
-  for (let i = 0; i < 5; i++) overs.push({ id: 'e' + (i + 1), start: (i + 1) * 1000, trimWorst: -1, verdict: 'watch', kcEnd: 0.49, overshoot: 3, hardPulls: 2 });
+  for (let i = 0; i < 5; i++) overs.push({ id: 'e' + (i + 1), start: (i + 1) * 1000, trimWorst: -1, verdict: 'watch', kcEnd: 0.49, overshoot: 3, overshootRpm: 3964, hardPulls: 2 });
   const boost = CAR.carFlashPlan(Object.assign(CAR.carEmpty(), { drives: overs.reduce((a, d) => (a[d.id] = Object.assign({ hardPulls: 2, boostTarget: 16, lugShare: 1, shakedown: 'none', calmSec: 700, missing: [], flat: [], duration: 900, moving: 800, cool: true, hot: false, hotRestart: false, tooShort: false, kcStart: 0.49, kcPeak: 0.49, iatMoving: 36, cvtPeak: 80, mixLeanest: 10.5, mixTarget: 11, wgAtPeak: 2.5, accel5070: null, updatedAt: NOW }, d), a), {}) }), MAP, { now: NOW });
   assert.equal(boost.kind, 'one-family');
   assert.ok(boost.tables.some((t) => t.id.startsWith('Boost_Target_')), 'named by id: ' + boost.tables.map((t) => t.id).join(','));
@@ -717,4 +717,41 @@ test('ticket 02: the app shows the after-flash sentence and the 5,200 rpm note i
   // And a drive with no high-rpm rise carries no excuse.
   const plain = check(pulls().report.an, 'kControl');
   assert.ok(!/5,200/.test(T.en.checks.kControl.display(plain.data, K.fmt)), plain.display);
+});
+
+// Ticket 10: the spool signal. A floored pull is the foot (TPS, the pedal) at
+// 85 % or more held 2 s, from 3,500 rpm or under.
+test('E1 spool signal: floored pulls carry spool rpm, lag, wastegate, gear and intake heat', () => {
+  // The owner's nine drives: no floored pull (the longest foot-down run is 1.5 s).
+  for (const id of IDS) assert.deepEqual(drive(id).report.ins.floored, [], id);
+  // One floored pull written into aug22-0903 at 20 s: foot 95 % for 3 s from 2,500 rpm,
+  // boost +1 psi per sample from 4 psi against an 18 psi target.
+  const log = cloneLog(drive('aug22-0903').log, (l) => {
+    let i0 = 0;
+    while (l.t[i0] < 20) i0++;
+    for (let k = -5; l.t[i0 + k] <= l.t[i0] + 4; k++) {
+      const i = i0 + k, on = k >= 0 && l.t[i] - l.t[i0] <= 3;
+      l.tps[i] = on ? 95 : 20;
+      l.rpm[i] = 2500 + 50 * Math.max(0, k);
+      l.boost[i] = Math.min(4 + Math.max(0, k), 19);
+      l.boostTarget[i] = 18;
+      l.wgPos[i] = 30 - Math.max(0, k);
+      l.gear[i] = 2;
+      l.iat[i] = 41;
+    }
+  });
+  const floored = K.checkDrive(log).ins.floored;
+  let i0 = 0;
+  while (log.t[i0] < 20) i0++;
+  assert.equal(floored.length, 1);
+  const f = floored[0];
+  assert.equal(f.rpm0, 2500);
+  assert.equal(f.spoolRpm, 2500 + 50 * 11, 'boost first reaches 15 psi on the 12th sample');
+  assert.equal(f.lagS, Math.round((log.t[i0 + 13] - log.t[i0]) * 10) / 10, 'boost first at 90 % of 18 psi (17 psi) on the 14th sample');
+  assert.equal(f.ewg, 30 - 13);
+  assert.equal(f.gear, 2);
+  assert.equal(f.iat, 41);
+  // From above 3,500 rpm it is not a spool pull.
+  const high = cloneLog(log, (l) => { for (let i = 0; i < l.n; i++) if (l.tps[i] >= 85) l.rpm[i] += 1100; });
+  assert.deepEqual(K.checkDrive(high).ins.floored, []);
 });

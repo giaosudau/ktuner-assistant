@@ -157,8 +157,9 @@ def TOOLS() -> list[dict[str, Any]]:
         fn(
             "get_fuel_test",
             "Is the premium fuel (E10 RON97 III) worth it over E10 RON95 III on this car? The engine pairs Drives tagged with "
-            "each fuel that both had hard pulls, intake within 8 °C, same map slot, and compares Knock Control and the timing it "
-            "costs. Comes with the card on how to run the test.",
+            "each fuel that are both hot with hard pulls, intake within 8 °C, same map slot, Knock Control settled (starting at "
+            "0.56 or under, not right after a Flash), and compares the judged Knock Control peak (at or under 5,200 rpm) and the "
+            "timing it costs. Comes with the card on how to run the test.",
             {},
             [],
         ),
