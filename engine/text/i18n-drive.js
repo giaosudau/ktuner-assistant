@@ -257,7 +257,7 @@
       pullIat: function (I, F) { return 'pulls start at 48 °C or less (this drive ' + n0(F, I.boost && I.boost.pullIat) + ' °C)'; },
       cvt: function (I, F) { return 'CVT stays at 90 °C or less (this drive ' + n0(F, I.heat.cvtMax) + ' °C)'; },
       data: function () { return 'the AFR command is in the log (see "Log the channels")'; },
-      headroom: function (I, F) { return 'the turbo has headroom: at ' + n1(F, I.boost && I.boost.peakBoost) + ' psi the wastegate is only ' + n1(F, I.boost && I.boost.wgAtPeak) + ' % open, so it is near its limit on this map. More boost here mostly adds heat'; },
+      headroom: function (I, F) { return 'a logged pull shows the turbo can reach a higher target (today the turbo is near its limit: at ' + n1(F, I.boost && I.boost.peakBoost) + ' psi the wastegate is only ' + n1(F, I.boost && I.boost.wgAtPeak) + ' % open on this map, so more boost here mostly adds heat)'; },
       pulls: function () { return 'a log with hard pulls'; },
       revs: function () { return 'you have tried the free fix first (keep the revs up)'; },
       safety: function () { return 'the Stop above is fixed'; }
@@ -675,7 +675,7 @@
       pullIat: function (I, F) { return 'các lần kéo bắt đầu ở 48 °C trở xuống (chuyến này ' + n0(F, I.boost && I.boost.pullIat) + ' °C)'; },
       cvt: function (I, F) { return 'CVT giữ ở 90 °C trở xuống (chuyến này ' + n0(F, I.heat.cvtMax) + ' °C)'; },
       data: function () { return 'log có lệnh AFR (xem "Log thêm các kênh")'; },
-      headroom: function (I, F) { return 'turbo còn dư: ở ' + n1(F, I.boost && I.boost.peakBoost) + ' psi wastegate chỉ mở ' + n1(F, I.boost && I.boost.wgAtPeak) + ' %, tức là gần giới hạn trên map này. Thêm boost ở đây chủ yếu chỉ thêm nhiệt'; },
+      headroom: function (I, F) { return 'một lần kéo ga trong log cho thấy turbo đạt được mục tiêu cao hơn (hiện tại turbo đã gần giới hạn: ở ' + n1(F, I.boost && I.boost.peakBoost) + ' psi wastegate chỉ mở ' + n1(F, I.boost && I.boost.wgAtPeak) + ' % trên map này, nên thêm boost ở đây chủ yếu chỉ thêm nhiệt)'; },
       pulls: function () { return 'có log với các lần kéo mạnh'; },
       revs: function () { return 'bạn đã thử cách miễn phí trước (giữ vòng tua cao)'; },
       safety: function () { return 'mục Dừng ở trên đã được sửa'; }

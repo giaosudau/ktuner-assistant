@@ -118,6 +118,49 @@ def test_confirming_an_unknown_part_says_which_parts_it_knows(loop: Loop):
     assert loop.get("/api/state").json()["carProfile"] is None, "a rejected card saves nothing"
 
 
+# -- the downpipe class (ticket 08): an optional type next to the parts list
+def test_the_downpipe_type_is_read_from_the_owners_words():
+    from kta_server import profile as P
+
+    def kind(text: str) -> str | None:
+        return P.draft_from_text(text, "")["fields"].get("downpipe_type")
+
+    assert kind("Civic with a catless downpipe") == "catless"
+    assert kind("27WON downpipe fitted") == "catted-200"
+    assert kind("TSP downpipe") == "catted-400"
+    assert kind("RV6 GESi downpipe") == "catted-400"
+    assert kind("RV6 downpipe, the old 200 cell one") == "catted-200", "a cell count beats the brand"
+    assert kind("downpipe with a 400-cell cat") == "catted-400"
+    assert kind("RV6 300 cell downpipe") == "unknown"
+    assert kind("Civic with a downpipe") is None, "unsaid: the chat asks once"
+    assert kind("Civic with a TSP intake") is None, "no downpipe, no type"
+
+
+def test_the_downpipe_type_round_trips_and_is_checked(loop: Loop):
+    fields = {**draft(loop)["fields"], "downpipe_type": "catted-400"}
+    assert confirm(loop, fields)["profile"]["downpipe_type"] == "catted-400"
+    assert loop.get("/api/state").json()["carProfile"]["downpipe_type"] == "catted-400"
+
+    bad = post(loop, "/api/profile", {"fields": {**fields, "downpipe_type": "300-cell"}})
+    assert bad.status_code == 400
+    assert "catted-400" in bad.json()["detail"]
+
+    # No downpipe on the car, no downpipe type.
+    gone = {**fields, "parts": ["intake"]}
+    assert "downpipe_type" not in confirm(loop, gone)["profile"]
+
+
+def test_naming_a_downpipe_in_chat_drafts_its_type():
+    from kta_server import desk as D
+
+    profile = {"model": "Civic FE 1.5T", "basemap": "Starter 21", "parts": ["intake"]}
+    out = D.part_change("I fitted a TSP downpipe", profile)
+    assert out["fields"]["parts"] == ["intake", "downpipe"]
+    assert out["fields"]["downpipe_type"] == "catted-400"
+    off = D.part_change("I removed the downpipe", out["fields"])
+    assert "downpipe_type" not in off["fields"]
+
+
 # -- no key: the plain form with the same fields
 def test_no_key_setup_falls_back_to_a_plain_form_with_the_same_fields(loop: Loop):
     body = loop.get("/api/state").json()
