@@ -91,9 +91,19 @@ test('insights: lugging raised Knock Control on the hot drive', () => {
 
 test('insights: the feel, measured the same way every time', () => {
   const b = pulls().report.ins.accel.best['50-70'];
-  assert.ok(b.full, 'foot down');
+  assert.ok(!b.full, 'part pedal, not foot down: the pedal read ' + b.pedalMin + ' %');
   assert.ok(b.seconds > 1.6 && b.seconds < 2.0, '50-70 km/h in about 1.8 s: ' + b.seconds);
   assert.ok(b.mapMax >= 18);
+});
+
+// TunerView's TPS is the driver's pedal; TPS Command is the throttle plate the ECU asks for, which
+// runs 20+ points higher under boost (the torque-based ECU opens the plate and boosts on the wastegate).
+test('the pedal is TPS, not the throttle-plate command: part-pedal runs are never "foot down"', () => {
+  const I = pulls().report.ins;
+  assert.equal(I.meta.pedalChannel, 'tps');
+  // On 30 Aug 15:29 the pedal never passed 83 %, so no run there was with the foot down.
+  assert.equal(I.accel.runs.filter((r) => r.full).length, 0);
+  for (const r of I.accel.runs) assert.ok(r.pedalMin < 85, 'pedal ' + r.pedalMin);
 });
 
 test('the queue: safety first, then the biggest effect for the least work; the same log gives the same list', () => {

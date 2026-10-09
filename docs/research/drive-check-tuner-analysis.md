@@ -39,7 +39,7 @@
 
 | Channel | What it really is on this ECU | Why a tuner cares |
 |---|---|---|
-| Engine RPM, Speed, Gear, TPS, **TPS Command** | Throttle plate and the ECU's throttle request. *Acceleration* is a g-sensor, **not** the pedal. | Find the pulls and the cruise. The 1.5T makes 19 psi with the plate about 45 % open, so a pull is "boost ≥ 12 psi with TPS Command ≥ 50 %", not "TPS ≥ 80 %". |
+| Engine RPM, Speed, Gear, TPS, **TPS Command** | **TPS is the driver's pedal** (0 at idle, tops out near 94); **TPS Command is the throttle plate the ECU asks for** (5–6 % at idle, 20+ points above TPS under boost). *Acceleration* is a g-sensor, **not** the pedal. | Find the pulls and the cruise. The 1.5T makes 19 psi with the pedal only about half down, so a pull is "boost ≥ 12 psi with TPS Command ≥ 50 %", not "TPS ≥ 80 %". "Foot down" is TPS ≥ 85 %. |
 | **MAP** (psi, gauge) / **Turbo Pressure** / **Turbo Pressure Target** | Manifold pressure; boost before the throttle and what the ECU asked for | Boost tracking, overshoot, how close the turbo is to its limit |
 | **EWG Position / Duty / Target** | Electric wastegate. 0 % = shut. | Shut at peak boost = no turbo headroom left |
 | **O2 (AFR)** | Stock wide-band front A/F sensor; the log shows λ × 14.7 | Mixture. Its accuracy under boost is unverified, so the app judges against the map's own target, not an absolute number. |

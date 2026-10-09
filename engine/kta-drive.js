@@ -29,7 +29,7 @@
     kcWindow: 30,                    // s of driving before an episode that are searched for its cause
     pullLoad: 4,                     // psi (MAP gauge): under boost
     hardPull: 12,                    // psi: a pull that tests fuel, spark and heat
-    fullPedal: 85,                   // % throttle command: foot down
+    fullPedal: 85,                   // % pedal (TunerView TPS, not TPS Command): foot down
     accelPedal: 60,                  // % throttle command held for an acceleration window
     pullIatGood: 48,                 // deg C at the start of a pull
     hotDrive: 45,                    // deg C IAT while moving: a hot-afternoon drive
@@ -104,7 +104,12 @@
     var baseline = isNum(opts.baseline) ? opts.baseline : KTA.LIMITS.score.baseline;
     var n = log.n, has = log.has, dt = log.dt || 0.1;
     var load = has.load ? log.load : null;
+    // Two different questions. `pedal` gates load (pulls, full-load mixture, held windows) on the
+    // throttle command the ECU asks for. `foot` is the driver's foot: TunerView's TPS is the pedal,
+    // 20+ points under TPS Command in boost, so "foot down" and the pedal % shown read `foot`.
     var pedal = has.tpsCmd ? log.tpsCmd : (has.pedal ? log.pedal : (has.tps ? log.tps : null));
+    var footKey = has.pedal ? 'pedal' : (has.tps ? 'tps' : (has.tpsCmd ? 'tpsCmd' : ''));
+    var foot = footKey ? log[footKey] : null;
     var warm = mask(n, function (i) { return !has.ect || log.ect[i] >= DL.warmEct; });
     var moving = mask(n, function (i) { return has.vss ? log.vss[i] >= 3 : (!has.rpm || log.rpm[i] >= 900); });
     var still = has.vss ? mask(n, function (i) { return log.vss[i] < 1; }) : null;
@@ -115,7 +120,7 @@
     I.meta = {
       duration: r0(log.duration), movingSeconds: r0(movingS), rateHz: r1(1 / dt), rows: n, source: log.source || 'other',
       townSeconds: has.vss ? r0(secs(log, mask(n, function (i) { return warm[i] && log.vss[i] >= 15 && log.vss[i] <= 60; }))) : null,
-      pedalChannel: has.tpsCmd ? 'tpsCmd' : (has.pedal ? 'pedal' : (has.tps ? 'tps' : ''))
+      pedalChannel: footKey
     };
     I.quality = {
       glitches: log.glitches || {}, glitchTotal: log.glitchTotal || 0, fuelCutSamples: (log.capped && log.capped.afr) || 0,
@@ -260,7 +265,7 @@
           boostMax: r1(q(log.boost, 1, m)), targetMax: r1(q(log.boostTarget, 1, m)), wgAtPeak: r1(q(log.wgPos, 0.5, peak)),
           iat0: r0(has.iat ? log.iat[r.i0] : NaN), iatEnd: r0(has.iat ? log.iat[r.i1] : NaN), cvt0: r0(has.cvt ? log.cvt[r.i0] : NaN),
           afr: r1(q(log.lam, 0.5, rich) * GAS), afrMax: r1(q(log.lam, 0.95, rich) * GAS), ign: r1(q(log.ign, 0.5, peak)), kr: r1(q(log.knock, 0.5, peak)),
-          pedalMax: r0(q(pedal, 1, m)), kc: r2(has.kControl ? log.kControl[r.i0] : NaN)
+          pedalMax: r0(q(foot, 1, m)), kc: r2(has.kControl ? log.kControl[r.i0] : NaN)
         };
         ev.hard = ev.mapMax >= DL.hardPull;
         return ev;
@@ -373,7 +378,7 @@
           var tA = crossT(log, log.vss, ai, A), jj = ai, ok = true, pmin = Infinity, mmax = -Infinity;
           while (jj < n && log.vss[jj] < B && log.t[jj] - tA < 12) {
             if (pedal && !(pedal[jj] >= DL.accelPedal)) { ok = false; break; }
-            if (pedal) pmin = Math.min(pmin, pedal[jj]);
+            if (foot) pmin = Math.min(pmin, foot[jj]);
             if (load && isNum(load[jj])) mmax = Math.max(mmax, load[jj]);
             jj++;
           }
