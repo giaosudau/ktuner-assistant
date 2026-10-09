@@ -18,7 +18,7 @@ from conftest import Loop, owner_csv, OWNER_FILE_NAMES
 from kta_server import readback as R
 from test_flash_step import flashed, propose, proposing  # noqa: F401  (fixture)
 
-ROWS = (2500, 2750, 3000)
+ROWS = (3500, 4000)  # sep01-0813 overshoots at 3,793 rpm: the rows either side
 
 
 def drive_csv(reads: dict[int, float]) -> str:
@@ -52,24 +52,24 @@ def first_drive(loop: Loop, reads: dict[int, float]):
 
 
 def test_a_drive_matching_version_2s_changed_cells_is_credited(proposing: Loop):
-    reply, after = first_drive(proposing, {2500: None, 2750: None, 3000: None})
+    reply, after = first_drive(proposing, {3500: None, 4000: None})
     read = reply.card["readback"]
     assert read["state"] == "credited" and read["credited"] is True
     assert "matches Map version 2" in read["line"] and "credited" in read["line"]
     assert reply.card["nextStep"]["key"] != "recheck"
-    assert after[2750] == 16.0  # the cells the reply is about are the card's
+    assert after[4000] == 20.0  # the cells the reply is about are the card's
 
 
 def test_a_drive_whose_logged_target_differs_is_not_credited_and_names_the_cell(proposing: Loop):
-    # 2,750 rpm still logs the old 17.0 where Map version 2 planned 16.0: a typo on the car.
-    reply, _ = first_drive(proposing, {2500: None, 2750: 17.0, 3000: None})
+    # 4,000 rpm still logs the old 21.0 where Map version 2 planned 20.0: a typo on the car.
+    reply, _ = first_drive(proposing, {3500: None, 4000: 21.0})
     read = reply.card["readback"]
     assert read["state"] == "mismatch" and read["credited"] is False
-    assert read["mismatches"] == ["2,750 rpm one of columns 8 to 16 reads 17.0, planned 16.0"]
-    assert "2,750 rpm one of columns 8 to 16 reads 17.0, planned 16.0" in read["line"]
+    assert read["mismatches"] == ["4,000 rpm one of columns 8 to 16 reads 21.0, planned 20.0"]
+    assert "4,000 rpm one of columns 8 to 16 reads 21.0, planned 20.0" in read["line"]
     step = reply.card["nextStep"]
     assert step["key"] == "recheck" and step["title"] == "Re-check what you typed in KTuner"
-    assert "reads 17.0, planned 16.0" in step["body"]
+    assert "reads 21.0, planned 20.0" in step["body"]
 
 
 def test_a_drive_that_never_visits_the_changed_cells_says_readback_is_still_open(proposing: Loop):
@@ -78,7 +78,7 @@ def test_a_drive_that_never_visits_the_changed_cells_says_readback_is_still_open
     assert read["state"] == "open" and read["credited"] is False
     assert read["line"].startswith("Readback: can't tell yet.")
     assert "No Drive since the Flash logged a Turbo Pressure Target in the changed cells" in read["line"]
-    assert "2,500-3,000 rpm" in read["line"]
+    assert "3,500-4,000 rpm" in read["line"]
     assert reply.card["nextStep"]["key"] != "recheck"
 
 
@@ -101,9 +101,9 @@ def test_cells_that_share_a_value_are_one_group_and_a_lone_cell_is_named_by_its_
 
 
 def test_the_worker_hands_back_tallies_not_log_rows(proposing: Loop):
-    _, _ = first_drive(proposing, {2750: None})
+    _, _ = first_drive(proposing, {4000: None})
     drive_id = next(iter(proposing.store.car_state(None)["drives"]))
-    got = proposing.run(proposing.worker.call("logTargets", driveId=drive_id, rpms=[2750], tol=30))
+    got = proposing.run(proposing.worker.call("logTargets", driveId=drive_id, rpms=[4000], tol=30))
     assert set(got) == {"driveId", "readable", "rows"}
     assert set(got["rows"][0]) == {"rpm", "samples", "targets"}
     assert all(set(t) == {"psi", "n"} for t in got["rows"][0]["targets"])

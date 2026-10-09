@@ -30,6 +30,8 @@
     pullLoad: 4,                     // psi (MAP gauge): under boost
     hardPull: 12,                    // psi: a pull that tests fuel, spark and heat
     fullPedal: 85,                   // % pedal (TunerView TPS, not TPS Command): foot down
+    floored: { holdS: 2, rpmMax: 3500, spoolPsi: 15, onTarget: 0.9 }, // a floored pull (ticket 10): foot down 2 s from
+                                     // 3,500 rpm or under; spool = boost first at 15 psi; on target = 90 % of it
     accelPedal: 60,                  // % throttle command held for an acceleration window
     pullIatGood: 48,                 // deg C at the start of a pull
     hotDrive: 45,                    // deg C IAT while moving: a hot-afternoon drive
@@ -283,7 +285,8 @@
         pullIatMax: r0(hard.reduce(function (m, e) { return isNum(e.iat0) ? Math.max(m, e.iat0) : m; }, -Infinity)),
         pullIatDrop: r1(median(hard.map(function (e) { return e.iat0 - e.iatEnd; }).filter(isNum))),
         hotCvtPulls: hard.filter(function (e) { return e.cvt0 >= KTA.LIMITS.cvt.good; }).length,
-        overshoot: r1(an.numbers.overshoot)
+        overshoot: r1(an.numbers.overshoot),
+        overshootRpm: r0(an.numbers.overshootRpm)  // where the held overshoot peaked: the rows the B2 trim lowers
       };
       ['peakMap', 'peakBoost', 'peakTarget'].forEach(function (key) { if (!isNum(I.boost[key])) I.boost[key] = null; });
       // A flat Turbo Pressure channel reads as a fake peak (Sep 5: -0.3 psi): never show it.
@@ -292,6 +295,29 @@
       if (flatHere.indexOf('boostTarget') >= 0) I.boost.peakTarget = null;
       if (!isNum(I.boost.pullIatMax)) I.boost.pullIatMax = null;
       I._boostMask = inBoost;
+    }
+
+    // ---- floored pulls: the spool signal (ticket 10). The foot (TPS, the pedal) at 85 % or more
+    // held 2 s, from 3,500 rpm or under. spoolRpm: rpm where boost first reaches 15 psi. lagS: the
+    // foot crossing 85 % to boost at 90 % of a target of 12 psi or more (a lower target is still
+    // ramping in, and boost meets it at once). ewg: EWG Position at that moment.
+    I.floored = [];
+    if (foot && has.rpm) {
+      var FL = DL.floored;
+      runs(log, mask(n, function (i) { return foot[i] >= DL.fullPedal; }), dt * 1.5, FL.holdS).forEach(function (r) {
+        if (!(log.rpm[r.i0] <= FL.rpmMax)) return;
+        var spool = NaN, lagI = -1;
+        for (var i = r.i0; i <= r.i1 && has.boost; i++) {
+          if (!isNum(spool) && log.boost[i] >= FL.spoolPsi) spool = log.rpm[i];
+          if (lagI < 0 && has.boostTarget && log.boostTarget[i] >= DL.hardPull && log.boost[i] >= FL.onTarget * log.boostTarget[i]) lagI = i;
+        }
+        I.floored.push({
+          t0: r1(r.t0), rpm0: r0(log.rpm[r.i0]), spoolRpm: r0(spool),
+          lagS: lagI >= 0 ? r1(log.t[lagI] - r.t0) : null,
+          ewg: lagI >= 0 && has.wgPos ? r1(log.wgPos[lagI]) : null,
+          gear: has.gear ? r0(log.gear[r.i0]) : null, iat: has.iat ? r0(log.iat[r.i0]) : null
+        });
+      });
     }
 
     // ---- mixture under load, by manifold pressure (the AFR table is load-based)

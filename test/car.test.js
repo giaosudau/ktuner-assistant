@@ -759,7 +759,7 @@ test('two boost candidates: the safety fix is planned, the other waits to be pro
     // Overshoot opens an overshoot question, and a starting score of 0.65 (above
     // the 0.60 after-flash band) a score question: both fixes are P2-eligible, so
     // P4 picks one family member.
-    drives.push({ id: 'd' + (i + 1), verdict: 'watch', trimWorst: -1, kcStart: 0.65, kcEnd: 0.49, overshoot: 3.0, lugShare: 8, boostTarget: 16 });
+    drives.push({ id: 'd' + (i + 1), verdict: 'watch', trimWorst: -1, kcStart: 0.65, kcEnd: 0.49, overshoot: 3.0, overshootRpm: 3964, lugShare: 8, boostTarget: 16 });
   }
   const t = synth(drives);
   const p = K.carFlashPlan(t, MAP, { now: NOW, history: [{ id: 'revs', verdict: 'keep' }] });
@@ -773,7 +773,7 @@ test('two boost candidates: the safety fix is planned, the other waits to be pro
 
 test('a boost plan carries all six Normal tables with identical cells, never shared', () => {
   const drives = [];
-  for (let i = 0; i < 5; i++) drives.push({ id: 'd' + (i + 1), verdict: 'watch', overshoot: 3.0, kcEnd: 0.49 });
+  for (let i = 0; i < 5; i++) drives.push({ id: 'd' + (i + 1), verdict: 'watch', overshoot: 3.0, overshootRpm: 3964, kcEnd: 0.49 });
   const p = K.carFlashPlan(synth(drives), MAP, { now: NOW });
   assert.equal(p.kind, 'one-family');
   const ids = p.tables.map((t) => t.id).sort();
@@ -807,8 +807,9 @@ test('bounds hold: AFM within 10% and rising; no raise below 3000; ceiling; prot
   assert.ok(after.every((v, k) => k === 0 || v > after[k - 1]), 'curve keeps rising');
   // Boost bounds on the overshoot plan: only lowers, under the ceiling.
   const drives = [];
-  for (let i = 0; i < 5; i++) drives.push({ id: 'e' + (i + 1), verdict: 'watch', overshoot: 3.0, kcEnd: 0.49 });
+  for (let i = 0; i < 5; i++) drives.push({ id: 'e' + (i + 1), verdict: 'watch', overshoot: 3.0, overshootRpm: 3236, kcEnd: 0.49 });
   const q = K.carFlashPlan(synth(drives), MAP, { now: NOW });
+  assert.ok(q.cells.length > 0, 'the overshoot plan has cells to bound');
   assert.ok(q.cells.every((c) => !(c.rpm < 3000 && c.after > c.before + 1e-9), 'no boost raised below 3000 rpm'));
   assert.ok(q.cells.every((c) => c.after <= q.ceiling + 1e-9, 'boost at or under the ceiling ' + q.ceiling));
   // No plan ever names ignition, knock or protection tables.
@@ -822,7 +823,7 @@ test('bounds hold: AFM within 10% and rising; no raise below 3000; ceiling; prot
 
 test('a same-family change after a flash waits for its prove-it', () => {
   const drives = [];
-  for (let i = 0; i < 5; i++) drives.push({ id: 'd' + (i + 1), start: (i + 1) * 100000, verdict: 'watch', overshoot: 3.0, kcEnd: 0.49 });
+  for (let i = 0; i < 5; i++) drives.push({ id: 'd' + (i + 1), start: (i + 1) * 100000, verdict: 'watch', overshoot: 3.0, overshootRpm: 3964, kcEnd: 0.49 });
   let s = synth(drives);
   s = K.carRecordFlash(s, { time: 600000, map: 'Starter 21 r2', changed: 'boost', note: '' }, { now: NOW }).state;
   const held = K.carFlashPlan(s, MAP, { now: NOW });
@@ -1244,19 +1245,23 @@ test('unmetered air: idle and low airflow only, after a flash — check the inst
   assert.equal(settled.settled.filter((x) => x.key === 'install')[0].status, 'done');
 });
 
-test('lean under boost after a downpipe install — check the flanges, then the mixture', () => {
+// The front A/F threads into the turbo outlet; only the rear O2 sits in the
+// downpipe (ticket 12). A lean front reading is never the pipe's flanges.
+test('lean under boost after a downpipe install — real lean, never the downpipe flanges', () => {
   const s = synth(
     [{ id: 'before', trimWorst: 0.5 }, { id: 'dp', trimWorst: 1.0, mixLeanest: 12.3, mixTarget: 11, hardPulls: 2, verdict: 'watch' }],
   );
   const installs = [{ part: 'TSP catted downpipe', installed_at: 150000 }];
   const dg = K.carDiagnose(s, 'dp', { installs });
-  assert.equal(dg.id, 'exhaust-lean');
-  assert.equal(dg.step, 'install');
+  assert.equal(dg.id, 'real-lean');
+  assert.match(dg.cause, /^Real lean, fuel pressure or the airflow sensor; downpipe flange leaks show on the rear O2 \/ P0420$/);
   assert.match(dg.sentence, /12\.3 against 11\.0 asked/);
   assert.match(dg.sentence, /after the downpipe went on/);
-  assert.match(dg.sentence, /check the flanges first/);
+  assert.doesNotMatch(dg.cause + ' ' + dg.sentence, /ahead of the A\/F|check the flanges/);
   oneSentence(dg.sentence);
-  assert.equal(K.carNextStep(s, 'dp', doneBaseline(), { installs }).step.key, 'install');
+  const step = K.carNextStep(s, 'dp', doneBaseline(), { installs }).step;
+  assert.equal(step.key, 'install');
+  assert.doesNotMatch(step.title, /flange/i);
 });
 
 test('scheduled retard with a flat score is never a finding', () => {
@@ -1470,27 +1475,27 @@ const ASKED = {
   habit: { kind: 'drive', gauges: ['rpm', 'kc', 'iat'], proves: 'lugging under 4 % of moving time and Knock Control not rising', settlesOn: 'after your next hot-afternoon Drive' },
   baseline: { kind: 'drive', gauges: ['iat', 'kc', 'afr', 'boost'], proves: 'a Cool Drive with 2 pulls to measure every later Drive against', settlesOn: 'after that morning Drive' },
   install: { kind: 'watch', gauges: ['trims', 'afr'], proves: 'trims back within ±5 % and the mixture on target', settlesOn: 'after your next drive, any kind' },
-  downpipe: { kind: 'flash', gauges: ['boost', 'afr'], proves: 'overshoot under +2.5 psi on pulls with the mixture on target', settlesOn: 'after two pulls on a cool morning' },
+  downpipe: { kind: 'flash', gauges: ['boost', 'afr'], proves: 'overshoot under +2.5 psi on 2 pulls, mixture on target (never leaner than 12.0) and trims within ±5 %', settlesOn: 'after two pulls on a cool morning' },
 };
 const FIRST_TITLE = {
   undo: 'Put the map from before back on the car', logger: 'Your logger recorded 1 dead gauge',
   habit: 'Keep the revs up in hot traffic (free, no Flash)', baseline: 'Log one Cool-morning drive with 2 pulls',
-  install: 'Check the install: clamps and flanges', downpipe: 'Flash the downpipe trim, then two pulls',
+  install: 'Check the install: clamps and hoses', downpipe: 'Flash the downpipe trim, then two pulls',
 };
 const AGAIN_TITLE = {
   undo: 'Undo: put the map from before back on the car', logger: 'Fix the logger: the dead gauges',
-  habit: 'Habit test: log your next hot-afternoon Drive', install: 'Check the install: clamps and flanges',
+  habit: 'Habit test: log your next hot-afternoon Drive', install: 'Check the install: clamps and hoses',
   downpipe: 'Flash the downpipe trim, then two pulls',
 };
 const STORED_TITLE = {
   undo: 'Undo: trims back within ±5 %', logger: 'Fix the logger: dead gauges', habit: 'Habit test: revs up in hot traffic',
   channels: 'Log AFR Command and MAF Hz', baseline: 'Baseline: one Cool drive with 2 pulls',
-  install: 'Check the install: clamps and flanges', downpipe: 'Flash the downpipe trim, then two pulls',
+  install: 'Check the install: clamps and hoses', downpipe: 'Flash the downpipe trim, then two pulls',
 };
 const SETTLE_WORDS = {
   undo: ['the Undo', 'a drive of 10 calm minutes'], logger: ['the logger fix', 'a drive with every gauge moving'],
   habit: ['the habit test', 'a hot-afternoon drive'], channels: ['the AFR Command / MAF Hz step', 'a log with AFR Command and MAF Hz in the list'],
-  baseline: ['the Baseline', 'a Cool Drive with 2 pulls'], install: ['the install check', 'a drive after checking the clamps and flanges'],
+  baseline: ['the Baseline', 'a Cool Drive with 2 pulls'], install: ['the install check', 'a drive after checking the clamps and hoses'],
   downpipe: ['the downpipe trim', 'two pulls on a cool morning'],
 };
 const WASTED_ORDER = ['undo', 'logger', 'habit', 'baseline', 'channels', 'install', 'downpipe'];
@@ -1590,7 +1595,8 @@ test('the History file carries restores and merges them without a phantom Map ve
 
 // ---- The premium-fuel test (tuning-shop) ----
 test('Fuel test: matched pulls on both fuels are paired; otherwise it says why it cannot tell yet', () => {
-  const s = synth([{ id: 'a' }, { id: 'b' }, { id: 'c', hardPulls: 0 }]);
+  const hot = { hot: true, cool: false, iatMoving: 50, kcPeakJudged: 0.55 };
+  const s = synth([Object.assign({ id: 'a' }, hot), Object.assign({ id: 'b' }, hot), Object.assign({ id: 'c', hardPulls: 0 }, hot)]);
   assert.equal(K.carFuelTest(s, {}).status, 'cant-tell');
   assert.match(K.carFuelTest(s, { a: { fuel: 'E10 RON95 III' } }).why, /Only E10 RON95 III/);
   const out = K.carFuelTest(s, { a: { fuel: 'E10 RON95 III', slot: 1 }, b: { fuel: 'E10 RON97 III', slot: 1 }, c: { fuel: 'E10 RON97 III', slot: 1 } });
@@ -1600,4 +1606,95 @@ test('Fuel test: matched pulls on both fuels are paired; otherwise it says why i
   const slots = K.carFuelTest(s, { a: { fuel: 'E10 RON95 III', slot: 1 }, b: { fuel: 'E10 RON97 III', slot: 2 } });
   assert.equal(slots.status, 'cant-tell');
   assert.match(slots.why, /same map slot/);
+});
+
+// ---------------------------------------------------------------------------
+// Wave 1 E1 (downpipe-power fix-spec): the engine core
+// ---------------------------------------------------------------------------
+test('E1: the Drive summary carries the judged Knock Control peak and the rpm where overshoot held', () => {
+  const d = ingest(K.carEmpty(), 'aug22-0903').state.drives['20260822-090322'];
+  assert.equal(d.kcPeakJudged, 0.52);
+  assert.equal(d.overshootRpm, 3964);
+});
+
+test('E1 fuel test: hot, settled pairs only, compared on the judged Knock Control peak', () => {
+  const hotD = (id, extra) => Object.assign({ id, hot: true, cool: false, iatMoving: 50, kcStart: 0.49, kcPeak: 0.7, kcPeakJudged: 0.55 }, extra);
+  const tags = { a: { fuel: 'E10 RON95 III', slot: 1 }, b: { fuel: 'E10 RON97 III', slot: 1 } };
+  const out = K.carFuelTest(synth([hotD('a'), hotD('b', { kcPeakJudged: 0.51 })]), tags);
+  assert.equal(out.status, 'measured');
+  assert.deepEqual([out.pairs[0].kcPeakA, out.pairs[0].kcPeakB], [0.55, 0.51], 'the judged peak (≤ 5,200 rpm), not the raw 0.70');
+  // A cool pair can never differ on this map: never paired.
+  const cool = K.carFuelTest(synth([{ id: 'a', kcPeakJudged: 0.49 }, { id: 'b', kcPeakJudged: 0.49 }]), tags);
+  assert.equal(cool.status, 'cant-tell');
+  assert.match(cool.why, /hot/i);
+  // Knock Control still settling after a Flash (starts above 0.56): skipped.
+  const fresh = K.carFuelTest(synth([hotD('a', { kcStart: 0.59 }), hotD('b')]), tags);
+  assert.equal(fresh.status, 'cant-tell');
+  assert.match(fresh.why, /0\.56/);
+});
+
+const overshootDrives = (rpm) => {
+  const drives = [];
+  for (let i = 0; i < 5; i++) drives.push({ id: 'd' + (i + 1), verdict: 'watch', overshoot: 3.0, overshootRpm: rpm, kcEnd: 0.49 });
+  return drives;
+};
+
+test('E1 B2: the trim lowers the Boost Target rows either side of where overshoot held, labelled from them', () => {
+  const p = K.carFlashPlan(synth(overshootDrives(3964)), MAP, { now: NOW });
+  assert.equal(p.changeId, 'downpipe');
+  assert.deepEqual([...new Set(p.cells.map((c) => c.rpm))].sort((a, b) => a - b), [3500, 4000]);
+  assert.ok(p.cells.every((c) => c.before >= 8 && c.after === c.before - 1));
+  assert.match(p.headline, /3,500–4,000 rpm/);
+  assert.match(p.levers.find((l) => l.id === 'downpipe').title, /3,500–4,000 rpm/);
+  assert.doesNotMatch(JSON.stringify(p), /3,250/, 'there is no 3,250 rpm row');
+  // On an axis row exactly, only that row.
+  const on = K.carFlashPlan(synth(overshootDrives(3500)), MAP, { now: NOW });
+  assert.deepEqual([...new Set(on.cells.map((c) => c.rpm))], [3500]);
+  assert.match(on.headline, /−1 psi at 3,500 rpm/);
+  // Drives that never said where it overshot cannot place a trim: nothing is planned.
+  const blind = K.carFlashPlan(synth(overshootDrives(undefined)), MAP, { now: NOW });
+  assert.notEqual(blind.changeId, 'downpipe');
+  assert.match(blind.levers.find((l) => l.id === 'downpipe').reason, /rpm/);
+});
+
+test('E1 B2: a cell under 8 psi in any of the six Normal tables is left alone in all six', () => {
+  const map = structuredClone(MAP);
+  const T = map.tables || map;
+  const t = T.Boost_Target_3_Normal_H;
+  const r = t.rpm_axis.indexOf(3500);
+  const col = t.values[r].findIndex((v) => v >= 8);
+  t.values[r][col] = 7.5;
+  const p = K.carFlashPlan(synth(overshootDrives(3964)), map, { now: NOW });
+  assert.equal(p.changeId, 'downpipe');
+  assert.equal(p.tables.length, 6);
+  assert.ok(!p.cells.some((c) => c.rpm === 3500 && c.col === col + 1), 'column ' + (col + 1) + ' at 3,500 rpm stays in every table');
+  assert.ok(p.cells.some((c) => c.rpm === 4000 && c.col === col + 1), 'the same column at 4,000 rpm still moves');
+  const sigs = p.tables.map((x) => JSON.stringify(x.cells.map((c) => [c.rpmRow, c.col])));
+  assert.ok(sigs.every((x) => x === sigs[0]), 'the six tables move together');
+});
+
+test('E1 B2 proof: two hard pulls on a Cool drive, overshoot ≤ 2.5, mixture on or richer than target and never past 12.0, trims ±5 %', () => {
+  const judge = (d) => K.carSettle(synth([{ id: 'a' }, Object.assign({ id: 'p', overshoot: 1.2, hardPulls: 2, mixLeanest: 10.6, mixTarget: 11, trimWorst: -1 }, d)]), 'p', openOne('downpipe'))
+    .settled.find((x) => x.key === 'downpipe').status;
+  assert.equal(judge({}), 'done');
+  assert.notEqual(judge({ hardPulls: 1 }), 'done', 'one pull is not two');
+  assert.notEqual(judge({ cool: false, hot: true, iatMoving: 50 }), 'done', 'a hot drive is not the Cool proof');
+  assert.notEqual(judge({ mixLeanest: 11.3 }), 'done', 'leaner than the 11.0 asked');
+  assert.notEqual(judge({ mixLeanest: 12.2, mixTarget: 12.5 }), 'done', 'never leaner than 12.0');
+  assert.notEqual(judge({ trimWorst: 6.5 }), 'done', 'trims outside ±5 %');
+  assert.equal(judge({ overshoot: 3.1 }), 'fail');
+});
+
+test('E1 diagnose: held overshoot after a Flash is "after the change", never the downpipe', () => {
+  let s = synth([{ id: 'before', trimWorst: 0.5 }, { id: 'spool', trimWorst: 1.0, overshoot: 3.0, hardPulls: 2, verdict: 'watch' }]);
+  s = K.carRecordFlash(s, { time: 150000, map: 'Starter 21 r2', changed: 'boost', note: '' }, { now: NOW }).state;
+  const dg = K.carDiagnose(s, 'spool');
+  assert.equal(dg.id, 'spool');
+  assert.match(dg.cause, /after the change/);
+  assert.doesNotMatch(dg.cause + ' ' + dg.sentence, /downpipe|spools faster/i);
+  oneSentence(dg.sentence);
+  // A non-downpipe Install reads the same way.
+  const other = K.carDiagnose(synth([{ id: 'before', trimWorst: 0.5 }, { id: 'spool', trimWorst: 1.0, overshoot: 3.0, hardPulls: 2, verdict: 'watch' }]),
+    'spool', { installs: [{ part: 'PRL intercooler', installed_at: 150000 }] });
+  assert.doesNotMatch(other.cause, /downpipe/i);
 });

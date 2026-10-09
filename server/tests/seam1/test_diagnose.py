@@ -82,7 +82,7 @@ def test_the_cause_sentence_uses_only_the_owner_s_words(replayed: Loop):
 def test_an_install_step_reads_as_a_physical_check_with_no_map_change():
     step = {
         "key": "install", "kind": "watch", "opens": "install", "also": None,
-        "title": "Check the install: clamps and flanges", "gauges": ["trims", "afr"],
+        "title": "Check the install: clamps and hoses", "gauges": ["trims", "afr"],
         "proves": "trims back within ±5 % and the mixture on target",
         "settlesOn": "after your next drive, any kind",
         "same": False, "cause": None,
@@ -107,11 +107,11 @@ def test_a_downpipe_flash_step_carries_the_plan_headline_not_an_undo():
         "previous": None, "flat": [],
     }
     plan = {
-        "kind": "one-family", "headline": "Boost targets, low rpm: −1 psi at 2,500–3,250 rpm, because overshoot held 3.0 psi.",
+        "kind": "one-family", "headline": "Boost targets: −1 psi at 3,500–4,000 rpm, because overshoot held 3.0 psi there.",
         "saveAs": "Starter 21 Dual Tune 2 · 20260830 · boost r1",
     }
     card = C.next_step_card(step, plan, {}, [])
     assert card["kind"] == "flash"
-    assert "−1 psi at 2,500–3,250 rpm" in card["body"]
+    assert "−1 psi at 3,500–4,000 rpm" in card["body"]
     assert "Shakedown drive" in card["body"]
     assert "previous map file" not in card["body"], "a forward change is not an Undo"
