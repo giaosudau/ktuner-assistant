@@ -148,7 +148,7 @@ These rules run first. A tuner reads the pattern, not the worst line.
 |---|---|---|
 | Trims beyond ±10 % in **every** load band, from the first minute, after a Flash or an Install | AFM preset or housing mismatch | **Fix the AFM preset** (Undo or preset) |
 | Trims ≥ +8 % at idle and low airflow, fine at high airflow, after an Install | Unmetered air (leak after the AFM) | **Check the install** (clamps, no map change) |
-| Leaner than target under boost, after a downpipe Install | Exhaust leak ahead of the A/F sensor, or a real lean | **Check the flanges**, then the mixture Play |
+| Leaner than target under boost, after a downpipe Install | A real lean, fuel pressure or the airflow sensor (the front A/F threads into the turbo outlet, so a downpipe flange leak can't read lean there; it shows on the rear O2 / P0420) | The mixture Play |
 | Knock Retard high **with the score flat** | Scheduled retard (fact-check §2) | None: it is not a finding |
 | Score rising, mostly while lugging, on hot drives | Lugging on hot E10 | **Keep the revs up**, then the low-rpm boost Play |
 | Boost overshoot above +2.5 psi held, after a downpipe | Faster spool | **Downpipe boost trim** |
@@ -211,9 +211,9 @@ These rules run first. A tuner reads the pattern, not the worst line.
 | Beat | |
 |---|---|
 | 2 Before | The latest Cool drive with 2 hard pulls (Tue 1 Sep 08:13: peak boost target 13.7 psi, leanest under boost 11.0 AFR, the map asks 11.0). |
-| Install check | New gaskets at both flanges. The front A/F sensor now sits in the new pipe, so any leak ahead of it reads lean. |
+| Install check | New gaskets at both flanges. Only the rear O2 sits in the new pipe (the front A/F stays on the turbo outlet), so a flange leak skews the catalyst check, not the mixture reading. |
 | 6 Prove | Two pulls on a cool morning: overshoot ≤ +2.5 psi, full-load AFR at or richer than 12.0, trims within ±5 %. |
-| Branch | Overshoot above +2.5 psi held → card B2. A P0420 code → pick a high-cell pipe first. Turning the monitor off in KTuner is the last resort, and it fails the đăng kiểm emissions test. |
+| Branch | Overshoot above +2.5 psi held → card B2. A P0420 code → pick a high-cell pipe first. Turning the monitor off in KTuner is the last resort; đăng kiểm tests tailpipe gas and the warning lamp, and an unapproved modification can be fined. |
 
 **KTuner card B2 (only if overshoot > +2.5 psi):** −1 psi on the boost plateau where the downpipe spools early.
 
