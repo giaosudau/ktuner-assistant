@@ -86,26 +86,29 @@
     },
     {
       id: 'dpCat', title: 'High-flow catted downpipe + front pipe', effect: 2, effort: 2, risk: 1,
-      gain: '+12 whp / +13 lb-ft on the stock map (27WON dyno, no tune)', sources: ['won27dp', 'tspdp'],
+      gain: '+12 whp / +13 lb-ft on the factory ECU (27WON vendor dyno; a first CVT test gave +7 / +11)', sources: ['won27dp', 'tspdp'],
       tables: [
-        { id: 'Boost_Target_1_Normal_L', what: 'Only if boost overshoots > +2.5 psi: −1 psi at 2,500-3,250 rpm' },
+        { id: 'Boost_Target_1_Normal_L', what: 'Only if held boost overshoot > +2.5 psi: −1 psi on the rpm rows where it was logged' },
         { id: 'Boost_Target_1_Normal_H', what: 'Same cells, high cam' },
-        { id: 'Final_Boost_Target_H', what: 'Leave stock' }
+        { id: 'Boost_Target_2_Normal_L', what: 'Same cells, Tune 2' },
+        { id: 'Boost_Target_2_Normal_H', what: 'Same cells, Tune 2 high cam' },
+        { id: 'Boost_Target_3_Normal_L', what: 'Same cells, Tune 3' },
+        { id: 'Boost_Target_3_Normal_H', what: 'Same cells, Tune 3 high cam' }
       ],
       features: ['Catalyst / rear O2 monitor: some catted pipes still set a code; KTuner can turn the monitor off (TSP\'s 400-cell pipe claims no code)'],
-      change: 'Turbo spools sooner on the same map. The front A/F sensor now sits in the new pipe: no leaks upstream.',
+      change: 'Turbo spools sooner on the same map. Only the rear O2 sensor sits in the new pipe; the front A/F sensor stays on the turbo outlet.',
       prove: 'Boost overshoot stays under +2.5 psi; full-load mixture still on target.',
       steps: [
-        'New gaskets at both flanges: the factory A/F sensor sits in the downpipe, so any leak ahead of it reads lean.',
+        'New gaskets at both flanges: only the rear O2 sensor sits in the downpipe, and a leak near it skews the catalyst check and the trims.',
         'Keep your map. Log two pulls on a cool morning.',
-        'Boost overshoot over +2.5 psi: lower Boost Target Normal (L and H) by 1 psi at 2,500-3,250 rpm only, flash, log again.',
+        'Held boost overshoot over +2.5 psi: lower Boost Target Normal (L and H, Tunes 1, 2 and 3) by 1 psi on the rpm rows where it was logged only, flash, log again.',
         'Full-load AFR still at or richer than 12.0 and cruise trims inside ±5 %: done. Nothing else changes.',
         'Catalyst code (P0420): pick a high-cell catted pipe first; turning the monitor off in KTuner is the last resort.'
       ]
     },
     {
-      id: 'map24', title: '24 psi map (TSP Map 3, Phearable Level 3)', effect: 2, effort: 1, risk: 3,
-      gain: 'TSP: 154 → 191 whp on a stock CVT car (all maps, output limited for the CVT)', sources: ['tsp', 'phearable'],
+      id: 'map24', title: '24 psi vendor file (TSP Map 3 / Phearable L3)', effect: 2, effort: 1, risk: 3,
+      gain: 'TSP: 154 → 191 whp on a stock CVT car (Map 3 only, output limited for engine and transmission)', sources: ['tsp', 'phearable'],
       tables: [
         { id: 'Boost_Target_1_Normal_H', what: '+3 psi over your 21 psi peak' },
         { id: 'Final_Boost_Target_H', what: 'Tops out lower than 24 in your file: must rise too (custom work)' },
@@ -142,7 +145,7 @@
       id: 'catless', title: 'Catless downpipe', effect: 2, effort: 2, risk: 3,
       gain: 'A few hp over a high-flow catted pipe', sources: ['won27dp'],
       tables: [], features: ['Catalyst monitor and rear O2 disabled in KTuner'],
-      change: 'Sets P0420 unless the monitor is turned off, and fails the đăng kiểm emissions test.',
+      change: 'Always sets P0420 unless the monitor is turned off, and risks the tailpipe test + 65–75 M VND fine.',
       prove: '', notForThisCar: true
     }
   ];
@@ -155,14 +158,14 @@
       note: 'Starter 18 (Stage 1): up to +30 whp. Starter 21 (Stage 2): up to +55 whp. "Running 91+ will give the best results." Your file is Starter 21 Dual Tune 2.' },
     { id: 'phear', claim: 'Phearable Stage 1.5 runs about 16.4 / 18 / 23-24 psi', verdict: 'true', conf: 'high', src: ['phearable'],
       note: '194 hp / 237 lb-ft on a stock 2022 non-Si CVT. 93 recommended, 91 the absolute minimum.' },
-    { id: 'hondata', claim: 'Hondata basemap: +34 hp / +50 lb-ft on the CVT', verdict: 'unverified', conf: 'low', src: ['hondata'],
-      note: 'Search snippet only; hondata.com blocks crawlers.' },
+    { id: 'hondata', claim: 'Hondata basemap: +34 hp / +50 lb-ft', verdict: 'true', conf: 'medium', src: ['hondata'],
+      note: 'Vendor claim, on Hondata\'s own chart: 22 Civic 1.5, 91 octane. The chart does not show the transmission.' },
     { id: 'ron', claim: 'Vietnam E10 RON95 is "premium" like US 91/93', verdict: 'partly', conf: 'medium', src: ['e10'],
       note: 'E10RON95 is still RON 95. US pumps show (RON+MON)/2, so RON 95 is about US 91: the floor of those maps, not 93.' },
     { id: 'turbo21', claim: 'The stock turbo can run the 21-24 psi maps', verdict: 'wrongForYou', conf: 'high', src: ['log'],
-      note: 'In your hard-pull drive the wastegate is about 3 % open at the boost peak: the stock turbo is near its limit before your 21 psi target.' },
-    { id: 'dp12', claim: 'A catted downpipe adds about 12 whp with no tune', verdict: 'true', conf: 'medium', src: ['won27dp'],
-      note: 'Vendor dyno (+12 whp / +13 lb-ft). 27WON says a code (CEL) will come on; TSP says theirs will not.' },
+      note: 'In your hard-pull drive the wastegate is about 3 % open at the boost peak, measured at ≤ 19.9 psi: the stock turbo is near its limit before your 21 psi target.' },
+    { id: 'dp12', claim: 'A catted downpipe adds about 12 whp with no tune', verdict: 'partly', conf: 'low', src: ['won27dp'],
+      note: '27WON vendor dyno on the factory ECU: +12 whp / +13 lb-ft peak; their first CVT test gave +7 / +11. No independent 11th-gen dyno. 27WON says a CEL can be illuminated (owners report it within days); TSP says theirs will not.' },
     { id: 'map28', claim: 'Stock MAP sensors stop reading at about 26-28 psi', verdict: 'true', conf: 'high', src: ['won300', 'rv6', 'map4'],
       note: 'Two vendors agree. 4-bar sensors read to about 45 psi and must be enabled in KTuner (supported on the 22+ non-Si).' },
     { id: 'p300', claim: 'A drop-in turbo makes 300 whp on this engine', verdict: 'partly', conf: 'medium', src: ['prlTurbo', 'rv6', 'won300'],

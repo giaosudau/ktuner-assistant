@@ -28,6 +28,8 @@ _MORE = re.compile(r"\b(add|more|increase|raise|give|extra|advance|retard|lower|
 _BOOST = re.compile(r"\bpsi\b|\bboost\b|\bturbo\b", re.I)
 _BOOST_UP = re.compile(r"\+\s*\d|\b(more|raise|increase|give|add|extra|up|tăng|thêm)\b", re.I)
 _HEAT = re.compile(r"\b(heat|hot|summer|afternoon|warm)\b|nóng", re.I)
+#: Exhaust parts (ticket 08): before any Drive, a question about one is a pre-install question for the cards.
+_EXHAUST = re.compile(r"down\s*-?\s*pipe|\bcat(?:less|ted)\b|\bcat\s*-?\s*back\b|\bexhaust\b", re.I)
 _SLOW = re.compile(r"\b(slow|slower|sluggish|weak|weaker|power|performance|lose|loses|losing|loss)\b|chậm|yếu", re.I)
 _STOP = {
     "what", "does", "how", "why", "with", "that", "this", "the", "and", "for", "are", "can", "you", "tell", "about",
@@ -114,6 +116,8 @@ async def answer_question(
     state = store.car_state(None) or {}
     installs = store.list_installs()
     has_drives = bool(state.get("drives")) and latest_id is not None
+    if intent == "boost" and not has_drives and _EXHAUST.search(text):
+        intent = "knowledge"
     win = W.window_for_state(state, installs, latest_id) if has_drives else {"ids": [], "since": None}
     window = C.window_card(win)["line"]
     out: dict[str, Any] = {"ok": True, "kind": "answer", "intent": intent, "window": window, "citations": [], "nextStep": None}

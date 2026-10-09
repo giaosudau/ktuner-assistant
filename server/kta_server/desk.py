@@ -238,6 +238,11 @@ def part_change(text: str, profile: Mapping[str, Any]) -> dict[str, Any]:
     else:
         parts = current + [p for p in named if p not in current]
     fields = {**dict(profile or {}), "parts": parts}
+    kind = P.downpipe_type(text)
+    if "downpipe" not in parts:
+        fields.pop("downpipe_type", None)
+    elif "downpipe" in named and kind:
+        fields["downpipe_type"] = kind
     return {"fields": fields, "filled": {"parts": True}, "missing": [], "prefilled": [], "changed": named}
 
 

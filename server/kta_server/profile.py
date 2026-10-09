@@ -39,6 +39,10 @@ _PART_KEYWORDS: dict[str, tuple[str, ...]] = {
 # list; the rest are plain strings.
 FIELDS: tuple[str, ...] = ("model", "engine", "transmission", "fuel", "climate", "basemap", "parts")
 
+#: The downpipe class (ticket 08), an optional `downpipe_type` beside `parts`,
+#: kept only while a downpipe is fitted. Absent means not said yet (= unknown).
+DOWNPIPE_TYPES: tuple[str, ...] = ("catted-200", "catted-400", "catless", "unknown")
+
 #: Fields the owner must not leave empty on confirm.
 REQUIRED: tuple[str, ...] = ("model", "basemap")
 
@@ -82,6 +86,9 @@ def draft_from_text(text: str, basemap: str) -> dict[str, Any]:
         "basemap": basemap,
         "parts": _parts(lowered),
     }
+    kind = downpipe_type(lowered) if "downpipe" in fields["parts"] else None
+    if kind:
+        fields["downpipe_type"] = kind
     filled = {
         "model": bool(fields["model"]),
         "engine": bool(fields["engine"]),
@@ -142,6 +149,26 @@ def _climate(lowered: str) -> str:
     return ""
 
 
+def downpipe_type(text: str) -> str | None:
+    """The downpipe class the owner's words name, or None when they name none.
+
+    A cell count beats the brand (older RV6 pipes were 300-cell); 27WON is the
+    200-cell pipe, TSP and RV6 22+ the 400-cell GESi core.
+    """
+    lowered = str(text or "").lower()
+    if re.search(r"cat\s*-?\s*less", lowered):
+        return "catless"
+    cells = re.search(r"\b(\d{3})\s*-?\s*(?:cells?|cpsi)\b", lowered)
+    if cells:
+        return {"200": "catted-200", "400": "catted-400"}.get(cells.group(1), "unknown")
+    if re.search(r"27\s*won", lowered):
+        return "catted-200"
+    # ponytail: a brand named anywhere in the text is read as the pipe's brand; the owner corrects the card.
+    if re.search(r"\b(tsp|rv6|gesi)\b", lowered):
+        return "catted-400"
+    return None
+
+
 def _parts(lowered: str) -> list[str]:
     found = []
     for part in PARTS:
@@ -177,6 +204,12 @@ def validate_fields(fields: Any, basemap_default: str) -> dict[str, Any]:
             + ". I know these parts: " + ", ".join(PARTS) + "."
         )
     cleaned["parts"] = [p for p in PARTS if p in parts]
+    kind = fields.get("downpipe_type")
+    if kind not in (None, ""):
+        if kind not in DOWNPIPE_TYPES:
+            raise ValueError("A downpipe type is one of: " + ", ".join(DOWNPIPE_TYPES) + ".")
+        if "downpipe" in cleaned["parts"]:
+            cleaned["downpipe_type"] = kind
     missing = [name for name in REQUIRED if not cleaned[name]]
     if missing:
         raise ValueError("A Car profile needs " + " and ".join(missing) + ".")
@@ -202,9 +235,11 @@ def installs_for_part_change(
 
 
 __all__ = [
+    "DOWNPIPE_TYPES",
     "FIELDS",
     "PARTS",
     "REQUIRED",
+    "downpipe_type",
     "draft_from_text",
     "installs_for_part_change",
     "part_display",

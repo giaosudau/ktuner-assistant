@@ -46,6 +46,61 @@ test('PRL Race preset on a street housing reads ~1.3-1.4x the air: trims would n
   assert.ok(Math.abs(pulls.ins.trims.worst) < 5);
 });
 
+// Downpipe fix-spec, Wave 1 B: the build text matches the research (tickets 02, 03, 05, 06, 08).
+const item = (id) => K.build.ITEMS.find((i) => i.id === id);
+const claim = (id) => K.build.CLAIMS.find((c) => c.id === id);
+
+test('dpCat: only the rear O2 sits in the pipe, B2 rows from the log in all three tunes, factory-ECU vendor gain', () => {
+  const dp = item('dpCat');
+  const all = [dp.change].concat(dp.steps).join(' ');
+  assert.match(dp.steps[0], /rear O2/);
+  assert.doesNotMatch(all, /A\/F sensor (now )?sits in/);
+  const ids = dp.tables.map((t) => t.id);
+  assert.ok(!ids.includes('Final_Boost_Target_H'), 'Final Boost Target is not a downpipe table');
+  for (const n of [1, 2, 3]) for (const c of ['L', 'H']) assert.ok(ids.includes('Boost_Target_' + n + '_Normal_' + c), 'tune ' + n + ' ' + c);
+  assert.doesNotMatch(JSON.stringify(dp), /2,500-3,250/, 'rows come from where overshoot was logged');
+  assert.equal(dp.gain, '+12 whp / +13 lb-ft on the factory ECU (27WON vendor dyno; a first CVT test gave +7 / +11)');
+});
+
+test('vendor claims carry vendor confidence: dp12 partly/low, hondata vendor-true without "on the CVT"', () => {
+  assert.equal(claim('dp12').verdict, 'partly');
+  assert.equal(claim('dp12').conf, 'low');
+  assert.match(claim('dp12').note, /vendor/i);
+  assert.equal(claim('hondata').verdict, 'true');
+  assert.match(claim('hondata').note, /vendor/i);
+  assert.doesNotMatch(claim('hondata').claim, /CVT/);
+  assert.match(claim('turbo21').note, /≤ 19\.9 psi/);
+});
+
+test('map24 is a vendor file: 191 whp is Map 3 only, limited for engine and transmission', () => {
+  const m = item('map24');
+  assert.equal(m.title, '24 psi vendor file (TSP Map 3 / Phearable L3)');
+  assert.match(m.gain, /Map 3 only/);
+  assert.match(m.gain, /output limited for engine and transmission/);
+  assert.doesNotMatch(m.gain, /all maps|for the CVT/);
+});
+
+test('catless risks the tailpipe test and a fine, not a sure đăng kiểm fail', () => {
+  const c = item('catless');
+  assert.match(c.change, /risks the tailpipe test \+ 65–75 M VND fine/);
+  assert.doesNotMatch(c.change, /fails/);
+});
+
+test('the headroom blocker says the turbo is near its limit, in both languages', () => {
+  const fs = require('fs'), vm = require('vm');
+  const window = {};
+  vm.createContext(window); window.window = window;
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
+  const I = { boost: { peakBoost: 19.9, wgAtPeak: 2.7 } };
+  const en = window.KTA_I18N.en.drive.blockers.headroom(I, K.fmt);
+  const vi = window.KTA_I18N.vi.drive.blockers.headroom(I, K.fmt);
+  assert.match(en, /the turbo is near its limit/);
+  assert.doesNotMatch(en, /has headroom/);
+  assert.match(vi, /gần giới hạn/);
+  assert.doesNotMatch(vi, /còn dư/);
+});
+
 test('items that need a how-to carry steps', () => {
   ['ic', 'dpCat'].forEach((id) => assert.ok(K.build.ITEMS.find((i) => i.id === id).steps.length >= 3, id));
 });

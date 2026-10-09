@@ -87,6 +87,21 @@ def test_a_card_question_needs_no_drive_and_cites_the_card(loop: Loop):
     assert body["window"] == "nothing read yet"
 
 
+def test_a_downpipe_question_with_no_drive_answers_from_the_cards(loop: Loop):
+    """Ticket 08: pre-install exhaust questions answer from what the shop knows, not the boost no-drive gate."""
+    for text in (
+        "Will a catless downpipe give me more boost?",
+        "Should I add a catted downpipe for more turbo power?",
+        "Does a cat-back exhaust add boost?",
+    ):
+        body = ask(loop, text)
+        assert body["intent"] == "knowledge", text
+        assert body["kind"] == "answer", text
+        assert not body["answer"].startswith("Upload a Drive first"), text
+    # A plain boost request with no Drive still waits for one.
+    assert ask(loop, "Give me +2 psi")["kind"] == "no-drive"
+
+
 def test_not_enough_drives_says_why_it_cannot_tell(loop: Loop):
     loop.upload_and_reply("aug22-0903")
     body = ask(loop, "Why is my car slower in the heat?")
