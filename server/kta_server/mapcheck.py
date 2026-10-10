@@ -49,6 +49,23 @@ def _no(reason: str, detail: str | None = None) -> dict[str, Any]:
     return {"ok": False, "reason": reason, "detail": detail}
 
 
+def ceiling_at(final: Any, rpm: float, ceiling_max: float) -> float:
+    """The boost ceiling at one rpm (ADR 0007): the Final Boost Target peak of
+    the rows either side of `rpm` (the lower one), never above `ceiling_max`."""
+    if not isinstance(final, dict) or not final.get("rpm_axis") or not final.get("values"):
+        return ceiling_max
+    axis = final["rpm_axis"]
+    lo = max((k for k, a in enumerate(axis) if a <= rpm), default=0)
+    hi = min((k for k, a in enumerate(axis) if a >= rpm), default=len(axis) - 1)
+    peaks = [
+        max((v for v in final["values"][r] if isinstance(v, (int, float))), default=None)
+        for r in (lo, hi)
+        if r < len(final["values"])
+    ]
+    peaks = [p for p in peaks if p is not None]
+    return min([ceiling_max, *peaks])
+
+
 def check_change(
     change: dict[str, Any],
     tables: dict[str, Any] | None,
@@ -58,16 +75,17 @@ def check_change(
     th = thresholds if thresholds is not None else load_thresholds()
     editable: dict[str, str] = th["editable_tables"]["value"]
     forbidden: list[str] = th["forbidden_tables"]["value"]
-    boost_set: list[str] = th["boost_pairs"]["value"]["members"]
+    boost_pairs: dict[str, Any] = th["boost_pairs"]["value"]
+    boost_set: list[str] = boost_pairs["members"]
     wot_set: list[str] = th["wot_pairs"]["value"]["members"]
     step_max: float = th["boost_step_max"]["value"]
     min_rpm: float = th["boost_raise_min_rpm"]["value"]
     maf_pct: float = th["maf_step_max_pct"]["value"] / 100
     wot_min: float = th["wot_target_band"]["value"]["min"]
     wot_max: float = th["wot_target_band"]["value"]["max"]
-    ceiling: float = th["boost_ceiling_psi"]["value"]
+    ceiling_max: float = th["boost_ceiling_psi"]["value"]
 
-    named = change.get("tables") if isinstance(change, dict) else None
+    named =change.get("tables") if isinstance(change, dict) else None
     ids = list(named) if isinstance(named, dict) else []
     total = sum(len(named[table_id] or []) for table_id in ids) if ids else 0
     if not ids or not total:
@@ -155,8 +173,18 @@ def check_change(
             "two-families",
             "One Flash carries one family: " + " + ".join(sorted(families)) + ".",
         )
-    # Pairs move together: every member present, with identical cells.
-    for pair_set in (boost_set, wot_set):
+    # Pairs move together: every member present, with identical cells. Boost
+    # moves as all six, Tune 2 L+H alone (a Boost step) or Tunes 1 and 3 (a promote).
+    boost_touched = {m for m in boost_set if named.get(m)}
+    boost_group = next(
+        (
+            group
+            for group in (boost_pairs.get("tune2_alone"), boost_pairs.get("promote"))
+            if group and set(group) == boost_touched
+        ),
+        boost_set,
+    )
+    for pair_set in (boost_group, wot_set):
         touched = [m for m in pair_set if named.get(m)]
         if not touched:
             continue
@@ -180,22 +208,16 @@ def check_change(
                     f"{other} differs from {pair_set[0]}: pairs stay identical.",
                 )
 
-    # The effective ceiling is the lower of the file's ceiling and the active
-    # map's Final Boost Target peak (the engine takes the same min).
+    # The ceiling (ADR 0007): the active map's Final Boost Target peak at the
+    # cell's rpm row, never above the file's 24 psi (the engine reads the same rule).
     final = None
     if isinstance(tables, dict):
         final = tables.get("Final_Boost_Target_H") or tables.get("Final_Boost_Target_L")
-    if isinstance(final, dict) and final.get("values"):
-        peak = max(
-            (v for row in final["values"] for v in row if isinstance(v, (int, float))),
-            default=None,
-        )
-        if peak is not None and peak < ceiling:
-            ceiling = peak
     for cell in flat:
         family = editable[cell["id"]]
         delta = cell["after"] - cell["before"]
         if family == "boost":
+            ceiling = ceiling_at(final, cell["rpm"], ceiling_max)
             if abs(delta) > step_max + EPS:
                 return _no(
                     "boost-step",
@@ -214,6 +236,20 @@ def check_change(
                     f"{cell['id']} asks {cell['after']} psi: the ceiling is "
                     f"{ceiling} psi.",
                 )
+            # A raise in Tune 1 or 3 is only a promote: it copies the proven Tune 2 cell.
+            tune2 = cell["id"].replace("Boost_Target_1_", "Boost_Target_2_").replace(
+                "Boost_Target_3_", "Boost_Target_2_"
+            )
+            if tune2 != cell["id"] and delta > EPS:
+                source = tables.get(tune2) if isinstance(tables, dict) else None
+                t2v = source["values"][cell["row"]][cell["col"]] if isinstance(source, dict) else None
+                if cell["after"] != t2v:
+                    return _no(
+                        "boost-promote",
+                        f"{cell['id']} row {cell['row']} col {cell['col']} rises to "
+                        f"{cell['after']} psi: Tunes 1 and 3 rise only to copy the proven "
+                        f"Tune 2 cell ({t2v} psi).",
+                    )
         elif family == "AFM Flow":
             pct = (cell["after"] / cell["before"] - 1) if cell["before"] else (
                 float("inf") if cell["after"] else 0.0

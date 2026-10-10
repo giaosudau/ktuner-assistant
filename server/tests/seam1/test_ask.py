@@ -48,7 +48,7 @@ def test_give_me_plus_2_psi_is_the_flash_plans_answer_with_its_lock_reasons(loop
     body = ask(loop, "Give me +2 psi")
     say = body["answer"]
     assert "Your logs support no map change right now." in say
-    assert "Locked: wastegate" in say, "the plan's own lock reason"
+    assert "Locked: no Cool drive yet" in say, "the plan's own Boost step lock reason"
     assert "What would unlock it:" in say
     assert "Nothing changes in your map." in say
     assert body["window"].startswith("based on your 2 Drives")

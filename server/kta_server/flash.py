@@ -306,7 +306,11 @@ async def checked_plan_with_change(
     active = (await worker.call("mapVersions", state=car_state))["active"]
     version = store.map_version(active["n"]) if active else None
     kwargs = {"map": version["tables"]} if version and version.get("tables") else {}
-    plan = await worker.call("flashPlan", state=window_state, now=now, **kwargs)
+    # The Boost step reads each Drive's map slot and stays locked while an Open step is open.
+    plan = await worker.call(
+        "flashPlan", state=window_state, now=now,
+        tags=store.drive_tags(), openSteps=store.list_open_steps(only_open=True), **kwargs,
+    )
     if plan["kind"] == "undo":
         return {**plan, "ktunerCard": undo_card(plan, worker.ktuner_basemap, active and active["n"])}, None, version
     if plan["kind"] != "one-family":

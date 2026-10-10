@@ -172,9 +172,10 @@ def test_a_change_both_checks_refuse_never_reaches_the_card_and_says_why(proposi
     proposing.store.save_car_state(state)
     # One of the six tables drifts from its pair in the stored map: the cells it
     # proposes no longer match, which both checks refuse (pairs move together).
+    # It drifts down: Tune 2 above Tune 1 is a Boost step under proof (ADR 0007).
     v1 = proposing.store.map_version(1)
     tables = v1["tables"]
-    tables["Boost_Target_2_Normal_H"]["values"][12][6] += 0.5  # row 12 = 3,500 rpm, a row the trim edits
+    tables["Boost_Target_2_Normal_H"]["values"][12][6] -= 0.5  # row 12 = 3,500 rpm, a row the trim edits
     proposing._loop.run_until_complete(_overwrite_tables(proposing, 1, tables))
 
     plan = proposing.get("/api/state").json()["flashPlan"]

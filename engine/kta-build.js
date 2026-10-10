@@ -116,10 +116,10 @@
       ],
       features: ['Stock MAP sensors read to about 26-28 psi: 24 psi is still inside them'],
       change: 'Asks the stock turbo for 3 psi more than your map does.',
-      prove: 'Only after the turbo shows headroom and a hot log stays OK.',
+      prove: 'The same Boost step gates on its logs (ADR 0007): keep it or revert.',
+      // No wastegate-guess lock (ADR 0007): undershoot on floored proof pulls tests headroom directly.
       lock: function (I, F) {
         var out = [];
-        if (I.boost && I.boost.headroom === 'small') out.push('turbo');
         if (F && isNum(F.finalPeak) && F.finalPeak < 24) out.push('final');
         out.push('octane');
         return out;

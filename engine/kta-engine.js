@@ -174,7 +174,7 @@
     mafStepMax: 0.10,                      // max AFM change per round (fraction)
     minBinWeight: 8,                       // closed-loop samples per AFM point
     minWotWeight: 3,                       // settled WOT samples per AFM point
-    boostCeilingPsi: 21,                   // basic-stage ceiling for the map peak
+    boostCeilingPsi: 24,                   // never above 24 psi; the real ceiling is the Final Boost Target peak (ADR 0007)
     wotTargetAfr: { min: 11.0, max: 12.0 } // allowed WOT command band (display AFR)
   };
 
@@ -1548,6 +1548,25 @@
    * table, forbidden table, bad axes, index range, before match, one family,
    * pairs, per-cell bounds, MAF curve still rising.
    */
+  /**
+   * The boost ceiling at one rpm (ADR 0007): the Final Boost Target peak of the
+   * rows either side of `rpm` (the lower one, since the ECU reads between them),
+   * never above `max`. `fin` is a table in the digitized shape; without it, `max`.
+   */
+  KTA.boostCeilingAt = function (fin, rpm, max) {
+    if (!fin || !fin.rpm_axis || !fin.values || !fin.values.length) return max;
+    var axis = fin.rpm_axis, lo = 0, hi = axis.length - 1;
+    axis.forEach(function (a, k) { if (a <= rpm) lo = k; });
+    for (var k = axis.length - 1; k >= 0; k--) if (axis[k] >= rpm) hi = k;
+    var peak = Infinity;
+    [lo, hi].forEach(function (r) {
+      var m = -Infinity;
+      (fin.values[r] || []).forEach(function (v) { if (isNum(v) && v > m) m = v; });
+      if (m > -Infinity && m < peak) peak = m;
+    });
+    return Math.min(peak, max);
+  };
+
   KTA.checkMapChange = function (change, tables) {
     function no(reason, detail) { return { ok: false, reason: reason, detail: detail || null }; }
     var TH = KTA.THRESHOLDS;
@@ -1615,7 +1634,13 @@
         return ((change.tables[m] || []).map(function (c) { return c.row + ':' + c.col + '=' + c.before + '->' + c.after; }).sort().join(','));
       });
     }
-    var sets = [boostSet, wotSet];
+    // Boost moves as all six, Tune 2 L+H alone (a Boost step) or Tunes 1 and 3 (a promote).
+    var BP = TH.boost_pairs.value;
+    var boostTouched = boostSet.filter(function (m) { return (change.tables[m] || []).length > 0; });
+    var boostGroup = [BP.tune2_alone, BP.promote].filter(function (g) {
+      return g && g.length === boostTouched.length && g.every(function (m) { return boostTouched.indexOf(m) >= 0; });
+    })[0] || boostSet;
+    var sets = [boostGroup, wotSet];
     for (i = 0; i < sets.length; i++) {
       var set = sets[i];
       var touched = set.filter(function (m) { return (change.tables[m] || []).length > 0; });
@@ -1628,21 +1653,21 @@
       }
     }
 
-    // The effective ceiling is the lower of the file's ceiling and the active
-    // map's Final Boost Target peak (the plan's carFlashPlan takes the same min).
-    var ceiling = TH.boost_ceiling_psi.value;
+    // The ceiling (ADR 0007): the active map's Final Boost Target peak at the
+    // cell's rpm row, never above the file's 24 psi (carFlashPlan reads the same rule).
     var fin = tables.Final_Boost_Target_H || tables.Final_Boost_Target_L;
-    if (fin && fin.values && fin.values.length) {
-      var peak = -Infinity;
-      fin.values.forEach(function (row) { row.forEach(function (v) { if (isNum(v) && v > peak) peak = v; }); });
-      if (isNum(peak) && peak < ceiling) ceiling = peak;
-    }
     for (i = 0; i < cells.length; i++) {
       var cell = cells[i], fam = editable[cell.id], d = cell.after - cell.before;
       if (fam === 'boost') {
+        var ceiling = KTA.boostCeilingAt(fin, cell.rpm, TH.boost_ceiling_psi.value);
         if (Math.abs(d) > stepMax + EPS) return no('boost-step', cell.id + ' row ' + cell.row + ' col ' + cell.col + ' moves ' + d.toFixed(1) + ' psi: at most ' + stepMax + ' psi per Flash.');
         if (cell.rpm < minRpm && d > EPS) return no('boost-low-rpm-raise', cell.id + ' at ' + cell.rpm + ' rpm: no boost raised below ' + minRpm + ' rpm.');
         if (cell.after > ceiling + EPS) return no('boost-ceiling', cell.id + ' asks ' + cell.after + ' psi: the ceiling is ' + ceiling + ' psi.');
+        var tune2 = cell.id.replace(/^Boost_Target_[13]_/, 'Boost_Target_2_');
+        var t2v = tables[tune2] ? tables[tune2].values[cell.row][cell.col] : null;
+        if (tune2 !== cell.id && d > EPS && cell.after !== t2v) {
+          return no('boost-promote', cell.id + ' row ' + cell.row + ' col ' + cell.col + ' rises to ' + cell.after + ' psi: Tunes 1 and 3 rise only to copy the proven Tune 2 cell (' + t2v + ' psi).');
+        }
       } else if (fam === 'AFM Flow') {
         var pct = cell.before ? (cell.after / cell.before - 1) : (cell.after ? Infinity : 0);
         if (!(Math.abs(pct) <= mafPct + EPS)) return no('maf-step', cell.id + ' point ' + cell.col + ' moves ' + (pct * 100).toFixed(1) + ' %: at most ' + (mafPct * 100) + ' % per round.');

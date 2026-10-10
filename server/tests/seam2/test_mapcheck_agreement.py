@@ -91,26 +91,83 @@ def test_out_of_bounds_step_rejects_on_both(basemap: dict[str, Any], tmp_path: P
     check_both("out-of-bounds step", change, basemap, tmp_path)
 
 
-def test_above_the_ceiling_rejects_on_both(basemap: dict[str, Any], tmp_path: Path) -> None:
-    # A cell already at the 21 psi peak, raised half a psi: within the step,
-    # above the ceiling.
-    table = basemap[BOOST_IDS[0]]["values"]
-    axis = basemap[BOOST_IDS[0]]["rpm_axis"]
-    spot = next(
-        (r, c)
-        for r, row in enumerate(table)
-        for c, v in enumerate(row)
-        if v == 21.0 and axis[r] >= 3000
-    )
-    change = boost_lower(basemap)
-    row, col = spot
-    for table_id in BOOST_IDS:
-        before = basemap[table_id]["values"][row][col]
+TUNE2 = ["Boost_Target_2_Normal_L", "Boost_Target_2_Normal_H"]
+TUNE13 = [
+    "Boost_Target_1_Normal_L",
+    "Boost_Target_1_Normal_H",
+    "Boost_Target_3_Normal_L",
+    "Boost_Target_3_Normal_H",
+]
+
+
+def raise_cells(
+    tables: dict[str, Any], ids: list[str], row: int, col: int, after: float | None = None
+) -> dict[str, Any]:
+    """One cell moved to `after` (default +1 psi) in each named table."""
+    change: dict[str, Any] = {"mapVersion": 1, "tables": {}}
+    for table_id in ids:
+        before = tables[table_id]["values"][row][col]
         change["tables"][table_id] = [
-            {"row": row, "col": col, "before": before, "after": round(before + 0.5, 1)}
+            {"row": row, "col": col, "before": before, "after": before + 1 if after is None else after}
         ]
-    assert mapcheck.check_change(change, basemap)["reason"] == "boost-ceiling"
-    check_both("above the ceiling", change, basemap, tmp_path)
+    return change
+
+
+def with_cell(tables: dict[str, Any], ids: list[str], row: int, col: int, value: float) -> dict[str, Any]:
+    out = copy.deepcopy(tables)
+    for table_id in ids:
+        out[table_id]["values"][row][col] = value
+    return out
+
+
+def test_above_the_ceiling_rejects_on_both(basemap: dict[str, Any], tmp_path: Path) -> None:
+    # The ceiling is the Final Boost Target peak at that row (23.4 here): a Tune 2
+    # cell already at 23 psi, raised 1 psi, is within the step but above it.
+    row = basemap[TUNE2[1]]["rpm_axis"].index(4000)
+    tables = with_cell(basemap, TUNE2, row, 7, 23.0)
+    change = raise_cells(tables, TUNE2, row, 7)
+    verdict = mapcheck.check_change(change, tables)
+    assert verdict["reason"] == "boost-ceiling"
+    assert "23.4 psi" in verdict["detail"]
+    check_both("above the ceiling", change, tables, tmp_path)
+    # A Final Boost Target that tops out higher still stops at 24 psi.
+    high = with_cell(tables, TUNE2, row, 7, 23.5)
+    for table_id in ("Final_Boost_Target_L", "Final_Boost_Target_H"):
+        high[table_id]["values"] = [[30.0] * len(r) for r in high[table_id]["values"]]
+    change = raise_cells(high, TUNE2, row, 7)
+    assert mapcheck.check_change(change, high)["reason"] == "boost-ceiling"
+    check_both("above 24 psi", change, high, tmp_path)
+
+
+def test_a_boost_step_on_tune_2_alone_accepts_on_both(basemap: dict[str, Any], tmp_path: Path) -> None:
+    row = basemap[TUNE2[1]]["rpm_axis"].index(3500)
+    change = raise_cells(basemap, TUNE2, row, 7)
+    assert mapcheck.check_change(change, basemap)["reason"] == "ok"
+    check_both("Boost step on Tune 2", change, basemap, tmp_path)
+
+
+def test_a_raise_in_tune_1_or_3_only_as_a_promote_on_both(basemap: dict[str, Any], tmp_path: Path) -> None:
+    row = basemap[TUNE2[1]]["rpm_axis"].index(3500)
+    # All six up together: Tunes 1 and 3 do not copy Tune 2.
+    six = raise_cells(basemap, BOOST_IDS, row, 7)
+    assert mapcheck.check_change(six, basemap)["reason"] == "boost-promote"
+    check_both("raise on all six", six, basemap, tmp_path)
+    # Tune 1 alone is no group.
+    one = raise_cells(basemap, ["Boost_Target_1_Normal_L", "Boost_Target_1_Normal_H"], row, 7)
+    assert mapcheck.check_change(one, basemap)["reason"] == "pair-mismatch"
+    check_both("Tune 1 alone", one, basemap, tmp_path)
+    # Tune 2 carries the proven step: copying it to Tunes 1 and 3 passes, anything else fails.
+    stepped = with_cell(basemap, TUNE2, row, 7, 22.0)
+    promote = raise_cells(stepped, TUNE13, row, 7, 22.0)
+    assert mapcheck.check_change(promote, stepped)["reason"] == "ok"
+    check_both("promote", promote, stepped, tmp_path)
+    wrong = raise_cells(stepped, TUNE13, row, 7, 21.5)
+    assert mapcheck.check_change(wrong, stepped)["reason"] == "boost-promote"
+    check_both("promote not equal to Tune 2", wrong, stepped, tmp_path)
+    # Lowering on Tune 2 alone (taking a step back) stays allowed.
+    back = raise_cells(basemap, TUNE2, row, 7, 20.0)
+    assert mapcheck.check_change(back, basemap)["reason"] == "ok"
+    check_both("Tune 2 lowered", back, basemap, tmp_path)
 
 
 def test_broken_pair_rejects_on_both(basemap: dict[str, Any], tmp_path: Path) -> None:

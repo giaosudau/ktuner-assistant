@@ -67,7 +67,11 @@ def agent_loop(tmp_path: Path, script: Script) -> Loop:
 
 
 def builtin_card(probe: Loop) -> dict[str, Any]:
-    return probe.upload_and_reply(DRIVE).card
+    # The card of the probe's first upload: a repeat upload of the same drive
+    # already has Open steps, and the Flash plan's Boost step lock names them.
+    if not hasattr(probe, "first_card"):
+        probe.first_card = probe.upload_and_reply(DRIVE).card
+    return probe.first_card
 
 
 def insight_numbers(probe: Loop) -> dict[str, Any]:

@@ -15,11 +15,24 @@
     "note": "Below 3,000 rpm boost may only be lowered, never raised."
   },
   "boost_ceiling_psi": {
-    "value": 21,
+    "value": 24,
     "unit": "psi",
-    "basis": "source",
-    "source": "fact-check.md §4 (KTuner 22+ Civic 1.5T page: Stage 2 (21PSI) boost targets in Normal/Sport)",
-    "note": "Nothing above 21 psi; the effective ceiling is the lower of this and the active map's Final Boost Target peak."
+    "rule": "final-boost-target-peak",
+    "basis": "judgement",
+    "source": "ticket 06 D1 (the app writes up to the active map's Final Boost Target peak, 23.4 on Starter 21) and ticket 13 (24 psi: the highest any vendor file has run on this car); ADR 0007",
+    "note": "A rule, not a fixed number: no boost cell above the active map's Final Boost Target peak at that cell's rpm row (the lower of the two rows either side), and never above 24 psi. Each +1 psi is proven by datalog (boost_step_gates)."
+  },
+  "boost_step_gates": {
+    "value": {
+      "pedal_pct": 85, "hold_s": 4, "rpm_min": 3500, "pulls_min": 2,
+      "rows_rpm": [3500, 4000, 4500], "cell_min_psi": 15,
+      "target_gap_psi": 0.5, "undershoot_psi": 1.5, "overshoot_psi": 1.5, "total_psi": 24,
+      "kc_max": 0.56, "afr_lean_max": 12.0, "difp_min_pct": 90, "trim_max_pct": 5, "ign_drop_deg": 1.0
+    },
+    "unit": "mixed (%, s, rpm, psi, score, AFR, deg)",
+    "basis": "judgement",
+    "source": "ticket 16 (proof pull: pedal 85 % held 4 s above 3,500 rpm, 2 pulls, rows 3,500-4,500; the pass gates), ticket 13 (overshoot tightened to 1.5 and target + overshoot 24; ignition achieved vs the last proven Map version, drop over 1°; DIFP 90 %; Knock Control 0.56 kept, read settled), ticket 17 (the logged target must reach the table: within 0.5 psi), ticket 06 D1 (undershoot 1.5, AFR never leaner than 12.0, trims ±5 %)",
+    "note": "A Boost step is offered, and kept, only when every gate passes on the latest Cool drive's proof pulls and the latest hot drive's Knock Control. No Honda tuner publishes these numbers: they are our judgement on the shared tuner method (ticket 13)."
   },
   "maf_step_max_pct": {
     "value": 10,
@@ -45,12 +58,14 @@
   "boost_pairs": {
     "value": {
       "members": ["Boost_Target_1_Normal_L", "Boost_Target_1_Normal_H", "Boost_Target_2_Normal_L", "Boost_Target_2_Normal_H", "Boost_Target_3_Normal_L", "Boost_Target_3_Normal_H"],
-      "rule": "identical"
+      "rule": "identical",
+      "tune2_alone": ["Boost_Target_2_Normal_L", "Boost_Target_2_Normal_H"],
+      "promote": ["Boost_Target_1_Normal_L", "Boost_Target_1_Normal_H", "Boost_Target_3_Normal_L", "Boost_Target_3_Normal_H"]
     },
     "unit": "tables",
     "basis": "judgement",
-    "source": "engine P6 (engine/kta-car.js carFlashPlan: the six Normal boost tables move together, verified in the file)",
-    "note": "A boost change touches all six tables with identical cells, or none."
+    "source": "engine P6 (engine/kta-car.js carFlashPlan: the six Normal boost tables move together, verified in the file); ticket 16 (a Boost step is written to Tune 2 only, a proven step is copied to Tunes 1 and 3; safety trims write all three tunes)",
+    "note": "A boost change touches, with identical cells, either all six tables (safety trims), Tune 2 L and H alone (a Boost step) or Tunes 1 and 3 L and H (promote). A raise in Tune 1 or 3 is accepted only as a promote: each cell's after equals the current Tune 2 cell."
   },
   "wot_pairs": {
     "value": {

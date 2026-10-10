@@ -727,7 +727,8 @@ test('flash plan on the owner drives: P9 no map change, all six levers with lock
   const byId = Object.fromEntries(p.levers.map((l) => [l.id, l]));
   assert.match(byId.afm.reason, /±\d ?%/);
   assert.match(byId.mixture.reason, /provisional/i);
-  assert.match(byId.boostPlus.reason, /headroom|wastegate/i);
+  // ADR 0007: locked by the proof gates, not by a wastegate guess.
+  assert.match(byId.boostPlus.reason, /^Locked: .*(floored pull|Knock Control)/);
   assert.match(byId.boostLow.reason, /revs|habit/i);
   assert.match(byId.downpipe.reason, /overshoot/i);
   assert.match(byId.hot.reason, /ECO.*18/i);
@@ -786,12 +787,13 @@ test('a boost plan carries all six Normal tables with identical cells, never sha
   assert.ok(p.cells.every((c) => c.col >= 1 && c.col <= c.of), 'columns counted N of M from the left');
 });
 
-test('locked levers name their pairs: WOT L+H, boost 1/2/3 x L/H', () => {
+test('locked levers name their pairs: WOT L+H, boost 1/2/3 x L/H, the Boost step Tune 2 L+H', () => {
   const { state: s } = ownerState();
   const p = K.carFlashPlan(s, MAP, { now: NOW });
   const byId = Object.fromEntries(p.levers.map((l) => [l.id, l]));
   assert.deepEqual(byId.mixture.wouldTouch.sort(), ['WOT_Enrich_H', 'WOT_Enrich_L']);
-  assert.deepEqual(byId.boostPlus.wouldTouch.sort(), ['Boost_Target_1_Normal_H', 'Boost_Target_1_Normal_L', 'Boost_Target_2_Normal_H', 'Boost_Target_2_Normal_L', 'Boost_Target_3_Normal_H', 'Boost_Target_3_Normal_L']);
+  assert.deepEqual(byId.boostLow.wouldTouch.sort(), ['Boost_Target_1_Normal_H', 'Boost_Target_1_Normal_L', 'Boost_Target_2_Normal_H', 'Boost_Target_2_Normal_L', 'Boost_Target_3_Normal_H', 'Boost_Target_3_Normal_L']);
+  assert.deepEqual(byId.boostPlus.wouldTouch.sort(), ['Boost_Target_2_Normal_H', 'Boost_Target_2_Normal_L']);
   assert.match(byId.mixture.unlocks + ' ' + byId.boostPlus.unlocks, /./);
 });
 
@@ -926,6 +928,130 @@ test('next-flash card contract: no-change carries six levers and no file, table 
   assert.equal(p.undoName, null);
   assert.equal(p.tables.length, 0);
   assert.equal(p.cells.length, 0);
+});
+
+// ---------------------------------------------------------------------------
+// Wave 2 — the Boost step (tickets 06, 13, 16, 17; ADR 0007): +1 psi on Tune 2
+// only, offered when the latest Cool drive's 2 floored proof pulls and the
+// latest hot drive pass every gate; the proof on slot 2 keeps it or undoes it.
+// ---------------------------------------------------------------------------
+const TUNE2 = ['Boost_Target_2_Normal_L', 'Boost_Target_2_Normal_H'];
+const TUNE13 = ['Boost_Target_1_Normal_L', 'Boost_Target_1_Normal_H', 'Boost_Target_3_Normal_L', 'Boost_Target_3_Normal_H'];
+const PULL = { t0: 100, holdS: 5, target: 21, targetRpm: 4000, under: 0.5, over: 0.5, afrLeanest: 10.8, fpPct: 97, ign: 8, ewg: 3 };
+const HOT = { id: 'hot', cool: false, hot: true, iatMoving: 50, kcStart: 0.49, kcPeakJudged: 0.52 };
+const COOL = { id: 'cool', cool: true, hot: false, kcStart: 0.49, kcPeakJudged: 0.5, proofPulls: [PULL, PULL], proofIgn: 8 };
+const changeOf = (p) => {
+  const tables = {};
+  for (const c of p.cells) (tables[c.table] = tables[c.table] || []).push({ row: c.rpmRow, col: c.col - 1, before: c.before, after: c.after });
+  return { mapVersion: 1, tables };
+};
+const leverOf = (p) => p.levers.find((l) => l.id === 'boostPlus');
+
+test('Boost step on today\'s nine drives: locked, the hot drive\'s Knock Control and no floored pull', () => {
+  let s = K.carEmpty();
+  for (const id of ['aug22-0903', 'aug22-0950', 'aug23-1959', 'aug23-2038', 'aug30-1509', 'aug30-1529', 'aug30-1601', 'sep01-0813', 'sep05-0756']) s = ingest(s, id).state;
+  const p = K.carFlashPlan(s, MAP, { now: NOW });
+  const l = leverOf(p);
+  assert.equal(l.status, 'locked');
+  assert.equal(l.title, 'Boost step +1 psi (Tune 2)');
+  assert.equal(l.reason, 'Locked: the latest Cool drive (5 Sep 07:56) has 0 floored pulls, it needs 2 (pedal 85 % or more held 4 s above 3,500 rpm); ' +
+    'the latest hot drive (30 Aug 16:01) reached Knock Control 0.65 judged, over 0.56.');
+  assert.match(l.unlocks, /^A Cool drive with 2 floored pulls that pass every gate/);
+  assert.deepEqual(l.wouldTouch, TUNE2);
+  assert.ok(!p.cells.some((c) => c.after > c.before), 'no raise on today\'s drives');
+});
+
+test('Boost step offered: Tune 2 L and H only, 3,500-4,500 rpm, cells of 15 psi and up, +1 psi under the Final Boost Target peak', () => {
+  const p = K.carFlashPlan(synth([HOT, COOL]), MAP, { now: NOW });
+  assert.equal(p.kind, 'one-family');
+  assert.equal(p.changeId, 'boostStep');
+  assert.equal(leverOf(p).status, 'planned');
+  assert.deepEqual(p.tables.map((t) => t.id), TUNE2);
+  assert.ok(p.cells.length > 0);
+  for (const c of p.cells) {
+    assert.ok([3500, 4000, 4500].includes(c.rpm), 'row ' + c.rpm);
+    assert.ok(c.before >= 15, 'cell ' + c.before);
+    assert.equal(c.after, Math.round((c.before + 1) * 10) / 10);
+    assert.ok(c.after <= 23.4);
+  }
+  // Both map checks' engine side accepts it on the map it was written on.
+  assert.equal(K.checkMapChange(changeOf(p), MAP).reason, 'ok');
+  assert.match(p.proof, /slot 2/);
+});
+
+test('Boost step gates: each failure locks it and names the gate', () => {
+  const plan = (cool, hot, opts) => K.carFlashPlan(synth([Object.assign({}, HOT, hot), Object.assign({}, COOL, cool)]), MAP, Object.assign({ now: NOW }, opts));
+  const reason = (cool, hot, opts) => { const l = leverOf(plan(cool, hot, opts)); assert.equal(l.status, 'locked'); return l.reason; };
+  assert.match(reason({ proofPulls: [Object.assign({}, PULL, { target: 19.2 }), PULL] }), /logged a target of 19\.2 psi against the table's 21\.0/);
+  assert.match(reason({ proofPulls: [Object.assign({}, PULL, { under: 2 }), PULL] }), /undershot 2\.0 psi/);
+  assert.match(reason({ proofPulls: [Object.assign({}, PULL, { over: 2 }), PULL] }), /overshot \+2\.0 psi/);
+  assert.match(reason({ proofPulls: [Object.assign({}, PULL, { target: 23, over: 1.4 }), PULL] }), /target \+ overshoot 24\.4 psi/);
+  assert.match(reason({ proofPulls: [Object.assign({}, PULL, { afrLeanest: 12.2 }), PULL] }), /12\.2 AFR at its leanest/);
+  assert.match(reason({ proofPulls: [Object.assign({}, PULL, { afrLeanest: 11.3 }), PULL] }), /11\.3 AFR at its leanest against 11\.0 asked/);
+  assert.match(reason({ proofPulls: [Object.assign({}, PULL, { fpPct: 85 }), PULL] }), /DIFP at 85 % of target/);
+  assert.match(reason({ kcPeakJudged: 0.6 }), /latest Cool drive.*Knock Control 0\.60 judged, over 0\.56/);
+  assert.match(reason({ kcStart: 0.6 }), /started Knock Control at 0\.60, not settled/);
+  assert.match(reason({ trimWorst: -6 }), /trims at −6\.0 %/);
+  assert.match(reason({ proofPulls: [PULL] }), /has 1 floored pull, it needs 2/);
+  assert.match(reason({}, { kcPeakJudged: 0.6 }), /latest hot drive \(.*\) reached Knock Control 0\.60 judged/);
+  assert.match(reason({}, {}, { openSteps: [{ key: 'channels', status: 'open' }] }), /the open step "Log AFR Command and MAF Hz" comes first/);
+  assert.match(reason({ overshoot: 3, overshootRpm: 3964 }), /B2 overshoot trim comes first/);
+  // No hot drive at all.
+  const l = leverOf(K.carFlashPlan(synth([COOL]), MAP, { now: NOW }));
+  assert.match(l.reason, /no hot drive yet/);
+});
+
+// A map whose Tune 2 carries the step (Map version 2), and the Car history around it.
+function steppedMap() {
+  const m = JSON.parse(JSON.stringify(MAP));
+  for (const id of TUNE2) {
+    m[id].rpm_axis.forEach((rpm, r) => {
+      if (![3500, 4000, 4500].includes(rpm)) return;
+      m[id].values[r] = m[id].values[r].map((v) => (v >= 15 ? Math.round((v + 1) * 10) / 10 : v));
+    });
+  }
+  return m;
+}
+function steppedState(proof) {
+  // Drives 1-2 (before the Flash) unlocked the step; drives 3-4 run Tune 2 after it.
+  // The proof pulls log the new 22 psi target: the step reached the table.
+  const P22 = Object.assign({}, PULL, { target: 22 });
+  let s = synth([HOT, COOL, Object.assign({}, COOL, { id: 'pc', proofPulls: [P22, P22] }, proof && proof.cool), Object.assign({}, HOT, { id: 'ph' }, proof && proof.hot)]);
+  s = K.carRecordFlash(s, { time: 250000, map: 'Starter 21 · boost step', changed: 'boost', note: 'boostStep' }, { now: NOW }).state;
+  s.shakedown.status = 'passed';
+  return s;
+}
+const SLOT2 = { pc: { slot: 2 }, ph: { slot: 2 } };
+
+test('Boost step proof passes on slot 2: the next plan copies the Tune 2 cells to Tunes 1 and 3', () => {
+  const m = steppedMap();
+  const p = K.carFlashPlan(steppedState(), m, { now: NOW, tags: SLOT2 });
+  assert.equal(p.kind, 'one-family');
+  assert.equal(p.changeId, 'boostPromote');
+  assert.match(p.headline, /copy the proven Tune 2 cells to Boost Target 1 and 3/);
+  assert.deepEqual(p.tables.map((t) => t.id), TUNE13);
+  for (const c of p.cells) assert.equal(c.after, m[c.table.replace(/_[13]_/, '_2_')].values[c.rpmRow][c.col - 1]);
+  assert.equal(K.checkMapChange(changeOf(p), m).reason, 'ok');
+});
+
+test('Boost step proof: the first failed gate is an Undo; not yet logged on slot 2, it waits', () => {
+  const m = steppedMap();
+  const over = K.carFlashPlan(steppedState({ cool: { proofPulls: [Object.assign({}, PULL, { target: 22, over: 2 }), PULL] } }), m, { now: NOW, tags: SLOT2 });
+  assert.equal(over.kind, 'undo');
+  assert.match(over.headline, /^Boost step failed its proof: flash your previous map file \(Map version 1/);
+  assert.match(over.evidence[0].text, /overshot \+2\.0 psi/);
+  // Timing achieved more than 1° below the last proven Map version.
+  const ign = K.carFlashPlan(steppedState({ cool: { proofIgn: 6.5, proofPulls: [Object.assign({}, PULL, { target: 22, ign: 6.5 }), Object.assign({}, PULL, { target: 22, ign: 6.5 })] } }), m, { now: NOW, tags: SLOT2 });
+  assert.equal(ign.kind, 'undo');
+  assert.match(ign.evidence[0].text, /ignition 6\.5° against 8\.0° on the last proven Map version/);
+  // The hot drive's Knock Control fails it too.
+  const hot = K.carFlashPlan(steppedState({ hot: { kcPeakJudged: 0.6 } }), m, { now: NOW, tags: SLOT2 });
+  assert.equal(hot.kind, 'undo');
+  // Drives on slot 1 prove nothing about Tune 2.
+  const wait = K.carFlashPlan(steppedState(), m, { now: NOW, tags: {} });
+  assert.equal(wait.kind, 'no-change');
+  assert.equal(leverOf(wait).status, 'held');
+  assert.match(leverOf(wait).reason, /Tune 2 carries a Boost step not proven yet/);
 });
 
 // ---------------------------------------------------------------------------

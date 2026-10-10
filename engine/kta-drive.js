@@ -30,8 +30,9 @@
     pullLoad: 4,                     // psi (MAP gauge): under boost
     hardPull: 12,                    // psi: a pull that tests fuel, spark and heat
     fullPedal: 85,                   // % pedal (TunerView TPS, not TPS Command): foot down
-    floored: { holdS: 2, rpmMax: 3500, spoolPsi: 15, onTarget: 0.9 }, // a floored pull (ticket 10): foot down 2 s from
-                                     // 3,500 rpm or under; spool = boost first at 15 psi; on target = 90 % of it
+    floored: { holdS: 2, rpmMax: 3500, spoolPsi: 15, onTarget: 0.9, proofRpm: 3500 }, // a floored pull (ticket 10): foot down 2 s from
+                                     // 3,500 rpm or under; spool = boost first at 15 psi; on target = 90 % of it;
+                                     // the Boost step reads the part held above proofRpm (ticket 16)
     accelPedal: 60,                  // % throttle command held for an acceleration window
     pullIatGood: 48,                 // deg C at the start of a pull
     hotDrive: 45,                    // deg C IAT while moving: a hot-afternoon drive
@@ -311,11 +312,24 @@
           if (!isNum(spool) && log.boost[i] >= FL.spoolPsi) spool = log.rpm[i];
           if (lagI < 0 && has.boostTarget && log.boostTarget[i] >= DL.hardPull && log.boost[i] >= FL.onTarget * log.boostTarget[i]) lagI = i;
         }
+        // The Boost step proof (ticket 16): the part of the pull held above 3,500 rpm,
+        // the rows a step edits, and what the gates read there.
+        var up = mask(n, function (i) { return i >= r.i0 && i <= r.i1 && log.rpm[i] >= FL.proofRpm; });
+        var gap = new Float64Array(n), fpr = new Float64Array(n), tMax = -Infinity, tRpm = NaN;
+        for (var j = 0; j < n; j++) {
+          gap[j] = up[j] && has.boost && has.boostTarget ? log.boostTarget[j] - log.boost[j] : NaN;
+          fpr[j] = up[j] && has.fp && has.fpTarget && log.fpTarget[j] > 0 ? log.fp[j] / log.fpTarget[j] * 100 : NaN;
+          if (up[j] && has.boostTarget && log.boostTarget[j] > tMax) { tMax = log.boostTarget[j]; tRpm = log.rpm[j]; }
+        }
         I.floored.push({
           t0: r1(r.t0), rpm0: r0(log.rpm[r.i0]), spoolRpm: r0(spool),
           lagS: lagI >= 0 ? r1(log.t[lagI] - r.t0) : null,
           ewg: lagI >= 0 && has.wgPos ? r1(log.wgPos[lagI]) : null,
-          gear: has.gear ? r0(log.gear[r.i0]) : null, iat: has.iat ? r0(log.iat[r.i0]) : null
+          gear: has.gear ? r0(log.gear[r.i0]) : null, iat: has.iat ? r0(log.iat[r.i0]) : null,
+          holdAbove3500S: r1(secs(log, up)),
+          target: r1(tMax), targetRpm: r0(tRpm),
+          under: r1(q(gap, 0.5, up)), over: r1(-q(gap, 0, up)),
+          afrLeanest: r2(q(log.lam, 1, up) * GAS), fpPct: r0(q(fpr, 0.05, up)), ign: r1(q(log.ign, 0.5, up))
         });
       });
     }

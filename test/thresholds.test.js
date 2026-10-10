@@ -74,6 +74,59 @@ test('checkMapChange rejects the textbook faults with the shared reasons', () =>
   assert.equal(K.checkMapChange({ mapVersion: 1, tables: {} }, MAP).reason, 'empty-change');
 });
 
+// Wave 2 (ADR 0007): a Boost step raises Tune 2 alone; Tunes 1 and 3 rise only
+// as a promote that copies the current Tune 2 cells; the ceiling is the active
+// map's Final Boost Target peak at that row, never above 24 psi.
+const T2 = ['Boost_Target_2_Normal_L', 'Boost_Target_2_Normal_H'];
+const T13 = ['Boost_Target_1_Normal_L', 'Boost_Target_1_Normal_H', 'Boost_Target_3_Normal_L', 'Boost_Target_3_Normal_H'];
+function raise(MAP, ids, row, col, to) {
+  const tables = {};
+  for (const id of ids) {
+    const before = MAP[id].values[row][col];
+    tables[id] = [{ row, col, before, after: to == null ? before + 1 : to }];
+  }
+  return { mapVersion: 1, tables };
+}
+function withCell(MAP, ids, row, col, v) {
+  const out = JSON.parse(JSON.stringify(MAP));
+  for (const id of ids) out[id].values[row][col] = v;
+  return out;
+}
+
+test('checkMapChange: a Boost step raises Tune 2 alone; Tune 1 or 3 rises only as a promote', () => {
+  const MAP = require('../data/ktuner-maps-digitized.json');
+  const row = MAP.Boost_Target_2_Normal_H.rpm_axis.indexOf(3500);
+  assert.equal(K.checkMapChange(raise(MAP, T2, row, 7), MAP).reason, 'ok', 'Tune 2 L+H +1 psi at 3,500 rpm');
+  assert.equal(K.checkMapChange(raise(MAP, ['Boost_Target_1_Normal_L', 'Boost_Target_1_Normal_H'], row, 7), MAP).reason, 'pair-mismatch', 'Tune 1 alone is no group');
+  assert.equal(K.checkMapChange(raise(MAP, TH.boost_pairs.value.members, row, 7), MAP).reason, 'boost-promote', 'all six up: Tunes 1 and 3 are not copying Tune 2');
+  assert.equal(K.checkMapChange(raise(MAP, T13, row, 7), MAP).reason, 'boost-promote', 'a promote must equal Tune 2');
+  // Tune 2 already carries the proven step: copying it to Tunes 1 and 3 passes.
+  const stepped = withCell(MAP, T2, row, 7, 22);
+  assert.equal(K.checkMapChange(raise(stepped, T13, row, 7, 22), stepped).reason, 'ok');
+  assert.equal(K.checkMapChange(raise(stepped, T13, row, 7, 21.5), stepped).reason, 'boost-promote');
+  // Lowering stays allowed on all six (safety trims) and on Tune 2 alone (taking a step back).
+  assert.equal(K.checkMapChange(raise(MAP, TH.boost_pairs.value.members, row, 7, 20), MAP).reason, 'ok');
+  assert.equal(K.checkMapChange(raise(MAP, T2, row, 7, 20), MAP).reason, 'ok');
+});
+
+test('checkMapChange: the ceiling is the Final Boost Target peak at that row, never above 24', () => {
+  const MAP = require('../data/ktuner-maps-digitized.json');
+  const row = MAP.Boost_Target_2_Normal_H.rpm_axis.indexOf(4000);
+  const at23 = withCell(MAP, T2, row, 7, 23);
+  const over = K.checkMapChange(raise(at23, T2, row, 7, 24), at23);
+  assert.equal(over.reason, 'boost-ceiling');
+  assert.match(over.detail, /23\.4 psi/);
+  assert.equal(K.checkMapChange(raise(at23, T2, row, 7, 23.4), at23).reason, 'ok');
+  // A Final Boost Target that tops out higher still stops at 24.
+  const high = JSON.parse(JSON.stringify(at23));
+  for (const id of ['Final_Boost_Target_L', 'Final_Boost_Target_H']) high[id].values = high[id].values.map((r) => r.map(() => 30));
+  for (const id of T2) high[id].values[row][7] = 23.5;
+  assert.equal(K.checkMapChange(raise(high, T2, row, 7, 24.5), high).reason, 'boost-ceiling');
+  // Below 3,000 rpm a raise is still refused, Tune 2 alone or not.
+  const low = MAP.Boost_Target_2_Normal_H.rpm_axis.indexOf(2500);
+  assert.equal(K.checkMapChange(raise(MAP, T2, low, 7), MAP).reason, 'boost-low-rpm-raise');
+});
+
 // A3: the verdict limits the worker ships to the reply are the engine's own
 // numbers under the engine's own names — no renamed copy.
 test('every limit the worker ships equals the engine value of the same name, and no other key exists', () => {

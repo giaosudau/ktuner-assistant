@@ -754,4 +754,42 @@ test('E1 spool signal: floored pulls carry spool rpm, lag, wastegate, gear and i
   // From above 3,500 rpm it is not a spool pull.
   const high = cloneLog(log, (l) => { for (let i = 0; i < l.n; i++) if (l.tps[i] >= 85) l.rpm[i] += 1100; });
   assert.deepEqual(K.checkDrive(high).ins.floored, []);
+  // 3 s of foot down from 2,500 rpm: well under the 4 s a Boost step proof needs above 3,500.
+  assert.ok(f.holdAbove3500S < 4, 'not a proof pull: ' + f.holdAbove3500S);
+});
+
+// Wave 2 (tickets 16, 17): a Boost step proof pull is the foot at 85 % or more
+// held 4 s above 3,500 rpm. The pull carries what the gates read there: the
+// logged target and where it peaked, undershoot, overshoot, the leanest AFR,
+// DIFP against its target and the ignition achieved.
+test('Boost step proof pull: time held above 3,500 rpm and the gate numbers there', () => {
+  const log = cloneLog(drive('aug22-0903').log, (l) => {
+    let i0 = 0;
+    while (l.t[i0] < 20) i0++;
+    for (let k = -5; l.t[i0 + k] <= l.t[i0] + 8; k++) {
+      const i = i0 + k, dt = l.t[i] - l.t[i0], on = k >= 0 && dt <= 7;
+      l.tps[i] = on ? 95 : 20;
+      l.rpm[i] = on ? Math.min(3000 + 500 * dt, 5000) : 2000;
+      l.boostTarget[i] = on ? 21 : 5;
+      l.boost[i] = on ? 20.5 : 5;
+      l.lam[i] = on ? 10.8 / 14.7 : 1;
+      l.fp[i] = 1900; l.fpTarget[i] = 2000;
+      l.ign[i] = 8;
+    }
+  });
+  const p = K.checkDrive(log).ins.floored[0];
+  assert.ok(Math.abs(p.holdAbove3500S - 6) <= 0.2, 'held from 3,500 rpm (1 s in) to the end (7 s): ' + p.holdAbove3500S);
+  assert.equal(p.target, 21);
+  assert.equal(p.under, 0.5);
+  assert.equal(p.over, -0.5);
+  assert.equal(p.afrLeanest, 10.8);
+  assert.equal(p.fpPct, 95);
+  assert.equal(p.ign, 8);
+  assert.ok(p.targetRpm >= 3500 && p.targetRpm <= 5000, 'where the target peaked: ' + p.targetRpm);
+  // The Car summary keeps the proof pulls and the ignition achieved on them.
+  const C = require('../engine/kta-car.js');
+  const sum = C.carIngest(C.carEmpty(), log,{ fileName: 'TunerView_20260822_090322.csv', now: 0 }).state.drives['20260822-090322'];
+  assert.equal(sum.proofPulls.length, 1);
+  assert.equal(sum.proofPulls[0].target, 21);
+  assert.equal(sum.proofIgn, 8);
 });

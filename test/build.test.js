@@ -30,11 +30,12 @@ test('map facts come from the file: 21 psi Normal, 18 psi ECO, Final 23.4, AFM e
   assert.ok(K.build.airFor(300) > 0.95 * F.afm.factory.gs && K.build.airFor(300) < F.afm.factory.gs);
 });
 
-test('real hard-pull drive: free-flowing bolt-ons first, 24 psi locked by the turbo and the map, big turbo and catless ruled out', () => {
+test('real hard-pull drive: free-flowing bolt-ons first, 24 psi locked by the map and the fuel, big turbo and catless ruled out', () => {
   const P = K.build.plan(pulls, MAP);
   assert.deepEqual(P.now.map((r) => r.item.id), ['ic', 'dpCat']);
   const m24 = P.later.find((r) => r.item.id === 'map24');
-  assert.ok(m24.locks.includes('turbo') && m24.locks.includes('final'));
+  // ADR 0007: the wastegate guess no longer locks it; the proof pulls decide headroom.
+  assert.deepEqual(m24.locks, ['final', 'octane']);
   assert.match(K.build.lockText('turbo', pulls.ins, P.facts), /wastegate 2\.7 % open at 19\.9 psi/);
   assert.deepEqual(P.no.map((r) => r.item.id).sort(), ['bigTurbo', 'catless']);
 });

@@ -550,7 +550,10 @@ var OPS = {
     var map = args.map || mapForVersion(state, args.mapVersion);
     var plan;
     try {
-      plan = KTA.carFlashPlan(state, map, { now: now, history: Array.isArray(args.history) ? args.history : [] });
+      plan = KTA.carFlashPlan(state, map, {
+        now: now, history: Array.isArray(args.history) ? args.history : [],
+        tags: args.tags || {}, openSteps: Array.isArray(args.openSteps) ? args.openSteps : []
+      });
     } catch (e) {
       fail('engine-error', 'The Flash plan could not be built: ' + (e && e.message));
     }

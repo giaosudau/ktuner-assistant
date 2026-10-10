@@ -35,7 +35,8 @@ def test_every_thresholds_entry_has_value_unit_basis_and_source(raw: dict[str, A
 def test_the_numbers_that_bound_a_change(raw: dict[str, Any]) -> None:
     assert raw["boost_step_max"]["value"] == 1
     assert raw["boost_raise_min_rpm"]["value"] == 3000
-    assert raw["boost_ceiling_psi"]["value"] == 21
+    assert raw["boost_ceiling_psi"]["value"] == 24
+    assert raw["boost_ceiling_psi"]["rule"] == "final-boost-target-peak"
     assert raw["maf_step_max_pct"]["value"] == 10
     assert raw["wot_target_band"]["value"] == {"min": 11.0, "max": 12.0}
 

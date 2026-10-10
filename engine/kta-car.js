@@ -271,6 +271,17 @@
     return out;
   }
 
+  // The Boost step gates live in data/thresholds.json (boost_step_gates, ADR 0007).
+  // Without the file nothing can be proven, so the Boost step stays locked.
+  var STEP_GATES = KTA.THRESHOLDS && KTA.THRESHOLDS.boost_step_gates ? KTA.THRESHOLDS.boost_step_gates.value : null;
+  function proofPullsOf(floored) {
+    if (!STEP_GATES) return [];
+    return (floored || []).filter(function (f) { return f.holdAbove3500S >= STEP_GATES.hold_s; }).map(function (f) {
+      return { t0: f.t0, holdS: f.holdAbove3500S, target: f.target, targetRpm: f.targetRpm, under: f.under, over: f.over,
+        afrLeanest: f.afrLeanest, fpPct: f.fpPct, ign: f.ign, ewg: f.ewg };
+    });
+  }
+
   function summarize(log, rep, ident, meta, verdict) {
     var I = rep.ins;
     var acc = I.accel && I.accel.best['50-70'] ? { seconds: I.accel.best['50-70'].seconds, iat: I.accel.best['50-70'].iat } : null;
@@ -329,6 +340,10 @@
       flat: engineFlat(rep) || flatChannels(log),
       calmSec: calmSeconds(log),
       hardPulls: I.boost ? I.boost.hard : 0,
+      // The Boost step proof pulls (ticket 16): foot down held 4 s above 3,500 rpm,
+      // with the gate numbers read there, and the ignition achieved on them.
+      proofPulls: proofPullsOf(I.floored),
+      proofIgn: medianOf(proofPullsOf(I.floored).map(function (p) { return p.ign; }).filter(isNum)),
       shakedown: 'none', // this drive's role: none | pending | passed
       updatedAt: nowOf(meta)
     };
@@ -1176,6 +1191,64 @@
     });
     return parts.join(' and ') + ' rpm';
   }
+  // ---- The Boost step (tickets 06, 13, 16, 17; ADR 0007) ----------------------
+  // +1 psi on Tune 2 only (Boost_Target_2_Normal L/H), offered when the latest
+  // Cool drive's floored proof pulls and the latest hot drive pass every gate
+  // (data/thresholds.json boost_step_gates); the proof on slot 2 keeps it
+  // (copied to Tunes 1 and 3) or undoes it.
+  var STEP_TITLE = 'Boost step +1 psi (Tune 2)';
+  var TUNE2_IDS = ['Boost_Target_2_Normal_L', 'Boost_Target_2_Normal_H'];
+  var TUNE13_IDS = ['Boost_Target_1_Normal_L', 'Boost_Target_1_Normal_H', 'Boost_Target_3_Normal_L', 'Boost_Target_3_Normal_H'];
+  function rd1(v) { return isFinite(v) ? v.toFixed(1) : 'not read'; }
+  function stepUnlocks() {
+    var G = STEP_GATES;
+    return 'A Cool drive with ' + G.pulls_min + ' floored pulls that pass every gate (target within ' + G.target_gap_psi +
+      ' psi of the table, undershoot and overshoot within ' + G.undershoot_psi + ' psi, target + overshoot at most ' + G.total_psi +
+      ', Knock Control settled and at most ' + G.kc_max + ', mixture never leaner than ' + G.afr_lean_max.toFixed(1) +
+      ' and at or richer than target, DIFP at least ' + G.difp_min_pct + ' %, trims within ±' + G.trim_max_pct +
+      ' %), and a hot drive with Knock Control at most ' + G.kc_max + '.';
+  }
+  /** Knock Control read only from a settled start, judged at or under 5,200 rpm. */
+  function kcFails(d) {
+    var G = STEP_GATES, out = [];
+    if (!(d.kcStart <= G.kc_max)) out.push('started Knock Control at ' + n2(d.kcStart) + ', not settled');
+    else if (!(d.kcPeakJudged <= G.kc_max)) out.push('reached Knock Control ' + n2(d.kcPeakJudged) + ' judged, over ' + G.kc_max);
+    return out;
+  }
+  /** What fails on a Cool drive's proof pulls; `table` is the slot's Boost Target Normal H { rpm, values }. */
+  function proofFails(d, table) {
+    var G = STEP_GATES, pulls = d.proofPulls || [];
+    if (pulls.length < G.pulls_min) {
+      return ['has ' + pulls.length + ' floored pull' + (pulls.length === 1 ? '' : 's') + ', it needs ' + G.pulls_min +
+        ' (pedal ' + G.pedal_pct + ' % or more held ' + G.hold_s + ' s above ' + KTA.fmt.num(G.rpm_min, 0) + ' rpm)'];
+    }
+    var gap = -Infinity, tgt = NaN, cellAt = NaN, und = -Infinity, ovr = -Infinity, tot = -Infinity, afr = -Infinity, fp = Infinity;
+    pulls.forEach(function (p) {
+      var r = -1, best = Infinity;
+      if (table && isNum(p.targetRpm)) table.rpm.forEach(function (a, k) { if (Math.abs(a - p.targetRpm) < best) { best = Math.abs(a - p.targetRpm); r = k; } });
+      var cell = r >= 0 ? tableMax([table.values[r]]) : NaN;
+      var g = isNum(p.target) && isNum(cell) ? cell - p.target : Infinity;
+      if (g > gap) { gap = g; tgt = p.target; cellAt = cell; }
+      und = Math.max(und, isNum(p.under) ? p.under : Infinity);
+      ovr = Math.max(ovr, isNum(p.over) ? p.over : Infinity);
+      tot = Math.max(tot, isNum(p.target) && isNum(p.over) ? p.target + Math.max(0, p.over) : Infinity);
+      afr = Math.max(afr, isNum(p.afrLeanest) ? p.afrLeanest : Infinity);
+      if (isNum(p.fpPct)) fp = Math.min(fp, p.fpPct);
+    });
+    var out = [];
+    if (!(gap <= G.target_gap_psi)) out.push('logged a target of ' + rd1(tgt) + ' psi against the table\'s ' + rd1(cellAt));
+    if (!(und <= G.undershoot_psi)) out.push('undershot ' + rd1(und) + ' psi');
+    if (!(ovr <= G.overshoot_psi)) out.push('overshot +' + rd1(ovr) + ' psi');
+    if (!(tot <= G.total_psi)) out.push('reached target + overshoot ' + rd1(tot) + ' psi');
+    if (!(afr <= G.afr_lean_max) || (isNum(d.mixTarget) && afr > d.mixTarget)) {
+      out.push('ran ' + rd1(afr) + ' AFR at its leanest' + (isNum(d.mixTarget) ? ' against ' + n1(d.mixTarget) + ' asked' : ''));
+    }
+    if (fp < G.difp_min_pct) out.push('held DIFP at ' + fp + ' % of target');
+    out = out.concat(kcFails(d));
+    if (!(isNum(d.trimWorst) && Math.abs(d.trimWorst) <= G.trim_max_pct)) out.push('had trims at ' + (isNum(d.trimWorst) ? sg1(d.trimWorst) : 'not read') + ' %');
+    return out;
+  }
+
   function issueCause(d, baseline) {
     if (isNum(d.trimWorst) && Math.abs(d.trimWorst) > TRIM_OK) return 'trims';
     if (isNum(d.overshoot) && d.overshoot > 2.5) return 'overshoot';
@@ -1266,6 +1339,47 @@
       wotLH: JSON.stringify(tableVals(T, 'WOT_Enrich_L')) === JSON.stringify(wotVals)
     } : null;
 
+    // ---- A Boost step on the car: Tune 2 sits above Tune 1. Judge its proof -----
+    // on slot 2 only: the latest Cool drive with the proof pulls and a settled
+    // Knock Control start, plus the latest settled hot drive. The first failed
+    // gate is an Undo; a pass lets this plan copy Tune 2 to Tunes 1 and 3.
+    // ponytail: after a failed proof the ladder is not held closed until a fuel or
+    // part change (ticket 06); the offer gates re-read the failing drives instead.
+    var tags = opts.tags || {};
+    function slotOf(d) { return (tags[d.id] && tags[d.id].slot) || 1; }
+    var stepJudge = { onCar: false, status: null, driveId: null, fails: [], drives: [] };
+    var t2Ahead = mapOk && TUNE2_IDS.some(function (id) {
+      var t1 = normals[id.replace('_2_', '_1_')].values;
+      return normals[id].values.some(function (row, r) { return row.some(function (v, c) { return v > t1[r][c]; }); });
+    });
+    if (t2Ahead && STEP_GATES) {
+      var G0 = STEP_GATES, activeV = KTA.carActiveMapVersion(s);
+      var fromT = activeV && isNum(activeV.from) ? activeV.from : -Infinity;
+      var allRows = planRows(s);
+      var onStep = allRows.filter(function (d) { return d.start > fromT && slotOf(d) === 2; });
+      var ref = allRows.filter(function (d) { return d.start != null && d.start <= fromT && isNum(d.proofIgn); }).pop();
+      var pc = onStep.filter(function (d) { return d.cool && (d.proofPulls || []).length >= G0.pulls_min && d.kcStart <= G0.kc_max; }).pop();
+      var ph = onStep.filter(function (d) { return d.hot && d.kcStart <= G0.kc_max; }).pop();
+      stepJudge.onCar = true;
+      if (pc) {
+        var pf = proofFails(pc, normals.Boost_Target_2_Normal_H);
+        if (ref && isNum(pc.proofIgn) && ref.proofIgn - pc.proofIgn > G0.ign_drop_deg) {
+          pf.push('ran ignition ' + n1(pc.proofIgn) + '° against ' + n1(ref.proofIgn) + '° on the last proven Map version');
+        }
+        if (pf.length) stepJudge.fails.push('Drive ' + driveStamp(pc.id) + ' ' + pf.join(', '));
+        if (pf.length && !stepJudge.driveId) stepJudge.driveId = pc.id;
+      }
+      if (ph) {
+        var hf = kcFails(ph);
+        if (hf.length) stepJudge.fails.push('Drive ' + driveStamp(ph.id) + ' ' + hf.join(', '));
+        if (hf.length && !stepJudge.driveId) stepJudge.driveId = ph.id;
+      }
+      stepJudge.drives = [pc, ph].filter(Boolean).map(function (d) { return d.id; });
+      stepJudge.status = stepJudge.fails.length ? 'fail' : (pc && ph ? 'pass' : 'wait');
+    }
+    var undoBy = issues.stop ? { driveId: issues.stop.driveId, stop: true }
+      : (stepJudge.status === 'fail' ? { driveId: stepJudge.driveId, stop: false } : null);
+
     var levers = [];
     function lever(id, family, title, status, reason, unlocks, wouldTouch, extra) {
       var l = { id: id, family: family, title: title, status: status, reason: reason, unlocks: unlocks, wouldTouch: wouldTouch || [] };
@@ -1274,39 +1388,44 @@
       return l;
     }
 
-    // ---- P1: an open Stop -> Undo is the only plan ---------------------------
-    if (issues.stop) {
-      var stopD = s.drives[issues.stop.driveId];
+    // ---- P1: an open Stop, or a Boost step that failed its proof -> Undo is ----
+    // ---- the only plan --------------------------------------------------------
+    if (undoBy) {
+      var stopD = s.drives[undoBy.driveId];
       // The Map version that Drive ran on, and the version before it to flash
       // back to. When there is genuinely no earlier version, Undo says so and
       // the owner is asked once — it never invents a file name.
       var target = KTA.carMapAt(s, stopD && stopD.start) || KTA.carActiveMapVersion(s);
       var undo = undoFor(s, target);
-      var trimRouted = stopD && isNum(stopD.trimWorst) && Math.abs(stopD.trimWorst) > TRIM_STOP;
+      var trimRouted = undoBy.stop && stopD && isNum(stopD.trimWorst) && Math.abs(stopD.trimWorst) > TRIM_STOP;
+      var sup = undoBy.stop ? 'Superseded by the open Stop: undo first.' : 'Superseded by the failed Boost step proof: undo first.';
       lever('afm', 'AFM Flow', 'AFM Flow curve', 'locked',
-        'Superseded by the open Stop: undo first. Trims off everywhere route to pick the right preset / Undo, never a curve edit.',
+        sup + (undoBy.stop ? ' Trims off everywhere route to pick the right preset / Undo, never a curve edit.' : ''),
         'Flash the previous map file, then a passing Shakedown drive.', []);
       lever('mixture', 'mixture', 'Mixture target (WOT 11.0 → 11.5)', 'locked',
-        'Superseded by the open Stop: undo first.', 'Flash the previous map file, then a passing Shakedown drive.', WOT_IDS.slice());
-      lever('boostPlus', 'boost', 'Boost +1 psi (24 psi map)', 'locked',
-        'Superseded by the open Stop: undo first.', 'Flash the previous map file, then a passing Shakedown drive.', NORMAL_BOOST_IDS.slice());
+        sup, 'Flash the previous map file, then a passing Shakedown drive.', WOT_IDS.slice());
+      lever('boostPlus', 'boost', STEP_TITLE, 'locked',
+        sup, 'Flash the previous map file, then a passing Shakedown drive.', TUNE2_IDS.slice());
       lever('boostLow', 'boost', 'Boost lower at low rpm', 'locked',
-        'Superseded by the open Stop: undo first.', 'Flash the previous map file, then a passing Shakedown drive.', NORMAL_BOOST_IDS.slice());
+        sup, 'Flash the previous map file, then a passing Shakedown drive.', NORMAL_BOOST_IDS.slice());
       lever('downpipe', 'boost', DP_TITLE, 'locked',
-        'Superseded by the open Stop: undo first.', 'Flash the previous map file, then a passing Shakedown drive.', NORMAL_BOOST_IDS.slice());
+        sup, 'Flash the previous map file, then a passing Shakedown drive.', NORMAL_BOOST_IDS.slice());
       lever('hot', null, 'Hot days', 'no-edit',
         'No edit needed: ECO mode already runs the 18 psi targets (KTuner Starter 21 Dual Tune 2).', '—', []);
+      var lead = undoBy.stop ? 'Stop open' : 'Boost step failed its proof';
       return {
         kind: 'undo', changeId: 'undo', family: null,
         headline: undo.known
-          ? 'Stop open: flash your previous map file (' + undo.label + ').'
-          : 'Stop open: flash your previous map file, and tell me which one it is.',
+          ? lead + ': flash your previous map file (' + undo.label + ').'
+          : lead + ': flash your previous map file, and tell me which one it is.',
         route: trimRouted ? 'preset' : 'previous-map',
         evidence: [{
-          drives: [issues.stop.driveId],
-          text: 'Drive ' + issues.stop.driveId + ' is a Stop' +
-            (stopD && isNum(stopD.trimWorst) ? ' (worst trim ' + stopD.trimWorst.toFixed(1) + ' %)' : '') +
-            (target ? ' on ' + target.label + ' · ' + target.name + '.' : ' with no Map version on record.'),
+          drives: undoBy.stop ? [undoBy.driveId] : stepJudge.drives,
+          text: undoBy.stop
+            ? 'Drive ' + undoBy.driveId + ' is a Stop' +
+              (stopD && isNum(stopD.trimWorst) ? ' (worst trim ' + stopD.trimWorst.toFixed(1) + ' %)' : '') +
+              (target ? ' on ' + target.label + ' · ' + target.name + '.' : ' with no Map version on record.')
+            : 'The Boost step on Tune 2 failed its proof on slot 2: ' + stepJudge.fails.join('; ') + '.',
           basis: 'Data'
         }],
         basis: 'Data',
@@ -1318,7 +1437,7 @@
           time: now,
           map: undo.name || (target ? target.name : ''),
           changed: target && target.changed ? target.changed : 'other',
-          note: 'Undo after the ' + issues.stop.driveId + ' Stop.'
+          note: undoBy.stop ? 'Undo after the ' + undoBy.driveId + ' Stop.' : 'Undo after the Boost step failed its proof on ' + undoBy.driveId + '.'
         },
         deferred: [], levers: levers, openIssues: issues,
         mapFacts: { normalPeak: normalPeak, ecoPeak: ecoPeak, finalPeak: finalPeak, pairsIdentical: pairsIdentical },
@@ -1334,7 +1453,6 @@
     var trimMed = medianOf(nums('trimWorst'));
     var overMax = nums('overshoot').length ? Math.max.apply(null, nums('overshoot')) : null;
     var lugMed = medianOf(nums('lugShare'));
-    var wgMed = medianOf(nums('wgAtPeak'));
     var causes = openCauses(issues);
     // P2: an open Watch, an unfinished Shakedown drive or an unanswered
     // Unexplained change means no gain lever, and a fix may appear only for
@@ -1407,12 +1525,70 @@
         'Lugging median back above 3 % with score rises.', NORMAL_BOOST_IDS.slice());
     }
 
+    // ---- The Boost step: promote a proven one, wait for a proof, or offer one ----
+    var stepWhy = [];
+    if (stepJudge.status === 'pass') {
+      cands.push({
+        id: 'boostPromote', leverId: 'boostPlus', family: 'boost', gain: true, matches: [], proven: true,
+        evidence: {
+          drives: stepJudge.drives,
+          text: 'The Tune 2 Boost step passed every gate on slot 2 (' + stepJudge.drives.map(driveStamp).join(' and ') + ').',
+          basis: 'Data'
+        },
+        proof: 'Nothing new to prove: Tunes 1 and 3 get the cells Tune 2 already proved. Any drive on any slot keeps the same gates.'
+      });
+    } else if (stepJudge.onCar) {
+      lever('boostPlus', 'boost', STEP_TITLE, 'held',
+        'Tune 2 carries a Boost step not proven yet: switch to slot 2 and log ' +
+        'a Cool drive with ' + STEP_GATES.pulls_min + ' floored pulls and a hot drive, both tagged slot 2.',
+        stepUnlocks(), TUNE2_IDS.slice());
+    } else if (!STEP_GATES || !mapOk) {
+      stepWhy.push(STEP_GATES ? 'the map tables are not readable' : 'the thresholds file is not loaded');
+    } else {
+      var openNow = KTA.carOpenSteps(opts.openSteps).filter(function (st) { return !doneStatus(st.status); });
+      if (openNow.length) stepWhy.push('the open step "' + openNow[0].title + '" comes first');
+      if (isNum(overMax) && overMax > 2.5) stepWhy.push('the B2 overshoot trim comes first');
+      var lastCool = rows.filter(function (d) { return d.cool; }).pop();
+      var lastHot = rows.filter(function (d) { return d.hot; }).pop();
+      if (!lastCool) stepWhy.push('no Cool drive yet');
+      else {
+        var cf = proofFails(lastCool, normals['Boost_Target_' + slotOf(lastCool) + '_Normal_H']);
+        if (cf.length) stepWhy.push('the latest Cool drive (' + driveStamp(lastCool.id) + ') ' + cf.join(', '));
+      }
+      if (!lastHot) stepWhy.push('no hot drive yet');
+      else {
+        var hfs = kcFails(lastHot);
+        if (hfs.length) stepWhy.push('the latest hot drive (' + driveStamp(lastHot.id) + ') ' + hfs.join(', '));
+      }
+      if (!stepWhy.length) {
+        cands.push({
+          id: 'boostStep', leverId: 'boostPlus', family: 'boost', gain: true, matches: [],
+          evidence: {
+            drives: [lastCool.id, lastHot.id],
+            text: lastCool.proofPulls.length + ' floored pulls on ' + driveStamp(lastCool.id) + ' and the hot drive ' +
+              driveStamp(lastHot.id) + ' passed every Boost step gate.',
+            basis: 'Data'
+          },
+          proof: 'Switch to slot 2 (Tune 2) and log a Cool drive with ' + STEP_GATES.pulls_min + ' floored pulls and a hot drive, both tagged slot 2: ' +
+            'every gate again, and ignition no more than ' + STEP_GATES.ign_drop_deg.toFixed(1) + '° below the last proven Map version. ' +
+            'The first failure undoes it; a pass copies it to Tunes 1 and 3.'
+        });
+      }
+    }
+    if (stepWhy.length) lever('boostPlus', 'boost', STEP_TITLE, 'locked', 'Locked: ' + stepWhy.join('; ') + '.', stepUnlocks(), TUNE2_IDS.slice());
+
     // ---- P2/P3/P5 gate per candidate, first blocker names the status ------------
     var FAMILY_RANK = { 'AFM Flow': 0, boost: 1, mixture: 2 };
-    var CAND_RANK = { afmCurve: 0, downpipe: 1, boostLow: 2 };
+    var CAND_RANK = { afmCurve: 0, downpipe: 1, boostLow: 2, boostStep: 3, boostPromote: 3 };
     cands.forEach(function (c) {
       c.block = null;
-      if (needMatch && c.matches.every(function (m) { return causes.indexOf(m) < 0; })) {
+      if (stepJudge.onCar && c.family === 'boost' && !c.proven) {
+        c.block = {
+          status: 'held',
+          reason: 'Held: Tune 2 carries a Boost step still being proven; other boost moves wait for its proof.',
+          unlocks: 'The Boost step proof on slot 2.'
+        };
+      } else if (needMatch && c.matches.every(function (m) { return causes.indexOf(m) < 0; })) {
         c.block = {
           status: 'deferred',
           reason: issues.shakedownPending && !causes.length
@@ -1420,7 +1596,7 @@
             : 'An open ' + causes.join(' + ') + ' question comes first; this fix answers a different one (P2).',
           unlocks: issues.shakedownPending && !causes.length ? 'A passing Shakedown drive.' : 'After the open question clears.'
         };
-      } else if (p5hold(c.family)) {
+      } else if (!c.proven && p5hold(c.family)) {
         c.block = {
           status: 'held',
           reason: 'Held: the last Flash already touched ' + c.family + ' — no move before its Prove-it (P5).',
@@ -1453,17 +1629,15 @@
       }
     }
     var wotTouch = WOT_IDS.slice();
-    var b2detail = '';
-    if (mapOk && normals[NORMAL_BOOST_IDS[0]]) {
-      try {
-        var step = KTA.suggestBoostStep(ceiling, normals[NORMAL_BOOST_IDS[0]].values);
-        b2detail = step.atCeiling ? ' The +1 psi math already returns zero cells at the ceiling.' : '';
-      } catch (e) { b2detail = ''; }
-    }
     lever('mixture', 'mixture', 'Mixture target (WOT 11.0 → 11.5)', 'locked',
       'Locked, provisional: no evidence of gain on this car; measured already 10.1–10.7 under boost against the 11.0 target.', 'The AFR command is logged, the car is healthy in heat, and a like-for-like proof is possible.', wotTouch);
-    lever('boostPlus', 'boost', 'Boost +1 psi (24 psi map)', 'locked',
-      'Locked: wastegate ' + (isNum(wgMed) ? wgMed.toFixed(1) : 'about 3') + ' % open at peak, so no headroom.' + b2detail, 'Never on this turbo.', NORMAL_BOOST_IDS.slice());
+    if (!leverFor('boostPlus')) {
+      var stepC = cands.filter(function (c) { return c.leverId === 'boostPlus'; })[0];
+      var stepTouch = stepC && stepC.id === 'boostPromote' ? TUNE13_IDS.slice() : TUNE2_IDS.slice();
+      if (winner && winner === stepC) lever('boostPlus', 'boost', STEP_TITLE, 'planned', 'In the plan below.', stepC.proof, stepTouch);
+      else if (stepC && stepC.block) lever('boostPlus', 'boost', STEP_TITLE, stepC.block.status, stepC.block.reason, stepC.block.unlocks, stepTouch);
+      else if (stepC) lever('boostPlus', 'boost', STEP_TITLE, 'deferred', 'After the first change (' + winner.id + ') is proven (P4: one family per Flash).', 'After the first change is proven.', stepTouch);
+    }
     if (!leverFor('boostLow')) {
       if (winner && winner.leverId === 'boostLow') {
         lever('boostLow', 'boost', 'Boost lower at low rpm', 'planned', 'In the plan below.', 'The next town drive proves it.', NORMAL_BOOST_IDS.slice());
@@ -1524,6 +1698,29 @@
       afmPct = afmAfter.map(function (v, i) { return customVals[i] ? (v / customVals[i] - 1) * 100 : 0; });
       afmPasteRow = KTA.toRow(afmAfter);
       tables.push({ id: 'MAF_Scaling_Custom', kind: 'curve', cells: [], pasteRow: afmPasteRow });
+    } else if (winner.id === 'boostStep' || winner.id === 'boostPromote') {
+      // Boost step: +1 psi on Tune 2 L/H, the proof pulls' rows, cells of 15 psi and
+      // up, never above the Final Boost Target peak at that row nor 24 psi.
+      // Promote: Tunes 1 and 3 take the proven Tune 2 cells.
+      var promote = winner.id === 'boostPromote';
+      var fin = T.Final_Boost_Target_H || T.Final_Boost_Target_L;
+      (promote ? TUNE13_IDS : TUNE2_IDS).forEach(function (id) {
+        if (KTA.TABLES[id].role !== 'edit') throw new Error(id + ' is not an editable table (P7).');
+        var tv = normals[id], tcells = [];
+        tv.values.forEach(function (row, r) {
+          var rpm = tv.rpm[r];
+          if (!promote && STEP_GATES.rows_rpm.indexOf(rpm) < 0) return;
+          row.forEach(function (v, c) {
+            var after = promote ? normals[id.replace(/_[13]_/, '_2_')].values[r][c]
+              : (v >= STEP_GATES.cell_min_psi ? Math.round(Math.min(v + KTA.THRESHOLDS.boost_step_max.value,
+                KTA.boostCeilingAt(fin, rpm, KTA.LIMITS.boostCeilingPsi)) * 10) / 10 : v);
+            if (after === v || (!promote && !(after > v))) return;
+            tcells.push({ table: id, rpm: rpm, rpmRow: r, col: c + 1, of: row.length, before: v, after: after });
+          });
+        });
+        tables.push({ id: id, kind: 'map', cells: tcells });
+        tcells.forEach(function (c) { cells.push(c); });
+      });
     } else if (winner.family === 'boost') {
       var refId = NORMAL_BOOST_IDS[0];
       var ref = normals[refId];
@@ -1566,7 +1763,11 @@
         ? 'AFM Flow: ' + (trimMed < 0 ? '−' : '+') + Math.abs(trimMed).toFixed(1) + ' % everywhere the log corrects, because the median worst trim is ' + trimMed.toFixed(1) + ' %.'
         : winner.id === 'downpipe'
           ? 'Boost targets: −1 psi at ' + rowsLabel(dpRows, boostAxis) + ', because overshoot held ' + overMax.toFixed(1) + ' psi there.'
-          : 'Boost targets, low rpm: −1 psi at 1,250–2,250 rpm, because lugging persists after the habit was proven.',
+          : winner.id === 'boostStep'
+            ? 'Boost step: +1 psi on Boost Target 2 Normal (L and H) at ' + rowsLabel(STEP_GATES.rows_rpm, boostAxis) + ', because the proof pulls and the hot drive passed every gate.'
+            : winner.id === 'boostPromote'
+              ? 'Boost step proven: copy the proven Tune 2 cells to Boost Target 1 and 3 Normal (L and H).'
+              : 'Boost targets, low rpm: −1 psi at 1,250–2,250 rpm, because lugging persists after the habit was proven.',
       evidence: [Object.assign({ drives: winner.evidence.drives, text: winner.evidence.text }, { basis: basis })],
       basis: basis, proof: proof,
       tables: tables, cells: cells,
