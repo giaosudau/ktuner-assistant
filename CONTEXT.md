@@ -34,6 +34,10 @@ _Avoid_: tune (as an event), update, upload
 The single set of map changes proposed for the next Flash: one table family, with evidence, proof and undo; it can also be "Undo" or "no change".
 _Avoid_: edit plan, tune plan, change list, stage
 
+**Boost step**:
+A Flash plan that raises the Normal boost targets by 1 psi at 3,000 rpm and above, offered only after the logs pass every safety gate and kept only when the next Cool drive and a hot drive prove the turbo reaches the new target without knock or lean; the first failed gate undoes it.
+_Avoid_: boost bump, stage, more boost map
+
 **Map**:
 The calibration file on the ECU. A drive's map is the Map version active when it started; it is never guessed from the log.
 _Avoid_: tune, basemap (except for KTuner's shipped starting maps), mode
