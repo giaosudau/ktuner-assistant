@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 // Prints the basic-stage edit plan for the owner's map as JSON, cell by cell, straight
 // from the engine (so the annotated spreadsheet and the app can never disagree).
-// Lever 2 is shown as it would be with a 22 psi ceiling; at the default 21 psi it changes nothing.
+// The Boost step (Tune 2 only) is capped by the map's Final Boost Target peak at each row (ADR 0007).
 'use strict';
 const path = require('path');
 const K = require(path.join(__dirname, '..', 'engine', 'kta-engine.js'));
 const maps = require(path.join(__dirname, '..', 'data', 'ktuner-maps-digitized.json'));
 
-const out = { note: 'Lever 2 computed with a 22 psi ceiling; at 21 psi (the default) it changes nothing.', tables: {} };
+const out = { note: 'Boost step: +1 psi on Boost Target 2 Normal, 3,500-4,500 rpm, under the Final Boost Target peak; Tunes 1 and 3 only after its proof.', tables: {} };
 Object.keys(maps).forEach((name) => {
   const t = K.readTable(name, maps[name]);
   const meta = K.TABLES[name] || {};
   const entry = { role: meta.role || 'info', stage: meta.stage || '', unit: meta.unit || '', rows: t.x, changed: [] };
-  const e = K.tableEdits(name, t.values, { ceiling: 22 });
+  const e = K.tableEdits(name, t.values, { fin: maps.Final_Boost_Target_H, rpm: t.x });
   if (e) entry.changed = e.changed;
   if (/^Ignition_(Base|Max)_/.test(name)) {
     const p = K.smoothPreview(t.values, { x: t.x });

@@ -298,6 +298,24 @@ async def active_map(worker, store, car_state: Mapping[str, Any]) -> dict[str, A
     return {"map": version["tables"]} if version and version.get("tables") else {}
 
 
+def remember_step_fail(store, car_state: Mapping[str, Any], fail: Mapping[str, Any] | None) -> None:
+    """Keep a Boost step's failed proof in the car state (once per failure).
+
+    The plan reads only the drive window, which moves past the failing Drives
+    once the Undo is flashed; this record holds the ladder closed (tickets 06, 16).
+    """
+    if not fail:
+        return
+    state = store.car_state(None) or {}
+    fails = list(state.get("boostStepFails") or [])
+    if any(f.get("at") == fail.get("at") for f in fails):
+        return
+    state["boostStepFails"] = fails + [dict(fail)]
+    store.save_car_state(state)
+    if isinstance(car_state, dict):  # a caller that saves its own copy keeps it too
+        car_state["boostStepFails"] = state["boostStepFails"]
+
+
 async def checked_plan_with_change(
     worker, store, car_state: Mapping[str, Any], window_state: Mapping[str, Any], now: int
 ) -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any] | None]:
@@ -306,12 +324,15 @@ async def checked_plan_with_change(
     active = (await worker.call("mapVersions", state=car_state))["active"]
     version = store.map_version(active["n"]) if active else None
     kwargs = {"map": version["tables"]} if version and version.get("tables") else {}
-    # The Boost step reads each Drive's map slot and stays locked while an Open step is open.
+    # The Boost step reads each Drive's map slot and fuel, stays locked while an Open step
+    # is open, and after a failed proof until a new fuel or an Install.
     plan = await worker.call(
         "flashPlan", state=window_state, now=now,
-        tags=store.drive_tags(), openSteps=store.list_open_steps(only_open=True), **kwargs,
+        tags=store.drive_tags(), openSteps=store.list_open_steps(only_open=True),
+        installs=store.list_installs(), **kwargs,
     )
     if plan["kind"] == "undo":
+        remember_step_fail(store, car_state, plan.get("stepFail"))
         return {**plan, "ktunerCard": undo_card(plan, worker.ktuner_basemap, active and active["n"])}, None, version
     if plan["kind"] != "one-family":
         return plan, None, version

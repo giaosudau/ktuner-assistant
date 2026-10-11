@@ -329,6 +329,8 @@
           holdAbove3500S: r1(secs(log, up)),
           target: r1(tMax), targetRpm: r0(tRpm),
           under: r1(q(gap, 0.5, up)), over: r1(-q(gap, 0, up)),
+          // The wastegate where the undershoot is read: shut there means the turbo's limit or a leak (ticket 16).
+          ewgHeld: has.wgPos ? r1(q(log.wgPos, 0.5, up)) : null,
           afrLeanest: r2(q(log.lam, 1, up) * GAS), fpPct: r0(q(fpr, 0.05, up)), ign: r1(q(log.ign, 0.5, up))
         });
       });

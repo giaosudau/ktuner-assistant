@@ -169,7 +169,7 @@
   function normalize(state) {
     var s = state && typeof state === 'object' ? state : {};
     var sh = (s.shakedown && typeof s.shakedown === 'object') ? s.shakedown : null;
-    return {
+    var out = {
       version: CAR_VERSION,
       drives: s.drives && typeof s.drives === 'object' ? s.drives : {},
       flashes: Array.isArray(s.flashes) ? s.flashes : [],
@@ -181,6 +181,12 @@
         ? { status: sh.status || 'none', flashId: sh.flashId || null, calmSec: sh.calmSec || 0, driveIds: Array.isArray(sh.driveIds) ? sh.driveIds : [], shares: sh.shares && typeof sh.shares === 'object' ? sh.shares : {} }
         : emptyShakedown()
     };
+    // Boost steps that failed their proof (`{ at, drives, fuels, shut }`, from the
+    // Flash plan's Undo): kept past the window, they hold the ladder closed.
+    if (Array.isArray(s.boostStepFails) && s.boostStepFails.length) {
+      out.boostStepFails = s.boostStepFails.filter(function (f) { return f && isNum(f.at); });
+    }
+    return out;
   }
   function clone(state) { return JSON.parse(JSON.stringify(normalize(state))); }
   function nowOf(meta) { return (meta && isNum(meta.now)) ? meta.now : Date.now(); }
@@ -278,7 +284,7 @@
     if (!STEP_GATES) return [];
     return (floored || []).filter(function (f) { return f.holdAbove3500S >= STEP_GATES.hold_s; }).map(function (f) {
       return { t0: f.t0, holdS: f.holdAbove3500S, target: f.target, targetRpm: f.targetRpm, under: f.under, over: f.over,
-        afrLeanest: f.afrLeanest, fpPct: f.fpPct, ign: f.ign, ewg: f.ewg };
+        afrLeanest: f.afrLeanest, fpPct: f.fpPct, ign: f.ign, ewg: f.ewg, ewgHeld: f.ewgHeld };
     });
   }
 
@@ -1012,6 +1018,7 @@
       mapRestores: s.mapRestores
     };
     if (s.shakedown.status !== 'none') doc.shakedown = s.shakedown;
+    if (s.boostStepFails) doc.boostStepFails = s.boostStepFails;
     return doc;
   };
   KTA.carImport = function (state, doc) {
@@ -1074,6 +1081,12 @@
     });
     s.mapVersions = normVersions(s.mapVersions);
     (doc.hidden || []).forEach(function (id) { if (s.hidden.indexOf(id) < 0) s.hidden.push(id); });
+    // Failed Boost step proofs merge by when they failed: the ladder stays closed on any copy.
+    (Array.isArray(doc.boostStepFails) ? doc.boostStepFails : []).forEach(function (f) {
+      if (!f || !isNum(f.at)) return;
+      s.boostStepFails = s.boostStepFails || [];
+      if (!s.boostStepFails.some(function (g) { return g.at === f.at; })) s.boostStepFails.push(f);
+    });
     Object.keys(doc.answers || {}).forEach(function (id) { if (s.answers[id] == null) s.answers[id] = doc.answers[id]; });
     if (s.shakedown.status === 'none' && doc.shakedown && doc.shakedown.status && doc.shakedown.status !== 'none') {
       s.shakedown = {
@@ -1116,7 +1129,7 @@
   //   P9 no change is a valid plan, with every lever and its lock reason.
   //
   // Candidate shapes reuse the existing lever math: suggestBoostStep builds the
-  // +1 psi lever (locked at the ceiling on this car), suggestWotLean builds the
+  // Boost step's cells (capped by the Final Boost Target peak), suggestWotLean builds the
   // WOT 11.0 -> 11.5 lever (locked provisional), LIMITS.mafStepMax caps the AFM
   // round, pairOf/TABLES enforce P6/P7, toRow renders the paste-ready AFM row.
   // ---------------------------------------------------------------------------
@@ -1215,6 +1228,44 @@
     else if (!(d.kcPeakJudged <= G.kc_max)) out.push('reached Knock Control ' + n2(d.kcPeakJudged) + ' judged, over ' + G.kc_max);
     return out;
   }
+  // Ticket 16: EWG Position ≈ 0 where the undershoot is read means the turbo is at
+  // its limit (or boost leaks), not that the target is still ramping in.
+  var EWG_SHUT_PCT = 1;
+  function wastegateShut(ewg) { return isNum(ewg) && ewg <= EWG_SHUT_PCT; }
+  // A part that can move the turbo's limit: only its Install reopens a ladder the
+  // shut wastegate closed.
+  var AIRFLOW_PART = /intercooler|turbo|intake/i;
+  function dayOf(ms) { return driveStamp(vnStamp(ms)).replace(/ \d\d:\d\d$/, ''); }
+  /**
+   * The ladder after a failed proof (tickets 06, 16): `{ reason, unlocks }` while
+   * it stays closed, else null. A shut-wastegate failure waits for an
+   * intercooler, turbo or intake Install; any other waits for any Install or a
+   * drive on another fuel, both after the failure.
+   */
+  function ladderClosed(s, tags, installs) {
+    var fails = s.boostStepFails || [];
+    if (!fails.length) return null;
+    var fitted = installs.filter(function (i) { return i && i.action !== 'removed' && isNum(i.installed_at); });
+    function fittedAfter(at, re) { return fitted.some(function (i) { return i.installed_at > at && (!re || re.test(String(i.part || ''))); }); }
+    var shut = fails.filter(function (f) { return f.shut && !fittedAfter(f.at, AIRFLOW_PART); })[0];
+    if (shut) {
+      return {
+        reason: 'the turbo could not reach the target with the wastegate shut (' + dayOf(shut.at) + '): no more boost on this turbo; check for a boost leak',
+        unlocks: 'An intercooler, turbo or intake fitted (an Install), then every gate again.'
+      };
+    }
+    var last = fails.reduce(function (a, f) { return !a || f.at > a.at ? f : a; }, null);
+    var fuels = last.fuels || [];
+    var newFuel = fuels.length && planRows(s).some(function (d) {
+      var fuel = tags[d.id] && tags[d.id].fuel;
+      return d.start > last.at && fuel && fuels.indexOf(fuel) < 0;
+    });
+    if (newFuel || fittedAfter(last.at)) return null;
+    return {
+      reason: 'a step failed its proof on ' + dayOf(last.at) + '; the ladder reopens after a fuel change or a new part',
+      unlocks: 'A drive tagged with another fuel, or a part fitted (an Install), then every gate again.'
+    };
+  }
   /** What fails on a Cool drive's proof pulls; `table` is the slot's Boost Target Normal H { rpm, values }. */
   function proofFails(d, table) {
     var G = STEP_GATES, pulls = d.proofPulls || [];
@@ -1222,14 +1273,15 @@
       return ['has ' + pulls.length + ' floored pull' + (pulls.length === 1 ? '' : 's') + ', it needs ' + G.pulls_min +
         ' (pedal ' + G.pedal_pct + ' % or more held ' + G.hold_s + ' s above ' + KTA.fmt.num(G.rpm_min, 0) + ' rpm)'];
     }
-    var gap = -Infinity, tgt = NaN, cellAt = NaN, und = -Infinity, ovr = -Infinity, tot = -Infinity, afr = -Infinity, fp = Infinity;
+    var gap = -Infinity, tgt = NaN, cellAt = NaN, und = -Infinity, undEwg = null, ovr = -Infinity, tot = -Infinity, afr = -Infinity, fp = Infinity;
     pulls.forEach(function (p) {
       var r = -1, best = Infinity;
       if (table && isNum(p.targetRpm)) table.rpm.forEach(function (a, k) { if (Math.abs(a - p.targetRpm) < best) { best = Math.abs(a - p.targetRpm); r = k; } });
       var cell = r >= 0 ? tableMax([table.values[r]]) : NaN;
       var g = isNum(p.target) && isNum(cell) ? cell - p.target : Infinity;
       if (g > gap) { gap = g; tgt = p.target; cellAt = cell; }
-      und = Math.max(und, isNum(p.under) ? p.under : Infinity);
+      var u = isNum(p.under) ? p.under : Infinity;
+      if (u > und) { und = u; undEwg = p.ewgHeld; }
       ovr = Math.max(ovr, isNum(p.over) ? p.over : Infinity);
       tot = Math.max(tot, isNum(p.target) && isNum(p.over) ? p.target + Math.max(0, p.over) : Infinity);
       afr = Math.max(afr, isNum(p.afrLeanest) ? p.afrLeanest : Infinity);
@@ -1237,7 +1289,9 @@
     });
     var out = [];
     if (!(gap <= G.target_gap_psi)) out.push('logged a target of ' + rd1(tgt) + ' psi against the table\'s ' + rd1(cellAt));
-    if (!(und <= G.undershoot_psi)) out.push('undershot ' + rd1(und) + ' psi');
+    if (!(und <= G.undershoot_psi)) {
+      out.push('undershot ' + rd1(und) + ' psi' + (wastegateShut(undEwg) ? ' with the wastegate shut (EWG ' + n1(undEwg) + ' %)' : ''));
+    }
     if (!(ovr <= G.overshoot_psi)) out.push('overshot +' + rd1(ovr) + ' psi');
     if (!(tot <= G.total_psi)) out.push('reached target + overshoot ' + rd1(tot) + ' psi');
     if (!(afr <= G.afr_lean_max) || (isNum(d.mixTarget) && afr > d.mixTarget)) {
@@ -1342,10 +1396,11 @@
     // ---- A Boost step on the car: Tune 2 sits above Tune 1. Judge its proof -----
     // on slot 2 only: the latest Cool drive with the proof pulls and a settled
     // Knock Control start, plus the latest settled hot drive. The first failed
-    // gate is an Undo; a pass lets this plan copy Tune 2 to Tunes 1 and 3.
-    // ponytail: after a failed proof the ladder is not held closed until a fuel or
-    // part change (ticket 06); the offer gates re-read the failing drives instead.
+    // gate is an Undo; a pass lets this plan copy Tune 2 to Tunes 1 and 3. The
+    // Undo carries `stepFail`, which the app keeps in the state (boostStepFails)
+    // so the ladder stays closed after the window moves past these drives.
     var tags = opts.tags || {};
+    var installs = Array.isArray(opts.installs) ? opts.installs : [];
     function slotOf(d) { return (tags[d.id] && tags[d.id].slot) || 1; }
     var stepJudge = { onCar: false, status: null, driveId: null, fails: [], drives: [] };
     var t2Ahead = mapOk && TUNE2_IDS.some(function (id) {
@@ -1376,6 +1431,19 @@
       }
       stepJudge.drives = [pc, ph].filter(Boolean).map(function (d) { return d.id; });
       stepJudge.status = stepJudge.fails.length ? 'fail' : (pc && ph ? 'pass' : 'wait');
+      if (stepJudge.status === 'fail') {
+        var failedOn = [pf && pf.length ? pc : null, hf && hf.length ? ph : null].filter(Boolean);
+        var fuels = [];
+        [pc, ph].forEach(function (d) { var f = d && tags[d.id] && tags[d.id].fuel; if (f && fuels.indexOf(f) < 0) fuels.push(f); });
+        stepJudge.fail = {
+          at: Math.max.apply(null, failedOn.map(function (d) { return d.start; })),
+          drives: stepJudge.drives, fuels: fuels,
+          // Undershoot read with the wastegate shut on a proof pull (ticket 16).
+          shut: !!(pf && pf.length) && (pc.proofPulls || []).some(function (p) {
+            return isNum(p.under) && p.under > G0.undershoot_psi && wastegateShut(p.ewgHeld);
+          })
+        };
+      }
     }
     var undoBy = issues.stop ? { driveId: issues.stop.driveId, stop: true }
       : (stepJudge.status === 'fail' ? { driveId: stepJudge.driveId, stop: false } : null);
@@ -1441,7 +1509,8 @@
         },
         deferred: [], levers: levers, openIssues: issues,
         mapFacts: { normalPeak: normalPeak, ecoPeak: ecoPeak, finalPeak: finalPeak, pairsIdentical: pairsIdentical },
-        ceiling: ceiling
+        ceiling: ceiling,
+        stepFail: undoBy.stop ? null : stepJudge.fail
       };
     }
 
@@ -1526,7 +1595,7 @@
     }
 
     // ---- The Boost step: promote a proven one, wait for a proof, or offer one ----
-    var stepWhy = [];
+    var stepWhy = [], closed = null;
     if (stepJudge.status === 'pass') {
       cands.push({
         id: 'boostPromote', leverId: 'boostPlus', family: 'boost', gain: true, matches: [], proven: true,
@@ -1544,6 +1613,8 @@
         stepUnlocks(), TUNE2_IDS.slice());
     } else if (!STEP_GATES || !mapOk) {
       stepWhy.push(STEP_GATES ? 'the map tables are not readable' : 'the thresholds file is not loaded');
+    } else if ((closed = ladderClosed(s, tags, installs))) {
+      stepWhy.push(closed.reason);
     } else {
       var openNow = KTA.carOpenSteps(opts.openSteps).filter(function (st) { return !doneStatus(st.status); });
       if (openNow.length) stepWhy.push('the open step "' + openNow[0].title + '" comes first');
@@ -1575,7 +1646,7 @@
         });
       }
     }
-    if (stepWhy.length) lever('boostPlus', 'boost', STEP_TITLE, 'locked', 'Locked: ' + stepWhy.join('; ') + '.', stepUnlocks(), TUNE2_IDS.slice());
+    if (stepWhy.length) lever('boostPlus', 'boost', STEP_TITLE, 'locked', 'Locked: ' + stepWhy.join('; ') + '.', closed ? closed.unlocks : stepUnlocks(), TUNE2_IDS.slice());
 
     // ---- P2/P3/P5 gate per candidate, first blocker names the status ------------
     var FAMILY_RANK = { 'AFM Flow': 0, boost: 1, mixture: 2 };
@@ -1699,21 +1770,20 @@
       afmPasteRow = KTA.toRow(afmAfter);
       tables.push({ id: 'MAF_Scaling_Custom', kind: 'curve', cells: [], pasteRow: afmPasteRow });
     } else if (winner.id === 'boostStep' || winner.id === 'boostPromote') {
-      // Boost step: +1 psi on Tune 2 L/H, the proof pulls' rows, cells of 15 psi and
-      // up, never above the Final Boost Target peak at that row nor 24 psi.
+      // Boost step (KTA.suggestBoostStep): +1 psi on Tune 2 L/H, the proof pulls'
+      // rows, cells of 15 psi and up, never above the Final Boost Target peak at
+      // that row nor 24 psi.
       // Promote: Tunes 1 and 3 take the proven Tune 2 cells.
       var promote = winner.id === 'boostPromote';
       var fin = T.Final_Boost_Target_H || T.Final_Boost_Target_L;
       (promote ? TUNE13_IDS : TUNE2_IDS).forEach(function (id) {
         if (KTA.TABLES[id].role !== 'edit') throw new Error(id + ' is not an editable table (P7).');
         var tv = normals[id], tcells = [];
+        var stepped = promote ? null : KTA.suggestBoostStep(fin, tv.values, tv.rpm).values;
         tv.values.forEach(function (row, r) {
           var rpm = tv.rpm[r];
-          if (!promote && STEP_GATES.rows_rpm.indexOf(rpm) < 0) return;
           row.forEach(function (v, c) {
-            var after = promote ? normals[id.replace(/_[13]_/, '_2_')].values[r][c]
-              : (v >= STEP_GATES.cell_min_psi ? Math.round(Math.min(v + KTA.THRESHOLDS.boost_step_max.value,
-                KTA.boostCeilingAt(fin, rpm, KTA.LIMITS.boostCeilingPsi)) * 10) / 10 : v);
+            var after = promote ? normals[id.replace(/_[13]_/, '_2_')].values[r][c] : stepped[r][c];
             if (after === v || (!promote && !(after > v))) return;
             tcells.push({ table: id, rpm: rpm, rpmRow: r, col: c + 1, of: row.length, before: v, after: after });
           });

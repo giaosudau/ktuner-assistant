@@ -336,7 +336,9 @@ var SUMMARIES = {
       evidence: plan.evidence || [],
       deferred: plan.deferred || [],
       levers: (plan.levers || []).map(function (l) { return { id: l.id, family: l.family, title: l.title, status: l.status, reason: l.reason, unlocks: l.unlocks }; }),
-      openIssues: plan.openIssues || null
+      openIssues: plan.openIssues || null,
+      // A Boost step's failed proof: the app keeps it so the ladder stays closed.
+      stepFail: plan.stepFail || null
     };
   },
 
@@ -552,7 +554,8 @@ var OPS = {
     try {
       plan = KTA.carFlashPlan(state, map, {
         now: now, history: Array.isArray(args.history) ? args.history : [],
-        tags: args.tags || {}, openSteps: Array.isArray(args.openSteps) ? args.openSteps : []
+        tags: args.tags || {}, openSteps: Array.isArray(args.openSteps) ? args.openSteps : [],
+        installs: Array.isArray(args.installs) ? args.installs : []
       });
     } catch (e) {
       fail('engine-error', 'The Flash plan could not be built: ' + (e && e.message));

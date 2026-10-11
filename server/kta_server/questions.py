@@ -162,6 +162,10 @@ async def rebuild_history(store, worker, now_ms: int) -> dict[str, Any]:
         engine = next((v for v in state.get("mapVersions") or [] if v.get("n") == row["n"]), None)
         if row["has_tables"] and engine and engine.get("changePending"):
             state = (await worker.call("storeMapTables", state=state, version=row["n"], now=now_ms))["state"]
+    # A Boost step's failed proof is a fact of the plan, not of any event replayed here: keep it.
+    fails = (store.car_state(None) or {}).get("boostStepFails")
+    if fails:
+        state["boostStepFails"] = fails
     store.save_car_state(state)
     sync_map_versions(store, state)
     return state

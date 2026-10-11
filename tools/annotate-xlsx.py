@@ -25,7 +25,7 @@ tables = plan['tables']
 TAB = {'edit': 'EB6834', 'check': '2A78D6', 'leave': '9AA6B2', 'never': 'C8402F', 'preset': 'C3CCD4', 'info': 'C3CCD4'}
 FILL_A = PatternFill('solid', start_color='FDE3CC', end_color='FDE3CC')    # Stage A, required
 FILL_B1 = PatternFill('solid', start_color='F9C08F', end_color='F9C08F')   # Lever 1, optional
-FILL_B2 = PatternFill('solid', start_color='FFF2D2', end_color='FFF2D2')   # Lever 2, off by default
+FILL_B2 = PatternFill('solid', start_color='FFF2D2', end_color='FFF2D2')   # Boost step, unlocked by the logs
 BOLD = Font(bold=True)
 WRAP = Alignment(wrap_text=True, vertical='top')
 
@@ -33,7 +33,7 @@ WHY = {
     'edit': {
         'A': 'Stage A, required after an intake. Paste the corrected 103-value row from the app (Step 3); it is computed from your own log.',
         'B1': 'Lever 1, optional, only after Step 5 passes: full-load columns 7-9 from 3,000 rpm, 11.0 -> 11.5 AFR (11.3 from 5,500 rpm). Same in L and H.',
-        'B2': 'Lever 2, optional and OFF by default: +1 psi on the 3,500-5,500 rpm plateau only if a reviewer raises the ceiling above 21 psi. Never below 3,000 rpm.',
+        'B2': 'Boost step, optional, only when the logs unlock it: +1 psi on Boost Target 2 Normal (Tune 2), rows 3,500-4,500 rpm, cells of 15 psi and up, under the Final Boost Target peak (23.4, 24 at most). Tunes 1 and 3 only after its proof. Never below 3,000 rpm.',
     },
     'check': 'Check against logs; do not edit.',
     'leave': 'Leave stock on purpose.',
@@ -93,7 +93,7 @@ for ws in wb.worksheets:
         cell = ws.cell(row=2, column=ch['c'] + 1) if curve else ws.cell(row=ch['r'] + 2, column=ch['c'] + 2)
         cell.fill = fill
         cell.font = BOLD
-        label = {'A': 'Stage A', 'B1': 'Lever 1 (optional)', 'B2': 'Lever 2 (off by default; only above a 21 psi ceiling)'}[t['stage']]
+        label = {'A': 'Stage A', 'B1': 'Lever 1 (optional)', 'B2': 'Boost step (Tune 2; unlocked by the logs)'}[t['stage']]
         cell.comment = Comment('%s: %s -> %s %s' % (label, fmt(ch['from']), fmt(ch['to']), t['unit']), AUTHOR, width=260, height=60)
     if role == 'edit' and t['stage'] == 'A':
         for col in range(1, ws.max_column + 1):
@@ -111,7 +111,7 @@ rows = [
     ['Order', 'Sheet (table)', 'Cells', 'Change', 'Only when', 'The log proves it when'],
     ['1 · Stage A (required)', 'MAF_Scaling_Custom (AFM Flow, Custom)', 'All 103 points', 'The corrected row the app computes from your trims and full-throttle error', 'After the intake is fitted; baseline log loaded', 'Trims within +/-5 % at every AFM point driven; full throttle within +/-0.3 AFR of command'],
     ['2 · Lever 1 (optional)', 'WOT_Enrich_L and WOT_Enrich_H', 'Rows 3,000-6,600 rpm x columns 7-9 (27 cells each)', '11.0 -> 11.5 AFR (11.3 from 5,500 rpm)', 'Step 5 passed: a cool-morning and a hot-afternoon log without a Stop', 'Measured within +/-0.3 of command, never leaner than 12.0; no new knock; knock control steady'],
-    ['3 · Lever 2 (optional, off by default)', 'Boost_Target_1/2/3_Normal_L and _H', 'Rows 3,500-5,500 rpm x the 21 psi columns (45 cells each)', '21 -> 22 psi', 'A reviewer raises the ceiling above 21 psi, after a clean hot-day log. Never below 3,000 rpm', 'Boost within 1.5 psi of target; knock <= 1 deg; knock control steady; CVT <= 90 C; torque within 3 % of the base map'],
+    ['3 · Boost step (optional)', 'Boost_Target_2_Normal_L and _H (Tune 2); Tunes 1 and 3 after its proof', 'Rows 3,500-4,500 rpm x cells of 15 psi and up', '+1 psi, never above the Final Boost Target peak at that row (23.4), 24 at most', 'A Cool drive with 2 floored pulls and a hot drive pass every gate. Never below 3,000 rpm', 'On Tune 2: target reached; under/overshoot <= 1.5 psi, target + overshoot <= 24; timing within 1 deg of the last proven map; knock control settled <= 0.56; AFR never leaner than 12.0; DIFP >= 90 %'],
     [],
     ['Leave stock', 'Why'],
 ]

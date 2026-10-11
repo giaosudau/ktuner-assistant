@@ -1054,6 +1054,63 @@ test('Boost step proof: the first failed gate is an Undo; not yet logged on slot
   assert.match(leverOf(wait).reason, /Tune 2 carries a Boost step not proven yet/);
 });
 
+// Ticket 06: after a failed proof the ladder stays closed until a fuel change or
+// an Install. Ticket 16: undershoot with the wastegate shut is the turbo's limit
+// (or a boost leak): never step again on this turbo.
+const P22 = Object.assign({}, PULL, { target: 22 });
+const RON95 = 'E10 RON95 III', RON97 = 'E10 RON97 III';
+const failedTags = { pc: { slot: 2, fuel: RON95 }, ph: { slot: 2, fuel: RON95 } };
+// After the Undo: the window holds only the new drives, on the map without the step.
+function afterUndo(fail, fuel) {
+  const s = synth([Object.assign({}, HOT, { id: 'h2' }), Object.assign({}, COOL, { id: 'c2' })]);
+  for (const id of ['h2', 'c2']) s.drives[id].start += 400000;   // after the failure
+  s.boostStepFails = [fail];
+  return { s, tags: { h2: { slot: 1, fuel }, c2: { slot: 1, fuel } } };
+}
+
+test('Boost step: a failed proof keeps the ladder closed until a fuel change or a new part', () => {
+  const failed = K.carFlashPlan(steppedState({ cool: { proofPulls: [Object.assign({}, P22, { over: 2 }), P22] } }), steppedMap(), { now: NOW, tags: failedTags });
+  assert.equal(failed.kind, 'undo');
+  assert.deepEqual(failed.stepFail, { at: 300000, drives: ['pc', 'ph'], fuels: [RON95], shut: false });
+  // Same fuel, every gate passing again: still closed.
+  const same = afterUndo(failed.stepFail, RON95);
+  const closed = K.carFlashPlan(same.s, MAP, { now: NOW, tags: same.tags });
+  assert.equal(closed.kind, 'no-change');
+  assert.equal(leverOf(closed).status, 'locked');
+  assert.equal(leverOf(closed).reason, 'Locked: a step failed its proof on 1 Jan; the ladder reopens after a fuel change or a new part.');
+  // An Install from before the failure changes nothing.
+  assert.equal(leverOf(K.carFlashPlan(same.s, MAP, { now: NOW, tags: same.tags, installs: [{ part: 'catback', action: 'fitted', installed_at: 200000 }] })).status, 'locked');
+  // A drive on another fuel reopens it.
+  const fuel = afterUndo(failed.stepFail, RON97);
+  assert.equal(K.carFlashPlan(fuel.s, MAP, { now: NOW, tags: fuel.tags }).changeId, 'boostStep');
+  // So does any part fitted after the failure.
+  assert.equal(K.carFlashPlan(same.s, MAP, { now: NOW, tags: same.tags, installs: [{ part: 'catback', action: 'fitted', installed_at: 350000 }] }).changeId, 'boostStep');
+  // The record survives every state the engine hands back.
+  assert.deepEqual(K.carRecordFlash(same.s, { time: 900000, map: 'x', changed: 'other' }, { now: NOW }).state.boostStepFails, [failed.stepFail]);
+  // ...and the History file, both ways.
+  assert.deepEqual(K.carImport(K.carEmpty(), K.carExport(same.s)).state.boostStepFails, [failed.stepFail]);
+});
+
+test('Boost step: undershoot with the wastegate shut locks it for good; only an intercooler, turbo or intake Install reopens it', () => {
+  const shutPull = Object.assign({}, P22, { under: 2, ewgHeld: 0.5 });
+  const failed = K.carFlashPlan(steppedState({ cool: { proofPulls: [shutPull, P22] } }), steppedMap(), { now: NOW, tags: failedTags });
+  assert.equal(failed.kind, 'undo');
+  assert.equal(failed.stepFail.shut, true);
+  assert.match(failed.evidence[0].text, /undershot 2\.0 psi with the wastegate shut \(EWG 0\.5 %\)/);
+  const reason = 'Locked: the turbo could not reach the target with the wastegate shut (1 Jan): no more boost on this turbo; check for a boost leak.';
+  // A fuel change does not reopen it, nor does a part that adds no airflow.
+  const fuel = afterUndo(failed.stepFail, RON97);
+  assert.equal(leverOf(K.carFlashPlan(fuel.s, MAP, { now: NOW, tags: fuel.tags })).reason, reason);
+  assert.equal(leverOf(K.carFlashPlan(fuel.s, MAP, { now: NOW, tags: fuel.tags, installs: [{ part: 'catback', action: 'fitted', installed_at: 350000 }] })).reason, reason);
+  assert.equal(leverOf(K.carFlashPlan(fuel.s, MAP, { now: NOW, tags: fuel.tags, installs: [{ part: 'intercooler', action: 'removed', installed_at: 350000 }] })).reason, reason);
+  // An intercooler fitted after it does.
+  assert.equal(K.carFlashPlan(fuel.s, MAP, { now: NOW, tags: fuel.tags, installs: [{ part: 'PRL intercooler', action: 'fitted', installed_at: 350000 }] }).changeId, 'boostStep');
+  // Undershoot with the wastegate open is an ordinary failure.
+  const open = K.carFlashPlan(steppedState({ cool: { proofPulls: [Object.assign({}, shutPull, { ewgHeld: 20 }), P22] } }), steppedMap(), { now: NOW, tags: failedTags });
+  assert.equal(open.stepFail.shut, false);
+  assert.doesNotMatch(open.evidence[0].text, /wastegate shut/);
+});
+
 // ---------------------------------------------------------------------------
 // 04 — Open steps, settling them, and exactly one Next step
 // ---------------------------------------------------------------------------

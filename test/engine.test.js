@@ -174,17 +174,27 @@ test('gain lever 1: WOT lean-out touches only the full-load columns from 3,000 r
   assert.equal(refs.find((c) => c.id === 'wotBand').status, 'good');
 });
 
-test('gain lever 2: boost step respects the ceiling and leaves low rpm alone', () => {
-  const same = K.suggestBoostStep(21);
+// ADR 0007: the Boost step is +1 psi on the 3,500-4,500 rpm rows, cells of 15 psi
+// and up, never above the Final Boost Target peak at that row (KTA.boostCeilingAt), 24 at most.
+test('Boost step: rows 3,500-4,500, cells of 15 psi and up, capped by the Final Boost Target peak', () => {
+  const fin = require('../data/ktuner-maps-digitized.json').Final_Boost_Target_H;
+  const up = K.suggestBoostStep(fin);
+  assert.deepEqual(up.rows.map((r) => r.rpm), [3500, 4000, 4500]);
+  up.rows.forEach((r) => { assert.equal(r.from, 21); assert.equal(r.to, 22); });
+  up.values.forEach((row, r) => row.forEach((v, c) => {
+    const was = K.REF.boost.normal[r][c];
+    if ([3500, 4000, 4500].includes(K.REF.boost.rpm[r]) && was >= 15) assert.equal(v, Math.min(was + 1, K.boostCeilingAt(fin, K.REF.boost.rpm[r], 24)));
+    else assert.equal(v, was);
+  }));
+  // A Final Boost Target at 21 psi leaves no room: at the ceiling.
+  const flat = { rpm_axis: fin.rpm_axis, values: fin.values.map((row) => row.map(() => 21)) };
+  const same = K.suggestBoostStep(flat);
   assert.equal(same.atCeiling, true);
   assert.equal(same.mapPeak, 21);
-  const up = K.suggestBoostStep(22);
-  assert.equal(up.rows.length, 5);
-  up.rows.forEach((r) => { assert.ok(r.rpm >= 3500 && r.rpm <= 5500); assert.equal(r.to, 22); });
-  const refs = K.referenceChecks({ boostValues: up.values, ceilingPsi: 22 });
+  const refs = K.referenceChecks({ boostValues: up.values, finalBoost: fin });
   assert.equal(refs.find((c) => c.id === 'boostLow').status, 'good');
   assert.equal(refs.find((c) => c.id === 'boostPeak').status, 'good');
-  const over = K.referenceChecks({ boostValues: up.values, ceilingPsi: 21 });
+  const over = K.referenceChecks({ boostValues: up.values, finalBoost: flat });
   assert.equal(over.find((c) => c.id === 'boostPeak').status, 'stop');
 });
 
@@ -233,7 +243,7 @@ test('map catalog: every digitized table has a role, and only three kinds are ed
   assert.equal(maf.values.length, 103);
 });
 
-test('edit plan: lever 1 and lever 2 name the exact cells, and keep the shape', () => {
+test('edit plan: lever 1 and the Boost step name the exact cells, and keep the shape', () => {
   for (const n of ['WOT_Enrich_L', 'WOT_Enrich_H']) {
     const t = table(n), e = K.tableEdits(n, t.values, {});
     assert.equal(e.changed.length, 27, n);                     // 9 rows from 3,000 rpm x 3 full-load columns
@@ -241,11 +251,14 @@ test('edit plan: lever 1 and lever 2 name the exact cells, and keep the shape', 
     assert.ok(e.changed.every((x) => x.to === (t.x[x.r] >= 5500 ? 11.3 : 11.5)));
     assert.ok(K.smoothness(e.before, e.after, { tol: t.meta.tol }).ok, n);
   }
-  const b = table('Boost_Target_1_Normal_H');
-  assert.equal(K.tableEdits(b.name, b.values, { ceiling: 21 }).changed.length, 0);  // at the map peak already
-  const e = K.tableEdits(b.name, b.values, { ceiling: 22 });
-  assert.equal(e.changed.length, 45);
-  assert.ok(e.changed.every((x) => b.x[x.r] >= 3500 && b.x[x.r] <= 5500 && x.to === 22));
+  // The Boost step goes on Tune 2 only; Tunes 1 and 3 take it only after its proof.
+  const fin = MAP.Final_Boost_Target_H;
+  const b1 = table('Boost_Target_1_Normal_H');
+  assert.equal(K.tableEdits(b1.name, b1.values, { fin, rpm: b1.x }).changed.length, 0);
+  const b = table('Boost_Target_2_Normal_H');
+  const e = K.tableEdits(b.name, b.values, { fin, rpm: b.x });
+  assert.ok(e.changed.length > 0);
+  assert.ok(e.changed.every((x) => [3500, 4000, 4500].includes(b.x[x.r]) && x.from >= 15 && x.to === x.from + 1 && x.to <= 23.4));
   assert.ok(K.smoothness(e.before, e.after, { tol: 1 }).ok);
   assert.equal(K.tableEdits('Ignition_Base_H', table('Ignition_Base_H').values, {}), null);
   const maf = table('MAF_Scaling_Custom');
@@ -339,4 +352,22 @@ test('no torque line: the CVT is judged on slip, Watch-only', () => {
   const noVss = K.readLog(K.sampleCsv('after'));
   noVss.vss = null; noVss.has.vss = false;
   assert.equal(slipOf(K.analyze(noVss, {})).status, 'nodata');
+});
+
+// The map tour tells the Boost step as it is (ADR 0007), in both languages.
+test('map tour copy: the Boost step on Tune 2, unlocked by the logs, no reviewer and no 21 psi ceiling', () => {
+  const fs = require('fs'), vm = require('vm');
+  const window = {};
+  vm.createContext(window); window.window = window;
+  for (const f of ['i18n.js', 'i18n-drive.js', 'i18n-map.js']) vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/' + f, 'utf8'), window);
+  for (const lang of ['en', 'vi']) {
+    const T = window.KTA_I18N[lang];
+    const copy = [T.tables.Boost_Target_Normal.edit, T.tables.Boost_Target_Normal.verify, T.tables.Boost_Target_Normal.shape,
+      T.map.plan.B2.join(' '), T.map.plan.none, T.map.stage.B2, T.map.atCeiling, T.map.howSteps.B2.join(' ')].join(' ');
+    assert.doesNotMatch(copy, /5,500|reviewer|người duyệt|ceiling above 21|trần trên 21|21 psi ceiling|trần 21 psi|1\/2\/3/, lang);
+    assert.match(copy, /3,500-4,500/, lang);
+    assert.match(copy, /23\.4/, lang);
+    assert.match(copy, /24/, lang);
+    assert.match(T.tables.Boost_Target_Normal.edit, /Tune 2/, lang);
+  }
 });

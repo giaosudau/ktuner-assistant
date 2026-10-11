@@ -793,3 +793,26 @@ test('Boost step proof pull: time held above 3,500 rpm and the gate numbers ther
   assert.equal(sum.proofPulls[0].target, 21);
   assert.equal(sum.proofIgn, 8);
 });
+
+// Ticket 16: undershoot is read with the wastegate where it was measured, the
+// part held above 3,500 rpm (not at spool, where the gate is always shut).
+test('Boost step proof pull: the wastegate held above 3,500 rpm', () => {
+  const log = cloneLog(drive('aug22-0903').log, (l) => {
+    let i0 = 0;
+    while (l.t[i0] < 20) i0++;
+    for (let k = -5; l.t[i0 + k] <= l.t[i0] + 8; k++) {
+      const i = i0 + k, dt = l.t[i] - l.t[i0], on = k >= 0 && dt <= 7;
+      l.tps[i] = on ? 95 : 20;
+      l.rpm[i] = on ? Math.min(3000 + 500 * dt, 5000) : 2000;
+      l.boostTarget[i] = on ? 22 : 5;
+      l.boost[i] = on ? 20 : 5;
+      l.wgPos[i] = on ? (l.rpm[i] >= 3500 ? 0.5 : 30) : 30;
+    }
+  });
+  const p = K.checkDrive(log).ins.floored[0];
+  assert.equal(p.under, 2);
+  assert.equal(p.ewgHeld, 0.5);
+  const C = require('../engine/kta-car.js');
+  const sum = C.carIngest(C.carEmpty(), log, { fileName: 'TunerView_20260822_090322.csv', now: 0 }).state.drives['20260822-090322'];
+  assert.equal(sum.proofPulls[0].ewgHeld, 0.5);
+});

@@ -49,9 +49,9 @@
       shape: 'A block with a gentle ramp at 2,750-3,000 rpm. No spikes.' },
     Boost_Target_Normal: { name: 'Boost Target, Normal',
       what: 'The boost the ECU aims for in Normal and Sport, psi gauge, by rpm (rows) and load (columns). Your map: 13 psi at 1,600-2,250 rpm, 21 psi from 3,500 rpm. Stock peaks near 16.5 psi.',
-      edit: 'Lever 2, optional and off by default: +1 psi on the 3,500-5,500 rpm plateau, only if a reviewer raises your ceiling above 21 psi. Same change in Boost Target 1, 2 and 3, L and H. Nothing below 3,000 rpm.',
-      verify: 'Boost within 1.5 psi of target, knock 1° or less, knock control steady, CVT 90 °C or less, torque within 3 % of the base map.',
-      shape: 'The 3,000 → 3,500 rpm ramp gets 1 psi steeper. No spikes.' },
+      edit: 'The Boost step, optional, offered only when your logs unlock it: +1 psi on the 3,500-4,500 rpm rows, cells of 15 psi and up, in Boost Target 2 Normal (L and H) only. Tune 2 carries it, so Tune 1 stays your proven map. It unlocks when a Cool drive with two floored pulls and a hot drive pass every gate. Once it is proven on Tune 2, the same cells go to Boost Target 1 and 3. Never above the Final Boost Target peak at that row (23.4 psi on this map), 24 psi at most. Nothing below 3,000 rpm.',
+      verify: 'On Tune 2, a Cool drive with two floored pulls and a hot drive: the logged target reaches the new value; undershoot and overshoot each within 1.5 psi, target + overshoot at most 24; timing within 1° of the last proven map; knock control settled and at most 0.56; mixture never leaner than 12.0; fuel pressure at least 90 % of target. The first failure undoes it.',
+      shape: 'The 3,000 → 3,500 rpm ramp gets 1 psi steeper, and 4,500 → 5,000 rpm steps back down 1 psi. No spikes.' },
     Boost_Target_ECO: { name: 'Boost Target, ECO', what: 'The ECO-button boost: 18 psi from 3,000 rpm. This is Stage 1 of your Dual Tune.', edit: 'Leave it. Use ECO on hot afternoons and in heavy traffic: less heat and less knock.' },
     Final_Boost_Target: { name: 'Final Boost Target', what: 'A final boost table, −0.2 to 23.4 psi. Its axes and exact role weren’t captured in the screenshots; it may act as a final cap.', edit: 'Leave stock. Don’t edit a table whose axes you can’t see.' },
     Boost_By_Gear_Limits: { name: 'Boost by gear limits', what: 'Per-gear boost caps. Yours are 35.4 psi everywhere, so this table isn’t limiting anything: the boost targets decide.', edit: 'Leave it. It isn’t a tuning knob in the basic stage.' },
@@ -79,16 +79,16 @@
       head: ['Step', 'Table in your file', 'Cells', 'Change'],
       A: ['Stage A · required', 'AFM Flow, 103 points', 'Computed from your log'],
       B1: ['Lever 1 · optional', 'Rows 3,000-6,600 rpm × columns 7-9, in L and H', '11.0 → 11.5 (11.3 from 5,500 rpm)'],
-      B2: ['Lever 2 · optional', 'Rows 3,500-5,500 rpm × the 21 psi columns, in 1/2/3 L and H', '+1 psi, only above a 21 psi ceiling'],
+      B2: ['Boost step · optional', 'Rows 3,500-4,500 rpm × cells of 15 psi and up, in Boost Target 2 L and H (Tune 2)', '+1 psi, under the Final Boost Target peak (23.4), 24 at most; to Tunes 1 and 3 once proven'],
       pending: 'waiting for a log',
-      none: 'none at your 21 psi ceiling',
+      none: 'none until your logs pass every gate',
       cells: function (n) { return n + ' per table'; },
       open: 'Open'
     },
     digitized: 'Digitized from your screenshots (data/KTuner-Maps-Digitized.xlsx). RPM rows are real. The load (column) axes weren’t captured, so columns are numbered 0 to N as in your sheets. Check a column’s real load value in KTuner before you type a change.',
     lh: 'L and H: your notes read low/high cam or low/high octane. Honda’s knock control moves between high- and low-octane limits by itself (KTuner and Hondata help), so any edit goes into both halves.',
     roles: { edit: 'Edit in the basic stage', check: 'Check against logs, don’t edit', leave: 'Leave stock', never: 'Never touch', preset: 'Reference curves', info: 'Screenshot part' },
-    stage: { A: 'Stage A · required', B1: 'Lever 1 · optional', B2: 'Lever 2 · optional, off by default' },
+    stage: { A: 'Stage A · required', B1: 'Lever 1 · optional', B2: 'Boost step · optional, unlocked by your logs' },
     pick: 'Table',
     views: { grid: '2D grid', lines: '2D lines', surface: '3D' },
     show: { label: 'Show', after: 'After the edit', before: 'As in your file', diff: 'Difference', smooth: 'If smoothed' },
@@ -103,7 +103,7 @@
     points: function (n) { return n === 1 ? '1 point changes' : n + ' points change'; },
     noEdit: 'The basic stage leaves this table as it is.',
     pendingAfm: 'Load a baseline log in Step 2 (or a sample) and the app computes this row. Until then there is nothing to paste.',
-    atCeiling: 'At your 21 psi ceiling this lever changes nothing. It proposes +1 psi only if a reviewer raises the ceiling in Step 6.',
+    atCeiling: 'At the Final Boost Target peak (23.4 psi on this map, 24 at most) the Boost step has no room left, so it changes nothing.',
     shapeOk: 'Shape check: no new spikes or dips.',
     shapeBad: function (n) { return 'Shape check: ' + n + (n === 1 ? ' new spike or dip.' : ' new spikes or dips.') + ' Blend the edge before you flash.'; },
     step: function (a, b, unit) { return 'Largest step between neighbours: ' + a + ' → ' + b + (unit ? ' ' + unit : '') + '. The ECU interpolates, so a step is a ramp, not a jump.'; },
@@ -113,7 +113,7 @@
     howSteps: {
       A: ['Open AFM Flow and choose Custom.', 'Copy the corrected row from Step 3 (103 values).', 'Select the whole row, paste, and check the graph still rises everywhere.', 'Save under a new file name, flash, then log the same drive.'],
       B1: ['Only after Step 5 passes.', 'Open WOT Enrichment L. Select rows 3,000-5,000 rpm, columns 7-9, set 11.5.', 'Select rows 5,500-6,600 rpm, columns 7-9, set 11.3.', 'Do the same in WOT Enrichment H.', 'Save under a new file name, flash, log a pull (Step 4 checks).'],
-      B2: ['Only with a reviewer, a clean hot-day log, and a ceiling above 21 psi.', 'In Boost Target 1, 2 and 3 Normal (L and H), select rows 3,500-5,500 rpm across the 21 psi columns and set 22.', 'Leave every row below 3,000 rpm as it is.', 'Save under a new file name, flash, log a hot-afternoon pull.']
+      B2: ['Only when the app offers it: a Cool drive with two floored pulls and a hot drive passed every gate.', 'In Boost Target 2 Normal L and H only, select rows 3,500-4,500 rpm, the cells of 15 psi and up, and add 1 psi (never above the Final Boost Target peak at that row: 23.4 here, 24 at most).', 'Leave Boost Target 1 and 3, and every row below 3,000 rpm, as they are.', 'Save under a new file name, flash, switch to Tune 2, and log a Cool drive with two floored pulls and a hot drive.', 'If they pass, copy the same cells to Boost Target 1 and 3. If one fails, flash your previous file back.']
     },
     blind: function (p, name, F) {
       var top = p.topHighLoad[0];
@@ -299,9 +299,9 @@
       shape: 'Một khối có dốc nhẹ ở 2,750-3,000 rpm. Không có gai.' },
     Boost_Target_Normal: { name: 'Boost Target, Normal',
       what: 'Mức boost ECU nhắm tới ở chế độ Normal và Sport, psi, theo rpm (hàng) và tải (cột). Map của bạn: 13 psi ở 1,600-2,250 rpm, 21 psi từ 3,500 rpm. Xe zin đạt đỉnh khoảng 16.5 psi.',
-      edit: 'Đòn bẩy 2, tuỳ chọn và mặc định tắt: +1 psi trên vùng phẳng 3,500-5,500 rpm, chỉ khi người duyệt nâng trần của bạn lên trên 21 psi. Sửa giống nhau ở Boost Target 1, 2 và 3, cả L và H. Không đụng dưới 3,000 rpm.',
-      verify: 'Boost lệch không quá 1.5 psi so với mục tiêu, kích nổ từ 1° trở xuống, knock control ổn định, CVT từ 90 °C trở xuống, mô-men không quá 3 % so với map gốc.',
-      shape: 'Đoạn dốc 3,000 → 3,500 rpm dốc thêm 1 psi. Không có gai.' },
+      edit: 'Bước tăng boost, tuỳ chọn, chỉ được đề xuất khi log của bạn mở khoá: +1 psi ở các hàng 3,500-4,500 rpm, những ô từ 15 psi trở lên, chỉ trong Boost Target 2 Normal (L và H). Tune 2 mang bước này, nên Tune 1 vẫn là map đã được chứng minh. Nó mở khoá khi một lần chạy trời mát có hai lần đạp lút ga và một lần chạy trời nóng đều qua mọi cổng kiểm tra. Khi đã được chứng minh trên Tune 2, đúng các ô đó được chép sang Boost Target 1 và 3. Không bao giờ vượt đỉnh Final Boost Target ở hàng đó (23.4 psi trên map này), tối đa 24 psi. Không đụng dưới 3,000 rpm.',
+      verify: 'Trên Tune 2, một lần chạy trời mát có hai lần đạp lút ga và một lần chạy trời nóng: mục tiêu ghi trong log lên tới giá trị mới; thiếu boost và vọt boost mỗi bên không quá 1.5 psi, mục tiêu + vọt boost tối đa 24; góc đánh lửa lệch không quá 1° so với map đã chứng minh gần nhất; knock control đã ổn định và tối đa 0.56; hòa khí không bao giờ nghèo hơn 12.0; áp suất xăng ít nhất 90 % mục tiêu. Lần trượt đầu tiên là gỡ bước này ra.',
+      shape: 'Đoạn dốc 3,000 → 3,500 rpm dốc thêm 1 psi, và 4,500 → 5,000 rpm hạ lại 1 psi. Không có gai.' },
     Boost_Target_ECO: { name: 'Boost Target, ECO', what: 'Boost khi bấm nút ECO: 18 psi từ 3,000 rpm. Đây là Stage 1 trong Dual Tune của bạn.', edit: 'Giữ nguyên. Dùng ECO vào buổi chiều nóng và khi kẹt xe: ít nhiệt, ít kích nổ hơn.' },
     Final_Boost_Target: { name: 'Final Boost Target', what: 'Bảng boost cuối, từ −0.2 tới 23.4 psi. Trục và vai trò chính xác không có trong ảnh chụp; có thể nó là mức trần cuối cùng.', edit: 'Giữ nguyên. Đừng sửa một bảng mà bạn không thấy trục của nó.' },
     Boost_By_Gear_Limits: { name: 'Giới hạn boost theo số', what: 'Mức trần boost cho từng số. Của bạn đều là 35.4 psi, nên bảng này không giới hạn gì cả: bảng boost mục tiêu mới quyết định.', edit: 'Giữ nguyên. Đây không phải nút để tune ở giai đoạn cơ bản.' },
@@ -329,16 +329,16 @@
       head: ['Bước', 'Bảng trong file của bạn', 'Ô', 'Thay đổi'],
       A: ['Giai đoạn A · bắt buộc', 'AFM Flow, 103 điểm', 'Tính từ log của bạn'],
       B1: ['Đòn bẩy 1 · tuỳ chọn', 'Hàng 3,000-6,600 rpm × cột 7-9, ở L và H', '11.0 → 11.5 (11.3 từ 5,500 rpm)'],
-      B2: ['Đòn bẩy 2 · tuỳ chọn', 'Hàng 3,500-5,500 rpm × các cột 21 psi, ở 1/2/3 L và H', '+1 psi, chỉ khi trần trên 21 psi'],
+      B2: ['Bước tăng boost · tuỳ chọn', 'Hàng 3,500-4,500 rpm × các ô từ 15 psi trở lên, ở Boost Target 2 L và H (Tune 2)', '+1 psi, dưới đỉnh Final Boost Target (23.4), tối đa 24; chép sang Tune 1 và 3 khi đã chứng minh'],
       pending: 'đang chờ log',
-      none: 'không có ở trần 21 psi của bạn',
+      none: 'không có cho tới khi log của bạn qua mọi cổng kiểm tra',
       cells: function (n) { return n + ' ô mỗi bảng'; },
       open: 'Mở'
     },
     digitized: 'Số hoá từ ảnh chụp của bạn (data/KTuner-Maps-Digitized.xlsx). Các hàng rpm là thật. Trục tải (cột) không chụp được, nên cột được đánh số từ 0 như trong sheet của bạn. Hãy kiểm tra giá trị tải thật của cột trong KTuner trước khi gõ thay đổi.',
     lh: 'L và H: ghi chú của bạn là cam thấp/cao hoặc octane thấp/cao. Knock control của Honda tự chuyển giữa giới hạn octane cao và thấp (theo trợ giúp của KTuner và Hondata), nên mọi thay đổi phải làm ở cả hai nửa.',
     roles: { edit: 'Sửa ở giai đoạn cơ bản', check: 'Kiểm tra bằng log, không sửa', leave: 'Giữ nguyên', never: 'Không bao giờ đụng', preset: 'Đường cong tham khảo', info: 'Phần ảnh chụp' },
-    stage: { A: 'Giai đoạn A · bắt buộc', B1: 'Đòn bẩy 1 · tuỳ chọn', B2: 'Đòn bẩy 2 · tuỳ chọn, mặc định tắt' },
+    stage: { A: 'Giai đoạn A · bắt buộc', B1: 'Đòn bẩy 1 · tuỳ chọn', B2: 'Bước tăng boost · tuỳ chọn, log của bạn mở khoá' },
     pick: 'Bảng',
     views: { grid: 'Bảng 2D', lines: 'Đường 2D', surface: '3D' },
     show: { label: 'Hiển thị', after: 'Sau khi sửa', before: 'Như trong file', diff: 'Chênh lệch', smooth: 'Nếu làm mượt' },
@@ -353,7 +353,7 @@
     points: function (n) { return n + ' điểm thay đổi'; },
     noEdit: 'Giai đoạn cơ bản giữ nguyên bảng này.',
     pendingAfm: 'Nạp log nền ở Bước 2 (hoặc log mẫu), app sẽ tính hàng này. Trước lúc đó chưa có gì để dán.',
-    atCeiling: 'Ở trần 21 psi của bạn, đòn bẩy này không đổi gì. Nó chỉ đề xuất +1 psi khi người duyệt nâng trần ở Bước 6.',
+    atCeiling: 'Ở đỉnh Final Boost Target (23.4 psi trên map này, tối đa 24) bước tăng boost không còn chỗ, nên nó không đổi gì.',
     shapeOk: 'Kiểm tra hình dạng: không có gai hay hõm mới.',
     shapeBad: function (n) { return 'Kiểm tra hình dạng: ' + n + ' gai hoặc hõm mới. Làm mượt mép vùng sửa trước khi nạp.'; },
     step: function (a, b, unit) { return 'Bước nhảy lớn nhất giữa hai ô cạnh nhau: ' + a + ' → ' + b + (unit ? ' ' + unit : '') + '. ECU nội suy, nên một bước là một đoạn dốc, không phải cú nhảy.'; },
@@ -363,7 +363,7 @@
     howSteps: {
       A: ['Mở AFM Flow và chọn Custom.', 'Copy hàng đã hiệu chỉnh ở Bước 3 (103 giá trị).', 'Chọn cả hàng, dán, rồi kiểm tra đồ thị vẫn tăng ở mọi chỗ.', 'Lưu thành file mới, nạp, rồi log lại đúng đoạn đường cũ.'],
       B1: ['Chỉ sau khi Bước 5 đạt.', 'Mở WOT Enrichment L. Chọn hàng 3,000-5,000 rpm, cột 7-9, đặt 11.5.', 'Chọn hàng 5,500-6,600 rpm, cột 7-9, đặt 11.3.', 'Làm giống hệt ở WOT Enrichment H.', 'Lưu thành file mới, nạp, log một lần kéo ga (Bước 4 kiểm tra).'],
-      B2: ['Chỉ khi có người duyệt, một log ngày nóng sạch, và trần trên 21 psi.', 'Ở Boost Target 1, 2 và 3 Normal (L và H), chọn hàng 3,500-5,500 rpm trên các cột 21 psi và đặt 22.', 'Giữ nguyên mọi hàng dưới 3,000 rpm.', 'Lưu thành file mới, nạp, log một lần kéo ga vào buổi chiều nóng.']
+      B2: ['Chỉ khi app đề xuất: một lần chạy trời mát có hai lần đạp lút ga và một lần chạy trời nóng đã qua mọi cổng kiểm tra.', 'Chỉ ở Boost Target 2 Normal L và H, chọn hàng 3,500-4,500 rpm, các ô từ 15 psi trở lên, và cộng 1 psi (không bao giờ vượt đỉnh Final Boost Target ở hàng đó: 23.4 ở đây, tối đa 24).', 'Giữ nguyên Boost Target 1 và 3, và mọi hàng dưới 3,000 rpm.', 'Lưu thành file mới, nạp, chuyển sang Tune 2, rồi log một lần chạy trời mát có hai lần đạp lút ga và một lần chạy trời nóng.', 'Nếu đạt, chép đúng các ô đó sang Boost Target 1 và 3. Nếu trượt, nạp lại file cũ của bạn.']
     },
     blind: function (p, name, F) {
       var top = p.topHighLoad[0];

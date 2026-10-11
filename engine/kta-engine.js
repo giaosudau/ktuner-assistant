@@ -1431,18 +1431,27 @@
     return { values: next, rows: rows, columns: [cols - 3, cols - 2, cols - 1] };
   };
 
-  /** Gain lever 2: +1 psi on the full-load plateau at 3,500-5,500 rpm, capped at the ceiling. */
-  KTA.suggestBoostStep = function (ceilingPsi, values) {
+  /**
+   * The Boost step (ADR 0007): +1 psi on the proof pulls' rows (3,500-4,500 rpm),
+   * cells of 15 psi and up, never above the Final Boost Target peak at that row
+   * (KTA.boostCeilingAt) nor the 24 psi file ceiling. `fin` is Final Boost Target
+   * in the digitized shape (without it, 24 psi); `rpm` is the rows of `values`.
+   */
+  KTA.suggestBoostStep = function (fin, values, rpm) {
     values = values || REF.boost.normal;
-    var ceiling = isNum(ceilingPsi) ? ceilingPsi : KTA.LIMITS.boostCeilingPsi;
-    var rpm = REF.boost.rpm, rows = [], blocked = 0;
+    rpm = rpm || REF.boost.rpm;
+    var TH = KTA.THRESHOLDS || {};
+    var G = TH.boost_step_gates ? TH.boost_step_gates.value : { rows_rpm: [3500, 4000, 4500], cell_min_psi: 15 };
+    var step = TH.boost_step_max ? TH.boost_step_max.value : 1;
+    var rows = [], blocked = 0;
     var next = values.map(function (row, r) {
-      var peak = Math.max.apply(null, row);
+      if (G.rows_rpm.indexOf(rpm[r]) < 0) return row.slice();
+      var ceiling = KTA.boostCeilingAt(fin, rpm[r], KTA.LIMITS.boostCeilingPsi);
       return row.map(function (v) {
-        if (rpm[r] < 3500 || rpm[r] > 5500 || v < peak - 0.01) return v;
-        var to = Math.min(v + 1, ceiling);
-        if (to <= v) { blocked++; return v; }
-        return round(to, 1);
+        if (!(v >= G.cell_min_psi)) return v;
+        var to = round(Math.min(v + step, ceiling), 1);
+        if (!(to > v)) { blocked++; return v; }
+        return to;
       });
     });
     next.forEach(function (row, r) {
@@ -1450,7 +1459,7 @@
       if (to !== from) rows.push({ rpm: rpm[r], from: from, to: to });
     });
     var mapPeak = Math.max.apply(null, values.map(function (r) { return Math.max.apply(null, r); }));
-    return { values: next, rows: rows, atCeiling: rows.length === 0, mapPeak: mapPeak, ceiling: ceiling, blockedCells: blocked };
+    return { values: next, rows: rows, atCeiling: rows.length === 0, mapPeak: mapPeak, blockedCells: blocked };
   };
 
   // ---------------------------------------------------------------------------
@@ -1689,7 +1698,8 @@
 
   /**
    * The basic-stage change for one table, cell by cell, or null for a table the
-   * basic stage leaves alone. opts: { maf: suggestMaf result, ceiling: psi }.
+   * basic stage leaves alone. opts: { maf: suggestMaf result, fin: Final Boost
+   * Target (digitized shape), rpm: the boost table's rows }.
    * AFM Flow stays "pending" until a log gives a correction.
    */
   KTA.tableEdits = function (name, values, opts) {
@@ -1701,7 +1711,8 @@
       if (opts.maf && opts.maf.ok && opts.maf.after.length === values.length) after = opts.maf.after.slice();
       else { after = values.slice(); pending = true; }
     } else if (meta.stage === 'B1') after = KTA.suggestWotLean(values).values;
-    else after = KTA.suggestBoostStep(opts.ceiling, values).values;
+    // The Boost step goes on Tune 2 only: Tunes 1 and 3 take it after its proof (ADR 0007).
+    else after = /^Boost_Target_2_/.test(name) ? KTA.suggestBoostStep(opts.fin, values, opts.rpm).values : values;
     var changed = [];
     if (meta.kind === 'curve') {
       values.forEach(function (v, k) { if (Math.abs(after[k] - v) > 1e-9) changed.push({ r: 0, c: k, from: v, to: after[k] }); });
@@ -1805,7 +1816,7 @@
   // Reference checks and the review packet
   // ---------------------------------------------------------------------------
   /**
-   * ctx: { maf: suggestMaf result | null, wotValues, boostValues, ceilingPsi,
+   * ctx: { maf: suggestMaf result | null, wotValues, boostValues, finalBoost,
    *        lastAnalysis, hotLogDone, untouchedConfirmed }
    */
   KTA.referenceChecks = function (ctx) {
@@ -1832,9 +1843,14 @@
     add('wotBand', 'WOT targets inside 11.0-12.0 AFR (λ 0.75-0.82)', bad.length ? 'stop' : 'good', bad.length ? 'Outside the band at ' + bad.slice(0, 4).join(', ') + ' rpm.' : 'Full-load columns from 3,000 rpm are in the band.', { bad: bad.slice(0, 4) });
 
     var bv = ctx.boostValues || REF.boost.normal;
-    var ceiling = isNum(ctx.ceilingPsi) ? ctx.ceilingPsi : L.boostCeilingPsi;
+    // The ceiling is a rule (ADR 0007): each row under the Final Boost Target peak there, 24 at most.
     var peak = Math.max.apply(null, bv.map(function (r) { return Math.max.apply(null, r); }));
-    add('boostPeak', 'Boost map peak at or under your ceiling', peak <= ceiling + 1e-9 ? 'good' : 'stop', 'Peak ' + peak + ' psi, ceiling ' + ceiling + ' psi.', { peak: peak, ceiling: ceiling });
+    var overRows = REF.boost.rpm.filter(function (rpm, r) {
+      return Math.max.apply(null, bv[r]) > KTA.boostCeilingAt(ctx.finalBoost, rpm, L.boostCeilingPsi) + 1e-9;
+    });
+    add('boostPeak', 'Boost targets at or under the Final Boost Target peak (24 psi at most)', overRows.length ? 'stop' : 'good',
+      'Peak ' + peak + ' psi' + (overRows.length ? '; over the ceiling at ' + overRows.slice(0, 4).join(', ') + ' rpm.' : ', under the ceiling on every row.'),
+      { peak: peak, overRows: overRows.slice(0, 4) });
     // Adding boost below 3,000 rpm loads the CVT belt hardest; taking some out there is allowed.
     var lowRaised = 0, lowCut = 0;
     bv.forEach(function (row, r) {
