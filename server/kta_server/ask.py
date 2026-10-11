@@ -18,6 +18,7 @@ from typing import Any, Mapping
 
 from . import agent as agent_node
 from . import copy as C
+from . import flash as FL
 from . import knowledge as K
 from . import window as W
 from .harness import Harness
@@ -156,7 +157,7 @@ async def answer_question(
     plan = step = None
     if has_drives:
         window_state = W.windowed_state(state, win["ids"])
-        plan = await worker.call("flashPlan", state=window_state, now=settings.now_ms())
+        plan = await FL.checked_plan(worker, store, state, window_state, settings.now_ms())
         decided = await worker.call(
             "nextStep", state=window_state, driveId=latest_id, openSteps=store.list_open_steps(), installs=installs
         )

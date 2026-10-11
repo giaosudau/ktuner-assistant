@@ -15,6 +15,7 @@ from typing import Any
 
 from . import agent as agent_node
 from . import copy as C
+from . import flash as FL
 from . import window as W
 from .harness import Harness
 
@@ -49,7 +50,7 @@ async def answer_screenshot(
     installs = store.list_installs()
     win = W.window_for_state(state, installs, latest_id)
     window_state = W.windowed_state(state, win["ids"])
-    plan = await worker.call("flashPlan", state=window_state, now=settings.now_ms())
+    plan = await FL.checked_plan(worker, store, state, window_state, settings.now_ms())
     decided = await worker.call(
         "nextStep", state=window_state, driveId=latest_id, openSteps=store.list_open_steps(), installs=installs
     )
