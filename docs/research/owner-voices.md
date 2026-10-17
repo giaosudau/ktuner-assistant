@@ -37,6 +37,7 @@ Ranked by how directly they match this owner (E10, hot climate, Starter 21 Dual,
 | 8 | **"It bogs or hesitates from a stop. Is KTuner worth it?"** | Turbo + CVT lag; a basemap with throttle and spool quick adjustments "transforms drivability"; some lag below 1,500 rpm stays | — | Out of scope for the logs today. Quick adjustments are KTuner settings, not tables |
 | 9 | **"Boost doesn't reach target."** | Misses only when warm → wastegate (the electronic wastegate linkage is a known weak point); never reaches it → boost leak | Boost tracks target (overshoot ≤ 1.9 psi) | A future check: target vs actual, warm vs cold |
 | 10 | **"Check engine light right after flashing."** | Key off, wait, key on without starting, let KTuner finish; it clears | — | A help card, not a verdict |
+| 11 | **"Which KTuner tables affect the others? There's no wastegate duty map."** "The tuner says turbo limit by air intake temp, the website says engine temp. It seems to datalog as engine temp." (FK8 Type R owner, experienced on COBB / HP Tuners) | The Bosch ECU is torque-based: "you basically set the parameter limits and the torque request and the Bosch ecu does almost everything else". Boost is capped by whichever limit is lowest: turbo limit by intake and engine temp, boost limit by altitude/air density, torque safety limits. Raising the limiting one gives more boost. Another owner pointed to KTuner Help's engine-temperature boost limit page and said KTuner answers questions by message/email | — | Name the limit that capped boost on this drive (the boost-target-gap work), in KTuner's own table names |
 
 ---
 
@@ -56,6 +57,10 @@ Ranked by how directly they match this owner (E10, hot climate, Starter 21 Dual,
 | P0420 disable: KTuner Main Parameters → Disables/Monitors | CivicXI | — | Exact KTuner location for the help card |
 | Tuned CVTs: failures mostly from brake launching and high low-rpm torque; a stop-thump is a simulated downshift | CivicX/CivicXI survey threads | No slip | CVT guidance |
 | KTuner Starter 21 ≈ 200–205 whp, 260–270 Nm (forum figure) | CivicX ("Fear of remapping") | — | Expectation setting |
+| **No wastegate duty table: boost comes from the torque request, capped by limit tables** (temperature, altitude, torque safety). Owners coming from COBB / HP Tuners expect a duty map and get lost | CivicX ("Building KTuner custom tune", FK8 2.0T; same Bosch torque logic) | Boost target 19.2 psi, below the 21 psi Normal tables (boost-target-gap ticket) | Explain boost as "the lowest limit wins", never as a duty cycle |
+| KTuner's labels and help pages don't always agree (intake temp vs engine temp on the turbo limit) | Same thread | — | Quote the table name the owner sees, and give the log channel that backs it |
+| Torque cut in low gears is not traction control: it has no wheel-speed input and only helps in a straight line | Same thread (two replies) | — | Out of scope; don't call a torque table "traction control" |
+| Asking for tuning help in public often turns into fights over credentials, not answers | Same thread (2 pages, no technical answer to the opening question) | — | Supports §1: the owner needs a private, evidence-based reader |
 
 ---
 
@@ -112,6 +117,7 @@ Ranked by how directly they match this owner (E10, hot climate, Starter 21 Dual,
 - [Low boost until 4k](https://www.civicx.com/forum/threads/make-low-boost-until-4k-rpm-feel-weird-help.94759/)
 - [KTuner check engine after flash](https://www.civicx.com/forum/threads/solved-ktuner-check-engine.39677/)
 - [Tuned 11th gen reliability thread, p6](https://www.civicxi.com/forum/threads/the-tuned-11th-gen-experience-reliability-thread-for-all-models.50251/page-6) and [p9](https://www.civicxi.com/forum/threads/the-tuned-11th-gen-experience-reliability-thread-for-all-models.50251/page-9)
+- [Building KTuner custom tune](https://www.civicx.com/forum/threads/building-ktuner-custom-tune.37882/) (FK8 Type R, Jun 2019, 2 pages; added 17 Oct 2026)
 - [Failures from the tuning reliability thread](https://www.civicx.com/forum/threads/failures-from-the-tuning-reliability-thread.54181/)
 - [2022 1.5T fuel octane](https://www.civic11forum.com/threads/2022-1-5l-turbo-manufacturer-recomended-fuel-octane-rating.977/)
 
@@ -124,12 +130,14 @@ Ranked by how directly they match this owner (E10, hot climate, Starter 21 Dual,
 - [27WON downpipe](https://store.27won.com/2022-civic-turbo-performance-downpipe-11th-gen.html)
 - [KTuner Help: ignition timing and knock control](http://www.ktuner.com/KTunerHelp/ignition_timing_and_knock_control.htm)
 - [KTuner Help: boost target dampening](http://www.ktuner.com/KTunerHelp/disable_boost_target_dampening.htm)
+- [KTuner Help: turbo pressure limit based on engine temperature](http://www.ktuner.com/KTunerHelp/turbo_pressure_limit_based_on_engine_temperature.htm)
 
 ---
 
 ## 6. Method and access notes (for the next research run)
 
 - **CivicX / CivicXI** block headless browsers (Cloudflare). They were read through the `r.jina.ai/<url>` reader. **Civic11forum** works the same way.
+- **Scrapling MCP** (added 17 Oct 2026): a plain `make_request` gets 403 on CivicX; `stealthy_fetch` with `solve_cloudflare: true` reads it. Selector `article.message .bbWrapper` with `extraction_type: "text"` keeps only the post bodies; add `/page-N` for later pages.
 - **Reddit blocks Anthropic's crawler.** It is excluded on purpose; don't route around it.
 - **Hondata forum** (Cloudflare captcha) was not reached. **DuckDuckGo HTML** shows a captcha after about 2 queries. Use the built-in web search for discovery.
 - **crawl4ai** Docker (`localhost:11235`) works for vendor sites with `Authorization: Bearer $CRAWL4AI_API_TOKEN`. The MCP entry was added with an unset variable, so its header is empty; re-add it with the right variable.
