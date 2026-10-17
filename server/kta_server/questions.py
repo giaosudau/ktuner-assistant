@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from . import profile as P
+
 # What each choice does. `flash` means record a Flash before the Drive with
 # this map name and change; `answer` means `carAnswer` this Drive afterwards;
 # `none` means history is untouched (housing, or an explicit "no").
@@ -129,6 +131,8 @@ async def rebuild_history(store, worker, now_ms: int) -> dict[str, Any]:
             out = await worker.call("recordFlash", state=state, flash=what, now=now_ms)
         state = out["state"]
 
+    # ponytail: one profile flag for every Drive; per-Flash map settings if the owner ever flips the box between drives.
+    opts = P.engine_opts(store.car_profile())
     for drive in drives:
         upload = store.get_upload(drive["upload_id"]) if drive.get("upload_id") else None
         if upload is None:
@@ -145,6 +149,7 @@ async def rebuild_history(store, worker, now_ms: int) -> dict[str, Any]:
             fileName=drive.get("file_name") or "TunerView.csv",
             now=now_ms,
             state=state,
+            **opts,
         )
         state = out["state"]
         drive_id = out["drive"]["id"]

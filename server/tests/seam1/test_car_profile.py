@@ -10,7 +10,7 @@ reply states its window, and Drives outside it never decide the Next step.
 
 from __future__ import annotations
 
-from conftest import Loop
+from conftest import Loop, owner_csv
 
 from test_reply_words import BANNED
 
@@ -53,6 +53,54 @@ def drive_start(loop: Loop, drive_id: str) -> int:
     return loop.store.car_state(None)["drives"][drive_id]["start"]
 
 
+def high_rpm_rise(csv: str, t0: float = 925, t1: float = 945) -> str:
+    """15:29 with 5,600 rpm and a 0.70 Knock Control held across its 929 s pull.
+
+    The Python twin of test/drive.test.js `highRpmPull`: a rise the ECU makes on
+    purpose while the map's "Eliminate Artificial Knock Control Rise" box is unticked.
+    """
+    lines = csv.splitlines()
+    head = lines[0].split(";")
+    t, rpm, kc = head.index("Timestamp"), head.index("Engine RPM"), head.index("Knock Control")
+    for i in range(2, len(lines)):
+        row = lines[i].split(";")
+        if len(row) == len(head) and t0 <= float(row[t]) <= t1:
+            row[rpm] = str(max(float(row[rpm]), 5600))
+            row[kc] = "0.70"
+            lines[i] = ";".join(row)
+    return "\n".join(lines) + "\n"
+
+
+# -- the map's artificial Knock Control rise box rides on the profile
+def test_the_artificial_rise_box_is_saved_unticked_by_default_and_checked(loop: Loop):
+    fields = draft(loop)["fields"]
+    assert confirm(loop, fields)["profile"]["eliminate_artificial_kc_rise"] is False
+    ticked = {**fields, "eliminate_artificial_kc_rise": True}
+    assert confirm(loop, ticked)["profile"]["eliminate_artificial_kc_rise"] is True
+    assert loop.get("/api/state").json()["carProfile"]["eliminate_artificial_kc_rise"] is True
+
+    bad = post(loop, "/api/profile", {"fields": {**fields, "eliminate_artificial_kc_rise": "yes"}})
+    assert bad.status_code == 400
+    assert "Eliminate Artificial Knock Control Rise" in bad.json()["detail"]
+
+
+def test_a_ticked_artificial_rise_box_reaches_the_drive_check(tmp_path):
+    """Profile → server → worker → KTA.carIngest: ticked, the rise above 5,200 rpm counts."""
+    csv = high_rpm_rise(owner_csv("aug30-1529"))
+    kept = {}
+    for ticked in (False, True):
+        loop = Loop(tmp_path / str(ticked)).start()
+        try:
+            confirm(loop, {**draft(loop)["fields"], "eliminate_artificial_kc_rise": ticked})
+            reply = loop.send(loop.upload(csv, "TunerView_20260830_152931.csv"))
+            assert not reply.errors(), reply.errors()
+            kept[ticked] = loop.store.car_state(None)["drives"]["20260830-152931"]["kcPeakJudged"]
+        finally:
+            loop.close()
+    # Unticked (this car's map today) the 0.70 above 5,200 rpm is skipped; ticked it is the peak.
+    assert kept[True] >= 0.69 > kept[False], kept
+
+
 # -- the card fills from the owner's words, and saves nothing before confirm
 def test_describing_the_car_fills_the_card_and_saves_nothing(loop: Loop):
     card = draft(loop)
@@ -88,8 +136,10 @@ def test_a_corrected_field_is_saved_as_corrected(loop: Loop):
 
     out = confirm(loop, corrected)
     assert out["line"] == "Car profile saved."
-    assert out["profile"] == corrected
-    assert loop.get("/api/state").json()["carProfile"] == corrected
+    # The artificial Knock Control rise box is always saved: unticked unless the owner ticks it.
+    saved = {**corrected, "eliminate_artificial_kc_rise": False}
+    assert out["profile"] == saved
+    assert loop.get("/api/state").json()["carProfile"] == saved
 
     # Taking the catback off records an Install with its date, like a Flash.
     assert [(r["part"], r["action"]) for r in out["installs"]] == [("catback", "removed")]

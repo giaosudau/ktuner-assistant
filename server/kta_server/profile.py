@@ -43,6 +43,11 @@ FIELDS: tuple[str, ...] = ("model", "engine", "transmission", "fuel", "climate",
 #: kept only while a downpipe is fitted. Absent means not said yet (= unknown).
 DOWNPIPE_TYPES: tuple[str, ...] = ("catted-200", "catted-400", "catless", "unknown")
 
+#: The map's "Eliminate Artificial Knock Control Rise" box in KTuner, as the
+#: owner says it is set. Unticked (False, the default and this car's map today)
+#: the engine skips Knock Control rises above 5,200 rpm; ticked, every rise counts.
+KC_RISE_FLAG = "eliminate_artificial_kc_rise"
+
 #: Fields the owner must not leave empty on confirm.
 REQUIRED: tuple[str, ...] = ("model", "basemap")
 
@@ -210,10 +215,23 @@ def validate_fields(fields: Any, basemap_default: str) -> dict[str, Any]:
             raise ValueError("A downpipe type is one of: " + ", ".join(DOWNPIPE_TYPES) + ".")
         if "downpipe" in cleaned["parts"]:
             cleaned["downpipe_type"] = kind
+    flag = fields.get(KC_RISE_FLAG)
+    if flag not in (None, True, False):
+        raise ValueError('"Eliminate Artificial Knock Control Rise" is ticked or not: true or false.')
+    cleaned[KC_RISE_FLAG] = flag is True
     missing = [name for name in REQUIRED if not cleaned[name]]
     if missing:
         raise ValueError("A Car profile needs " + " and ".join(missing) + ".")
     return cleaned
+
+
+def engine_opts(profile: dict[str, Any] | None) -> dict[str, Any]:
+    """The Car profile settings every drive check reads, as worker args.
+
+    No profile yet, or one saved before the box was on the card, reads as
+    unticked: the map's default.
+    """
+    return {"eliminateArtificialKcRise": (profile or {}).get(KC_RISE_FLAG) is True}
 
 
 def installs_for_part_change(
@@ -236,11 +254,13 @@ def installs_for_part_change(
 
 __all__ = [
     "DOWNPIPE_TYPES",
+    "KC_RISE_FLAG",
     "FIELDS",
     "PARTS",
     "REQUIRED",
     "downpipe_type",
     "draft_from_text",
+    "engine_opts",
     "installs_for_part_change",
     "part_display",
     "profile_spec",

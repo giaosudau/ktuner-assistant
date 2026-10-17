@@ -266,7 +266,7 @@ export function NextStepCard({
 }
 
 // ------------------------------------------------------------ the Car profile
-const FIELDS: { key: keyof Omit<CarProfile, "parts">; label: string }[] = [
+const FIELDS: { key: keyof Omit<CarProfile, "parts" | "eliminate_artificial_kc_rise">; label: string }[] = [
   { key: "model", label: "Model" },
   { key: "engine", label: "Engine" },
   { key: "transmission", label: "Gearbox" },
@@ -364,6 +364,19 @@ export function ProfileCard({
           ))}
         </div>
       </div>
+      <label className="small" style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 12 }}>
+        <input
+          type="checkbox"
+          checked={fields.eliminate_artificial_kc_rise === true}
+          data-testid="setup-field-eliminate_artificial_kc_rise"
+          onChange={(event) => setFields((f) => ({ ...f, eliminate_artificial_kc_rise: event.target.checked }))}
+        />
+        <span>
+          &ldquo;Eliminate Artificial Knock Control Rise&rdquo; is ticked on my map
+          <br />
+          <span className="meta">Unticked, the ECU raises Knock Control above 5,200 rpm on purpose, so I don&rsquo;t count those rises.</span>
+        </span>
+      </label>
       {draft.missing.length ? (
         <p className="small" style={{ marginTop: 12 }} data-testid="setup-missing">
           Still to say: {draft.missing.join(", ")}.

@@ -437,7 +437,8 @@ var OPS = {
     var p = parsed(need(args, 'csv', 'string'), fileName);
     var out;
     try {
-      out = KTA.carIngest(state, p.log, { fileName: fileName, now: now });
+      // The Car profile's copy of KTuner's "Eliminate Artificial Knock Control Rise" box.
+      out = KTA.carIngest(state, p.log, { fileName: fileName, now: now }, { eliminateArtificialKcRise: args.eliminateArtificialKcRise === true });
     } catch (e) {
       fail('engine-error', 'The engine could not read this drive: ' + (e && e.message));
     }

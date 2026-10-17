@@ -53,6 +53,7 @@ from . import agent as agent_node
 from . import copy as C
 from . import flash as FL
 from . import pictures as PIC
+from . import profile as P
 from . import tour as TOUR
 from . import readback as RB
 from . import window as W
@@ -237,7 +238,10 @@ async def _ingest_run(
     #    unchanged: the engine's operations are pure.
     ingested = await harness.step(
         config, "ingestUpload", "Add the Drive to your Car history", shown,
-        lambda: worker.call("ingestUpload", csv=csv_text, fileName=upload["file_name"], now=now, state=car_state),
+        lambda: worker.call(
+            "ingestUpload", csv=csv_text, fileName=upload["file_name"], now=now, state=car_state,
+            **P.engine_opts(store.car_profile()),
+        ),
     )
     drive = ingested["drive"]
     car_state = ingested["state"]

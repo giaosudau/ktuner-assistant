@@ -355,6 +355,8 @@ export type CarProfileFields = {
   climate: string;
   basemap: string;
   parts: string[];
+  /** KTuner's "Eliminate Artificial Knock Control Rise" box on the map. Absent = unticked. */
+  eliminate_artificial_kc_rise?: boolean;
 };
 
 export type CarProfile = CarProfileFields;
