@@ -14,12 +14,12 @@ Working files (claims, findings, conflicts, per-group picks): `.scratch/ktuner-k
 | Old KTuner forum (Wayback Machine; live forum is offline) | 243 snapshots of 541 topic ids | 69 | 68 staff answers; most kept threads are other Hondas |
 | CivicXI (11th gen) | 115 threads | 156 | Main same-car source |
 | Civic11forum (11th gen) | 63 threads | 113 | |
-| CivicX (10th gen 1.5T) | 19 threads + 35 search summaries | 131 | Blocked mid-run; 81 claims are search-summary only (low confidence). Refetch running |
+| CivicX (10th gen 1.5T) | 84 threads + 37 search summaries | 284 | Second pass 18 Oct (§9): 153 new claims; 44 snippet-only claims checked against the full text: 6 confirmed, 22 corrected, 16 unsupported |
 | Vendors (TSP, Phearable, PRL, 27WON, Hybrid Racing) | 24 pages | 59 | Primary only about their own product |
 | YouTube | 45 transcripts | 115 | YouTube blocked our IP after ~50 requests; 68 videos left |
 | TikTok | search captions | 3 | Needs an anti-bot challenge; not solved by design. Almost no value |
 
-**764 claims → 197 findings.** Verdicts: 129 supported, 55 plausible (forum level), 7 conflicts, 6 refuted. Each finding was checked against `fact-check.md`, the 46 cards, `thresholds.json`, our map file and **this car's 9 logs (108,918 rows)**.
+**917 claims → 207 findings** (first pass 764 → 197, verdicts 129 supported, 55 plausible (forum level), 7 conflicts, 6 refuted; the CivicX second pass added 153 claims, 10 findings and 2 verdict upgrades). Each finding was checked against `fact-check.md`, the 46 cards, `thresholds.json`, our map file and **this car's 9 logs (108,918 rows)**.
 
 ---
 
@@ -29,14 +29,14 @@ Working files (claims, findings, conflicts, per-group picks): `.scratch/ktuner-k
 
 Ruled out on our data: the export-ECU TPS Command cap at ~95 % (ours reached 99–100), Final Boost Target (top 23.4, passes the target through), Boost By Gear (35.4 psi everywhere = no limit), ethanol boost adjust (0, no sensor), ECO mode, knock (0.49–0.53 at every peak), heat, altitude.
 
-Still open: KTuner says Starter maps keep factory protections; one Starter 21 Dual owner never passed 19.5 psi floored and was told to go custom (KTuner forum p9224). That may cap our target below 21 even when floored.
+Still open: KTuner says Starter maps keep factory protections; one Starter 21 Dual owner never passed 19.5 psi floored and was told to go custom (KTuner forum p9224). That may cap our target below 21 even when floored. A KTuner post from the 10th gen era (CivicX 27523) adds why: "we're at the safe point for the CVT and factory clutch at this 21PSI level", and "the rods in the base are also weaker".
 
 **To settle it (owner, one drive):**
 1. Key on, engine off, pedal floored: read TPS. That sets what "floored" means on this car.
 2. One floored pull held ≥ 5 s from ~3,000 to past 5,000 rpm, S mode, ECO off, Cool conditions. Log TPS, TPS Command, Turbo Pressure Target, Turbo Pressure, EWG Position, EWG Target, RPM, Gear.
 3. Screenshot the column header of `Boost_Target_2_Normal` (its columns step 19.0 → 20.0; the axis may be pedal).
 
-Reading it: target flattens at 21 → a Boost step can show. Target flattens below 21 with TPS Command ≥ 99 → a protection owns it → **no map change**. **Until that pull exists: no map change, and the Boost step stays closed.**
+Reading it: target flattens at 21 → a Boost step can show. Target flattens below 21 with TPS Command ≥ 99 → the target is capped → **no map change**. TPS Command held below the pedal with no wheel slip → a protection is closing the throttle → **no map change**. **Until that pull exists: no map change, and the Boost step stays closed.**
 
 ---
 
@@ -109,12 +109,42 @@ The full list (≈ 120 picks with wording and links): `.scratch/ktuner-kb-resear
 - "Knock Count shows knock." It's a misfire count; watch Knock Control.
 - "Add fuel for E10" / "set a flex correction for E10": no ethanol sensor, flex tables do nothing, trims show no E10 offset (cruise median −0.8 %).
 - "Pick the Race MAF option for a better intake." Only with a Race housing; the housing decides, not the brand.
+- "KTuner says a downpipe runs lean." The thread says the opposite: "All exhaust modifications are supported with the included tunes".
+- "Trims lock from 1 psi of boost." Our logs: short-term trim is zero on only 16–30 % of rows up to 6 psi, about 100 % from 10 psi.
+- "Trims add 20 %, so lower g/s by 20 %." Backwards: a positive trim raises g/s.
 
 ---
 
 ## 8. Gaps and what's not done
 
-- **YouTube:** 68 videos not fetched (IP block), including the four official KTuner tutorials and Derek Robinson's 2022 Si walkthrough. Resume: `scratchpad/yt_grab_kb.py` (skips saved ids).
-- **CivicX:** about 60 threads still being fetched in the background (25 s per page); their claims aren't extracted yet. The 81 search-summary claims stay low-confidence until those threads are read.
+- **YouTube:** still IP-blocked at the last probe (18 Oct 01:50); a waiter retries every 30 minutes until about 08:45. 68 videos not fetched, including the four official KTuner tutorials and Derek Robinson's 2022 Si walkthrough. Resume: `scratchpad/yt_grab_kb.py` (skips saved ids).
+- **CivicX:** done (§9). 37 snippet-only claims remain with no fetched thread; they stay low-confidence.
 - **TikTok:** no transcripts by design (anti-bot challenge). **Facebook groups and Vietnamese sources (Otofun)** not reached; they remain the biggest gap for this market.
 - Not in any source: what exactly caps the target below 21 on a floored pull (only the test in §2 answers it), and KTuner's internal Knock Control model.
+
+---
+
+## 9. Second CivicX pass (18 Oct 2026)
+
+The 50 CivicX threads fetched after the block lifted were read in full (153 claims; quotes checked word for word). The 44 claims that rested on search snippets were checked against their threads: **16 had no support and 22 needed correcting**, so snippet-only claims were right to be marked low-confidence. Worst cases: a "KTuner agreed a downpipe runs lean" snippet (KTuner said the opposite), and four snippets crediting KTuner staff with what owners or a vendor said. That leaves the "0.9 and above is irregular" rung of the forum Knock Control scale with no staff source.
+
+**One decision for the owner: how far past 21 psi a Boost step may go.** KTuner says it stopped its Starter maps at 21 psi as "the safe point for the CVT and factory clutch" on the base engine, whose rods are weaker (10th gen era post, CivicX 27523). `kc-boost-step` today allows a step up to the Final Boost Target peak, 23.4. Vendors run past 21 on stock 11th gen CVTs (TSP Map 3 targets 24 psi; the 11th gen census has 0 failures in 21 tuned CVTs, too few to prove anything). No log can measure that margin. **Recommendation: cap the Boost step at 21 psi target for now.** On this map that closes the step outright, because its 3,500–4,500 rpm rows already ask 21, so the honest power answer becomes "no map change". Going past 21 means using up KTuner's own margin, and that's the owner's call. The step stays closed either way until the floored pull in §2.
+
+**Checks on our logs added this pass:**
+- Open loop: short-term trim reads exactly zero on 16–30 % of rows at 0–6 psi (the same as cruise), 43 % at 6–8 psi, 89 % at 8–10 psi and about 100 % from 10 psi. The 8 psi cut in `kc-open-loop-wot` and the engine stands.
+- IAT − IAT2 is never negative on 23,560 warm rows, which backs `kc-iat2-side`.
+
+**Owner check needed:** one owner says the TunerView CSV has no MAF signal. If TunerView offers no airflow-frequency gauge on this car, the MAF headroom check must read Can't tell and the log still counts, or every log fails the gate on something the owner can't fix (`kc-log-gate`, `kc-drive-brief`).
+
+**Card tensions found, no change made:** `kc-heat-soak` (an owner cites +12–15 bhp from a bigger intercooler on a dyno; our street data still says the stock cooler holds), `kc-cvt` (owners on stock fluid see 88–104 °C, so the 100 °C Stop stays provisional), `kc-dual-boost-targets` (ECO also reduces A/C output, a real cost in Vietnamese heat), `kc-cvt` / `kc-power-sources` (two owners say there's no torque limiter; KTuner says Starter maps keep factory limits, which is the better source).
+
+**Best new picks** (wording and links in `.scratch/ktuner-kb-research/analysis/picks-civicx2.md`):
+1. `kc-boost-step`: read the floored pull by TPS Command as well as target (see §2).
+2. `kc-boost-codes`: boost on target cold but short warm points to the wastegate, not a leak.
+3. `kc-flash-howto`: a floored-pull target stuck at the factory level means the map didn't flash; ours reached 19.2, so the Starter map is in.
+4. `kc-maf-housing`: a preset that doesn't match the housing can show as a bog past about 4,500 rpm with boost 4–6 psi down, not only as bad trims.
+5. `kc-heat-soak`: ask which intake is fitted; a short-ram filter heat-soaks to about 62 °C in hot traffic, and heat wrap doesn't help.
+6. `kc-shakedown`: after an airflow flash also compare DI fuel pressure with its target.
+
+Verdicts upgraded with the full text: the low-rpm judder fix in KTuner 1.0.9.5 (plausible → supported) and Phearable's maps keeping the artificial knock rise (merged into the §3 `kc-high-rpm` finding).
+
