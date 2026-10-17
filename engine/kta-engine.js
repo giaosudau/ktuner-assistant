@@ -420,19 +420,20 @@
     { key: 'rpm', label: 'Engine speed', any: [/\brpm\b/, /engine speed/, /\bne\b/] },
     { key: 'mafHz', label: 'AFM / MAF frequency (Hz)', all: [/maf|afm|air ?flow|mass air/, /\bhz\b|freq/] },
     { key: 'mafGs', label: 'AFM / MAF airflow (g/s)', any: [/maf|afm|air ?flow|mass air/], none: [/\bhz\b|freq|volt|\bv\b|corr|target|tgt|limit|load|%/] },
-    { key: 'stft', label: 'Short-term fuel trim', any: [/\bstft\b/, /short term/, /short trim/, /\bs\.? ?trim\b/, /\bst trim\b/, /\bsft\b/] },
-    { key: 'ltft', label: 'Long-term fuel trim', any: [/\bltft\b/, /long term/, /long trim/, /\bl\.? ?trim\b/, /\blt trim\b/, /\blft\b/] },
+    { key: 'stft', label: 'Short-term fuel trim', any: [/\bstft1?\b/, /short term/, /short trim/, /\bs\.? ?trim\b/, /\bst trim\b/, /\bsft\b/] },
+    { key: 'ltft', label: 'Long-term fuel trim', any: [/\bltft1?\b/, /long term/, /long trim/, /\bl\.? ?trim\b/, /\blt trim\b/, /\blft\b/] },
     { key: 'afrCmd', label: 'AFR / lambda command', all: [/\bafr\b|\baf\b|air fuel|lambda|equiv|\beqr\b/, /cmd|command|target|tgt|desired|req/] },
     { key: 'afr', label: 'AFR / lambda (sensor)', any: [/\bafr\b/, /\baf\b/, /air fuel/, /lambda/, /wideband/, /\bwb\b/, /\bo2\b/], none: [/cmd|command|target|tgt|desired|req|trim|volt|\bv\b|heater|current|corr/] },
-    { key: 'fpTarget', label: 'Fuel pressure target', all: [/fuel ?press|\bdi ?press|rail ?press|\bfp\b|\bdifp\b|\bhp ?press|injection ?press/, /target|tgt|desired|cmd|req/] },
-    { key: 'fp', label: 'Fuel pressure (DI)', any: [/fuel ?press/, /\bdi ?press/, /rail ?press/, /\bfp\b/, /\bdifp\b/, /\bhp ?press/, /injection ?press/], none: [/target|tgt|desired|cmd|req|\blow\b|\blp\b|duty/] },
-    // KTuner logs the boost sensor ahead of the throttle as "Turbo Pressure", and MAP separately
-    { key: 'boostTarget', label: 'Boost target', all: [/boost|\bmap\b|turbo ?press/, /target|tgt|desired|cmd|req/], none: [/limit|duty/] },
-    { key: 'boost', label: 'Boost', any: [/boost/, /turbo ?press/], none: [/target|tgt|desired|cmd|req|limit|duty|ctrl|control|solenoid|\bmax\b|gear/] },
+    { key: 'fpTarget', label: 'Fuel pressure target', all: [/fuel ?press|\bdi ?press|rail ?press|\bfp\b|\bdifp(ress)?\b|\bhp ?press|injection ?press/, /target|tgt|desired|cmd|req/] },
+    { key: 'fp', label: 'Fuel pressure (DI)', any: [/fuel ?press/, /\bdi ?press/, /rail ?press/, /\bfp\b/, /\bdifp(ress)?\b/, /\bhp ?press/, /injection ?press/], none: [/target|tgt|desired|cmd|req|\blow\b|\blp\b|duty/] },
+    // KTuner logs the boost sensor ahead of the throttle as "Turbo Pressure" (TC.Press), and MAP separately
+    { key: 'boostTarget', label: 'Boost target', all: [/boost|\bmap\b|turbo ?press|\btc\b/, /target|tgt|desired|cmd|req/], none: [/limit|duty/] },
+    { key: 'boost', label: 'Boost', any: [/boost/, /turbo ?press/, /\btc\.? ?press/], none: [/target|tgt|desired|cmd|req|limit|duty|ctrl|control|solenoid|\bmax\b|gear/] },
     { key: 'map', label: 'Manifold pressure (MAP)', any: [/\bmap\b/, /manifold/], none: [/target|tgt|desired|cmd|volt|\bv\b/] },
     { key: 'baro', label: 'Barometric pressure', any: [/baro/, /\bpa\b/, /atmos/, /ambient press/] },
-    { key: 'tpsCmd', label: 'Throttle command', all: [/\btps\b|throttle/, /cmd|command|target|desired|req/] },
-    { key: 'tps', label: 'Throttle', any: [/\btps\b/, /throttle/], none: [/target|cmd|desired|req|pedal/] },
+    // KTuner's TPS.C is the throttle command; plain TPS is the pedal
+    { key: 'tpsCmd', label: 'Throttle command', all: [/\btps\b|throttle/, /cmd|command|target|desired|req|\btps\.c\b/] },
+    { key: 'tps', label: 'Throttle', any: [/\btps\b/, /throttle/], none: [/target|cmd|desired|req|pedal|\btps\.c\b/] },
     // "Acceleration" is the car's g-sensor, not the pedal
     { key: 'pedal', label: 'Accelerator pedal', any: [/pedal/, /\bapp\b/, /\baccelerator\b/], none: [/acceleration|lateral|longitudinal/] },
     { key: 'gear', label: 'Gear', any: [/\bgear\b/], none: [/ratio|limit|boost|shift|temp/] },
@@ -440,8 +441,8 @@
     { key: 'iat', label: 'Intake air temp', any: [/\biat\b/, /intake air/, /intake temp/, /\bair temp/, /charge temp/], none: [/cvt|trans|oil|coolant|\bect\b/] },
     { key: 'ect', label: 'Coolant temp', any: [/\bect\b/, /coolant/, /water temp/, /engine temp/, /\bclt\b/] },
     { key: 'cvt', label: 'CVT fluid temp', any: [/cvt.*(temp|fluid|oil)/, /(temp|fluid|oil).*cvt/, /trans\w* (temp|fluid)/, /\batf\b/, /gearbox temp/], none: [/ratio|gear|speed|pressure|slip/] },
-    { key: 'kControl', label: 'Knock control', any: [/k\.? ?control/, /knock control/, /knock level/, /k\.? ?level/, /knock ctrl/] },
-    { key: 'knock', label: 'Knock retard', multi: true, any: [/knock.*(retard|cyl|\d)/, /k\.? ?retard/, /\bkr\b/, /retard.*cyl/], none: [/count|control|level|sens|limit|noise|threshold|ctrl/] },
+    { key: 'kControl', label: 'Knock control', any: [/k\.? ?control/, /\bk\.? ?cont?\b/, /knock control/, /knock level/, /k\.? ?level/, /knock ctrl/] },
+    { key: 'knock', label: 'Knock retard', multi: true, any: [/knock.*(retard|cyl|\d)/, /k\.? ?ret(ard)?\b/, /\bkr\b/, /retard.*cyl/], none: [/count|control|level|sens|limit|noise|threshold|ctrl/] },
     { key: 'ign', label: 'Ignition timing', any: [/\bign\b/, /ignition/, /timing/, /spark/], none: [/knock|retard|target|table|limit|\bmax\b|\bmin\b|dwell|cam|vtc|inj/] },
     { key: 'torque', label: 'Engine torque', any: [/torque/], none: [/converter|limit|request|req|target|\bmax\b|demand|reduction/] },
     { key: 'wgPos', label: 'Wastegate position', all: [/wastegate|\bwg\b|\bewg\b/, /pos/] },
@@ -724,7 +725,7 @@
     }
     log.glitchTotal = Object.keys(log.glitches).reduce(function (s, key) { return s + log.glitches[key]; }, 0);
     var hset = H.map(function (h) { return String(h).toLowerCase(); }).join('|');
-    log.source = /turbo pressure/.test(hset) && /tps command/.test(hset) ? 'ktuner' : (/k\.control|k\.retard|s\.trim|l\.trim|afm hz/.test(hset) ? 'hondata' : 'other');
+    log.source = /turbo pressure|tc\.press/.test(hset) && /tps command|tps\.c\b/.test(hset) ? 'ktuner' : (/k\.control|k\.retard|s\.trim|l\.trim|afm hz/.test(hset) ? 'hondata' : 'other');
 
     log.found = KTA.REQUIRED.filter(function (key) { return channelPresent(log, key); });
     log.missing = KTA.REQUIRED.filter(function (key) { return !channelPresent(log, key); });

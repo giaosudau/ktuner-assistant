@@ -72,6 +72,29 @@ test('detectChannels: Hondata-style names', () => {
   assert.equal(name('vss'), 'VSS');
 });
 
+// KTuner Help's short channel names (ktuner-community-knowledge.md §6.1). TPS.C is
+// the throttle command, never the pedal; STFT2 (bank 2) is never read as bank 1.
+test('detectChannels: KTuner short names', () => {
+  const headers = ['Time', 'RPM', 'TPS.C', 'TPS', 'K.Cont', 'K.Ret', 'TC.Target', 'TC.Press', 'DIFPress', 'STFT2', 'STFT1', 'LTFT1', 'MAP', 'ECT'];
+  const map = K.detectChannels(headers);
+  const name = (k) => headers[map[k]];
+  assert.equal(name('tpsCmd'), 'TPS.C');
+  assert.equal(name('tps'), 'TPS');
+  assert.equal(name('kControl'), 'K.Cont');
+  assert.deepEqual(map.knock.map((i) => headers[i]), ['K.Ret']);
+  assert.equal(name('boostTarget'), 'TC.Target');
+  assert.equal(name('boost'), 'TC.Press');
+  assert.equal(name('fp'), 'DIFPress');
+  assert.equal(name('stft'), 'STFT1');
+  assert.equal(name('ltft'), 'LTFT1');
+  assert.equal(name('map'), 'MAP');
+  assert.equal(K.detectChannels(['K.Con']).kControl, 0, 'K.Con is Knock Control too');
+  // Alone, TPS.C is still the command: the pedal is never guessed from it.
+  const only = K.detectChannels(['RPM', 'TPS.C']);
+  assert.equal(only.tpsCmd, 1);
+  assert.equal(only.tps, undefined);
+});
+
 test('buildLog: lambda columns, Fahrenheit, absolute kPa boost and fractional trims', () => {
   const rows = ['Time,RPM,Lambda,Lambda Target,ECT (F),IAT (F),Boost (kPa),STFT,LTFT'];
   for (let i = 0; i < 50; i++) rows.push([i / 10, 2000 + i, 1.0 + (i % 3) * 0.01, 1.0, 194, 104, 150, 0.02 + (i % 5) * 0.001, 0.03].join(','));
