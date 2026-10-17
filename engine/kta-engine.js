@@ -164,6 +164,7 @@
     mafHz: { good: 9500, watch: 9900 },    // AFM table ends at 10,000 Hz
     iat: { good: 50, watch: 60 },          // deg C: heat alone caps at Watch, never Stop
     ect: { good: 100, watch: 105 },       // deg C: Stop 105 is provisional (no Honda limit read)
+    ectCold: { min: 80, movingS: 600 },    // deg C never reached after 10 min moving: thermostat stuck open (P0128 is off on this map)
     cvt: { good: 90, watch: 100 },         // deg C: Stop 100 is provisional (this car peaks at 95)
     knock: { good: 1.0, watch: 3.0 },      // deg retard, worst cylinder, WOT
     kControl: { good: 0.56, watch: 0.80 }, // learned knock level vs the score rule below
@@ -1166,6 +1167,10 @@
     var missingSafety = safety.filter(function (s) { return !s.present; }).map(function (s) { return s.name; });
     var flatSafety = safety.filter(function (s) { return s.present && s.flat; }).map(function (s) { return s.name; });
     var tooShort = movingSecs < 60;
+    // A thermostat stuck open shows only as coolant that never reaches 80 °C: this map turns
+    // P0128 off (ktuner-community-knowledge.md §6.6). The owner's cold starts pass 80 °C
+    // within 4 minutes of driving, so 10 minutes moving is a drive long enough to warm up.
+    var ectCold = isNum(ectMax) && ectMax < L.ectCold.min && movingSecs >= L.ectCold.movingS;
     var cantTell = null;
     if (tooShort) cantTell = { reason: 'tooShort', movingSeconds: round(movingSecs, 1) };
     else if (missingSafety.length || flatSafety.length) {
@@ -1251,10 +1256,12 @@
         isNum(iatMax) ? F.num(iatMax, 0) + ' °C peak' + (iatWhere === 'pull' ? ' in a pull' : (iatWhere === 'load' ? ' under boost' : (iatWhere === 'moving' ? ' while moving' : ''))) : 'Not logged',
         '50 °C or less', 'Heat-soaked. Cruise 5 minutes to cool before a pull. If it stays high, check the intercooler airflow and the intake heat shield.',
         { value: iatMax, hint: 'iat', basis: { t: 'judgement', k: 'iat-cap' }, data: { value: iatMax, inPull: iatWhere === 'pull', where: iatWhere, soak: iatSoak } }),
-      check('ect', 'Coolant temp', grade(ectMax, L.ect),
-        isNum(ectMax) ? F.num(ectMax, 0) + ' °C peak' : 'Not logged',
-        '100 °C or less', 'Stop logging until coolant is back under 95 °C. Check the radiator, fan and coolant level.',
-        { value: ectMax, hint: 'ect', basis: { t: 'provisional', k: 'ect-stop' }, data: { value: ectMax } })
+      check('ect', 'Coolant temp', ectCold ? 'watch' : grade(ectMax, L.ect),
+        isNum(ectMax) ? F.num(ectMax, 0) + ' °C peak' + (ectCold ? ': never warmed to ' + F.num(L.ectCold.min, 0) + ' °C' : '') : 'Not logged',
+        '100 °C or less', ectCold
+          ? 'Coolant never reached ' + F.num(L.ectCold.min, 0) + ' °C on a drive long enough to warm up: the thermostat may be stuck open. This map turns its code (P0128) off, so the dash stays quiet. Have the thermostat checked.'
+          : 'Stop logging until coolant is back under 95 °C. Check the radiator, fan and coolant level.',
+        { value: ectMax, hint: 'ect', basis: ectCold ? { t: 'judgement', k: 'ect-cold' } : { t: 'provisional', k: 'ect-stop' }, data: { value: ectMax, cold: ectCold, coldMin: L.ectCold.min } })
     ];
     // CVT slip (Watch only): revs jumping without speed under boost. Revs up 250 rpm
     // within 0.33 s while speed gains under 1 km/h, with MAP at 8 psi or more, throttle

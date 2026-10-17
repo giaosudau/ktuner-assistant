@@ -316,6 +316,34 @@ test('issue 01: the engine\'s internal status names never reach the screen', () 
   }
 });
 
+// §6.6: this map turns off P0128, so a thermostat stuck open shows only as coolant that
+// never reaches 80 °C. The owner's cold starts pass 80 °C within 4 minutes of driving.
+test('coolant that stays under 80 °C on a drive long enough to warm up is a Watch', () => {
+  const cold = (id) => K.checkDrive(cloneLog(drive(id).log, (l) => { for (let i = 0; i < l.n; i++) l.ect[i] = Math.min(l.ect[i], 76 + (i % 3)); }));
+  const r = cold('sep05-0756'); // 35 min moving
+  const c = check(r.an, 'ect');
+  assert.equal(c.status, 'watch', c.display);
+  assert.equal(c.data.cold, true);
+  assert.notEqual(r.verdict, 'stop');
+  assert.equal(check(drive('sep05-0756').report.an, 'ect').status, 'good', 'the real drive warms up');
+  // Under 10 minutes of moving it is still warming up: no Watch.
+  assert.equal(check(cold('aug22-0903').an, 'ect').status, 'good', '8 min moving');
+  // The line says why in both languages.
+  const window = {};
+  const vm = require('vm'), fs = require('fs');
+  vm.createContext(window);
+  window.window = window;
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
+  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
+  for (const lang of ['en', 'vi']) {
+    const T = window.KTA_I18N[lang];
+    const s = T.checks.ect.display(c.data, K.fmt) + ' ' + T.checks.ect.fix(c.data, K.fmt);
+    assert.match(s, /80 °C/, lang + ': ' + s);
+    assert.match(s, /P0128/, lang + ': ' + s);
+    assert.ok(T.drive.basisNotes[c.basis.k], lang + ' basis note for ' + c.basis.k);
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Issue 02 — evidence-based limits (fact-check.md wins on every number).
 // ---------------------------------------------------------------------------
