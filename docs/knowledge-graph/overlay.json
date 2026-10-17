@@ -1,0 +1,39 @@
+{
+  "_help": "Hand-curated glue the generator can't read from code: links, reviewer notes, and which threshold a card number is. Every id must exist or the build fails. Edit, then run: make kg",
+  "nodes": [],
+  "edges": [
+    {
+      "from": "file:server/kta_server/worker.py",
+      "to": "file:server/kta_worker/worker.js",
+      "kind": "runs",
+      "note": "Spawns one long-lived Node process (path from config.WORKER_SCRIPT); newline-delimited JSON both ways."
+    },
+    {
+      "from": "file:web/lib/useChat.ts",
+      "to": "route:/agent",
+      "kind": "calls",
+      "note": "AG-UI HttpAgent posts every chat turn to AGENT_URL (web/lib/types.ts)."
+    },
+    {
+      "from": "file:web/app/layout.tsx",
+      "to": "file:web/app/page.tsx",
+      "kind": "wraps",
+      "note": "Next.js renders every page inside the root layout."
+    }
+  ],
+  "notes": {
+    "file:server/kta_server/graph.py": "The LangGraph chat graph (front agent -> tuner hand-off, Drive pipeline), not this knowledge graph."
+  },
+  "quantities": {
+    "step-psi": ["boost_step_max"],
+    "pedal-floored": ["boost_step_gates.pedal_pct"],
+    "hold-s": ["boost_step_gates.hold_s"],
+    "under-over-max": ["boost_step_gates.undershoot_psi", "boost_step_gates.overshoot_psi"],
+    "total-max": ["boost_step_gates.total_psi"],
+    "timing-drop-max": ["boost_step_gates.ign_drop_deg"],
+    "kc-watch": ["boost_step_gates.kc_max"],
+    "afr-lean-max": ["boost_step_gates.afr_lean_max"],
+    "rail-min": ["boost_step_gates.difp_min_pct"],
+    "trim-ok": ["boost_step_gates.trim_max_pct"]
+  }
+}

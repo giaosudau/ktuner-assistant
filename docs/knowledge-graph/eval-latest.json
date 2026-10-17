@@ -1,0 +1,1321 @@
+{
+ "metrics": {
+  "scenarios": 42,
+  "drives": 10,
+  "kg_recall_at_5": 1.0,
+  "heldout_recall_at_5": 1.0,
+  "heldout_keyword_recall_at_5": 0.8,
+  "keyword_recall_at_5": 0.607,
+  "decision_accuracy": 1.0,
+  "drive_pass_rate": 1.0,
+  "conflicts": 0,
+  "gaps": 23
+ },
+ "failed": [],
+ "rows": [
+  {
+   "id": "wot-afr-106",
+   "group": "Owner question",
+   "decision": "teach-only",
+   "kg_top": [
+    "kc-table-wot",
+    "kc-e10",
+    "kc-rich-wot",
+    "kc-fuel-test",
+    "kc-wot-lean-timing"
+   ],
+   "want": [
+    "kc-rich-wot",
+    "kc-fuel-test"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-fuel-test",
+    "kc-ignition-formula",
+    "kc-misfire-gauges",
+    "kc-wot-lean-timing"
+   ],
+   "kw_recall": 0.5,
+   "decision_ok": true,
+   "want_decision": "teach-only"
+  },
+  {
+   "id": "knock-065",
+   "group": "Owner question",
+   "decision": "read-only",
+   "kg_top": [
+    "kc-table-ignition",
+    "kc-ranges",
+    "kc-fuel-test",
+    "kc-high-rpm",
+    "kc-ignition-formula"
+   ],
+   "want": [
+    "kc-ranges"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-p0420",
+    "kc-fuel-test",
+    "kc-timing-percent"
+   ],
+   "kw_recall": 0.0,
+   "decision_ok": true,
+   "want_decision": "read-only"
+  },
+  {
+   "id": "heat-boost-15",
+   "group": "Owner question",
+   "decision": "play:boost",
+   "kg_top": [
+    "kc-table-boost",
+    "kc-boost-step",
+    "kc-heat-soak",
+    "kc-dual-boost-targets",
+    "kc-expectations"
+   ],
+   "want": [
+    "kc-heat-soak"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-maf-wot-calibration",
+    "kc-table-boost",
+    "kc-maf-housing",
+    "kc-heat-soak",
+    "kc-p0420"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "intake-trims",
+   "group": "Owner question",
+   "decision": "play:airflow",
+   "kg_top": [
+    "kc-trim-cause",
+    "kc-table-maf",
+    "kc-maf-data-rules",
+    "kc-trims",
+    "kc-maf-housing"
+   ],
+   "want": [
+    "kc-maf-housing",
+    "kc-trims"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-maf-wot-calibration",
+    "kc-fuel-test",
+    "kc-p0420"
+   ],
+   "kw_recall": 0.0,
+   "decision_ok": true,
+   "want_decision": "play:airflow"
+  },
+  {
+   "id": "downpipe-cel",
+   "group": "Owner question",
+   "decision": "play:boost",
+   "kg_top": [
+    "kc-p0420",
+    "kc-tune-one-thing",
+    "kc-boost-step",
+    "kc-table-boost",
+    "kc-tune-order"
+   ],
+   "want": [
+    "kc-p0420"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-p0420",
+    "kc-fuel-test",
+    "kc-downpipe"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "cvt-slip",
+   "group": "Owner question",
+   "decision": "teach",
+   "kg_top": [
+    "kc-cvt",
+    "kc-map-switching",
+    "kc-table-boost",
+    "kc-heat-soak",
+    "kc-quick-adjustments"
+   ],
+   "want": [
+    "kc-cvt"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-map-switching",
+    "kc-ignition-formula",
+    "kc-misfire-gauges",
+    "kc-table-boost",
+    "kc-table-ignition"
+   ],
+   "kw_recall": 0.0,
+   "decision_ok": true,
+   "want_decision": "teach"
+  },
+  {
+   "id": "ron95-21psi",
+   "group": "Owner question",
+   "decision": "play:boost",
+   "kg_top": [
+    "kc-expectations",
+    "kc-table-boost",
+    "kc-boost-step",
+    "kc-e10",
+    "kc-dual-boost-targets"
+   ],
+   "want": [
+    "kc-expectations"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-fuel-test",
+    "kc-maf-wot-calibration",
+    "kc-p0420"
+   ],
+   "kw_recall": 0.0
+  },
+  {
+   "id": "bog-from-stop",
+   "group": "Owner question",
+   "decision": "play:boost",
+   "kg_top": [
+    "kc-table-boost",
+    "kc-boost-step",
+    "kc-quick-adjustments",
+    "kc-expectations",
+    "kc-map-switching"
+   ],
+   "want": [
+    "kc-quick-adjustments"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-quick-adjustments",
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-maf-wot-calibration",
+    "kc-p0420"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "more-boost",
+   "group": "Owner question",
+   "decision": "play:boost",
+   "kg_top": [
+    "kc-table-boost",
+    "kc-boost-step",
+    "kc-dual-boost-targets",
+    "kc-expectations",
+    "kc-map-switching"
+   ],
+   "want": [
+    "kc-boost-step",
+    "kc-expectations"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-boost-step",
+    "kc-power-sources",
+    "kc-table-boost",
+    "kc-expectations",
+    "kc-iat2-side"
+   ],
+   "kw_recall": 1.0,
+   "decision_ok": true,
+   "want_decision": "play:boost"
+  },
+  {
+   "id": "more-timing",
+   "group": "Owner question",
+   "decision": "read-only",
+   "kg_top": [
+    "kc-table-ignition",
+    "kc-timing-percent",
+    "kc-iat-retard",
+    "kc-ignition-formula",
+    "kc-wot-lean-timing"
+   ],
+   "want": [
+    "kc-timing-percent",
+    "kc-table-ignition"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-timing-percent",
+    "kc-table-ignition",
+    "kc-iat2-side",
+    "kc-ignition-formula",
+    "kc-p0420"
+   ],
+   "kw_recall": 1.0,
+   "decision_ok": true,
+   "want_decision": "read-only"
+  },
+  {
+   "id": "eco-button",
+   "group": "KTuner how-to",
+   "decision": "play:boost",
+   "kg_top": [
+    "kc-table-boost",
+    "kc-dual-boost-targets",
+    "kc-boost-step",
+    "kc-expectations",
+    "kc-map-switching"
+   ],
+   "want": [
+    "kc-dual-boost-targets"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-boost",
+    "kc-dual-boost-targets",
+    "kc-table-ignition",
+    "kc-misfire-gauges",
+    "kc-p0420"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "map-slots",
+   "group": "KTuner how-to",
+   "decision": "teach",
+   "kg_top": [
+    "kc-map-switching",
+    "kc-dual-boost-targets",
+    "kc-heat-soak",
+    "kc-timing-percent",
+    "kc-oil"
+   ],
+   "want": [
+    "kc-map-switching"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-map-switching",
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-p0420",
+    "kc-downpipe"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "lean-for-power",
+   "group": "Owner question",
+   "decision": "teach-only",
+   "kg_top": [
+    "kc-table-wot",
+    "kc-wot-lean-timing",
+    "kc-rich-wot",
+    "kc-open-loop-wot",
+    "kc-maf-wot-calibration"
+   ],
+   "want": [
+    "kc-wot-lean-timing"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-wot-lean-timing",
+    "kc-table-ignition",
+    "kc-maf-wot-calibration",
+    "kc-power-sources",
+    "kc-ignition-formula"
+   ],
+   "kw_recall": 1.0,
+   "decision_ok": true,
+   "want_decision": "teach-only"
+  },
+  {
+   "id": "trims-after-flash",
+   "group": "Shop round",
+   "decision": "play:airflow",
+   "kg_top": [
+    "kc-trim-cause",
+    "kc-table-maf",
+    "kc-shakedown",
+    "kc-trims",
+    "kc-maf-housing"
+   ],
+   "want": [
+    "kc-trim-cause",
+    "kc-trims"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-timing-percent",
+    "kc-trims",
+    "kc-ignition-formula",
+    "kc-iat2-side"
+   ],
+   "kw_recall": 0.5,
+   "decision_ok": true,
+   "want_decision": "play:airflow"
+  },
+  {
+   "id": "how-to-log",
+   "group": "Shop round",
+   "decision": "teach",
+   "kg_top": [
+    "kc-drive-brief",
+    "kc-log-gate",
+    "kc-fuel-test",
+    "kc-heat-soak",
+    "kc-shakedown"
+   ],
+   "want": [
+    "kc-drive-brief",
+    "kc-log-gate"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-maf-wot-calibration",
+    "kc-fuel-test",
+    "kc-p0420"
+   ],
+   "kw_recall": 0.0,
+   "decision_ok": true,
+   "want_decision": "teach"
+  },
+  {
+   "id": "after-flash",
+   "group": "Shop round",
+   "decision": "teach",
+   "kg_top": [
+    "kc-shakedown",
+    "kc-after-flash",
+    "kc-trim-cause",
+    "kc-map-switching",
+    "kc-maf-housing"
+   ],
+   "want": [
+    "kc-shakedown",
+    "kc-after-flash"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-p0420",
+    "kc-downpipe",
+    "kc-fuel-test"
+   ],
+   "kw_recall": 0.0,
+   "decision_ok": true,
+   "want_decision": "teach"
+  },
+  {
+   "id": "misfire-gauge",
+   "group": "Owner question",
+   "decision": "read-only",
+   "kg_top": [
+    "kc-table-ignition",
+    "kc-misfire-gauges",
+    "kc-high-rpm",
+    "kc-timing-percent",
+    "kc-ignition-formula"
+   ],
+   "want": [
+    "kc-misfire-gauges"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-misfire-gauges",
+    "kc-p0420",
+    "kc-timing-percent"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "e10-fuel",
+   "group": "Owner question",
+   "decision": "teach",
+   "kg_top": [
+    "kc-e10",
+    "kc-fuel-test",
+    "kc-rich-wot",
+    "kc-table-ignition",
+    "kc-expectations"
+   ],
+   "want": [
+    "kc-e10"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-fuel-test",
+    "kc-ignition-formula",
+    "kc-power-sources",
+    "kc-timing-percent"
+   ],
+   "kw_recall": 0.0,
+   "decision_ok": true,
+   "want_decision": "teach"
+  },
+  {
+   "id": "oil",
+   "group": "Owner question",
+   "decision": "teach",
+   "kg_top": [
+    "kc-oil",
+    "kc-dual-boost-targets",
+    "kc-cvt",
+    "kc-rich-wot",
+    "kc-downpipe"
+   ],
+   "want": [
+    "kc-oil"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-maf-wot-calibration",
+    "kc-timing-percent",
+    "kc-p0420"
+   ],
+   "kw_recall": 0.0,
+   "decision_ok": true,
+   "want_decision": "teach"
+  },
+  {
+   "id": "iat2",
+   "group": "Owner question",
+   "decision": "teach",
+   "kg_top": [
+    "kc-iat2-side",
+    "kc-power-sources",
+    "kc-heat-soak",
+    "kc-iat-retard",
+    "kc-after-flash"
+   ],
+   "want": [
+    "kc-iat2-side"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-iat2-side",
+    "kc-misfire-gauges",
+    "kc-p0420",
+    "kc-power-sources",
+    "kc-maf-wot-calibration"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "knock-high-rpm",
+   "group": "Owner question",
+   "decision": "read-only",
+   "kg_top": [
+    "kc-table-ignition",
+    "kc-high-rpm",
+    "kc-timing-percent",
+    "kc-ignition-formula",
+    "kc-ranges"
+   ],
+   "want": [
+    "kc-high-rpm"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-maf-wot-calibration",
+    "kc-table-boost",
+    "kc-after-flash",
+    "kc-ignition-formula",
+    "kc-iat-retard"
+   ],
+   "kw_recall": 0.0
+  },
+  {
+   "id": "open-loop",
+   "group": "Owner question",
+   "decision": "play:airflow",
+   "kg_top": [
+    "kc-trim-cause",
+    "kc-table-maf",
+    "kc-tune-order",
+    "kc-open-loop-wot",
+    "kc-tune-one-thing"
+   ],
+   "want": [
+    "kc-open-loop-wot"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-open-loop-wot",
+    "kc-maf-wot-calibration",
+    "kc-wot-lean-timing",
+    "kc-p0420",
+    "kc-rich-wot"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "maf-csv",
+   "group": "KTuner how-to",
+   "decision": "play:airflow",
+   "kg_top": [
+    "kc-table-maf",
+    "kc-trim-cause",
+    "kc-maf-wot-calibration",
+    "kc-maf-data-rules",
+    "kc-maf-housing"
+   ],
+   "want": [
+    "kc-maf-wot-calibration",
+    "kc-maf-data-rules"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-maf-wot-calibration",
+    "kc-table-ignition",
+    "kc-open-loop-wot",
+    "kc-ignition-formula",
+    "kc-maf-data-rules"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "all-at-once",
+   "group": "Shop round",
+   "decision": "play:airflow",
+   "kg_top": [
+    "kc-table-maf",
+    "kc-tune-order",
+    "kc-tune-one-thing",
+    "kc-maf-data-rules",
+    "kc-trim-cause"
+   ],
+   "want": [
+    "kc-tune-one-thing",
+    "kc-tune-order"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-boost",
+    "kc-maf-wot-calibration",
+    "kc-open-loop-wot",
+    "kc-downpipe",
+    "kc-downpipe-catted-catless"
+   ],
+   "kw_recall": 0.0,
+   "decision_ok": true,
+   "want_decision": "play:airflow"
+  },
+  {
+   "id": "downpipe-map",
+   "group": "Parts",
+   "decision": "play:boost",
+   "kg_top": [
+    "kc-downpipe-catted-catless",
+    "kc-downpipe",
+    "kc-tune-one-thing",
+    "kc-table-boost",
+    "kc-tune-order"
+   ],
+   "want": [
+    "kc-downpipe"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-downpipe",
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-p0420",
+    "kc-maf-wot-calibration"
+   ],
+   "kw_recall": 1.0,
+   "decision_ok": true,
+   "want_decision": "play:boost"
+  },
+  {
+   "id": "actual-ign",
+   "group": "KTuner how-to",
+   "decision": "read-only",
+   "kg_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-iat-retard",
+    "kc-timing-percent",
+    "kc-tune-order"
+   ],
+   "want": [
+    "kc-ignition-formula"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-ignition-formula",
+    "kc-table-ignition",
+    "kc-table-boost",
+    "kc-misfire-gauges",
+    "kc-maf-wot-calibration"
+   ],
+   "kw_recall": 1.0,
+   "decision_ok": true,
+   "want_decision": "read-only"
+  },
+  {
+   "id": "premium-fuel",
+   "group": "Owner question",
+   "decision": "teach",
+   "kg_top": [
+    "kc-fuel-test",
+    "kc-e10",
+    "kc-rich-wot",
+    "kc-expectations",
+    "kc-power-sources"
+   ],
+   "want": [
+    "kc-fuel-test"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-fuel-test",
+    "kc-e10",
+    "kc-misfire-gauges",
+    "kc-table-ignition",
+    "kc-map-switching"
+   ],
+   "kw_recall": 1.0,
+   "decision_ok": true,
+   "want_decision": "teach"
+  },
+  {
+   "id": "more-power",
+   "group": "Parts",
+   "decision": "teach",
+   "kg_top": [
+    "kc-power-sources",
+    "kc-wot-lean-timing",
+    "kc-iat-retard",
+    "kc-expectations",
+    "kc-downpipe"
+   ],
+   "want": [
+    "kc-power-sources",
+    "kc-expectations"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-downpipe",
+    "kc-power-sources",
+    "kc-wot-lean-timing"
+   ],
+   "kw_recall": 0.5
+  },
+  {
+   "id": "old-21psi",
+   "group": "Superseded",
+   "decision": "play:boost",
+   "kg_top": [
+    "kc-table-boost",
+    "kc-expectations",
+    "kc-boost-step",
+    "kc-dual-boost-targets",
+    "kc-map-switching"
+   ],
+   "want": [
+    "kc-expectations"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-fuel-test",
+    "kc-ignition-formula",
+    "kc-timing-percent",
+    "kc-p0420"
+   ],
+   "kw_recall": 0.0
+  },
+  {
+   "id": "old-torque",
+   "group": "Superseded",
+   "decision": "teach",
+   "kg_top": [
+    "kc-cvt",
+    "kc-power-sources",
+    "kc-table-boost",
+    "kc-expectations",
+    "kc-tune-order"
+   ],
+   "want": [
+    "kc-cvt"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-timing-percent",
+    "kc-fuel-test",
+    "kc-wot-lean-timing"
+   ],
+   "kw_recall": 0.0,
+   "decision_ok": true,
+   "want_decision": "teach"
+  },
+  {
+   "id": "old-knock-070",
+   "group": "Superseded",
+   "decision": "read-only",
+   "kg_top": [
+    "kc-table-ignition",
+    "kc-ranges",
+    "kc-ignition-formula",
+    "kc-timing-percent",
+    "kc-high-rpm"
+   ],
+   "want": [
+    "kc-ranges"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-p0420",
+    "kc-misfire-gauges",
+    "kc-ignition-formula",
+    "kc-ranges",
+    "kc-table-ignition"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "intercooler",
+   "group": "Parts",
+   "decision": "teach",
+   "kg_top": [
+    "kc-iat2-side",
+    "kc-heat-soak",
+    "kc-iat-retard",
+    "kc-cvt",
+    "kc-quick-adjustments"
+   ],
+   "want": [
+    "kc-heat-soak"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-maf-wot-calibration",
+    "kc-iat2-side",
+    "kc-table-boost",
+    "kc-maf-housing",
+    "kc-p0420"
+   ],
+   "kw_recall": 0.0
+  },
+  {
+   "id": "ho-hot-timing",
+   "group": "Held-out (written after tuning)",
+   "decision": "read-only",
+   "kg_top": [
+    "kc-table-ignition",
+    "kc-iat-retard",
+    "kc-timing-percent",
+    "kc-heat-soak",
+    "kc-ignition-formula"
+   ],
+   "want": [
+    "kc-iat-retard"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-quick-adjustments",
+    "kc-table-ignition",
+    "kc-map-switching",
+    "kc-p0420",
+    "kc-boost-step"
+   ],
+   "kw_recall": 0.0,
+   "decision_ok": true,
+   "want_decision": "read-only"
+  },
+  {
+   "id": "ho-knock-sens",
+   "group": "Held-out (written after tuning)",
+   "decision": "read-only",
+   "kg_top": [
+    "kc-table-ignition",
+    "kc-timing-percent",
+    "kc-ignition-formula",
+    "kc-iat-retard",
+    "kc-ranges"
+   ],
+   "want": [
+    "kc-table-ignition"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-timing-percent",
+    "kc-fuel-test",
+    "kc-map-switching"
+   ],
+   "kw_recall": 1.0,
+   "decision_ok": true,
+   "want_decision": "read-only"
+  },
+  {
+   "id": "ho-maf-preset",
+   "group": "Held-out (written after tuning)",
+   "decision": "play:airflow",
+   "kg_top": [
+    "kc-table-maf",
+    "kc-trim-cause",
+    "kc-maf-housing",
+    "kc-maf-data-rules",
+    "kc-maf-wot-calibration"
+   ],
+   "want": [
+    "kc-maf-housing"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-ignition",
+    "kc-ignition-formula",
+    "kc-table-maf",
+    "kc-iat2-side",
+    "kc-timing-percent"
+   ],
+   "kw_recall": 0.0,
+   "decision_ok": true,
+   "want_decision": "play:airflow"
+  },
+  {
+   "id": "ho-afr-11",
+   "group": "Held-out (written after tuning)",
+   "decision": "teach-only",
+   "kg_top": [
+    "kc-table-wot",
+    "kc-rich-wot",
+    "kc-wot-lean-timing",
+    "kc-maf-wot-calibration",
+    "kc-open-loop-wot"
+   ],
+   "want": [
+    "kc-rich-wot"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-p0420",
+    "kc-rich-wot",
+    "kc-downpipe-catted-catless",
+    "kc-maf-wot-calibration",
+    "kc-fuel-test"
+   ],
+   "kw_recall": 1.0,
+   "decision_ok": true,
+   "want_decision": "teach-only"
+  },
+  {
+   "id": "ho-maf-logs",
+   "group": "Held-out (written after tuning)",
+   "decision": "play:airflow",
+   "kg_top": [
+    "kc-table-maf",
+    "kc-maf-data-rules",
+    "kc-trim-cause",
+    "kc-maf-housing",
+    "kc-trims"
+   ],
+   "want": [
+    "kc-maf-data-rules"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-maf-data-rules",
+    "kc-downpipe",
+    "kc-table-maf",
+    "kc-maf-wot-calibration",
+    "kc-tune-one-thing"
+   ],
+   "kw_recall": 1.0,
+   "decision_ok": true,
+   "want_decision": "play:airflow"
+  },
+  {
+   "id": "ho-catless",
+   "group": "Held-out (written after tuning)",
+   "decision": "play:boost",
+   "kg_top": [
+    "kc-downpipe-catted-catless",
+    "kc-tune-order",
+    "kc-boost-step",
+    "kc-tune-one-thing",
+    "kc-table-boost"
+   ],
+   "want": [
+    "kc-downpipe-catted-catless"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-maf-wot-calibration",
+    "kc-downpipe-catted-catless",
+    "kc-rich-wot",
+    "kc-downpipe",
+    "kc-after-flash"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "ho-cvt-95",
+   "group": "Held-out (written after tuning)",
+   "decision": "teach",
+   "kg_top": [
+    "kc-cvt",
+    "kc-ranges",
+    "kc-timing-percent",
+    "kc-iat-retard",
+    "kc-ignition-formula"
+   ],
+   "want": [
+    "kc-cvt"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-cvt",
+    "kc-misfire-gauges",
+    "kc-fuel-test",
+    "kc-timing-percent",
+    "kc-wot-lean-timing"
+   ],
+   "kw_recall": 1.0,
+   "decision_ok": true,
+   "want_decision": "teach"
+  },
+  {
+   "id": "ho-eco-hot",
+   "group": "Held-out (written after tuning)",
+   "decision": "play:boost",
+   "kg_top": [
+    "kc-table-boost",
+    "kc-boost-step",
+    "kc-dual-boost-targets",
+    "kc-expectations",
+    "kc-map-switching"
+   ],
+   "want": [
+    "kc-dual-boost-targets"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-boost",
+    "kc-dual-boost-targets",
+    "kc-boost-step",
+    "kc-downpipe",
+    "kc-map-switching"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "ho-final-target",
+   "group": "Held-out (written after tuning)",
+   "decision": "read-only",
+   "kg_top": [
+    "kc-table-boost",
+    "kc-boost-step",
+    "kc-dual-boost-targets",
+    "kc-expectations",
+    "kc-map-switching"
+   ],
+   "want": [
+    "kc-table-boost"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-table-boost",
+    "kc-downpipe",
+    "kc-dual-boost-targets",
+    "kc-boost-step",
+    "kc-p0420"
+   ],
+   "kw_recall": 1.0,
+   "decision_ok": true,
+   "want_decision": "read-only"
+  },
+  {
+   "id": "ho-score-after-flash",
+   "group": "Held-out (written after tuning)",
+   "decision": "read-only",
+   "kg_top": [
+    "kc-after-flash",
+    "kc-table-ignition",
+    "kc-shakedown",
+    "kc-high-rpm",
+    "kc-timing-percent"
+   ],
+   "want": [
+    "kc-after-flash"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [
+    "kc-after-flash",
+    "kc-high-rpm",
+    "kc-ranges",
+    "kc-iat-retard",
+    "kc-shakedown"
+   ],
+   "kw_recall": 1.0
+  },
+  {
+   "id": "drive:aug22-0903",
+   "group": "Drive (simulated)",
+   "decision": "next-step",
+   "kg_top": [
+    "kc-drive-brief",
+    "kc-heat-soak",
+    "kc-boost-step",
+    "kc-timing-percent",
+    "kc-log-gate"
+   ],
+   "want": [
+    "kc-drive-brief"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [],
+   "kw_recall": null,
+   "decision_ok": true,
+   "want_decision": "next-step",
+   "drive_ok": true
+  },
+  {
+   "id": "drive:aug22-0950",
+   "group": "Drive (simulated)",
+   "decision": "next-step",
+   "kg_top": [
+    "kc-drive-brief",
+    "kc-log-gate",
+    "kc-heat-soak",
+    "kc-fuel-test",
+    "kc-boost-step"
+   ],
+   "want": [
+    "kc-drive-brief"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [],
+   "kw_recall": null,
+   "decision_ok": true,
+   "want_decision": "next-step",
+   "drive_ok": true
+  },
+  {
+   "id": "drive:aug23-1959",
+   "group": "Drive (simulated)",
+   "decision": "next-step",
+   "kg_top": [
+    "kc-drive-brief",
+    "kc-log-gate",
+    "kc-heat-soak",
+    "kc-fuel-test",
+    "kc-boost-step"
+   ],
+   "want": [
+    "kc-drive-brief"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [],
+   "kw_recall": null,
+   "decision_ok": true,
+   "want_decision": "next-step",
+   "drive_ok": true
+  },
+  {
+   "id": "drive:aug23-2038",
+   "group": "Drive (simulated)",
+   "decision": "stop",
+   "kg_top": [
+    "kc-shakedown",
+    "kc-trim-cause",
+    "kc-tune-order",
+    "kc-trims",
+    "kc-open-loop-wot"
+   ],
+   "want": [
+    "kc-trim-cause"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [],
+   "kw_recall": null,
+   "decision_ok": true,
+   "want_decision": "stop",
+   "drive_ok": true
+  },
+  {
+   "id": "drive:aug30-1509",
+   "group": "Drive (simulated)",
+   "decision": "fix-log",
+   "kg_top": [
+    "kc-drive-brief",
+    "kc-log-gate",
+    "kc-trims",
+    "kc-shakedown",
+    "kc-trim-cause"
+   ],
+   "want": [
+    "kc-log-gate"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [],
+   "kw_recall": null,
+   "decision_ok": true,
+   "want_decision": "fix-log",
+   "drive_ok": true
+  },
+  {
+   "id": "drive:aug30-1529",
+   "group": "Drive (simulated)",
+   "decision": "next-step",
+   "kg_top": [
+    "kc-drive-brief",
+    "kc-heat-soak",
+    "kc-boost-step",
+    "kc-timing-percent",
+    "kc-log-gate"
+   ],
+   "want": [
+    "kc-drive-brief"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [],
+   "kw_recall": null,
+   "decision_ok": true,
+   "want_decision": "next-step",
+   "drive_ok": true
+  },
+  {
+   "id": "drive:aug30-1601",
+   "group": "Drive (simulated)",
+   "decision": "next-step",
+   "kg_top": [
+    "kc-drive-brief",
+    "kc-boost-step",
+    "kc-heat-soak",
+    "kc-timing-percent",
+    "kc-ranges"
+   ],
+   "want": [
+    "kc-drive-brief"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [],
+   "kw_recall": null,
+   "decision_ok": true,
+   "want_decision": "next-step",
+   "drive_ok": true
+  },
+  {
+   "id": "drive:sep01-0813",
+   "group": "Drive (simulated)",
+   "decision": "next-step",
+   "kg_top": [
+    "kc-drive-brief",
+    "kc-high-rpm",
+    "kc-heat-soak",
+    "kc-fuel-test",
+    "kc-oil"
+   ],
+   "want": [
+    "kc-oil"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [],
+   "kw_recall": null,
+   "decision_ok": true,
+   "want_decision": "next-step",
+   "drive_ok": true
+  },
+  {
+   "id": "drive:sep05-0756",
+   "group": "Drive (simulated)",
+   "decision": "fix-log",
+   "kg_top": [
+    "kc-log-gate",
+    "kc-drive-brief",
+    "kc-misfire-gauges",
+    "kc-boost-step",
+    "kc-dual-boost-targets"
+   ],
+   "want": [
+    "kc-log-gate"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [],
+   "kw_recall": null,
+   "decision_ok": true,
+   "want_decision": "fix-log",
+   "drive_ok": true
+  },
+  {
+   "id": "drive:sep01-0813+overshoot",
+   "group": "Drive (simulated)",
+   "decision": "play:boost",
+   "kg_top": [
+    "kc-table-boost",
+    "kc-expectations",
+    "kc-boost-step",
+    "kc-dual-boost-targets",
+    "kc-map-switching"
+   ],
+   "want": [
+    "kc-table-boost"
+   ],
+   "kg_recall": 1.0,
+   "kw_top": [],
+   "kw_recall": null,
+   "decision_ok": true,
+   "want_decision": "play:boost",
+   "drive_ok": true
+  }
+ ],
+ "checks": {
+  "errors": [],
+  "gaps": [
+   "channel:baro is linked to nothing",
+   "channel:gear is linked to nothing",
+   "channel:torque is linked to nothing",
+   "channel:tps is linked to nothing",
+   "channel:tpsCmd is linked to nothing",
+   "channel:wg is linked to nothing",
+   "family:basemap has no card explaining it",
+   "family:mixture is editable but no current Play card covers it (teach-only)",
+   "glossary term:Boost step carries a number; ADR 0008: define without numbers, point to the card",
+   "glossary term:Capabilities is used nowhere",
+   "glossary term:Cool drive carries a number; ADR 0008: define without numbers, point to the card",
+   "glossary term:Fuel tag carries a number; ADR 0008: define without numbers, point to the card",
+   "glossary term:Fuel tag is used nowhere",
+   "glossary term:Fuel-quality score (Knock Control) carries a number; ADR 0008: define without numbers, point to the card",
+   "glossary term:Hot restart carries a number; ADR 0008: define without numbers, point to the card",
+   "glossary term:KTuner basemap carries a number; ADR 0008: define without numbers, point to the card",
+   "glossary term:Premium-fuel test carries a number; ADR 0008: define without numbers, point to the card",
+   "glossary term:Round carries a number; ADR 0008: define without numbers, point to the card",
+   "glossary term:Too-short drive carries a number; ADR 0008: define without numbers, point to the card",
+   "source:file is linked to nothing",
+   "term:Capabilities is linked to nothing",
+   "term:Fuel tag is linked to nothing",
+   "threshold:maf_curve_rising is read by no engine/server module"
+  ]
+ }
+}

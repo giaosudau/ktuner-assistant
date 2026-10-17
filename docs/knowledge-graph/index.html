@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tuning Knowledge Graph</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js" integrity="sha384-IWROdLKRsN1UuJywMlWl7/blXQ8GEooN2n7dzTxfEPd7ybYIKCUJ2Ol/1Gpf3YV4" crossorigin="anonymous"></script>
+<style>
+  /* Tokens from DESIGN.md */
+  :root {
+    --bg: #ffffff; --bg-side: #f9f9f9; --bg-soft: #f4f4f4; --bg-hover: #ececec; --ink: #0d0d0d; --ink-2: #424242; --ink-3: #6b6b6b;
+    --line: rgba(13,13,13,.1); --line-2: rgba(13,13,13,.16); --accent: #5b45c2; --accent-ink: #fff; --accent-soft: rgba(91,69,194,.1);
+    --ok: #1a7f4b; --ok-soft: rgba(26,127,75,.1); --watch: #9a6700; --watch-soft: rgba(191,135,0,.13); --stop: #c62828; --stop-soft: rgba(198,40,40,.1);
+    --k-module: #2f6fd6; --k-test: #4d7c0f; --k-route: #c2410c; --k-data: #8a5a00; --k-adr: #7c3aed; --k-doc: #0e7490; --k-card: #be185d;
+    --k-term: #57534e; --k-table: #0f766e; --k-family: #115e59; --k-threshold: #b45309; --k-stage: #5b45c2; --k-trait: #9333ea;
+    --k-mod: #be123c; --k-claim: #a16207; --k-source: #64748b; --k-channel: #0369a1; --k-area: #9a9a92;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #212121; --bg-side: #171717; --bg-soft: #2f2f2f; --bg-hover: #3a3a3a; --ink: #ececec; --ink-2: #c8c8c8; --ink-3: #9b9b9b;
+      --line: rgba(255,255,255,.1); --line-2: rgba(255,255,255,.16); --accent: #8b78e6; --accent-soft: rgba(139,120,230,.16);
+      --ok: #4ac381; --ok-soft: rgba(74,195,129,.14); --watch: #e2b340; --watch-soft: rgba(226,179,64,.14); --stop: #f0716a; --stop-soft: rgba(240,113,106,.14);
+      --k-module: #7aa2ff; --k-test: #a3c45a; --k-route: #fb923c; --k-data: #e0b050; --k-adr: #b794f6; --k-doc: #5ec8dc; --k-card: #f472b6;
+      --k-term: #b5b0a8; --k-table: #2dd4bf; --k-family: #5eead4; --k-threshold: #fbbf24; --k-stage: #a78bfa; --k-trait: #c084fc;
+      --k-mod: #fb7185; --k-claim: #facc15; --k-source: #94a3b8; --k-channel: #38bdf8; --k-area: #77776f;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font: 14px/1.5 ui-sans-serif, -apple-system, system-ui, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+  nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  nav a { padding: 8px 14px; border-radius: 999px; color: var(--ink-2); text-decoration: none; font-weight: 600; min-height: 36px; display: inline-flex; align-items: center; }
+  nav a:hover { background: var(--bg-hover); }
+  nav a[aria-current="page"] { background: var(--ink); color: var(--bg); }
+  header .meta { margin-left: auto; color: var(--ink-3); font-size: 12px; }
+  main { flex: 1; min-height: 0; display: flex; }
+  section.tab { display: none; flex: 1; min-height: 0; }
+  section.tab.on { display: grid; }
+  .split { grid-template-columns: minmax(260px, 340px) 1fr; }
+  .split3 { grid-template-columns: minmax(240px, 300px) 1fr minmax(300px, 400px); }
+  .pane { overflow: auto; padding: 16px; min-width: 0; }
+  .side { background: var(--bg-side); border-right: 1px solid var(--line); }
+  .side-r { border-left: 1px solid var(--line); }
+  h2 { font-size: 12.5px; font-weight: 600; color: var(--ink-3); margin: 18px 0 6px; }
+  h2:first-child { margin-top: 0; }
+  h3 { font-size: 17px; font-weight: 600; margin: 4px 0 8px; letter-spacing: -.01em; }
+  p { margin: 6px 0; } .muted { color: var(--ink-3); } .small { font-size: 12.5px; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  button, input, select { font: inherit; color: var(--ink); }
+  button { border: 1px solid var(--line-2); background: transparent; border-radius: 999px; padding: 0 14px; min-height: 36px; font-weight: 600; cursor: pointer; }
+  button:hover { background: var(--bg-hover); } button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  input[type=search], input[type=text] { width: 100%; padding: 9px 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--bg); }
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li > a, .row-link { display: block; padding: 8px 10px; border-radius: 8px; color: var(--ink); text-decoration: none; cursor: pointer; }
+  .list li > a:hover, .row-link:hover { background: var(--bg-hover); } .list li > a.on { background: var(--accent-soft); }
+  .pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--bg-soft); color: var(--ink-2); white-space: nowrap; }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); } .pill.watch { background: var(--watch-soft); color: var(--watch); }
+  .pill.stop { background: var(--stop-soft); color: var(--stop); } .pill.accent { background: var(--accent-soft); color: var(--accent); }
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 8px 0; }
+  .card summary { cursor: pointer; font-weight: 600; list-style: none; } .card summary::-webkit-details-marker { display: none; }
+  .card summary::after { content: " ›"; color: var(--ink-3); } .card[open] summary::after { content: " ⌄"; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+  .chip { border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; cursor: pointer; background: transparent; min-height: 30px; }
+  .chip:hover, .chip.on { background: var(--accent-soft); border-color: var(--accent); }
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; }
+  .steps > li { position: relative; padding: 0 0 0 36px; margin: 0 0 4px; }
+  .steps > li::before { counter-increment: s; content: counter(s); position: absolute; left: 4px; top: 8px; width: 22px; height: 22px; border-radius: 50%; background: var(--bg-soft); font: 600 12px var(--mono); display: grid; place-items: center; }
+  .steps > li.on::before, .steps > li.lit::before { background: var(--accent); color: var(--accent-ink); }
+  .steps .next { font-size: 12px; color: var(--ink-3); padding: 0 10px 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; color: var(--ink-3); font-size: 12.5px; }
+  .cy { min-height: 0; height: 100%; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--ink-3); padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  .legend i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 4px; border-radius: 2px; }
+  .sw { width: 10px; height: 10px; border-radius: 50%; flex: none; display: inline-block; }
+  label.f { display: flex; align-items: center; gap: 8px; padding: 2px 0; cursor: pointer; font-size: 13px; }
+  label.f .n { margin-left: auto; color: var(--ink-3); font-size: 12px; }
+  .spark { vertical-align: middle; }
+  .center-col { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  @media (max-width: 1023px) {
+    main { overflow: auto; } section.tab.on { display: block; }
+    .pane { overflow: visible; } .side, .side-r { border: 0; border-bottom: 1px solid var(--line); }
+    .cy { height: 60vh; } .center-col { height: 70vh; }
+  }
+  @media (max-width: 640px) { header { padding: 8px 14px; } header .meta { display: none; } .pane { padding: 14px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Tuning knowledge graph</h1>
+  <nav aria-label="Views">
+    <a href="#round">Shop round</a><a href="#situations">Situations</a><a href="#tables">Map tables</a>
+    <a href="#parts">Parts</a><a href="#graph">Graph</a><a href="#health">Health</a>
+  </nav>
+  <span class="meta" id="meta"></span>
+</header>
+<main>
+  <!-- Shop round: how a tuning shop runs a car, round after round -->
+  <section class="tab split" id="tab-round">
+    <div class="pane side">
+      <h2>One round, in the shop's order</h2>
+      <ol class="steps" id="stages"></ol>
+      <h2>Car character</h2>
+      <p class="small muted">Tap one to see which steps it changes.</p>
+      <div class="chips" id="traits"></div>
+    </div>
+    <div class="pane" id="stage-detail"></div>
+  </section>
+
+  <!-- Situations: each one a decision tree -->
+  <section class="tab split3" id="tab-situations">
+    <div class="pane side">
+      <form id="ask-form"><input type="search" id="ask" placeholder="Ask like an owner: can I add 2 psi?" aria-label="Ask a question"></form>
+      <p class="small muted" id="ask-note"></p>
+      <div id="sit-list"></div>
+    </div>
+    <div class="center-col">
+      <div class="legend"><span><i style="background:var(--accent)"></i>taken</span><span><i style="background:var(--watch)"></i>the engine decides on the next Drive</span><span><i style="background:var(--line-2)"></i>not taken</span></div>
+      <div class="cy" id="tree"></div>
+    </div>
+    <div class="pane side-r" id="sit-detail"></div>
+  </section>
+
+  <!-- Map tables -->
+  <section class="tab" id="tab-tables"><div class="pane" id="tables"></div></section>
+
+  <!-- Parts -->
+  <section class="tab" id="tab-parts"><div class="pane" id="parts"></div></section>
+
+  <!-- Graph explorer -->
+  <section class="tab split3" id="tab-graph">
+    <div class="pane side" id="filters"></div>
+    <div class="center-col">
+      <div class="legend"><input type="search" id="find" placeholder="Find any node: kc-boost-step, Final_Boost_Target_H, app.py" aria-label="Find a node" style="max-width:420px">
+        <button id="all">Show all</button><label class="f"><input type="checkbox" id="group"> Group by area</label></div>
+      <div class="cy" id="cy"></div>
+    </div>
+    <div class="pane side-r" id="node-detail"><p class="muted">Click a node to see what it is and what it links to. Double-click to show only its neighbours.</p></div>
+  </section>
+
+  <!-- Health: eval trend, conflicts, gaps -->
+  <section class="tab" id="tab-health"><div class="pane" id="health"></div></section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const color = (kind) => css(`--k-${kind}`) || css("--ink-3");
+const ROLE = { edit: ["ok", "Editable"], "read-only": ["stop", "Read-only"], untouched: ["", "Left to the basemap"] };
+const DECISION = { teach: "Teach, no map change", "read-only": "Read-only table, no map change", "teach-only": "No Play yet, no map change",
+  "fix-log": "Fix the log first", stop: "Stop: undo first", "next-step": "No map change this round" };
+const decisionLabel = (d) => DECISION[d] || (d?.startsWith("play:") ? `Play: ${d.slice(5)}, if the engine's gates pass` : d);
+let G, byId = {}, out = {}, inn = {}, SITS = [], HIST = [], LATEST = null, LLM = null, cy, tree;
+
+const load = (f) => fetch(f).then((r) => (r.ok ? (f.endsWith(".jsonl") ? r.text() : r.json()) : null)).catch(() => null);
+Promise.all(["graph.json", "situations.json", "eval-history.jsonl", "eval-latest.json", "eval-llm-latest.json"].map(load))
+  .then(([graph, sits, hist, latest, llm]) => {
+    if (!graph) return noServer();
+    G = graph; SITS = sits?.situations || []; LATEST = latest; LLM = llm;
+    HIST = (hist || "").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
+    G.nodes.forEach((n) => (byId[n.id] = n));
+    G.edges.forEach((e) => { (out[e.from] ||= []).push(e); (inn[e.to] ||= []).push(e); });
+    $("meta").textContent = `${G.nodes.length} nodes · ${G.edges.length} links · generated by ${G.meta.generator}`;
+    renderRound(); renderSituations(); renderTables(); renderParts(); renderHealth();
+    route(); addEventListener("hashchange", route);
+  });
+
+function noServer() {
+  document.querySelector("main").innerHTML = `<div class="pane"><h3>Open it through the viewer server</h3>
+    <p>A page opened from disk can't read its data files. Run <code class="mono">make kg-view</code> and open
+    <a href="http://localhost:8765">http://localhost:8765</a>.</p></div>`;
+}
+
+// ---- routing: #tab or #tab/id -------------------------------------------------
+function route() {
+  const [tab, ...rest] = (location.hash.slice(1) || "round").split("/");
+  const id = decodeURIComponent(rest.join("/"));
+  document.querySelectorAll("nav a").forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === `#${tab}` ? "page" : "false"));
+  document.querySelectorAll("section.tab").forEach((s) => s.classList.toggle("on", s.id === `tab-${tab}`));
+  if (tab === "round") showStage(id || "stage:intake");
+  if (tab === "situations") showSituation(id || SITS[0]?.id);
+  if (tab === "graph") { ensureGraph(); if (id) focusNode(id); }
+}
+const go = (tab, id) => (location.hash = id ? `${tab}/${encodeURIComponent(id)}` : tab);
+const link = (id, label) => `<a class="mono" href="#graph/${encodeURIComponent(id)}">${esc(label ?? byId[id]?.label ?? id)}</a>`;
+const links = (from, kinds, dir = "out") => ((dir === "out" ? out : inn)[from] || []).filter((e) => kinds.includes(e.kind));
+
+// ---- cards, shown with their real numbers --------------------------------------
+function cardBox(id, open = false) {
+  const c = byId[id.startsWith("card:") ? id : `card:${id}`];
+  if (!c) return "";
+  const status = c.status?.startsWith("superseded") ? `<span class="pill stop">${esc(c.status)}</span>` : "";
+  return `<details class="card" ${open ? "open" : ""}><summary>${esc(c.description)} ${status}</summary>
+    <p>${esc(c.body)}</p><p class="small muted">${link(c.id, c.label)} · ${esc(c.card_kind)} · source ${esc(c.source)}</p></details>`;
+}
+
+// ---- Shop round -----------------------------------------------------------------
+function renderRound() {
+  const stages = G.nodes.filter((n) => n.kind === "stage").sort((a, b) => a.order - b.order);
+  $("stages").innerHTML = stages.map((s) => {
+    const nexts = links(s.id, ["next"]).map((e) => `${e.label ? esc(e.label) + " → " : "→ "}${esc(byId[e.to].label)}`).join(" · ");
+    return `<li data-id="${esc(s.id)}"><a class="row-link" href="#round/${encodeURIComponent(s.id)}">${esc(s.label)}</a><div class="next">${nexts}</div></li>`;
+  }).join("");
+  $("traits").innerHTML = G.nodes.filter((n) => n.kind === "trait").map((t) =>
+    `<button class="chip" data-trait="${esc(t.id)}">${esc(t.label)}</button>`).join("");
+  $("traits").onclick = (e) => {
+    const b = e.target.closest("[data-trait]"); if (!b) return;
+    const on = !b.classList.contains("on");
+    document.querySelectorAll("[data-trait]").forEach((x) => x.classList.remove("on"));
+    document.querySelectorAll("#stages li").forEach((li) => li.classList.remove("lit"));
+    if (on) {
+      b.classList.add("on");
+      links(b.dataset.trait, ["affects"]).forEach((e) => document.querySelector(`#stages li[data-id="${e.to}"]`)?.classList.add("lit"));
+      showStage(b.dataset.trait);
+    }
+  };
+}
+
+function showStage(id) {
+  const s = byId[id]; if (!s) return;
+  document.querySelectorAll("#stages li").forEach((li) => li.classList.toggle("on", li.dataset.id === id));
+  const group = (kinds) => links(id, kinds);
+  const fams = group(["works-on"]).map((e) => byId[e.to]);
+  const gates = group(["gated-by"]).map((e) => byId[e.to]);
+  const affects = s.kind === "trait" ? group(["affects"]).map((e) => `<a class="chip" href="#round/${encodeURIComponent(e.to)}">${esc(byId[e.to].label)}</a>`).join("") : "";
+  const traitsHere = links(id, ["affects"], "in").map((e) => `<a class="chip" href="#round/${encodeURIComponent(e.from)}">${esc(byId[e.from].label)}</a>`).join("");
+  const situations = SITS.filter((x) => x.stage === id);
+  $("stage-detail").innerHTML = `
+    <span class="pill accent">${s.kind === "trait" ? "Car character" : `Step ${s.order}`}</span>
+    <h3>${esc(s.label)}</h3><p>${esc(s.description)}</p>
+    ${affects ? `<h2>Changes these steps</h2><div class="chips">${affects}</div>` : ""}
+    ${traitsHere ? `<h2>Car character that bears on it</h2><div class="chips">${traitsHere}</div>` : ""}
+    ${group(["next"]).length ? `<h2>Then</h2><div class="chips">${group(["next"]).map((e) => `<a class="chip" href="#round/${encodeURIComponent(e.to)}">${e.label ? esc(e.label) + " → " : ""}${esc(byId[e.to].label)}</a>`).join("")}</div>` : ""}
+    ${group(["reads-channel"]).length ? `<h2>What the shop reads in the log</h2><div class="chips">${group(["reads-channel"]).map((e) => `<span class="pill mono" title="${esc(byId[e.to].label)}">${esc(byId[e.to].label)}${byId[e.to].required ? "" : " (optional)"}</span>`).join("")}</div>` : ""}
+    ${fams.length ? `<h2>Map tables it works on</h2>${fams.map((f) => `<p><span class="pill ${ROLE[f.role][0]}">${ROLE[f.role][1]}</span> <a href="#tables">${esc(f.description)}</a>: ${esc(f.what)}${f.locked ? ` <span class="muted">${esc(f.locked)}</span>` : ""}</p>`).join("")}` : ""}
+    ${gates.length ? `<h2>Gates (data/thresholds.json)</h2><table><tr><th>Gate</th><th>Value</th><th>Why</th></tr>${gates.map((t) => `<tr><td>${link(t.id)}</td><td class="mono">${esc(t.value)} ${esc(t.unit)}</td><td>${esc(t.description)} <span class="pill">${esc(t.basis)}</span></td></tr>`).join("")}</table>` : ""}
+    <h2>The method, with this car's numbers</h2>${group(["method"]).map((e) => cardBox(e.to)).join("") || '<p class="muted">No cards.</p>'}
+    ${situations.length ? `<h2>Situations that land here</h2><div class="chips">${situations.map((x) => `<a class="chip" href="#situations/${encodeURIComponent(x.id)}">${esc(x.title)}</a>`).join("")}</div>` : ""}
+    ${group(["implemented-by"]).length ? `<h2>Code that does it</h2><p class="small">${group(["implemented-by"]).map((e) => link(e.to, byId[e.to].path)).join(" · ")}</p>` : ""}
+    <h2>Source</h2><p class="small">${group(["sourced-from"]).map((e) => `${link(e.to, byId[e.to].path)} ${esc(e.label || "")}`).join(" · ")}</p>`;
+}
+
+// ---- Situations: decision trees -------------------------------------------------
+function renderSituations() {
+  const groups = {};
+  SITS.forEach((s) => (groups[s.group] ||= []).push(s));
+  $("sit-list").innerHTML = Object.entries(groups).map(([g, items]) => `<h2>${esc(g)}</h2><ul class="list">${items.map((s) =>
+    `<li><a href="#situations/${encodeURIComponent(s.id)}" data-sit="${esc(s.id)}">${esc(s.title)}</a></li>`).join("")}</ul>`).join("");
+  const live = location.protocol.startsWith("http");
+  $("ask-note").textContent = live ? "Press Enter: the graph answers with its trace and decision tree." : "";
+  $("ask-form").onsubmit = (e) => {
+    e.preventDefault();
+    const q = $("ask").value.trim(); if (!q) return;
+    fetch(`ask?q=${encodeURIComponent(q)}`).then((r) => r.json()).then((sit) => {
+      sit.id = `asked:${Date.now()}`; SITS.unshift(sit); renderSituations(); go("situations", sit.id);
+    }).catch(() => ($("ask-note").textContent = "Asking needs the viewer server: make kg-view."));
+  };
+}
+
+function showSituation(id) {
+  const sit = SITS.find((s) => s.id === id); if (!sit) return;
+  document.querySelectorAll("[data-sit]").forEach((a) => a.classList.toggle("on", a.dataset.sit === id));
+  drawTree(sit);
+  const d = sit.drive;
+  const cls = sit.decision?.startsWith("play") ? "watch" : ["stop", "fix-log"].includes(sit.decision) ? "stop" : "ok";
+  const ok = sit.expect?.decision ? (sit.expect.decision === sit.decision ? '<span class="pill ok">matches the golden answer</span>' : `<span class="pill stop">golden answer: ${esc(sit.expect.decision)}</span>`) : "";
+  $("sit-detail").innerHTML = `
+    <span class="pill ${cls}">${esc(decisionLabel(sit.decision))}</span> ${ok}
+    <h3>${esc(sit.title)}</h3><p>${esc(sit.say)}</p>
+    ${sit.stage ? `<p class="small">Where it sits in the shop round: <a href="#round/${encodeURIComponent(sit.stage)}">${esc(byId[sit.stage].label)}</a></p>` : ""}
+    ${d ? `<h2>What the engine read on this Drive</h2><p class="small"><span class="pill">${esc(d.verdict || "no verdict")}</span> ${esc(d.body || "")}</p>
+      <p class="small mono">${(d.numbers || []).map(esc).join(" · ")}</p>
+      <details class="card"><summary>Log checkpoints</summary><ul class="small">${(d.checkpoints || []).map((c) => `<li>${esc(c)}</li>`).join("")}</ul></details>
+      ${d.tables?.length ? `<p class="small">Engine's Flash plan touches: ${d.tables.map((t) => link(`table:${t}`, t)).join(", ")}</p>` : ""}` : ""}
+    <h2>What it names</h2><div class="chips">${sit.entities.map((e) => `<a class="chip" href="#graph/${encodeURIComponent(e.id)}" title="${esc(e.why)}">${esc(byId[e.id]?.label || e.id)}</a>`).join("") || '<span class="muted small">Nothing in the map: a teaching answer.</span>'}</div>
+    <h2>Cards the answer cites</h2>${sit.cards.filter((c) => c.kind !== "proposal").map((c, i) => cardBox(c.id, i === 0) + `<p class="small muted" style="margin-top:-4px">ranked by: ${esc(c.why.join("; "))}</p>`).join("")}
+    ${sit.cards.some((c) => c.kind === "proposal") ? `<h2>Open knowledge proposals</h2>${sit.cards.filter((c) => c.kind === "proposal").map((c) => `<p class="small">${esc(c.title)}</p>`).join("")}` : ""}
+    ${sit.mods?.length ? `<h2>Parts that bear on it</h2>${sit.mods.slice(0, 3).map(partLine).join("")}` : ""}
+    <p><button class="primary" id="trace-btn">Show the trace in the graph</button></p>`;
+  $("trace-btn").onclick = () => { go("graph"); setTimeout(() => highlight(sit.nodes), 50); };
+}
+
+function drawTree(sit) {
+  // The taken path, plus the one alternative at each fork; deeper branches that weren't taken stay folded.
+  const all = Object.fromEntries(sit.tree.map((n) => [n.id, n]));
+  const shown = (n) => !n.parent || (shown(all[n.parent]) && all[n.parent].taken !== false);
+  const T = sit.tree.filter(shown);
+  const els = T.map((n) => ({ data: { id: n.id, label: n.label, kind: n.kind, taken: String(n.taken) } }))
+    .concat(T.filter((n) => n.parent).map((n) => ({ data: { id: `${n.parent}>${n.id}`, source: n.parent, target: n.id, label: n.edge, taken: String(n.taken) } })));
+  tree?.destroy();
+  tree = cytoscape({ container: $("tree"), elements: els, wheelSensitivity: 0.3, autoungrabify: true,
+    layout: { name: "breadthfirst", directed: true, roots: ["root"], spacingFactor: 1.05, padding: 16 },
+    style: [
+      { selector: "node", style: { shape: "round-rectangle", label: "data(label)", "text-wrap": "wrap", "text-max-width": 170, "font-size": 11,
+        "text-valign": "center", "text-halign": "center", width: 190, height: "label", padding: 10, color: css("--ink"),
+        "background-color": css("--bg"), "border-width": 1, "border-color": css("--line-2") } },
+      { selector: "node[kind = 'question']", style: { "background-color": css("--bg-soft") } },
+      { selector: "node[kind = 'situation']", style: { "background-color": css("--ink"), color: css("--bg"), "font-weight": 600 } },
+      { selector: "node[taken = 'true']", style: { "border-color": css("--accent"), "border-width": 2 } },
+      { selector: "node[kind = 'leaf'][taken = 'true']", style: { "background-color": css("--accent"), color: css("--accent-ink"), "font-weight": 600 } },
+      { selector: "node[taken = 'open']", style: { "border-color": css("--watch"), "border-width": 2, "border-style": "dashed" } },
+      { selector: "node[taken = 'false']", style: { opacity: 0.45 } },
+      { selector: "edge", style: { "curve-style": "taxi", "taxi-direction": "downward", width: 1, "line-color": css("--line-2"), "target-arrow-shape": "triangle",
+        "target-arrow-color": css("--line-2"), label: "data(label)", "font-size": 10, color: css("--ink-3"), "text-background-color": css("--bg"), "text-background-opacity": 1 } },
+      { selector: "edge[taken = 'true']", style: { width: 3, "line-color": css("--accent"), "target-arrow-color": css("--accent"), color: css("--accent") } },
+      { selector: "edge[taken = 'open']", style: { width: 2, "line-style": "dashed", "line-color": css("--watch"), "target-arrow-color": css("--watch") } },
+    ] });
+  if (tree.zoom() < 0.75) {  // keep labels readable; scroll the tree instead of shrinking it
+    tree.zoom(0.75);
+    const p = tree.getElementById("root").renderedPosition();
+    tree.panBy({ x: tree.width() / 2 - p.x, y: 40 - p.y });
+  }
+  tree.on("tap", "node", (e) => {
+    const n = T.find((x) => x.id === e.target.id());
+    const refs = n.refs.map((r) => byId[r]?.kind === "card" ? cardBox(r, true) : `<p>${link(r)} <span class="muted small">${esc(byId[r]?.kind)}</span></p>`).join("");
+    $("sit-detail").insertAdjacentHTML("afterbegin", `<div class="card" style="border-color:var(--accent)"><b>${esc(n.label)}</b>${refs || '<p class="muted small">No linked knowledge.</p>'}</div>`);
+  });
+}
+
+// ---- Map tables -----------------------------------------------------------------
+function renderTables() {
+  const fams = G.nodes.filter((n) => n.kind === "family").sort((a, b) => (a.tune_order ?? 9) - (b.tune_order ?? 9));
+  $("tables").innerHTML = `<h3>Every KTuner table in this map, and where it stands</h3>
+    <p class="muted">From <span class="mono">data/ktuner-maps-digitized.json</span>, the map tour (<span class="mono">tour.py</span>) and <span class="mono">thresholds.json</span>. Editable tables change only through a checked Flash plan; read-only ones are explained, never edited.</p>` +
+    fams.map((f) => {
+      const tables = links(f.id, ["in-family"], "in").map((e) => byId[e.from]);
+      return `<div class="card"><span class="pill ${ROLE[f.role][0]}">${ROLE[f.role][1]}</span>${f.tune_order ? ` <span class="pill accent">tune order ${f.tune_order}</span>` : ""}
+        <h3>${esc(f.description)}</h3><p>${esc(f.what)}</p>
+        ${f.locked ? `<p class="small"><b>Why locked:</b> ${esc(f.locked)}<br><b>What unlocks it:</b> ${esc(f.unlocks)}</p>` : ""}
+        <table><tr><th>Table</th><th>Role</th><th>Size</th><th>Cards</th><th>Parts that change it</th><th>Code</th></tr>
+        ${tables.map((t) => {
+          const cards = links(t.id, ["about"], "in").map((e) => link(e.from, byId[e.from].label));
+          const mods = links(t.id, ["changes", "checks"], "in").map((e) => `<span title="${esc(e.note)}">${esc(byId[e.from].label)}${e.kind === "checks" ? " (check)" : ""}</span>`);
+          const code = links(t.id, ["touches"], "in").length;
+          return `<tr><td>${link(t.id, t.label)}<div class="small muted">${esc(t.note || "")}</div></td>
+            <td><span class="pill ${ROLE[t.role][0]}">${ROLE[t.role][1]}</span></td><td class="mono">${esc(t.shape)}</td>
+            <td class="small">${cards.join(", ") || "—"}</td><td class="small">${mods.join("<br>") || "—"}</td><td class="mono">${code}</td></tr>`;
+        }).join("")}</table></div>`;
+    }).join("");
+}
+
+// ---- Parts ----------------------------------------------------------------------
+function partLine(m) {
+  return `<div class="card"><b>${esc(m.title)}</b> <span class="pill mono">score ${m.score}</span>${m.not_for_this_car ? ' <span class="pill stop">not for this car</span>' : ""}
+    <p class="small">${esc(m.change)}</p>${m.gain ? `<p class="small muted">Claimed: ${esc(m.gain)}</p>` : ""}</div>`;
+}
+
+function renderParts() {
+  const mods = G.nodes.filter((n) => n.kind === "mod").sort((a, b) => a.not_for_this_car - b.not_for_this_car || b.score - a.score);
+  const claims = G.nodes.filter((n) => n.kind === "claim");
+  const VERDICT = { true: "ok", partly: "watch", unverified: "", wrongForYou: "stop" };
+  $("parts").innerHTML = `<h3>Parts: what each does to this car, and to the map</h3>
+    <p class="muted">From <span class="mono">engine/kta-build.js</span>. Score = 3·effect − 2·effort − 2·risk. Gains are the vendors' own claims unless a source says otherwise.</p>` +
+    mods.map((m) => {
+      const ch = links(m.id, ["changes", "checks"]);
+      return `<div class="card"><h3>${esc(m.label)} <span class="pill mono">score ${m.score}</span>${m.not_for_this_car ? ' <span class="pill stop">not for this car</span>' : ""}</h3>
+        <p class="small mono">effect ${m.effect} · effort ${m.effort} · risk ${m.risk}</p><p>${esc(m.description)}</p>
+        ${m.gain ? `<p><b>Claimed gain:</b> ${esc(m.gain)}</p>` : ""}
+        ${ch.length ? `<h2>Map</h2><table>${ch.map((e) => `<tr><td>${link(e.to, byId[e.to].label)}</td><td>${e.kind === "checks" ? '<span class="pill">check only</span>' : '<span class="pill watch">changes</span>'}</td><td class="small">${esc(e.note)}</td></tr>`).join("")}</table>` : '<p class="small muted">No table change.</p>'}
+        ${(m.features || []).length ? `<p class="small"><b>KTuner settings:</b> ${m.features.map(esc).join("; ")}</p>` : ""}
+        ${m.prove ? `<p class="small"><b>How it is proven:</b> ${esc(m.prove)}</p>` : ""}
+        ${(m.steps || []).length ? `<details><summary class="small">Steps</summary><ol class="small">${m.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol></details>` : ""}
+        <p class="small muted">Sources: ${links(m.id, ["sourced-from"]).map((e) => `<a href="${esc(byId[e.to].url)}" target="_blank" rel="noopener">${esc(byId[e.to].label)}</a>`).join(" · ")}</p></div>`;
+    }).join("") +
+    `<h3>Claims people repeat, checked</h3><table><tr><th>Claim</th><th>Verdict</th><th>Confidence</th><th>Sources</th></tr>${claims.map((c) =>
+      `<tr><td>${esc(c.label)}<div class="small muted">${esc(c.description)}</div></td><td><span class="pill ${VERDICT[c.verdict] || ""}">${esc(c.verdict)}</span></td><td>${esc(c.confidence)}</td>
+       <td class="small">${links(c.id, ["sourced-from"]).map((e) => `<a href="${esc(byId[e.to].url)}" target="_blank" rel="noopener">${esc(byId[e.to].label)}</a>`).join("<br>")}</td></tr>`).join("")}</table>`;
+}
+
+// ---- Health ---------------------------------------------------------------------
+function spark(values, lo = 0, hi = 1) {
+  const pts = values.map((v, i) => `${(i / Math.max(1, values.length - 1)) * 120},${24 - ((v - lo) / (hi - lo || 1)) * 22}`).join(" ");
+  return `<svg class="spark" width="124" height="26" viewBox="-2 -1 124 27" aria-hidden="true"><polyline fill="none" stroke="${css("--accent")}" stroke-width="2" points="${pts}"/></svg>`;
+}
+
+function renderHealth() {
+  const graphRuns = HIST.filter((h) => h.kind !== "agent"), agentRuns = HIST.filter((h) => h.kind === "agent");
+  const last = graphRuns.at(-1) || {};
+  const metric = (key, label) => {
+    const vals = graphRuns.map((h) => h[key]).filter((v) => v != null);
+    return `<tr><td>${label}</td><td class="mono">${last[key] ?? "—"}</td><td>${vals.length > 1 ? spark(vals) : ""}</td></tr>`;
+  };
+  const checks = LATEST?.checks || { errors: [], gaps: [] };
+  $("health").innerHTML = `<h3>Is the knowledge right, and is it getting better?</h3>
+    <p class="muted">Every eval run with a note is one line in <span class="mono">eval-history.jsonl</span>. Run <span class="mono">make kg-eval NOTE="…"</span> after any change.</p>
+    <table><tr><th>Measure (latest)</th><th>Value</th><th>Trend</th></tr>
+      ${metric("kg_recall_at_5", "Right card in the top 5 — knowledge graph")}
+      ${metric("keyword_recall_at_5", "Right card in the top 5 — today's keyword search")}
+      ${metric("heldout_recall_at_5", "Same, on questions written after tuning")}
+      ${metric("decision_accuracy", "Decision tree lands on the golden branch")}
+      ${metric("drive_pass_rate", "Real Drives: right card, right branch, a legal plan")}
+    </table>
+    ${agentRuns.length ? `<h2>The agent with and without the graph (${esc(agentRuns.at(-1).model)})</h2><table><tr><th></th><th>Agent + graph</th><th>Agent + keyword search</th></tr>
+      ${["decision_ok", "cites_expected", "cites_grounded", "numbers_grounded"].map((k) => `<tr><td>${{ decision_ok: "Decides the right branch", cites_expected: "Cites the right card", cites_grounded: "Cites only cards it was given", numbers_grounded: "Every number comes from a card" }[k]}</td>
+        <td class="mono">${agentRuns.at(-1)[`kg_${k}`]}</td><td class="mono">${agentRuns.at(-1)[`keyword_${k}`]}</td></tr>`).join("")}</table>` : ""}
+    <h2>Conflicts (the build fails on these)</h2>${checks.errors.length ? `<ul>${checks.errors.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : '<p><span class="pill ok">none</span></p>'}
+    <h2>Review list (${checks.gaps.length})</h2><ul class="small">${checks.gaps.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>
+    <h2>Every recorded run</h2><table><tr><th>Date</th><th>Note</th><th>KG</th><th>Keyword</th><th>Decisions</th><th>Drives</th></tr>
+      ${HIST.slice().reverse().map((h) => h.kind === "agent"
+        ? `<tr><td class="mono">${esc(h.date)}</td><td>${esc(h.note)}</td><td class="mono" colspan="4">agent: decides ${h.kg_decision_ok} vs ${h.keyword_decision_ok}; cites ${h.kg_cites_expected} vs ${h.keyword_cites_expected}</td></tr>`
+        : `<tr><td class="mono">${esc(h.date)}</td><td>${esc(h.note)}</td><td class="mono">${h.kg_recall_at_5}</td><td class="mono">${h.keyword_recall_at_5}</td><td class="mono">${h.decision_accuracy}</td><td class="mono">${h.drive_pass_rate}</td></tr>`).join("")}</table>`;
+}
+
+// ---- Graph explorer -------------------------------------------------------------
+const EDGE_COLOR = { imports: "--k-module", tests: "--k-test", calls: "--k-route", serves: "--k-route", reads: "--k-data", touches: "--k-table",
+  about: "--k-card", method: "--k-stage", next: "--k-stage", affects: "--k-trait", changes: "--k-mod", bounds: "--k-threshold", "gated-by": "--k-threshold",
+  conflicts: "--stop", "uses-term": "--k-term", "sourced-from": "--k-source" };
+const DEFAULT_OFF = new Set(["mentions", "uses-term", "touches", "defines", "sourced-from"]);
+
+function ensureGraph() {
+  if (cy) return;
+  const count = (key) => G[key === "kind" ? "nodes" : "edges"].reduce((m, x) => ((m[x.kind] = (m[x.kind] || 0) + 1), m), {});
+  const box = (title, counts, attr, col, off = new Set()) => `<h2>${title}</h2>` + Object.entries(counts).sort().map(([k, n]) =>
+    `<label class="f"><input type="checkbox" data-${attr}="${esc(k)}" ${off.has(k) ? "" : "checked"}><span class="sw" style="background:${col(k)}"></span>${esc(k)}<span class="n">${n}</span></label>`).join("");
+  $("filters").innerHTML = box("Show nodes", count("kind"), "nk", color, new Set(["area"])) +
+    box("Show links", count("edge"), "ek", (k) => css(EDGE_COLOR[k] || "--ink-3"), DEFAULT_OFF) +
+    `<p class="small muted">Busy links (mentions, glossary use, code touching tables) start hidden.</p>`;
+  $("filters").onchange = applyFilters;
+  buildGraph();
+  $("group").onchange = buildGraph;
+  $("all").onclick = () => { applyFilters(); cy.elements().removeClass("faded hot"); };
+  $("find").onchange = (e) => { const v = e.target.value.trim().toLowerCase();
+    const hit = byId[v] ? v : G.nodes.find((n) => n.id.toLowerCase().includes(v) || n.label.toLowerCase().includes(v))?.id; if (hit) go("graph", hit); };
+}
+
+function buildGraph() {
+  const group = $("group").checked;
+  const deg = (id) => (out[id]?.length || 0) + (inn[id]?.length || 0);
+  const els = G.nodes.filter((n) => group || n.kind !== "area").map((n) => ({ data: { id: n.id, label: n.label, kind: n.kind, col: color(n.kind), deg: deg(n.id),
+    parent: group && n.kind !== "area" && n.area && byId[`area:${n.area}`] ? `area:${n.area}` : undefined } }))
+    .concat(G.edges.map((e, i) => ({ data: { id: `e${i}`, source: e.from, target: e.to, kind: e.kind, col: css(EDGE_COLOR[e.kind] || "--line-2") } })));
+  cy?.destroy();
+  cy = cytoscape({ container: $("cy"), elements: els, wheelSensitivity: 0.3, style: [
+    { selector: "node", style: { "background-color": "data(col)", label: "data(label)", color: css("--ink"), "font-size": 9, "text-valign": "bottom",
+      "text-margin-y": 3, "min-zoomed-font-size": 7, width: "mapData(deg, 0, 40, 9, 36)", height: "mapData(deg, 0, 40, 9, 36)" } },
+    { selector: "node[kind = 'area']", style: { "background-opacity": 0.05, "border-width": 1, "border-color": css("--line-2"), "text-valign": "top",
+      "font-size": 13, "font-weight": 600, color: css("--ink-3"), shape: "round-rectangle", padding: 12 } },
+    { selector: "edge", style: { width: 1, "line-color": "data(col)", "target-arrow-color": "data(col)", "target-arrow-shape": "triangle", "arrow-scale": 0.6, "curve-style": "bezier", opacity: 0.55 } },
+    { selector: "edge[kind = 'conflicts']", style: { width: 3, opacity: 1 } },
+    { selector: ".hidden", style: { display: "none" } }, { selector: ".faded", style: { opacity: 0.07 } },
+    { selector: "node:selected, node.hot", style: { "border-width": 3, "border-color": css("--accent") } }, { selector: "edge.hot", style: { opacity: 1, width: 2.5 } },
+  ] });
+  cy.on("tap", "node", (e) => showNode(e.target.id()));
+  cy.on("dbltap", "node", (e) => focusNode(e.target.id()));
+  applyFilters();
+}
+
+function applyFilters() {
+  const on = (a) => new Set([...document.querySelectorAll(`[data-${a}]`)].filter((c) => c.checked).map((c) => c.dataset[a]));
+  const nk = on("nk"), ek = on("ek");
+  cy.batch(() => { cy.nodes().forEach((n) => n.toggleClass("hidden", !nk.has(n.data("kind")) && n.data("kind") !== "area"));
+    cy.edges().forEach((e) => e.toggleClass("hidden", !ek.has(e.data("kind")))); });
+  layout();
+}
+const layout = () => cy.elements(":visible").layout({ name: "cose", animate: false, nodeDimensionsIncludeLabels: true, padding: 20, nodeRepulsion: 9000, idealEdgeLength: 60 }).run();
+
+function focusNode(id) {
+  ensureGraph();
+  const node = cy.getElementById(id); if (!node.length) return;
+  const keep = node.closedNeighborhood().union(node.closedNeighborhood().ancestors());
+  cy.elements().addClass("hidden"); keep.removeClass("hidden"); layout(); cy.fit(keep, 40); showNode(id);
+}
+
+function highlight(ids) {
+  ensureGraph();
+  const nodes = cy.collection(ids.map((i) => cy.getElementById(i)).filter((n) => n.length));
+  const keep = nodes.union(nodes.edgesWith(nodes)).union(nodes.ancestors());
+  cy.elements().addClass("hidden"); keep.removeClass("hidden"); nodes.addClass("hot"); keep.edges().addClass("hot"); layout(); cy.fit(keep, 30);
+  $("node-detail").innerHTML = `<h3>Where the question went</h3><p class="small muted">Every node the answer touched: what it named, the cards, gates and tables on its path.</p>${ids.map((i) => `<p>${link(i)} <span class="muted small">${esc(byId[i]?.kind)}</span></p>`).join("")}`;
+}
+
+function showNode(id) {
+  const n = byId[id]; if (!n) return;
+  const facts = ["path", "area", "role", "family", "value", "unit", "basis", "status", "card_kind", "methods", "lines", "verdict", "confidence", "url", "note"]
+    .filter((k) => n[k] != null && n[k] !== "").map((k) => `<dt>${k}</dt><dd>${k === "url" ? `<a href="${esc(n[k])}" target="_blank" rel="noopener">${esc(n[k])}</a>` : esc(Array.isArray(n[k]) ? n[k].join(", ") : n[k])}</dd>`).join("");
+  const grouped = (list, side) => Object.entries(list.reduce((m, e) => ((m[e.kind] ||= []).push(e), m), {})).map(([k, es]) =>
+    `<h2>${side} ${esc(k)} (${es.length})</h2><ul class="list">${es.map((e) => { const other = side === "→" ? e.to : e.from;
+      return `<li><a href="#graph/${encodeURIComponent(other)}"><span class="sw" style="background:${color(byId[other]?.kind)}"></span> ${esc(byId[other]?.label ?? other)}${e.note ? `<div class="small muted">${esc(e.note)}</div>` : ""}</a></li>`; }).join("")}</ul>`).join("");
+  $("node-detail").innerHTML = `<span class="pill" style="background:${color(n.kind)};color:#fff">${esc(n.kind)}</span><h3>${esc(n.label)}</h3>
+    ${n.description ? `<p>${esc(n.description)}</p>` : ""}${n.body ? `<p class="small">${esc(n.body)}</p>` : ""}
+    <dl class="small" style="display:grid;grid-template-columns:auto 1fr;gap:2px 10px">${facts}</dl>
+    ${n.kind === "stage" || n.kind === "trait" ? `<p><a href="#round/${encodeURIComponent(id)}">Open in the shop round</a></p>` : ""}
+    ${grouped(out[id] || [], "→")}${grouped(inn[id] || [], "←")}`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1283 @@
+{
+ "model": "deepseek-v4.1-flash:free",
+ "n": 42,
+ "arms": {
+  "kg": {
+   "decision_ok": 0.917,
+   "cites_expected": 1.0,
+   "cites_grounded": 1.0,
+   "numbers_grounded": 1.0
+  },
+  "keyword": {
+   "decision_ok": 0.625,
+   "cites_expected": 0.643,
+   "cites_grounded": 1.0,
+   "numbers_grounded": 1.0
+  }
+ },
+ "rows": {
+  "wot-afr-106": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Nothing went wrong. The map asks 11.0 at full load; your 10.6 is richer than asked, which is the safe side for knock and heat, not a fault — it just costs a little power. E10 does not lean it: the sensor reads lambda and the ECU trims itself. Don't buy fuel to fix this; judge premium only by Knock Control, tank against tank, on hot drives. Leaning risks timing.",
+     "cites": [
+      "kc-rich-wot",
+      "kc-e10",
+      "kc-fuel-test"
+     ],
+     "decision": "teach-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": false,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No card ties E10 to that number — the shop keeps the full-throttle target where the basemap sets it. Judge mixture by measured AFR against AFR Command, not AFR Adj. Fuel is judged by Knock Control tank against tank on hot drives: RON97 can win back about 1.6 degrees at most, and 0.5 degrees or less is no gain. Test before paying.",
+     "cites": [
+      "kc-wot-lean-timing",
+      "kc-misfire-gauges",
+      "kc-fuel-test"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "knock-065": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "0.65 is above Watch (0.56). No hard driving starts at 0.62 held over 60 seconds, so avoid hard driving while it stays there. Under boost, 0.65 costs about 1.6 degrees timing. Stop is 0.80, and this car has never reached it. Knock is read-only; don't edit ignition or knock sensitivity. Log the trend and let it settle.",
+     "cites": [
+      "kc-ranges",
+      "kc-table-ignition"
+     ],
+     "decision": "read-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "0.65 means the ECU is pulling timing via Knock Retard; that is protection, not proof of damage. Read Actual Ign, Knock Control and Knock Retard together, and judge trends over several pulls, not one traffic reading. You can drive, but don't add timing or lower knock sensitivity; if Knock Control repeatably rises under hard pulls, remove timing in 1–2° steps on a dyno.",
+     "cites": [
+      "kc-ignition-formula",
+      "kc-table-ignition"
+     ],
+     "decision": "read-only"
+    }
+   }
+  },
+  "heat-boost-15": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "That drop is heat soak, not the tune. A hot car park leaves 57–64 °C in the manifold; cool drives read 35–39 °C, and a pull should start at or below 48 °C. Two drives half an hour apart showed 19.9 psi against 16.7 psi and 1.77 s against 2.23 s. After a hot stop, drive three to five calm minutes before hard acceleration, and compare only drives at similar intake temperatures. No map change.",
+     "cites": [
+      "kc-heat-soak",
+      "kc-expectations"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "That is heat soak, not the map. After a hot stop the manifold can sit at 57–64 °C; cool moving air is 35–39 °C, and pulls should start at or below 48 °C. The same car made 16.7 psi hot versus 19.9 psi cool. After a hot car park, drive 3–5 calm minutes before hard acceleration and compare only at similar intake temperatures.",
+     "cites": [
+      "kc-heat-soak"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "intake-trims": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Which housing — factory, street, or Race? Log a calm drive first. Trims within 5 percent are fine; beyond 10 percent is a Stop. Off in every band from the first minute means the airflow preset does not match the housing. Wrong only at idle and low airflow means unmetered air: check clamps, no map change. Otherwise the airflow Play corrects it.",
+     "cites": [
+      "kc-trims",
+      "kc-trim-cause",
+      "kc-maf-housing"
+     ],
+     "decision": "play:airflow"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No card here reads your fuel trims, so I can't pass them — an intake alone isn't a verdict in these cards. What they do cover is full throttle: airflow is judged against AFR Command, never trims. Log several same-gear pulls at one intake temperature with MAF Hz, correct only the points that sit off command, about 2% per round, and stop a little rich — 0.2 AFR. Richer than 10.5 means points are too high. Flash, then log the same pulls again.",
+     "cites": [
+      "kc-maf-wot-calibration"
+     ],
+     "decision": "play:airflow"
+    }
+   }
+  },
+  "downpipe-cel": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Most 200-cell pipes set P0420 within days; 400-cell owners report none. The downpipe carries the rear oxygen sensor the catalyst check reads, so a flange leak can also set it. KTuner's switch is under Disables and Monitors, but this car keeps it on — disabling hides a fault. Đăng kiểm sniffs tailpipe gas and checks the lamp, so it won't help. Prefer a 400-cell catted pipe; check both flanges cold.",
+     "cites": [
+      "kc-p0420"
+     ],
+     "decision": "read-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "A 200-cell downpipe usually sets P0420 within days; 400-cell pipes often don’t. You can disable the P0420 catalyst monitor in KTuner under Main Parameters > Disables and Monitors, but this car keeps it on. Turning it off only hides the fault; đăng kiểm still tests tailpipe gas and the warning lamp. Prefer a 400-cell catted pipe and check cold flanges for leaks.",
+     "cites": [
+      "kc-p0420",
+      "kc-downpipe"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "cvt-slip": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No slipping is visible: slip would show as revs jumping without speed, and there are zero such events across all your drives. The app sets no torque number, but the ECU's factory torque limiter still protects the CVT. Survival is heat management: no pulls at or above 90 °C fluid, never brake-launch (launching and low-end torque cause reported failures), and HCF-2 fluid on the severe schedule.",
+     "cites": [
+      "kc-cvt"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "The cards don’t give a CVT slip gauge or a survival verdict. The only CVT risk they name is low-rpm torque, which hurts the CVT, so good maps keep boost down there and change paired boost tables together. I can’t confirm slipping from these cards; log boost and rpm and inspect low-rpm torque.",
+     "cites": [
+      "kc-table-boost"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "ron95-21psi": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Vietnam RON95 is about US 90–91, at or just under KTuner's 91, so no E10 offset is needed. On Starter 21, 21 psi is Normal/Sport target; ECO is 18 psi. Logged target never passed 19.2 psi. Use ECO on hot days or fuel you don't trust. More boost is gated; today hot drive hit 0.64 and no floored pull, so no step.",
+     "cites": [
+      "kc-e10",
+      "kc-dual-boost-targets",
+      "kc-expectations",
+      "kc-table-boost",
+      "kc-boost-step"
+     ],
+     "decision": "play:boost"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Cards do not cover a 91-octane basemap or a safe 21-psi limit. Fuel is judged by Knock Control tank against tank: same hot route, mode, map slot, intake within 8°C. Cool drives sit at the 0.49 floor. Ignition/knock tables are read-only; never add timing or lower knock sensitivity without a dyno. Log Actual Ign, Knock Control, Knock Retard.",
+     "cites": [
+      "kc-fuel-test",
+      "kc-table-ignition",
+      "kc-ignition-formula"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "bog-from-stop": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Throttle response is pedal feel, not power—your taste; no log can prove it. For lag, a floored pull shows if the wastegate is open. If open, one level up on Turbo Responsiveness or Boost Target Ramp Rate may help, one change at a time. Early Spool stays off. Boost step is closed today: hot drive 0.64, no floored pull yet. No map change.",
+     "cites": [
+      "kc-quick-adjustments",
+      "kc-boost-step"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Throttle feel and turbo lag live in KTuner's Quick Adjustments dropdowns, not in map tables — and on your car all levels sit at Factory: Throttle Responsiveness, Boost Target Ramp Rate and Turbo Responsiveness. Throttle Responsiveness is pedal feel only, so it's your taste. For lag, do a floored pull and read time from 85 percent pedal to 90 percent of boost target with the wastegate. If the target ramps slowly while the wastegate is open, one level up can help — one change at a time. Keep Early Spool off.",
+     "cites": [
+      "kc-quick-adjustments"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "more-boost": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Boost only moves in proven 1 psi steps, never two at once, and today that step is closed: you have no floored pull logged yet, and the hot drive hit 0.64 Knock Control, above the 0.56 cap. Bring two floored pulls (pedal 85 percent or more, held 4 seconds above 3,500 rpm) plus a clean hot drive, and I can add the first psi to Tune 2. Note this map's turbo is already near its ceiling.",
+     "cites": [
+      "kc-boost-step",
+      "kc-expectations"
+     ],
+     "decision": "play:boost"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Not 2 psi as one ask. Boost steps are one proven 1 psi at a time, added only in the 3,500–4,500 rpm rows and never above the 23.4 final target. Today it's closed: the hot drive reached 0.64 and no floored pull is logged yet. It can only open after the cool-drive and hot-drive gates pass on your next Drive.",
+     "cites": [
+      "kc-boost-step",
+      "kc-table-boost",
+      "kc-expectations"
+     ],
+     "decision": "play:boost"
+    }
+   }
+  },
+  "more-timing": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. Honda's ECU never runs more timing than Ignition Base and only pulls timing through Knock Control. On E10 RON95 this car already sits at the 0.49 floor under boost. A percent works backwards: plus 5 makes boosted cells about 0.08 degrees less, while cruise adds about 1 degree near ideal. Tuners work in degrees and add timing only on a dyno. Ignition is read-only here.",
+     "cites": [
+      "kc-timing-percent",
+      "kc-table-ignition"
+     ],
+     "decision": "read-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": false,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. A percent moves the wrong way: Ignition Base holds 150 negative high-load cells where boost lives, so plus 5 percent makes those about 0.08 degrees less, while cruise cells near ideal gain about 1 degree. On E10 RON95 this car already sits at the 0.49 Knock Control floor under boost. Work in degrees, and on the street only remove 1 to 2 degrees where retard collects, starting from a professional basemap. Adding timing needs a dyno.",
+     "cites": [
+      "kc-timing-percent",
+      "kc-table-ignition",
+      "kc-ignition-formula"
+     ],
+     "decision": "teach-only"
+    }
+   }
+  },
+  "eco-button": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "With the ECO button on, the ECU uses Boost Target ECO; with it off it uses Boost Target Normal. Sport also runs Normal. This applies per tune and per cam. No log channel records ECO mode, so tag logs by mode. No map change is being made here.",
+     "cites": [
+      "kc-dual-boost-targets",
+      "kc-table-boost"
+     ],
+     "decision": "teach-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "With the ECO button on, the ECU uses that tune's Boost Target ECO table instead of Boost Target Normal — on the starter dual tune that's about 18 psi versus 21 psi. The button is the switch: no flash, no device needed. Sport runs the Normal table too. No log channel records ECO, so note the mode when you attach a log and only compare drives in the same mode.",
+     "cites": [
+      "kc-dual-boost-targets",
+      "kc-table-boost"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "map-slots": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Use On The Fly Map Switching: a long press of the cruise Cancel button changes tune, and switching while moving is supported. Tune 1 is the proven map—it's the slot the car starts in if the KTuner device is unplugged—so keep trials in Tune 2. Note that as digitized all three tunes hold the same boost targets, so switching changes nothing yet. No log channel records the tune, so tag each log with its slot.",
+     "cites": [
+      "kc-map-switching"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Long-press the cruise Cancel button to switch tunes, and switching while moving is supported. Be aware: as digitized, all three tunes on this map hold the same boost targets, so switching changes nothing yet. With the device unplugged the car starts in Tune 1. No log channel records the tune, so tag each log with its map slot.",
+     "cites": [
+      "kc-map-switching"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "lean-for-power": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "We won't set WOT Enrich to 12.5. It is the full-throttle mixture target, editable, but there is no proven Play yet, so no map change. Leaning trades knock and exhaust-heat margin for little power; your data shows no gain, and danger starts at 12.0. Only revisit after airflow is right, trims within 5%, in 0.2 steps, watching Knock Control.",
+     "cites": [
+      "kc-table-wot",
+      "kc-wot-lean-timing",
+      "kc-rich-wot"
+     ],
+     "decision": "teach-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No — we keep the full-throttle mixture target where the basemap has it. This map asks about 0.75 lambda on purpose: it cools the charge against knock and keeps turbine heat down, and best power sits near 0.82–0.85, so leaning is wrong on hot E10 RON95. One owner found leaning past 11.5 made the ECU pull timing hard and lose power. A healthy log with AFR Command plus a like-for-like proof drive is what would change our mind.",
+     "cites": [
+      "kc-wot-lean-timing",
+      "kc-power-sources"
+     ],
+     "decision": "teach-only"
+    }
+   }
+  },
+  "trims-after-flash": {
+   "kg": {
+    "decision_ok": false,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Minus 21 everywhere right after a Flash is a preset/housing mismatch; beyond 10 is a Stop. Undo first: flash back the earlier file, then confirm the fitted housing and pick its matching MAF preset. Do not bend the MAF curve or touch full-throttle targets. Drive calm; hard driving waits until trims are within 5%.",
+     "cites": [
+      "kc-trim-cause",
+      "kc-trims",
+      "kc-maf-housing",
+      "kc-shakedown"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": false,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Minus 21 percent in every load band is beyond the 10 percent Stop threshold, so the ECU cannot measure air correctly right now. Hard driving waits until a calm drive shows trims back within 5 percent. The cause comes from the trim pattern, not the size alone. No map change.",
+     "cites": [
+      "kc-trims"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "how-to-log": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Log like the shop asks: in TunerView turn on every gauge, including AFR Command and MAF Hz, at 10 Hz or faster. Start with intake under 42°C. Drive 10 minutes normally until coolant is above 80°C, then cruise steady speeds. On a safe straight, in S, roll from 50 km/h and hold full pedal to 100 km/h, lift, cool a minute, repeat with intake under 48°C. Keep 10+ minutes moving, then export CSV.",
+     "cites": [
+      "kc-drive-brief",
+      "kc-log-gate"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Log Knock Control, Actual Ign and Knock Retard together, and never read meaning into a half-degree change. For fuel questions: same route, same mode, same map slot, intake within 8 °C, read only at or below 5,200 rpm, tag each log with its fuel. For full throttle: several pulls in the same gear mode at the same intake temperature, with AFR Command and MAF Hz.",
+     "cites": [
+      "kc-ignition-formula",
+      "kc-fuel-test",
+      "kc-maf-wot-calibration"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "after-flash": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "After any Flash, drive calm for 10 minutes before hard acceleration: steady speeds, engine fully warm. Watch trims first; hard driving waits until trims are within 5 percent. The fuel-quality score starts near 0.58 and settles toward 0.49 over ten to fifteen calm minutes; that's normal, not a verdict. If trims never settle or a new Stop appears, flash back and say so.",
+     "cites": [
+      "kc-shakedown",
+      "kc-after-flash"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "After a flash, do several pulls and log. Watch Actual Ign, Knock Control and Knock Retard together; log Knock Control trends over several pulls. Don’t add timing or lower knock sensitivity on the street. If judging fuel later, do tank-to-tank hot logs: same route, mode, map slot, intake within 8°C, tag fuel, read at or below 5,200 rpm.",
+     "cites": [
+      "kc-table-ignition",
+      "kc-ignition-formula",
+      "kc-fuel-test"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "misfire-gauge": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Not from those gauges alone. On the 1.5T, KTuner support and experienced owners treat Knock Count and Misfire as gauges not to judge by; ignore both. The number the shop reads is the Fuel-quality score, the ECU's learned margin. A rising count alone is no reason to buy plugs or change the map; a step up in Fuel-quality score is. Knock tables are read-only here, so no map change.",
+     "cites": [
+      "kc-misfire-gauges",
+      "kc-table-ignition"
+     ],
+     "decision": "read-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. On the 1.5T, KTuner support says Knock Count is tied to misfire detection, and experienced owners ignore both Knock Count and Misfire gauges on this platform. A rising count alone is no reason to buy spark plugs or change the map. The number the shop reads is the Fuel-quality score, the ECU's learned margin; a step up in that is what matters. Also watch measured AFR against AFR Command, not AFR Adj.",
+     "cites": [
+      "kc-misfire-gauges"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "e10-fuel": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. E10 needs about 4.3 percent more fuel by mass for the same lambda, but the ECU handles it: front sensor and trims in closed loop, fuel model in open loop. No E10 offset is written into the airflow curve, and E10 does not make full-throttle read lean. So do not add fuel for ethanol.",
+     "cites": [
+      "kc-e10",
+      "kc-rich-wot"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": false,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. Fuel follows air, and this map already asks 0.75 to cool the charge against knock; extra fuel adds nothing on E10. E10 fuel quality is judged tank-to-tank by Knock Control, not by adding fuel. Don't add fuel for ethanol.",
+     "cites": [
+      "kc-power-sources",
+      "kc-fuel-test"
+     ],
+     "decision": "teach-only"
+    }
+   }
+  },
+  "oil": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Use Honda manual grade 0W-20, API SP or newer. In traffic below 60 km/h, use S or a paddle before pressing past a third of the pedal, and let it rev to 2000 rpm or more first. For the CVT, use Honda HCF-2 and change it on the severe schedule.",
+     "cites": [
+      "kc-oil",
+      "kc-cvt"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No card here covers oil, so I won't give a grade or interval — that would be inventing a number. My cards only cover ignition and knock behaviour, full-throttle MAF/AFR calibration, timing percent, and P0420. For oil on a tuned, traffic-heavy car, follow Honda's manual grade and shorten the interval; ask an oil specialist. No map change needed.",
+     "cites": [],
+     "decision": "teach"
+    }
+   }
+  },
+  "iat2": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "IAT2 depends on the ECU. On some ECUs it reads air after the intercooler; on others, before. A Southeast Asian ECU was seen reading after, matching another tool, but another owner reports before, so the shop never assumes which side yours is. Do not judge intercooler health from IAT2 alone; pre-intercooler air runs hotter on a long pull.",
+     "cites": [
+      "kc-iat2-side"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "It depends on the ECU, so the shop never assumes. Owners of this same engine read IAT2 differently: some ECUs report it after the intercooler, others before it, and a Southeast Asian ECU has been logged reading after, matching another tool. Until we confirm it on your car, we won't judge intercooler health from IAT2 alone. A clue in your own log: pre-intercooler air runs far hotter on a long pull.",
+     "cites": [
+      "kc-iat2-side"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "knock-high-rpm": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No — don't read anything into it. Non-Si ECUs raise Knock Control on purpose above roughly 5,200 rpm, so a rise at 5,500 rpm says nothing about fuel quality or heat and is excluded from fuel and heat verdicts. A high-rpm rise alone never opens a step or changes a verdict. Judge the tank by normal driving and traffic, where heat and lugging actually move the score. Knock tables stay read-only here; no map change.",
+     "cites": [
+      "kc-high-rpm",
+      "kc-ranges"
+     ],
+     "decision": "read-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Judge it with Actual Ign, Knock Control and Knock Retard together, not Knock Control alone; the log rounds, so ignore half-degree changes. On E10 RON95, Knock Control rises in heat and pulls more timing on top, so a heat-soaked pull loses power. The fix is cooler intake air and a few calm minutes, not a map change.",
+     "cites": [
+      "kc-ignition-formula",
+      "kc-iat-retard"
+     ],
+     "decision": "read-only"
+    }
+   }
+  },
+  "open-loop": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "At full throttle, this ECU may go open loop: short-term trim sits flat at zero, so trims can't correct mixture there. Your cruise trims then say nothing about full-throttle fuelling. Only the airflow calibration decides it. Read your log to confirm loop state from trims, then judge the measured mixture against AFR Command, not the table alone.",
+     "cites": [
+      "kc-open-loop-wot",
+      "kc-tune-order"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "At full throttle the ECU may go open loop. If short-term trim sits flat at zero under boost, trims cannot correct the mixture there; only the airflow calibration (MAF Scaling) decides it. Cruise trims say nothing about it. Judge the measured mixture against AFR Command, not the table.",
+     "cites": [
+      "kc-open-loop-wot",
+      "kc-maf-wot-calibration"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "maf-csv": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Fix part-throttle first, trims within 5%. At full throttle, log several same-gear pulls, warm, steady intake temp, smooth throttle, AFR Command and MAF Hz. Leaner than commanded means those points read too little air; richer, too much. Change only those points about 2% per round, smooth, flash, relog. Stop about 0.2 AFR richer than commanded. No blind cuts; shop checks every point.",
+     "cites": [
+      "kc-maf-wot-calibration",
+      "kc-maf-data-rules",
+      "kc-table-maf"
+     ],
+     "decision": "play:airflow"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Log several same-gear full-throttle pulls at steady intake temp with AFR Command and MAF Hz. At WOT, judge against AFR Command, not trims: if leaner, those airflow points read too little air; if richer, too much. Change only those points about 2% per round, smooth, flash, re-log. Stop about 0.2 AFR richer. Full-throttle may be open loop; verify flat-zero short-term trim.",
+     "cites": [
+      "kc-maf-wot-calibration",
+      "kc-open-loop-wot",
+      "kc-maf-data-rules"
+     ],
+     "decision": "play:airflow"
+    }
+   }
+  },
+  "all-at-once": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No — one change per round. Air before fuel: fix MAF Scaling first, then mixture, then boost. Each needs its own flash and log under the same conditions. MAF correction needs a warm engine, steady samples, two or three rounds, part throttle first. Boost and mixture wait until airflow trims are proven.",
+     "cites": [
+      "kc-tune-order",
+      "kc-tune-one-thing",
+      "kc-table-maf",
+      "kc-maf-data-rules"
+     ],
+     "decision": "play:airflow"
+    }
+   },
+   "keyword": {
+    "decision_ok": false,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. We cannot batch boost, mixture and MAF. Full-throttle may be open loop, so judge mixture against AFR Command. MAF/mixture is airflow: log pulls at same gear mode and intake temp; change only those points by about 2% per round, then re-log; stop about 0.2 AFR richer than commanded. Boost tables change as a pair. Do one, log next Drive.",
+     "cites": [
+      "kc-maf-wot-calibration",
+      "kc-open-loop-wot",
+      "kc-table-boost"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "downpipe-map": {
+   "kg": {
+    "decision_ok": false,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "For a catted downpipe there is no map change; fuel and spark stay untouched. The same tune response applies to catted or catless. Check both flanges cold for leaks. The only possible map action is a small boost trim, and only if a log proves boost holds above target. Without that proof, leave the map alone.",
+     "cites": [
+      "kc-downpipe-catted-catless",
+      "kc-downpipe"
+     ],
+     "decision": "teach-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": false,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No map change for a catted downpipe on the stock turbo. Logs already include it. Full-load target stays 11.0, timing untouched. Only a small boost trim if a log proves boost holds above target. Check both flanges cold for leaks; keep P0420 monitor on.",
+     "cites": [
+      "kc-downpipe",
+      "kc-p0420"
+     ],
+     "decision": "teach-only"
+    }
+   }
+  },
+  "actual-ign": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Because the table is a ceiling, not the final number. KTuner's rule: final timing is the ignition table plus the knock limit, minus the retard that Knock Control pulls, and the ECU takes the lesser value — never more than the table. Knock Control times the knock retard table gives that retard, and hot intake air adds IAT retard through the knock limit on top. So actual ignition sits under the table. Ignition tables are read-only here; follow Actual Ign, Knock Control and Knock Retard together.",
+     "cites": [
+      "kc-ignition-formula",
+      "kc-iat-retard",
+      "kc-table-ignition"
+     ],
+     "decision": "read-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Knock pull, not a fault. KTuner's rule: final timing is the ignition table plus the knock limit, minus knock retard — and the ECU takes the lesser of that and the table, so it never exceeds the table. Their example: 21 plus 2 equals 23; Knock Control 0.38 times a retard-table value of 10 gives 3.8 degrees, so final is 19.2, logged as 19 and 3.5. Read Actual Ign, Knock Control and Knock Retard together; intake-temperature corrections can ride in the knock limit. We read ignition tables, never edit them.",
+     "cites": [
+      "kc-ignition-formula",
+      "kc-table-ignition"
+     ],
+     "decision": "read-only"
+    }
+   }
+  },
+  "premium-fuel": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Judge it by Knock Control, tank against tank, never by feel. On cool drives both fuels sit at the 0.49 floor, so only a matched hot pair can show anything: same route, mode, map slot, intake within 8 °C, tagged logs, read at or below 5,200 rpm. A gap of 0.5 degrees or less is inside KTuner's logging step, so no measurable gain. RON97's ceiling is only what heat costs, about 1.6 degrees.",
+     "cites": [
+      "kc-fuel-test",
+      "kc-e10"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Test tank against tank, not by feel: run E10 RON95 III until Knock Control settles, log a hot drive; then fill E10 RON97 III, settle, log same route/mode/map slot, intake within 8°C. Read Knock Control/timing only ≤5,200 rpm. A ≤0.5° gap is no measurable gain; RON97 can at most recover ~1.6° heat loss. E10 needs no trim offset.",
+     "cites": [
+      "kc-fuel-test",
+      "kc-e10"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "more-power": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Only trapped air makes power, and this map has no boost headroom left: at 19.9 psi the wastegate was only 2.5 percent open, so more boost mostly means heat. More fuel adds nothing and leaning is wrong on hot E10 RON95. The downpipe gain is already in your logs. So real gains come from cooler intake air and good habits, not map changes.",
+     "cites": [
+      "kc-power-sources",
+      "kc-expectations",
+      "kc-downpipe",
+      "kc-iat-retard"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Only air makes power; boost is pressure, not flow. Fuel already runs rich at 0.75, and leaning risks timing. Spark is knock-capped, so more boost on E10 RON95 forces timing out. Your downpipe gains are already in your logs, with no map change needed. The factory torque limiter still caps the CVT.",
+     "cites": [
+      "kc-power-sources",
+      "kc-downpipe",
+      "kc-wot-lean-timing"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "old-21psi": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Not entirely. On local fuel you don't trust, use ECO: Tune 2 runs 18 psi in ECO, 21 psi in Normal/Sport. ECO is for hot days, traffic, or untrusted fuel. No map change needed. More boost mostly adds heat, not power. Tag logs and compare only same mode.",
+     "cites": [
+      "kc-dual-boost-targets",
+      "kc-expectations"
+     ],
+     "decision": "teach-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "These cards don't justify blanket-avoiding 21 psi. Judge local fuel by Knock Control tank-to-tank: hot drives, same route/mode/map slot. RON97 can only win back heat, about 1.6 degrees; a 0.5-degree gap is unmeasurable. On E10 RON95 this car sits at the 0.49 floor under boost. If Knock Control rises repeatably, remove timing in degrees; no proven boost Play shown here.",
+     "cites": [
+      "kc-fuel-test",
+      "kc-timing-percent",
+      "kc-table-ignition"
+     ],
+     "decision": "teach-only"
+    }
+   }
+  },
+  "old-torque": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. The app sets no torque number for this car; the old keep-under-a-number warning is removed. The ECU's factory torque limiter still protects the CVT. Care is heat and slip: no pulls with fluid at or above 90°C, never brake-launch. Use Honda HCF-2 on the severe schedule in hot traffic.",
+     "cites": [
+      "kc-cvt"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "I don't have a card covering CVT torque limits, so I can't confirm 250 Nm. The cards don't set a torque cap or say to keep CVT torque under any number. Don't change a map for this. Treat it as guidance to check with a transmission specialist, not from these cards.",
+     "cites": [],
+     "decision": "teach"
+    }
+   }
+  },
+  "old-knock-070": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. The shop's line for no hard driving is 0.62 held over 60 seconds, so 0.70 is already past it. Watch starts at 0.56; Stop is 0.80, which this car has never reached. These cut points are judgement, not measured limits. Under boost, each point above the 0.49 floor costs 10.2 degrees of timing.",
+     "cites": [
+      "kc-ranges"
+     ],
+     "decision": "read-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. The no-hard-driving line is 0.62, held over 60 seconds. 0.70 is above it but below the 0.80 Stop point. Watch starts at 0.56. Under boost, 0.62 costs about 1.3 degrees; the cut points are judgement, not measured limits.",
+     "cites": [
+      "kc-ranges"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "intercooler": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Heat soak, not the intercooler, costs power. The intercooler adds only 2 to 6 °C under boost. Hot intake air pulls ignition timing. After a hot stop, drive calm 3 to 5 minutes before hard acceleration; judge power only at similar intake temps. CVT: no pulls at 90 °C fluid. No map change.",
+     "cites": [
+      "kc-heat-soak",
+      "kc-iat-retard",
+      "kc-cvt"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Not proven from these cards. First confirm which side IAT2 reads on your ECU: some read after the intercooler, others before. Until that is confirmed, intercooler health is not judged from IAT2 alone. In your own log, air straight off the turbo runs far hotter on a long pull than air after the intercooler.",
+     "cites": [
+      "kc-iat2-side"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "ho-hot-timing": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "That's intake-air temperature, not a fault. IAT Ignition High Load takes nothing up to 40 °C, 4.5 degrees at 50 °C and 9 degrees at 90 °C and above; 1 to 3 degrees at low load. KTuner applies it through the knock limit, and on E10 RON95 Knock Control rises in heat and pulls more on top. Cure: cooler intake air and a few calm minutes after a hot stop — no map change.",
+     "cites": [
+      "kc-iat-retard",
+      "kc-heat-soak",
+      "kc-table-ignition"
+     ],
+     "decision": "read-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Heat raises knock risk, so Knock Control pulls timing. KTuner's formula is final timing = ignition table + knock limit − Knock Control pull. The shop only reads these ignition and knock-sensitivity tables; it never edits them. If retard collects, only remove 1–2 degrees from a professional basemap, and never add timing or lower knock sensitivity without a dyno.",
+     "cites": [
+      "kc-table-ignition"
+     ],
+     "decision": "read-only"
+    }
+   }
+  },
+  "ho-knock-sens": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. The Knock Sens tables are read-only here; the shop never edits them, and the street rule is never to lower knock sensitivity without a dyno. It also wouldn't help: the 5.0 degrees of retard logged under boost at 0.49 is scheduled from the fuel-quality score, not knock events. Watch Actual Ign, Knock Control and Knock Retard together instead.",
+     "cites": [
+      "kc-table-ignition",
+      "kc-ranges",
+      "kc-ignition-formula"
+     ],
+     "decision": "read-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. The Knock Sens tables set detection sensitivity, and lowering them without a dyno is not a street fix. This app reads those tables but doesn't edit them. Watch Actual Ign, Knock Control and Knock Retard together; on E10 RON95 this car already sits at the 0.49 floor under boost. On the street, only remove timing in degrees where retard repeats.",
+     "cites": [
+      "kc-table-ignition",
+      "kc-ignition-formula",
+      "kc-timing-percent"
+     ],
+     "decision": "read-only"
+    }
+   }
+  },
+  "ho-maf-preset": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Don’t pick by PRL brand. MAF preset follows the fitted housing: factory or street housing keeps the Factory curve; a larger Race housing needs its Race preset. Ask which housing you have. After flashing, drive calm; make no pull until trims sit within about 5%. If trims stay beyond 10%, revert and correct the preset.",
+     "cites": [
+      "kc-maf-housing",
+      "kc-table-maf",
+      "kc-trim-cause"
+     ],
+     "decision": "play:airflow"
+    }
+   },
+   "keyword": {
+    "decision_ok": false,
+    "cites_expected": false,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No PRL preset is listed in the cards. MAF Scaling has Factory, Race presets for larger housings, and Custom, which you edit. Pick the preset matching your intake housing; if none matches, start Custom. Then log steady part-throttle trims and correct smoothly, aiming within about 5 percent; beyond about 10 percent means the table or preset is wrong.",
+     "cites": [
+      "kc-table-maf"
+     ],
+     "decision": "teach-only"
+    }
+   }
+  },
+  "ho-afr-11": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "11.0 is the basemap's own full-throttle target, about 0.75 lambda, so it is not too rich. E10 does not lean it: the sensor reads lambda whatever the fuel, and no fuel is added for E10. Reading richer than asked, 10.1 to 10.7, is the safe side for knock and heat, just a little power lost. Keep the target where the basemap has it; leaning needs an AFR Command log, healthy heat, and a like-for-like proof drive first.",
+     "cites": [
+      "kc-table-wot",
+      "kc-rich-wot",
+      "kc-wot-lean-timing"
+     ],
+     "decision": "teach-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": false,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "No. 11.0 is what the map already asks at full load — 0.75 lambda — so it isn't an over-rich target. E10 doesn't change it: the sensor reads lambda whatever the fuel, and no fuel is added for E10. Your logs reading 10.1–10.7 are richer than asked, which is the safe side for knock and heat and costs a little power; best power sits near 0.82–0.85, and danger starts at 12.0. The target is judged at 12 psi and above.",
+     "cites": [
+      "kc-rich-wot"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "ho-maf-logs": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Plan on two or three rounds, not one drive. Each round needs at least 30 minutes of steady cruising, plenty of mixed driving, and 15 minutes of slow driving, engine fully warm and intake temps steady. I throw away rows around throttle stabs, stops and loop transitions, and leave any point with too few samples alone. Then smooth lightly, flash, and log again until trims sit within about 5 percent.",
+     "cites": [
+      "kc-maf-data-rules",
+      "kc-table-maf",
+      "kc-maf-housing"
+     ],
+     "decision": "play:airflow"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Airflow Play needs a fully warm engine, steady intake temp, smooth throttle. Use at least 30 min steady cruising, as much mixed driving, and 15 min slow driving across rounds; discard rows around sudden throttle, stops and loop transitions. Expect two or three rounds, part throttle first, then full throttle; apply only part of each correction.",
+     "cites": [
+      "kc-maf-data-rules",
+      "kc-table-maf"
+     ],
+     "decision": "play:airflow"
+    }
+   }
+  },
+  "ho-catless": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Catless can make about 0 to 6 whp over a good catted pipe, so little. It brings exhaust smell, always sets P0420, and risks the đăng kiểm tailpipe test and fines. The shop picks a 400-cell catted pipe. Tune response is the same: no map change, and only a small boost trim if a log proves boost holds above target.",
+     "cites": [
+      "kc-downpipe-catted-catless"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Maybe only slightly. A catless downpipe makes about 0 to 6 whp over a good catted pipe, but brings exhaust smell, always sets P0420, and risks the đăng kiểm tailpipe test; an unapproved modification can be fined 65 to 75 million VND. The tune response is the same: no map change, only a small boost trim if a log proves boost holds above target.",
+     "cites": [
+      "kc-downpipe-catted-catless",
+      "kc-downpipe"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "ho-cvt-95": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "It's inside the car's own known range, but it's above the watch line, so treat it as hot, not safe to hammer. Fluid heat watch starts at 90 °C; Stop is 100 °C, and that's provisional, never seen on this car, whose peak is 95 °C. So no pulls at or above 90 °C, and never brake-launch. Let it cool and drive calmly before any pull.",
+     "cites": [
+      "kc-cvt"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "95 °C is in the watch zone: watch starts at 90 °C, and Stop at 100 °C is provisional. Your car's peak is 95 °C, so it is below the provisional stop, but no pulls with fluid at or above 90 °C. Never brake-launch. Keep HCF-2 on the severe schedule in hot traffic.",
+     "cites": [
+      "kc-cvt"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "ho-eco-hot": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Yes — the ECO button switches which boost table the ECU reads. On the Starter 21 Dual Tune 2 map that is 18 psi in ECO versus 21 psi in Normal and Sport, and ECO keeps factory-like boost. KTuner's own advice is to use ECO on hot days, in traffic, or on fuel you don't trust. Note ECO isn't logged, so tag logs with the mode.",
+     "cites": [
+      "kc-dual-boost-targets",
+      "kc-table-boost"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Yes — but it is the ECO button, not the heat, that switches tables. With Dual Boost Targets With ECO Button, the ECU runs Boost Target ECO while the button is on: 18 psi versus 21 psi Normal on Starter 21 Dual Tune 2, with no flash and no device. Hot days, traffic or doubtful fuel are when to press it. Nothing is edited here, and no log channel records ECO, so tag the log.",
+     "cites": [
+      "kc-dual-boost-targets",
+      "kc-table-boost"
+     ],
+     "decision": "teach-only"
+    }
+   }
+  },
+  "ho-final-target": {
+   "kg": {
+    "decision_ok": true,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Final Boost Target is the target the ECU settles on after arbitrating the boost targets — on this map it tops out near 23.4 psi. It isn't edited directly: the shop changes the Boost Target tables, one proven 1 psi step at a time. The logged target has never passed 19.2 psi, held back by factory throttle dampening and the Boost Target Ramp Rate.",
+     "cites": [
+      "kc-table-boost",
+      "kc-boost-step"
+     ],
+     "decision": "read-only"
+    }
+   },
+   "keyword": {
+    "decision_ok": false,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "Final Boost Target is the boost the ECU actually aims for after it arbitrates between the tune's Boost Target tables (Normal and ECO, Low and High cam), topping out near 23.4 psi on this map. Your logs have never passed 19.2 psi: factory throttle dampening and the Boost Target Ramp Rate hold it, so it follows the pedal and climbs over seconds.",
+     "cites": [
+      "kc-table-boost"
+     ],
+     "decision": "teach"
+    }
+   }
+  },
+  "ho-score-after-flash": {
+   "kg": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "That is normal after a Flash. The fuel-quality score starts high, around 0.58, then relearns and settles toward the 0.49 baseline with calm driving. Give it ten to fifteen calm minutes before judging fuel or heat. It is not an alarm and never sets a Verdict alone. If it later climbs in traffic, judge that separately.",
+     "cites": [
+      "kc-after-flash",
+      "kc-shakedown"
+     ],
+     "decision": "teach"
+    }
+   },
+   "keyword": {
+    "decision_ok": null,
+    "cites_expected": true,
+    "cites_grounded": true,
+    "numbers_grounded": true,
+    "reply": {
+     "answer": "That high start is the fresh-flash relearn: the Fuel-quality score begins around 0.58 after every Flash and settles back toward 0.49 with calm driving. It is never an unexplained change or verdict by itself. Give it ten to fifteen calm minutes, watch trims first, then judge fuel or heat. If it climbs again later, that later rise is the finding.",
+     "cites": [
+      "kc-after-flash",
+      "kc-shakedown",
+      "kc-ranges"
+     ],
+     "decision": "teach"
+    }
+   }
+  }
+ }
+}

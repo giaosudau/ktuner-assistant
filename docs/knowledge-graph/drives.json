@@ -1,0 +1,478 @@
+{
+ "_help": "Written by `make kg-simulate`: what the engine decided on each real Drive. `expect` is kept across runs and is what the eval checks.",
+ "drives": [
+  {
+   "id": "aug22-0903",
+   "verdict": "Watch",
+   "kind": "drive",
+   "key": "baseline",
+   "title": "Log one Cool-morning drive with 2 pulls",
+   "body": "Every “did it work?” needs a Drive to compare against. Heat moves boost, timing and the 50→70 time on its own, so the Baseline has to be a Cool Drive.",
+   "also": null,
+   "plan": "Your logs support no map change right now.",
+   "tables": [],
+   "readable": true,
+   "open_steps": [
+    {
+     "key": "baseline",
+     "title": "Baseline: one Cool drive with 2 pulls"
+    },
+    {
+     "key": "channels",
+     "title": "Log AFR Command and MAF Hz"
+    }
+   ],
+   "numbers": [
+    "intake air, moving: 49°C",
+    "Knock Control, start → peak: 0.49 → 0.52",
+    "worst fuel trim: −2.3%",
+    "hard pulls: 9"
+   ],
+   "checkpoints": [
+    "Logged 10 times a second or faster: 7.5 a second (not met)",
+    "10 minutes or more of moving: 8 min (not met)",
+    "Every gauge moving: all moving (met)",
+    "AFR Command and MAF Hz in the log: missing: AFR Command and MAF Hz (not met)",
+    "Engine warm (coolant 80 °C or more): 90 °C peak (met)",
+    "Cool intake while moving (under 42 °C): 49 °C (not met)",
+    "2 full-throttle pulls: 9 hard pulls (met)",
+    "Pulls started under 48 °C intake: 51 °C (not met)"
+   ],
+   "expect": {
+    "cards": [
+     "kc-drive-brief"
+    ],
+    "decision": "next-step"
+   }
+  },
+  {
+   "id": "aug22-0950",
+   "verdict": "Watch",
+   "kind": "drive",
+   "key": "baseline",
+   "title": "Log one Cool-morning drive with 2 pulls",
+   "body": "",
+   "also": null,
+   "plan": "Your logs support no map change right now.",
+   "tables": [],
+   "readable": true,
+   "open_steps": [
+    {
+     "key": "channels",
+     "title": "Log AFR Command and MAF Hz"
+    },
+    {
+     "key": "baseline",
+     "title": "Baseline: one Cool drive with 2 pulls"
+    }
+   ],
+   "numbers": [
+    "intake air, moving: 60°C",
+    "Knock Control, start → peak: 0.49 → 0.53",
+    "worst fuel trim: −3.9%",
+    "hard pulls: 0"
+   ],
+   "checkpoints": [
+    "Logged 10 times a second or faster: 7.5 a second (not met)",
+    "10 minutes or more of moving: 13 min (met)",
+    "Every gauge moving: all moving (met)",
+    "AFR Command and MAF Hz in the log: missing: AFR Command and MAF Hz (not met)",
+    "Engine warm (coolant 80 °C or more): 92 °C peak (met)",
+    "Cool intake while moving (under 42 °C): 60 °C (not met)",
+    "2 full-throttle pulls: 0 hard pulls (not met)",
+    "Pulls started under 48 °C intake: no pull to time (not met)"
+   ],
+   "expect": {
+    "cards": [
+     "kc-drive-brief"
+    ],
+    "decision": "next-step"
+   }
+  },
+  {
+   "id": "aug23-1959",
+   "verdict": "OK",
+   "kind": "drive",
+   "key": "baseline",
+   "title": "Log one Cool-morning drive with 2 pulls",
+   "body": "",
+   "also": null,
+   "plan": "Your logs support no map change right now.",
+   "tables": [],
+   "readable": true,
+   "open_steps": [
+    {
+     "key": "channels",
+     "title": "Log AFR Command and MAF Hz"
+    },
+    {
+     "key": "baseline",
+     "title": "Baseline: one Cool drive with 2 pulls"
+    }
+   ],
+   "numbers": [
+    "intake air, moving: 49°C",
+    "Knock Control, start → peak: 0.49 → 0.50",
+    "worst fuel trim: −1.6%",
+    "hard pulls: 0"
+   ],
+   "checkpoints": [
+    "Logged 10 times a second or faster: 7.5 a second (not met)",
+    "10 minutes or more of moving: 22 min (met)",
+    "Every gauge moving: all moving (met)",
+    "AFR Command and MAF Hz in the log: missing: AFR Command and MAF Hz (not met)",
+    "Engine warm (coolant 80 °C or more): 92 °C peak (met)",
+    "Cool intake while moving (under 42 °C): 49 °C (not met)",
+    "2 full-throttle pulls: 0 hard pulls (not met)",
+    "Pulls started under 48 °C intake: no pull to time (not met)"
+   ],
+   "expect": {
+    "cards": [
+     "kc-drive-brief"
+    ],
+    "decision": "next-step"
+   }
+  },
+  {
+   "id": "aug23-2038",
+   "verdict": "Stop",
+   "kind": "flash",
+   "key": "undo",
+   "title": "Put the map from before back on the car",
+   "body": "Stop open: flash your previous map file, and tell me which one it is. In KTuner: load the file you ran before this Drive and flash it. I have no Map version before the one this Drive ran on — tell me what you flashed and I can name the file to flash back. Save today's file first so nothing is lost. Then drive a Shakedown drive: 10 calm minutes, no hard driving.",
+   "also": null,
+   "plan": "Stop open: flash your previous map file, and tell me which one it is.",
+   "tables": [],
+   "readable": true,
+   "open_steps": [
+    {
+     "key": "channels",
+     "title": "Log AFR Command and MAF Hz"
+    },
+    {
+     "key": "baseline",
+     "title": "Baseline: one Cool drive with 2 pulls"
+    },
+    {
+     "key": "undo",
+     "title": "Undo: trims back within ±5 %"
+    }
+   ],
+   "numbers": [
+    "intake air, moving: 45°C",
+    "Knock Control, start → peak: 0.50 → 0.50",
+    "worst fuel trim: −21.4%",
+    "hard pulls: 0"
+   ],
+   "checkpoints": [
+    "Logged 10 times a second or faster: 7.5 a second (not met)",
+    "10 minutes or more of moving: 10 min (met)",
+    "Every gauge moving: all moving (met)",
+    "AFR Command and MAF Hz in the log: missing: AFR Command and MAF Hz (not met)",
+    "Engine warm (coolant 80 °C or more): 92 °C peak (met)",
+    "Cool intake while moving (under 42 °C): 45 °C (not met)",
+    "2 full-throttle pulls: 0 hard pulls (not met)",
+    "Pulls started under 48 °C intake: no pull to time (not met)"
+   ],
+   "expect": {
+    "cards": [
+     "kc-trim-cause"
+    ],
+    "decision": "stop"
+   }
+  },
+  {
+   "id": "aug30-1509",
+   "verdict": null,
+   "kind": "none",
+   "key": "tooShort",
+   "title": "Nothing read: the drive was too short",
+   "body": "Under a minute moving. I keep your Car history clean and I don't judge it. The step you already have stands: Undo: trims back within ±5 %. Upload after a drive of 10 minutes or more.",
+   "also": null,
+   "plan": null,
+   "tables": [],
+   "readable": false,
+   "open_steps": [
+    {
+     "key": "channels",
+     "title": "Log AFR Command and MAF Hz"
+    },
+    {
+     "key": "baseline",
+     "title": "Baseline: one Cool drive with 2 pulls"
+    },
+    {
+     "key": "undo",
+     "title": "Undo: trims back within ±5 %"
+    }
+   ],
+   "numbers": [],
+   "checkpoints": [],
+   "expect": {
+    "cards": [
+     "kc-log-gate"
+    ],
+    "decision": "fix-log"
+   }
+  },
+  {
+   "id": "aug30-1529",
+   "verdict": "Watch",
+   "kind": "drive",
+   "key": "baseline",
+   "title": "Log one Cool-morning drive with 2 pulls",
+   "body": "Every “did it work?” needs a Drive to compare against. Heat moves boost, timing and the 50→70 time on its own, so the Baseline has to be a Cool Drive.",
+   "also": null,
+   "plan": "Your logs support no map change right now.",
+   "tables": [],
+   "readable": true,
+   "open_steps": [
+    {
+     "key": "channels",
+     "title": "Log AFR Command and MAF Hz"
+    },
+    {
+     "key": "baseline",
+     "title": "Baseline: one Cool drive with 2 pulls"
+    },
+    {
+     "key": "undo",
+     "title": "Undo: trims back within ±5 %"
+    }
+   ],
+   "numbers": [
+    "intake air, moving: 51°C",
+    "Knock Control, start → peak: 0.58 → 0.59",
+    "worst fuel trim: −2.3%",
+    "hard pulls: 8"
+   ],
+   "checkpoints": [
+    "Logged 10 times a second or faster: 7.5 a second (not met)",
+    "10 minutes or more of moving: 16 min (met)",
+    "Every gauge moving: all moving (met)",
+    "AFR Command and MAF Hz in the log: missing: AFR Command and MAF Hz (not met)",
+    "Engine warm (coolant 80 °C or more): 91 °C peak (met)",
+    "Cool intake while moving (under 42 °C): 51 °C (not met)",
+    "2 full-throttle pulls: 8 hard pulls (met)",
+    "Pulls started under 48 °C intake: 49 °C (not met)"
+   ],
+   "expect": {
+    "cards": [
+     "kc-drive-brief"
+    ],
+    "decision": "next-step"
+   }
+  },
+  {
+   "id": "aug30-1601",
+   "verdict": "Watch",
+   "kind": "drive",
+   "key": "baseline",
+   "title": "Log one Cool-morning drive with 2 pulls",
+   "body": "Every “did it work?” needs a Drive to compare against. Heat moves boost, timing and the 50→70 time on its own, so the Baseline has to be a Cool Drive.",
+   "also": "Knock Control went 0.49 → 0.65: about 1.6° of timing taken under boost. Not damage. 31 of its 41 step-ups came while the CVT held 1,509 rpm with load in 53 °C air.",
+   "plan": "Your logs support no map change right now.",
+   "tables": [],
+   "readable": true,
+   "open_steps": [
+    {
+     "key": "channels",
+     "title": "Log AFR Command and MAF Hz"
+    },
+    {
+     "key": "baseline",
+     "title": "Baseline: one Cool drive with 2 pulls"
+    },
+    {
+     "key": "undo",
+     "title": "Undo: trims back within ±5 %"
+    },
+    {
+     "key": "habit",
+     "title": "Habit test: revs up in hot traffic"
+    }
+   ],
+   "numbers": [
+    "intake air, moving: 53°C",
+    "Knock Control, start → peak: 0.49 → 0.65",
+    "worst fuel trim: −2.4%",
+    "hard pulls: 2"
+   ],
+   "checkpoints": [
+    "Logged 10 times a second or faster: 7.5 a second (not met)",
+    "10 minutes or more of moving: 46 min (met)",
+    "Every gauge moving: all moving (met)",
+    "AFR Command and MAF Hz in the log: missing: AFR Command and MAF Hz (not met)",
+    "Engine warm (coolant 80 °C or more): 92 °C peak (met)",
+    "Cool intake while moving (under 42 °C): 53 °C (not met)",
+    "2 full-throttle pulls: 2 hard pulls (met)",
+    "Pulls started under 48 °C intake: 60 °C (not met)"
+   ],
+   "expect": {
+    "cards": [
+     "kc-drive-brief"
+    ],
+    "decision": "next-step"
+   }
+  },
+  {
+   "id": "sep01-0813",
+   "verdict": "OK",
+   "kind": "drive",
+   "key": "habit",
+   "title": "Habit test: log your next hot-afternoon Drive",
+   "body": "The Baseline is in. Keep the habit going: the next hot afternoon scores it.",
+   "also": null,
+   "plan": "Your logs support no map change right now.",
+   "tables": [],
+   "readable": true,
+   "open_steps": [
+    {
+     "key": "channels",
+     "title": "Log AFR Command and MAF Hz"
+    },
+    {
+     "key": "baseline",
+     "title": "Baseline: one Cool drive with 2 pulls"
+    },
+    {
+     "key": "undo",
+     "title": "Undo: trims back within ±5 %"
+    },
+    {
+     "key": "habit",
+     "title": "Habit test: revs up in hot traffic"
+    }
+   ],
+   "numbers": [
+    "intake air, moving: 37°C",
+    "Knock Control, start → peak: 0.51 → 0.54",
+    "worst fuel trim: +1.6%",
+    "hard pulls: 2"
+   ],
+   "checkpoints": [
+    "Logged 10 times a second or faster: 7.5 a second (not met)",
+    "10 minutes or more of moving: 30 min (met)",
+    "Every gauge moving: all moving (met)",
+    "AFR Command and MAF Hz in the log: missing: AFR Command and MAF Hz (not met)",
+    "Engine warm (coolant 80 °C or more): 92 °C peak (met)",
+    "Cool intake while moving (under 42 °C): 37 °C (met)",
+    "2 full-throttle pulls: 2 hard pulls (met)",
+    "Pulls started under 48 °C intake: 39 °C (met)"
+   ],
+   "expect": {
+    "cards": [
+     "kc-oil"
+    ],
+    "decision": "next-step"
+   }
+  },
+  {
+   "id": "sep05-0756",
+   "verdict": "OK",
+   "kind": "watch",
+   "key": "logger",
+   "title": "Your logger recorded 4 dead gauges",
+   "body": "DIFP, Transmission Temperature, Turbo Pressure and Turbo Pressure Target sat on one number the whole Drive while the revs moved. The car is fine; the log isn't. Without boost in the log I cannot check the next pull, and the habit test cannot be scored.",
+   "also": null,
+   "plan": "Your logs support no map change right now.",
+   "tables": [],
+   "readable": false,
+   "open_steps": [
+    {
+     "key": "channels",
+     "title": "Log AFR Command and MAF Hz"
+    },
+    {
+     "key": "baseline",
+     "title": "Baseline: one Cool drive with 2 pulls"
+    },
+    {
+     "key": "undo",
+     "title": "Undo: trims back within ±5 %"
+    },
+    {
+     "key": "habit",
+     "title": "Habit test: revs up in hot traffic"
+    },
+    {
+     "key": "logger",
+     "title": "Fix the logger: dead gauges"
+    }
+   ],
+   "numbers": [
+    "intake air, moving: 39°C",
+    "Knock Control, start → peak: 0.49 → 0.50",
+    "worst fuel trim: −1.6%",
+    "hard pulls: 0"
+   ],
+   "checkpoints": [
+    "Logged 10 times a second or faster: 7.5 a second (not met)",
+    "10 minutes or more of moving: 35 min (met)",
+    "Every gauge moving: stuck: DIFP, Transmission Temperature, Turbo Pressure and Turbo Pressure Target (not met)",
+    "AFR Command and MAF Hz in the log: missing: AFR Command and MAF Hz (not met)",
+    "Engine warm (coolant 80 °C or more): 91 °C peak (met)",
+    "Cool intake while moving (under 42 °C): 39 °C (met)",
+    "2 full-throttle pulls: 0 hard pulls (not met)",
+    "Pulls started under 48 °C intake: no pull to time (not met)"
+   ],
+   "expect": {
+    "cards": [
+     "kc-log-gate"
+    ],
+    "decision": "fix-log"
+   }
+  },
+  {
+   "id": "sep01-0813+overshoot",
+   "verdict": "OK",
+   "kind": "none",
+   "key": "none",
+   "title": "Boost overshoot over the hold (fixture: overshoot set to 3.4 psi)",
+   "body": "Most Drives end here, and that is an answer, not a gap: on this car the turbo has no headroom left. Nothing to type in KTuner.",
+   "also": null,
+   "plan": "Boost targets: −1 psi at 3,500–4,000 rpm, because overshoot held 3.4 psi there.",
+   "tables": [
+    "Boost_Target_1_Normal_H",
+    "Boost_Target_1_Normal_L",
+    "Boost_Target_2_Normal_H",
+    "Boost_Target_2_Normal_L",
+    "Boost_Target_3_Normal_H",
+    "Boost_Target_3_Normal_L"
+   ],
+   "readable": true,
+   "open_steps": [
+    {
+     "key": "baseline",
+     "title": "Baseline: one Cool drive with 2 pulls"
+    },
+    {
+     "key": "channels",
+     "title": "Log AFR Command and MAF Hz"
+    }
+   ],
+   "numbers": [
+    "intake air, moving: 37°C",
+    "Knock Control, start → peak: 0.51 → 0.54",
+    "worst fuel trim: +1.6%",
+    "hard pulls: 2"
+   ],
+   "checkpoints": [
+    "Logged 10 times a second or faster: 7.5 a second (not met)",
+    "10 minutes or more of moving: 30 min (met)",
+    "Every gauge moving: all moving (met)",
+    "AFR Command and MAF Hz in the log: missing: AFR Command and MAF Hz (not met)",
+    "Engine warm (coolant 80 °C or more): 92 °C peak (met)",
+    "Cool intake while moving (under 42 °C): 37 °C (met)",
+    "2 full-throttle pulls: 2 hard pulls (met)",
+    "Pulls started under 48 °C intake: 39 °C (met)"
+   ],
+   "expect": {
+    "cards": [
+     "kc-table-boost"
+    ],
+    "decision": "play:boost"
+   }
+  }
+ ]
+}

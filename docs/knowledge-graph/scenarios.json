@@ -1,0 +1,459 @@
+{
+ "_help": "Golden situations for the knowledge graph eval. Questions are owners' own words (docs/research/owner-voices.md §2, with this car's real numbers) or the shop's real asks. `cards`: must be in the top 5. `decision`: the branch of the shop's decision tree (teach | read-only | teach-only | play:<family> | fix-log | stop). Written before the ranking was tuned; change an expectation only with a reason in the commit.",
+ "scenarios": [
+  {
+   "id": "wot-afr-106",
+   "group": "Owner question",
+   "question": "My WOT AFR is 10.6. What went wrong? Is it my E10? Should I pay for better fuel?",
+   "expect": {
+    "cards": [
+     "kc-rich-wot",
+     "kc-fuel-test"
+    ],
+    "decision": "teach-only"
+   }
+  },
+  {
+   "id": "knock-065",
+   "group": "Owner question",
+   "question": "Knock control went to 0.65 in traffic. Am I hurting the engine? Can I still drive hard?",
+   "expect": {
+    "cards": [
+     "kc-ranges"
+    ],
+    "decision": "read-only"
+   }
+  },
+  {
+   "id": "heat-boost-15",
+   "group": "Owner question",
+   "question": "This car is completely different in the heat. Boost drops to about 15 psi after idling in a hot car park.",
+   "expect": {
+    "cards": [
+     "kc-heat-soak"
+    ]
+   }
+  },
+  {
+   "id": "intake-trims",
+   "group": "Owner question",
+   "question": "I installed an intake. Are my fuel trims OK? Do I need a tune?",
+   "expect": {
+    "cards": [
+     "kc-maf-housing",
+     "kc-trims"
+    ],
+    "decision": "play:airflow"
+   }
+  },
+  {
+   "id": "downpipe-cel",
+   "group": "Owner question",
+   "question": "Downpipe: will I get a check engine light? How do I turn it off? Will I pass inspection?",
+   "expect": {
+    "cards": [
+     "kc-p0420"
+    ]
+   }
+  },
+  {
+   "id": "cvt-slip",
+   "group": "Owner question",
+   "question": "Is my CVT slipping since the tune? Will it survive?",
+   "expect": {
+    "cards": [
+     "kc-cvt"
+    ],
+    "decision": "teach"
+   }
+  },
+  {
+   "id": "ron95-21psi",
+   "group": "Owner question",
+   "question": "Can I run RON95 on a 91 octane basemap? Is 21 psi safe in my country?",
+   "expect": {
+    "cards": [
+     "kc-expectations"
+    ]
+   }
+  },
+  {
+   "id": "bog-from-stop",
+   "group": "Owner question",
+   "question": "It bogs or hesitates from a stop. Can I get less turbo lag and sharper throttle response?",
+   "expect": {
+    "cards": [
+     "kc-quick-adjustments"
+    ]
+   }
+  },
+  {
+   "id": "more-boost",
+   "group": "Owner question",
+   "question": "Can you give me 2 more psi of boost?",
+   "expect": {
+    "cards": [
+     "kc-boost-step",
+     "kc-expectations"
+    ],
+    "decision": "play:boost"
+   }
+  },
+  {
+   "id": "more-timing",
+   "group": "Owner question",
+   "question": "Should I add 2 or 5 percent timing?",
+   "expect": {
+    "cards": [
+     "kc-timing-percent",
+     "kc-table-ignition"
+    ],
+    "decision": "read-only"
+   }
+  },
+  {
+   "id": "eco-button",
+   "group": "KTuner how-to",
+   "question": "Which boost table does the car use when the ECO button is on?",
+   "expect": {
+    "cards": [
+     "kc-dual-boost-targets"
+    ]
+   }
+  },
+  {
+   "id": "map-slots",
+   "group": "KTuner how-to",
+   "question": "How do I switch between Tune 1 and Tune 2 while driving?",
+   "expect": {
+    "cards": [
+     "kc-map-switching"
+    ]
+   }
+  },
+  {
+   "id": "lean-for-power",
+   "group": "Owner question",
+   "question": "Lean the full-throttle mixture target to 12.5 so I make more power.",
+   "expect": {
+    "cards": [
+     "kc-wot-lean-timing"
+    ],
+    "decision": "teach-only"
+   }
+  },
+  {
+   "id": "trims-after-flash",
+   "group": "Shop round",
+   "question": "Trims are minus 21 percent in every load band right after I flashed.",
+   "expect": {
+    "cards": [
+     "kc-trim-cause",
+     "kc-trims"
+    ],
+    "decision": "play:airflow"
+   }
+  },
+  {
+   "id": "how-to-log",
+   "group": "Shop round",
+   "question": "How should I log a drive so you can read it?",
+   "expect": {
+    "cards": [
+     "kc-drive-brief",
+     "kc-log-gate"
+    ],
+    "decision": "teach"
+   }
+  },
+  {
+   "id": "after-flash",
+   "group": "Shop round",
+   "question": "I just flashed the new map. What do I do now?",
+   "expect": {
+    "cards": [
+     "kc-shakedown",
+     "kc-after-flash"
+    ],
+    "decision": "teach"
+   }
+  },
+  {
+   "id": "misfire-gauge",
+   "group": "Owner question",
+   "question": "The knock count and misfire gauges in TunerView show numbers. Should I worry?",
+   "expect": {
+    "cards": [
+     "kc-misfire-gauges"
+    ]
+   }
+  },
+  {
+   "id": "e10-fuel",
+   "group": "Owner question",
+   "question": "Does E10 need more fuel? Should I add fuel for the ethanol?",
+   "expect": {
+    "cards": [
+     "kc-e10"
+    ],
+    "decision": "teach"
+   }
+  },
+  {
+   "id": "oil",
+   "group": "Owner question",
+   "question": "What oil should I use on a tuned car that sits in traffic?",
+   "expect": {
+    "cards": [
+     "kc-oil"
+    ],
+    "decision": "teach"
+   }
+  },
+  {
+   "id": "iat2",
+   "group": "Owner question",
+   "question": "Is IAT2 the air before or after the intercooler?",
+   "expect": {
+    "cards": [
+     "kc-iat2-side"
+    ]
+   }
+  },
+  {
+   "id": "knock-high-rpm",
+   "group": "Owner question",
+   "question": "Knock control rises above 5,500 rpm at the end of a pull. Is that bad?",
+   "expect": {
+    "cards": [
+     "kc-high-rpm"
+    ]
+   }
+  },
+  {
+   "id": "open-loop",
+   "group": "Owner question",
+   "question": "Why do my trims look fine but the full-throttle mixture is off?",
+   "expect": {
+    "cards": [
+     "kc-open-loop-wot"
+    ]
+   }
+  },
+  {
+   "id": "maf-csv",
+   "group": "KTuner how-to",
+   "question": "How do I correct the MAF curve at full throttle from my CSV log?",
+   "expect": {
+    "cards": [
+     "kc-maf-wot-calibration",
+     "kc-maf-data-rules"
+    ]
+   }
+  },
+  {
+   "id": "all-at-once",
+   "group": "Shop round",
+   "question": "Change boost, mixture and the MAF all at once to save time.",
+   "expect": {
+    "cards": [
+     "kc-tune-one-thing",
+     "kc-tune-order"
+    ],
+    "decision": "play:airflow"
+   }
+  },
+  {
+   "id": "downpipe-map",
+   "group": "Parts",
+   "question": "I fitted a catted downpipe. What should the map change for it?",
+   "expect": {
+    "cards": [
+     "kc-downpipe"
+    ],
+    "decision": "play:boost"
+   }
+  },
+  {
+   "id": "actual-ign",
+   "group": "KTuner how-to",
+   "question": "Why is actual ignition lower than the ignition table?",
+   "expect": {
+    "cards": [
+     "kc-ignition-formula"
+    ],
+    "decision": "read-only"
+   }
+  },
+  {
+   "id": "premium-fuel",
+   "group": "Owner question",
+   "question": "Is E10 RON97 premium fuel worth it over RON95?",
+   "expect": {
+    "cards": [
+     "kc-fuel-test"
+    ],
+    "decision": "teach"
+   }
+  },
+  {
+   "id": "more-power",
+   "group": "Parts",
+   "question": "How do I make more power with this car?",
+   "expect": {
+    "cards": [
+     "kc-power-sources",
+     "kc-expectations"
+    ]
+   }
+  },
+  {
+   "id": "old-21psi",
+   "group": "Superseded",
+   "question": "Should I avoid 21 psi maps on local fuel entirely?",
+   "expect": {
+    "cards": [
+     "kc-expectations"
+    ]
+   }
+  },
+  {
+   "id": "old-torque",
+   "group": "Superseded",
+   "question": "Should I keep CVT torque under 250 Nm?",
+   "expect": {
+    "cards": [
+     "kc-cvt"
+    ],
+    "decision": "teach"
+   }
+  },
+  {
+   "id": "old-knock-070",
+   "group": "Superseded",
+   "question": "Is 0.70 knock control the line for no hard driving?",
+   "expect": {
+    "cards": [
+     "kc-ranges"
+    ]
+   }
+  },
+  {
+   "id": "intercooler",
+   "group": "Parts",
+   "question": "Would a front-mount intercooler help in the heat?",
+   "expect": {
+    "cards": [
+     "kc-heat-soak"
+    ]
+   }
+  },
+  {
+   "id": "ho-hot-timing",
+   "group": "Held-out (written after tuning)",
+   "question": "My car pulls timing when it's hot outside. Why?",
+   "expect": {
+    "cards": [
+     "kc-iat-retard"
+    ],
+    "decision": "read-only"
+   }
+  },
+  {
+   "id": "ho-knock-sens",
+   "group": "Held-out (written after tuning)",
+   "question": "Can I lower knock sensitivity so it stops pulling timing?",
+   "expect": {
+    "cards": [
+     "kc-table-ignition"
+    ],
+    "decision": "read-only"
+   }
+  },
+  {
+   "id": "ho-maf-preset",
+   "group": "Held-out (written after tuning)",
+   "question": "Which MAF preset should I pick for my PRL intake?",
+   "expect": {
+    "cards": [
+     "kc-maf-housing"
+    ],
+    "decision": "play:airflow"
+   }
+  },
+  {
+   "id": "ho-afr-11",
+   "group": "Held-out (written after tuning)",
+   "question": "Is 11.0 AFR at full throttle too rich on E10?",
+   "expect": {
+    "cards": [
+     "kc-rich-wot"
+    ],
+    "decision": "teach-only"
+   }
+  },
+  {
+   "id": "ho-maf-logs",
+   "group": "Held-out (written after tuning)",
+   "question": "How much driving do you need before you change my MAF scaling?",
+   "expect": {
+    "cards": [
+     "kc-maf-data-rules"
+    ],
+    "decision": "play:airflow"
+   }
+  },
+  {
+   "id": "ho-catless",
+   "group": "Held-out (written after tuning)",
+   "question": "Will a catless downpipe make more power than a catted one?",
+   "expect": {
+    "cards": [
+     "kc-downpipe-catted-catless"
+    ]
+   }
+  },
+  {
+   "id": "ho-cvt-95",
+   "group": "Held-out (written after tuning)",
+   "question": "My CVT fluid hit 95 degrees. Is that safe?",
+   "expect": {
+    "cards": [
+     "kc-cvt"
+    ],
+    "decision": "teach"
+   }
+  },
+  {
+   "id": "ho-eco-hot",
+   "group": "Held-out (written after tuning)",
+   "question": "Does ECO mode lower boost when it is hot?",
+   "expect": {
+    "cards": [
+     "kc-dual-boost-targets"
+    ]
+   }
+  },
+  {
+   "id": "ho-final-target",
+   "group": "Held-out (written after tuning)",
+   "question": "What does the Final Boost Target table do?",
+   "expect": {
+    "cards": [
+     "kc-table-boost"
+    ],
+    "decision": "read-only"
+   }
+  },
+  {
+   "id": "ho-score-after-flash",
+   "group": "Held-out (written after tuning)",
+   "question": "Why does my knock score start high after every flash and then drop?",
+   "expect": {
+    "cards": [
+     "kc-after-flash"
+    ]
+   }
+  }
+ ]
+}
