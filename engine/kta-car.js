@@ -748,7 +748,7 @@
   KTA.carIngest = function (state, log, meta, opts) {
     var s = clone(state);
     meta = meta || {};
-    var rep = KTA.checkDrive(log, { history: (opts && opts.history) || [] });
+    var rep = KTA.checkDrive(log, { history: (opts && opts.history) || [], eliminateArtificialKcRise: !!(opts && opts.eliminateArtificialKcRise) });
     var ident = KTA.carIdentity(log, meta);
     var moving = rep.ins.meta.movingSeconds;
     var tooShort = !(moving >= MIN_MOVING);

@@ -227,8 +227,10 @@
         // is not evidence about fuel or heat. rpmP90 is the episode's top-end revs,
         // with rpm (its median) as the fallback. The episode stays in the list either
         // way, marked counts: false, so the chart and the numbers still show it.
+        // With the artificial rise eliminated on the map (an.numbers.kControlHighRpm null) every episode counts.
+        var hiRpm = an.numbers.kControlHighRpm !== undefined ? an.numbers.kControlHighRpm : DL.kcHighRpm;
         e.episodeRpm = isNum(e.rpmP90) ? e.rpmP90 : e.rpm;
-        e.counts = !(isNum(e.episodeRpm) && e.episodeRpm > DL.kcHighRpm);
+        e.counts = hiRpm === null || !(isNum(e.episodeRpm) && e.episodeRpm > hiRpm);
         episodes.push(e);
       }
       var an2 = an.numbers;

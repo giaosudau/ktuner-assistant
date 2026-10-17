@@ -547,6 +547,27 @@ test('ticket 02: a rise above 5,200 rpm is shown but never counts toward a fuel 
   assert.ok(!/exempt|ignore/i.test(kc.display), kc.display);
 });
 
+// The 5,200 rpm rule holds only while KTuner's "Eliminate Artificial Knock Control
+// Rise" box is unticked, as it is on this car's map today (ktuner-community-knowledge.md
+// §6.2). Ticked, the ECU no longer raises the score up there, so a rise is real knock.
+test('Car profile: with Eliminate Artificial Knock Control Rise ticked, a rise above 5,200 rpm counts', () => {
+  const log = highRpmPull(0.70);
+  const off = K.checkDrive(log, { eliminateArtificialKcRise: false });
+  assert.ok(off.ins.kc.excludedRises >= 1, 'unticked (today): the rise is excluded');
+  const on = K.checkDrive(log, { eliminateArtificialKcRise: true });
+  const kc = check(on.an, 'kControl');
+  assert.equal(on.ins.kc.excludedRises, 0);
+  assert.ok(on.ins.kc.episodes.every((e) => e.counts), 'every episode counts');
+  assert.equal(kc.data.judgedPeak, kc.data.peak, 'the verdict reads the whole-drive peak');
+  assert.ok(!/5,200 rpm/.test(kc.display), 'no "on purpose" excuse: ' + kc.display);
+  assert.ok(on.plan.all.some((a) => a.id === 'fuelCheck'), '"check the fuel" is asked: ' + on.plan.all.map((a) => a.id));
+  // The Car module passes the profile flag through to the summary it keeps.
+  const C = require('../engine/kta-car.js');
+  const meta = { fileName: 'TunerView_20260830_152931.csv', now: 0 };
+  const kept = (opts) => C.carIngest(C.carEmpty(), log, meta, opts).state.drives['20260830-152931'].kcPeakJudged;
+  assert.ok(kept({ eliminateArtificialKcRise: true }) > kept({}), kept({ eliminateArtificialKcRise: true }) + ' vs ' + kept({}));
+});
+
 test('ticket 02: the same score at the same place, below 5,200 rpm, is a real Watch', () => {
   // Same drive, same 0.70, but the revs are the ones the owner actually pulled at:
   // now it is fuel or heat, and the fuel question is asked.

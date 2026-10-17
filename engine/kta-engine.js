@@ -794,6 +794,9 @@
    *   baseline  this car's Fuel-quality score Baseline (default 0.49, until the Car
    *               module learns it from cool drives); only moves the timing-cost line
    *   isShakedown  accepted for the Car module; the drive check itself is unchanged
+   *   eliminateArtificialKcRise  the Car profile's copy of KTuner's "Eliminate Artificial
+   *               Knock Control Rise" box (unticked on this car's map today). Ticked, the
+   *               ECU no longer raises the score above score.highRpm, so a rise there counts
    */
   KTA.analyze = function (log, opts) {
     opts = opts || {};
@@ -991,12 +994,14 @@
     // The score the verdict is read from: the peak that was reached at or below
     // score.highRpm. Above that the non-Si ECU raises it on purpose, so a rise up
     // there is kept in the numbers (kcPeak, the episodes) and left out of the fuel
-    // and heat verdicts (owner-voices.md §3). Without rpm in the log every sample counts.
+    // and heat verdicts (owner-voices.md §3). Without rpm in the log every sample counts,
+    // and so does every sample when the map has the artificial rise eliminated.
+    var kcHighRpm = opts.eliminateArtificialKcRise ? null : L.score.highRpm;
     var kcLowMask = null, kcHighMask = null, kcHighSeconds = 0;
-    if (kcSmooth && has.rpm) {
+    if (kcSmooth && has.rpm && kcHighRpm != null) {
       kcLowMask = new Uint8Array(n); kcHighMask = new Uint8Array(n);
       for (i = 0; i < n; i++) {
-        var upHere = isNum(log.rpm[i]) && log.rpm[i] > L.score.highRpm;
+        var upHere = isNum(log.rpm[i]) && log.rpm[i] > kcHighRpm;
         kcLowMask[i] = upHere ? 0 : 1;
         kcHighMask[i] = upHere ? 1 : 0;
         if (upHere) kcHighSeconds += log.w[i];
@@ -1314,7 +1319,7 @@
       closedLoopSeconds: round(clSeconds, 1),
       maf: { axis: axis, cl: clBins, wot: wotBins, binsWithData: binsWithData, fpLimitedSeconds: round(fpLimited * dt, 1) },
       wot: { byRpm: byRpm, absErrAfr: wotAbsErr, signedErrAfr: wotSignedErr, leanestLambda: mixLean, leanestT: mixLeanT, fuelPressRatio: fp05 },
-      numbers: { overshoot: overshoot, overshootRpm: overshootRpm, undershoot: undershoot, mafMax: mafMax, knockMax: knockMax, iatMax: iatMax, ectMax: ectMax, cvtMax: cvtMax, lowBoost: lowBoost, kControlStart: kcStart, kControlEnd: kcEnd, kControlPeak: kcPeak, kControlPeakJudged: kcPeakJudged, kControlHighPeak: kcHighPeak, trimWorst: trimWorst, wotMeasuredAfr: mixMedAfr, wotMapAfr: mapWot, iatSoak: iatSoak },
+      numbers: { overshoot: overshoot, overshootRpm: overshootRpm, undershoot: undershoot, mafMax: mafMax, knockMax: knockMax, iatMax: iatMax, ectMax: ectMax, cvtMax: cvtMax, lowBoost: lowBoost, kControlStart: kcStart, kControlEnd: kcEnd, kControlPeak: kcPeak, kControlPeakJudged: kcPeakJudged, kControlHighPeak: kcHighPeak, kControlHighRpm: kcHighRpm, trimWorst: trimWorst, wotMeasuredAfr: mixMedAfr, wotMapAfr: mapWot, iatSoak: iatSoak },
       knockScheduled: knockScheduled,
       gates: gates,
       verdict: verdict,
