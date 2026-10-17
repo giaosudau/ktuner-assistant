@@ -1,0 +1,1820 @@
+## youtube
+
+Candidates from yt-dlp search (id | channel | duration | title). Official channel: K Tuner (UCza3lEChkPEVeOOP182iTkQ), 10 uploads listed. Only >=150 s shown.
+
+- NtWMKcZuPI8 | Two Step Performance | 8:05 | Tuning the FIRST 2025 Honda Civic Si with KTuner!!
+- dpnGdND_8vc | Luis J Rivera | 18:55 | Ktuner vs. Hondata: Which Tuner Is Right For You?
+- 7RXFZXquOo8 | SargentO_GiO 🟣 | 8:51 | 11th Gen Civic Si Phearable 1.5 Vs 11th Gen Civic Si TSP
+- FZown9cAgPY | Dale Does Stuff | 11:15 | Tune Your Honda Civic Si with KTuner (Step-by-Step Guide)
+- r0f2uXAi6_E | Civicsic | 7:12 | Phearable Stage 1.5R Tune 11th Gen Civic Si Review
+- BuIQpUyns1o | Zygrene | 7:32 | 2023 Honda Civic Si Review - Can Bolt Ons And A Tune Fix Its Biggest Weakness?
+- 1NjQ8MuHnjc | Chris Time | 20:02 | KTUNER V2 INSTALL FOR 10TH GEN CIVIC | 0-60 Times
+- t8drRkFzAEU | SargentO_GiO 🟣 | 4:59 | 11th Gen Honda Civic Si Phearable 1.5 (11th Gen) 1/4 Mile test | Dragy | Full Bolts On 91 Octane
+- ObNVwyiGviA | Chris Time | 13:23 | KTUNER REVIEW | POV | 2021 Honda Civic Sport Hatchback |After 1000 miles
+- 7XVksMuOf0w | SargentO_GiO 🟣 | 7:02 | Testing Phearable Stage 1.5 Tune on my 2022 Civic 11th gen + Bloopers
+- TY44KWF8wJo | Rev It Up TV | 4:54 | Civic X 1.5 Turbo (KTuner) @ 1/4 mile Guatemala RaceWay 14.136 @ 100.80mp/h (English Version)
+- 9uGiRRQBm_c | Justin V. | 14:44 | Tuning my 2022 2.0L Honda Civic Sport!
+- 0HdFnInVsOE | TheFOAT Media | 10:01 | Big Torque Gains | E85 Tuning Our 2022 Honda Civic | Powermetric Stage 2 | PRL Flex Fuel Kit Install
+- Vq26vGoROmw | Cameron Hill | 13:26 | Ktuner v1.2 and v2.. Which One Should You Buy? | The BASICS
+- _lZbMGjDO8Y | TheFOAT Media | 13:55 | Added Power In New 2022 Honda Civic!!! | Hondata Tuned | Canyon Run
+- 30a9NOWxGww | TORQ Toolbox | 15:27 | DON'T BUY K-Tuner or Hondata until You Watch This
+- -72W2pfcDc4 | Tony Castillo | 15:56 | Pros and Cons on TUNING your 10th gen CIVIC SI
+- Bn03GonKMqY | caraddict | 23:38 | 2017 Honda civic EXT 1.5T Ktuner V2 testing stock, stage 1, and stage 2 50-70 and 20-90 pulls
+- O-VCM8RE6vc | Cameron Hill | 18:33 | TSP STAGE 1 for 10th Gen Civics: EVERYTHING YOU NEED TO KNOW!
+- rEhyfL4-dyc | Ibssaini | 11:41 | KTUNER v1.2 + PHEARABLE TUNE INSTALL- 2020 Civic Si (10th gen)
+- h8eIN5cA-Cc | DracoAzul | 11:57 | Installing Ktuner + Phearable Tune NON Si | Honda Civic Hatchback 1.5T 2019
+- pUBqbpW-wNM | caraddict | 36:55 | 2017 Honda CivicX 1.5T MAF scale tuning Ktuner how to DIY
+- AL5rRUtKQNg | Tony Castillo | 11:37 | Installing Ktuner on my 10th Gen Civic Si.
+- Ye0CtLGfkB8 | Cameron Hill | 11:02 | Ktuner/Tuning Problems with my 2020 Civic Si | FIXING STUFF
+- ShtY-ZidAsw | John Nguyen | 5:56 | Civic 1.5T Tuned | Does it Suck? | K-Tuned
+- t-e5gySpqBo | Tony Castillo | 18:34 | Phearable 1.5 Tune Review / 2020 Honda Civic Si
+- RiR1hJ8XOLs | Parking Lot Trucks and Watson Tech | 8:48 | KTuner Honda Civic 1.5t non-si CVT Running Derek Robertson Tune Part 1
+- R-sQ8pp6uMQ | 801 Garage | 11:16 | Installing Ktuner V1.2 10th Gen CIvic SI
+- ysb-AP3yV58 | K Tuner | 8:14 | KTunerFlash V2 Touch Setup Tutorial
+- AoGOhC97Kts | K Tuner | 7:54 | KTuner Getting Started Part 1
+- 5pfGKvzjWSE | Turbogixxer Tuning | 3:09 | How to record and save a datalog with KTuner
+- OmZGIoFScDo | K Tuner | 2:31 | KTunerFlash V1.2 Setup And Flashing
+- gbc44nHf13w | Jimmy Cain | 62:11 | KTuner V2 Complete Process Buying, Locking, Registration, Tuning Plus Driving Experience - FK7 Civic
+- FgjzrgVKRbM | K Tuner | 7:21 | KTuner Interface Overview
+- tHQXUj_LW3U | Turbogixxer Tuning | 3:44 | Ktuner tutorial: How to select and upload the correct tune file
+- fB6xKNswSZg | Dan | 16:17 | How to use KTuner: Quick Tutorial
+- Y0kVUHhfMgc | Peter Pham | 6:39 | How to install & flash Ktuner
+- IkcegKWLaUw | IggyVlogs | 6:41 | how to tune your honda with ktuner v2
+- XYUIuPXXxdg | Josh Brinley | 13:39 | RSX Type-S Ktuner Install | Flashing Basemaps & 2-Step Ignition Cut Fun!
+- QtBBT6CQ2N0 | Carson.Captures | 15:32 | Everything You Need to Know: K-Tuner Settings 2025 | (10th gen civic si)
+- ooA2UOBvo_I | Fahrenheit Motorsports | 14:57 | KTuner V2 Install - 2018 Honda Accord 2.0T / 10AT (Part 1)
+- HgeafrSYiUQ | Two Step Performance | 6:03 | KTuner V2 FAQ | Datalogging, CAN Gateway, & MORE! | TSP
+- XMSZnlm3oII | Little John | 17:02 | KTUNER FOR V6 AUTOMATICS - 9TH GEN INTERMEDIATE TUTORIAL WITH 91+ OCTANE TUNE - DBW VTEC & SHIFTING!
+- 8xHQQ54wDQI | Eug like travel | 11:04 | KTUNER V1.2 Install step by step for 10th Gen Honda Civic 1.5 Turbo.
+- YocJz8sNR0w | ChrisRST | 8:09 | How to use Ktuner v1.2 Honda/Acura RDX 2.0T
+- OtYMPP2jUaw | Simple_life_ride | 15:28 | Honda civic si, what map to use for best result from ktuner v2
+- IGMtPC77bO8 | ANGEL GAYOSSO | 4:12 | KTUNER V2 INSTALL ON 2018 HONDA ACCORD (simple steps)
+- EGfp-mKXwOc | The Lemon Factor! LLC | 12:54 | How-To: KTUNER V2 Display - LED Light Setup // (2018+) 10th Gen Honda Accord
+- Pa0b24NQxHM | issafk7 | 8:57 | Customizing Basic Ktuner Basemaps for 10th Gen Honda Civic
+- e_3T78_w4zw | Chris Valle | 7:43 | How To Datalog/ Upload & Flash on KTuner V1.2 using Tunerview
+- DTlARsw148A | HiRevz Media | 14:50 | Bluetooth Datalog & TunerView App Walkthrough - Civic eBay Turbo Build - Part 13
+- 7edQAMULC_Y | LancerDH | 2:31 | TunerView onboard datalog
+- MaiW24xXU2g | CAPTS | 4:00 | #KTuner V2 Data Logging with Tuner View + Camera recording
+- nV-6jVv_bjA | Linszter Performance | 3:00 | TunerView for Android / Settings, Units, Warning limits...etc
+- YU6C2MbBMFQ | HiRevz Media | 7:05 | TunerView App OBD1 Bluetooth - Turbo ‘98 Honda CR-V AWD
+- 1VDnNA5VFr4 | Honda Land | 10:00 | Datalogging with TunerView to .CSV File - Opened in HTS
+- JlZY9xIQO3s | DIY KAI | 5:01 | Tuner View App datalogging with Honda Tuning Suite
+- fffMao5XQeI | Evans Performance Academy | 17:20 | [FULL VIDEO] Hondata FlashPro: Knock Control | Evans Performance Academy
+- PUWFlMnJboI | Goat Rope Garage | 13:13 | Engine Knock, False Knock, Knock Sensor Sensitivity Explained!
+- jUUPcNPGm3k | Haltech | 10:33 | Knock Control - What it is and why you need it
+- PTGBEiZAqd0 | Tony Castillo | 8:30 | My Ktuner display settings / 2020 Honda Civic Si
+- K5qd6D3351A | STATICSPEED TUNING | 8:42 | How to Tune 8th Gen Civic Si K20 (Part 2: Knock Control, Cam Angles, and VTEC Crossover)
+- vkzaT_JG1Qk | High Performance Academy | 39:52 | Elite Knock Control | Closed Loop Knock/Ping/Detonation Control [GOLD MEMBER WEBINAR]
+- 38cfEOQcTys | caraddict | 3:50 | How to speed up knock control learning down ktuner V2 2017 Honda Civic EXT
+- sfwP7cUteAE | caraddict | 20:46 | VERY beginners guide to Ktuner V2 how to setup /flash / log on the CivicX
+- 1IMcur5tiDY | Hondata | 3:21 | 7vtctuningignknock
+- Q7-VSxsFO64 | The Lemon Factor! LLC | 9:59 | KTuner K.CON Analysis!?! (using Phearable Stage 3 ECU Tune) // 10th Gen. (2018+) Honda Accord
+- h-fCGuGwEEE | Louie V | 11:19 | KTUNER V1.2 INSTALL "10TH GEN HONDA CIVIC SI DETAILED INSTALL"
+- jplHNwoEh3U | MobSquad | 10:40 | KTUNER V2
+- 66okwgg6Rrw | High Performance Academy | 4:22 | Knock / Pinging / Detonation | What does it sound like? [FREE LESSON]
+- DW4vbV26K0k | MyGuyFTW | 15:26 | Civic sport tsp stage 1 (Non si) install and review
+- obD_ghuJdoQ | Alvin Vlogs | 23:35 | HOW TO NOT TUNE YOUR CAR (Ktuner V2)
+- Z-bRzQZ97ms | The Lemon Factor! LLC | 11:39 | How-To: Setup KTUNER V2 Display, Gauge Layout, & Datapoints // (2018+) 10th Gen Honda Accord
+- M5GqU_zeQoQ | Jesse Perrella | 12:42 | Dialing In The Phearable 1.5R Tune! (Better Fuel) 10th Gen Honda Civic Si
+- S0ovmyF8pVQ | Another Rich Experience | 11:23 | "Got Boost?" Ktuners new blessing to the Integra and 11th gen Civics called Boost Target Ramp Rate.
+- rXhYqkV-Fa0 | BoostedWhipz | 15:56 | K-Tuner V2 for the Honda Accord 2018-2019
+- rbi8zO5Icto | Haltech | 36:11 | 🛠 Boost Control: How to map your boost against gear | TECHNICALLY SPEAKING
+- dHtNo97bDOM | L.O.S. | 3:09 | KTuner Idle Adjustment & More!
+- XNQEHrQkdQQ | Evans Performance Academy | 5:18 | Hondata FlashPro Part 34: 10th Gen Boost Control Tuning | Evans Performance Academy
+- 57QVTFnE1VM | Edge Autosport | 19:36 | P0234 Solved on our 10th Gen Honda Civic Si | Wastegate Recalibration
+- dY7oRkl_LHY | Another Rich Experience | 6:57 | 2023 Acura Integra Ktuner:  My Quick Adjustments and Settings.
+- YLdLmHba7co | ADONIS | 19:20 | NA | Ktuner Stage 2 Honda Accord UPDATE ( T.L.O.A.C :1 )
+- kbRlZO9SJ6Q | caraddict | 11:58 | I figured out how to brake boost my Honda CivicX turbo plus LED giveaway info.
+- wpiRvPAP-X8 | FiTech Fuel Injection | 4:31 | Adjusting Target AFR | Tech Tuesdays | EP12
+- 0q8M5nZvfp8 | Auto District | 12:20 | How to tune your 2022 Civic Si
+- D49ccJOvpUw | Another Rich Experience | 4:38 | 2023 Acura Integra Ktuner Turbo Response Comparison using Virtual Dyno
+- 8IuYRVgMlDg | That Racing Channel | 5:26 | Lambda VS AFR - Jay's Tech Tips
+- 1eRsaOxxiUc | driving 4 answers | 16:45 | If You Understand Volumetric Efficiency You Understand Engines
+- TlAEVPCleQ8 | Bang 4 Buck Racing | 5:18 | How to make your turbo SPOOL FASTER - the simple tips you need to know!
+- 6-NHfWZWvNk | Rust Belt Auto | 13:20 | Ej8 D16 Ebay turbo boost by gear setup part 20
+- Gqt-YILhtOM | Tony Castillo | 14:45 | Testing out different Throttle Padding on Ktuner / 2020 Civic Si
+- wYjfva5srkY | GT Garage | 5:25 | Tuning an RDX with K-Tuner | All the settings you can edit
+- cKo6ISBN7k4 | Honda4K | 9:56 | KTUNER SETTINGS AND PARAMETERS + BURBLE TUNE (HONDA ACCORD 2.0T)
+- 0oc2YW7B0x0 | Cameron Hill | 14:03 | NEW KTUNER FEATURES for 10TH GEN CIVICS!! + NEW MERCH STORE!
+- VWULCyL2Oyk | AGVAuto | 3:50 | TSP Stage 1 and Stage 2 Tunes Get New Features!! - 10th Gen Civic Si
+- yBCukfR7agc | Mitch Mc | 3:55 | 2022 Honda Civic SI | A quick look at Tunerview App for Ktuner!
+- b16dTG7SDJc | The Lemon Factor! LLC | 8:01 | BEST Modification for Honda / Acura! (KTUNER ECU Tuner)
+- kd-ohu3H0uA | ThePropperWay | 16:48 | Explaining KTuner 2020 Civic si
+- gPiCu4VDy5E | HotCars | 2:37 | Speed up your Civic: ways To Make Your Honda Faster
+- K-tAZIv3oog | kikilqz | 3:37 | KTUNER INJECTORS SETUP 🔴
+- kj4TvZ6HoPw | TorqueCars | 12:02 | Best K24 Mods & Tuning Upgrades [Honda Engine Tuning]
+- dvFrorXFaEE | caraddict | 3:26 | How to save/load a map onto your Ktuner to flash your car
+- Kqpj8_1a2_0 | STATICSPEED TUNING | 8:39 | How to Tune 8th Gen Civic Si K20 (Part 1: Ignition Map)
+- TPBMAx8k-Ms | MarkIV Garage | 10:01 | KtunerV2 how to flash your ECU for more power!
+- MWkuK65EUNQ | Fahrenheit Motorsports | 35:11 | KTUNER V1.2 Flash + Tuner View install - 10th Gen Accord (Complete Install)
+- Jnc7-SqA6pM | Team Axle Stands | 13:00 | KTuner end user install and loading  it up with a base tune - Bonus: OBD2 Bluetooth phone app
+- 3TP2xyJm9HY | ScienceofSpeed | 2:40 | KTuner Flash & Touch for 2006-09 S2000
+- UDCayK19wlU | Jesse Perrella | 10:13 | Tuning The Si! - Ktuner 23 Psi Base Map
+- SVMrLvGZCXk | Lowpololoco | 4:58 | 8th Gen Civic Si - Ktuner V2 Tune PULLS HARD!
+- F4es3MTEQFA | GEORGE LOPEZ HOW TO DO IT YOUR SELF | 5:53 | Revision Crakle and Pop Basemap Flashpro 8th Gen Civic Si at your own discretion!
+- 4hE9RaanOAQ | RCautoworks | 9:09 | Creating basemap in hondata flashpro pt.1 + e85 tips + misfire on/off
+- QFlS_pjM5hk | High Performance Academy | 7:49 | 🛑First Startup? No Base Map? Watch This First! | AFR - Initial Startup [FREE LESSON]
+- S6gwwndKZUs | Haltech | 4:48 | 💬 How Base Maps Work and where to get yours FREE | TECHNICALLY SPEAKING
+- Vo6GqWCzIwg | Mitch Mc | 6:15 | 2022 Honda Civic SI | Ktuner vs Factory Tune comparison!
+- TCaSQL09yRI | Z3Ph IZr3aL | 7:08 | How Simple Is Flashing/Loading A Tune To Your ECU With KTuner V2?
+- BOdwyf0kmPw | Goat Rope Garage | 10:38 | How To Start Tuning Cars, What I Wish I Would've Known!
+- lvlaaULIDuU | Haters Garage | 3:18 | ECU Tuning for Idiots - Standalone vs Piggyback vs Re-flashing
+- AQevate_wlc | MZopyrus | 10:33 | Tools You Need || ECU TUNING
+- MKDLXoYgPnE | MZopyrus | 9:49 | ECU Tuning || EXPLAINED
+- pBW6Y_3OG_I | Camshaft Engineer | 5:37 | Every Car Tuning Stage Explained
+- TYMrGhYX7Ks | AudiuX | 36:52 | Civic Si Mod Install Recap - MAP Intercooler / PRL Cobra Intake / KTuner / TSP Tune
+- AbclDpoIj90 | Donut | 15:37 | We Tried Tuning a Car with AI
+- tKkCdmNdAZM | Jimmy Oakes | 52:30 | HOW TO TUNE A CAR! - Basics to FULL Dyno Session!
+- O2HpkoPiKkw | AHC Garage | 22:21 | 2023 Acura Integra A-Spec - Dyno Pulls with K-Tuner Phearable Stage 1.5 Race Tune (Episode 7)
+- RthPxMOLG-4 | Carson.Captures | 7:43 | LED Setup in KTuner Under 8 Minutes | 2025
+- 3mDQy-2xgzQ | Dardantuned | 4:53 | 2023 acura integra dyno numbers| stock vs custom tune
+- OAaDY_-yphQ | Andrew Madon | 5:54 | KTuner V2 Kit and TSP Stage 1 Tune - One Month Later
+- W4CfY_yad8s | Two Step Performance | 15:39 | Do This One Modification before Tuning Your 1.5T Civic.
+- exga6vQPJCY | Four Eyed Driver | 16:04 | Boost Your Acura Integra A-Spec with This Simple Upgrade!
+- jRzDXRcIhFU | Hondata | 2:55 | Tuning the New 2023 Acura Integra | Hondata FlashPro | Baseline & More Power!!!
+- roYeMyHBkgc | Awsom Sauce TV | 16:25 | Hondata Vs Ktuner  1 of 2
+- pZ24W0tZyUw | PRL Motorsports | 3:05 | 2022 Honda Civic Si vs 2023 Acura Integra - Drag & Roll Race
+- VtjSplyPJvU | milanmastracci | 13:50 | IF YOU OWN A HONDA OR ACURA, YOU NEED THIS!!!
+- 4hSimiXBeVo | 8020 Automotive | 7:52 | How to Build a 275 WHP Honda 1.5 Turbo for Just $2,000! (L15B/L15C)
+- Dxjmpw_nGq0 | Passio Tuning | 4:55 | Honda Civic 1.5 Turbo cải thiện hiệu năng vận hành Remap ECU Stage 1,tăng ngay 31HP 47Nm đo tại bánh
+- bIFgg5BkwOI | Axion Industries | 7:48 | Our 2022 Civic Hatchback 1.5t hits the dyno: What will we make?
+- 7E1tZ6eVdtE | Tony Castillo | 9:33 | 2020 Honda Civic Si Dyno Results | Phearable 1.5R tune
+- pp2u5wXk2Hs | Pentagon Racing | 3:37 | 2022 Honda Civic FE 1.5T Upgrades PRL filter, DP & FP with new dyno comparison modified
+- IKdIG8CSTyk | Pentagon Racing | 3:08 | 1st Hondata Dyno Tuned 2022 Malaysia Honda Civic FE 1.5T CVT by PENTAGON Racing modified
+- eUf7Hbskl2U | DopeZ06 | 6:00 | The BEST RELIABLE MODS For Your 10th Gen Civic 1.5T CVT/Manual - My Modified 10th Gen Honda Civic
+- GRt36Tay4Po | DopeZ06 | 7:35 | The BEST Reliable POWER MODS for Your 10th GEN Civic/Accord 1.5T CVT & How To TUNE Them!
+- JhNFwvrM25g | Sam CarLegion | 8:36 | Honda Civic 1.5t CVT vs VW Golf TSI Auto battle! Drag and Roll Race!
+- GxKrV0sIZNo | DopeZ06 | 17:08 | Best Maintenance Tips For Your New 10th Gen Civic (2016+ Honda Civic/Accord 1.5T CVT)
+- yDdQtudB_u0 | Pentagon Racing | 2:45 | Finally Stg3+ Civic FE 1.5T CVT Done 280whp with mod details
+- W9_xnACUcf0 | Sam CarLegion | 4:30 | Kia K5 GT vs Tuned Honda Civic 1.5t, drag and roll race!
+- Y2MlT2x9D8g | Sam CarLegion | 7:29 | Tuned Honda Civic 1.5T CVT vs Tuned BMW 330i XDrive, someone gets whooped badly. Drag and roll race.
+- _zTGnxe9K9U | Sam CarLegion | 4:53 | Tuned Civic 1.5t CVT vs Accord 2 0t Sport, Honda Affair. Drag Race!
+- kAigBhhGnS0 | Tuner Garage | 16:29 | REFLASH CIVIC 1.5 TURBO AUTOMÁTICO (CVT) - Tuning Sin Hondata - 🔥MÁS POTENCIA 100% STOCK🔥
+- v9G9ethX75E | Cameron Hill | 11:45 | MAPerformance Downpipe INSTALL and FIRST IMPRESSIONS | 10th Gen Civic Si
+- uBvuTu39YWE | House of Pain | 4:44 | DOWNPIPE FRONT PIPE AND K TUNER INSTALL ON 10TH GEN CIVIC
+- ZYZyoCkJ3kc | MAPerformance | 6:49 | How To Make a 290+HP Honda Civic Si 10th Gen
+- teb2cNg1Ljk | MAPerformance | 13:51 | So You Want To Modify Your 10th Gen Honda Civic Si 1.5t?
+- -qE7MTPtrEo | FORSAKEN GARAGE | 12:35 | PHEARABLE STAGE 1.5 REVIEW W/ CATLESS DOWNPIPE (ITS SO LOUD)!
+- pA0MGaHsKRk | Axion Industries | 2:47 | New Product: Rv6 Gesi downpipe Civic 1.5t - Lets review
+- AP1fZIbykMg | Cameron Hill | 17:39 | MAPerformance Downpipe REVIEW for 10th Gen Civics!
+- tzQPbLRMt7M | FA5 Productions | 2:57 | 2018 10th gen si ktuner review
+- 2s2BhLq30SM | itskevzter | 3:23 | 10th Gen CVT Civic on E85! | I raced an STI and TYPE R?!
+- N-la-A9ehaE | VeganGrubz | 12:10 | 10TH GEN HONDA MALIBU CANYON   RUN | E85 STAGE 2 TUNE CIVIC SI VS FBO BUILT CIVIC Si VS 2.0T ACCORD
+- htDPjercuew | caraddict | 15:56 | 2017 Honda CIvic turbo 6MT Ktuner flex fuel. e85 is a GO!
+- aNgg_zEY4Ag | Tony Castillo | 10:14 | The Difference between e85 Tune and 91 Tune | 2017 Honda Civic Hatchback Vs 2020 Honda Civic Si
+- gLhC6u3m5M0 | TheRed45 | 3:22 | Honda Civic FC 1.5T Stage 2+ Sepang
+- v5FjW2P8vC4 | Legend17 | 17:57 | Tuned my 10th Gen Honda Accord + POV drive (Ktuner: New update) VERY FAST!!
+- 13UQPCHEJww | WiLL02724 | 3:15 | PRL Cobra intake + Ktuner stage 2 2016+ Honda Civic Touring (CVT)
+- nB7NyWIsYxg | caraddict | 8:44 | CivicX TURBO UPGRADE !!!! 2017 Honda Civic 1.5T  PURE STG2  AWESOME!!!
+- cm63-YO9qyo | Cameron Hill | 9:21 | KTUNER FIRST IMPRESSIONS with my 2020 Civic si!!
+- 8QhZlBKm4kI | Sapphire M340 | 3:45 | Ktuner V2 Above Stereo Mount | Two-Step Performance Review
+- 2nTCzEcdKzI | The Lemon Factor! LLC | 8:43 | KTUNER STAGE 2 - 0-60mph Testing!!! // 10th Gen (2018+) Honda Accord
+- 6o8ozmReACc | Tony Castillo | 8:45 | The Cleanest Ktuner V2  Mount | 2017 - 2021 Honda Civic Si
+- aiU7s6I0rnQ | Cameron Hill | 12:37 | Ktuner v2 + 9th Gen Civic Si (Experiment)
+- nnjcBGw3glA | YungEli | 14:59 | KTuner Stage 2 Review | Honda Accord 2.0T – Is It Actually Worth It?
+- V6FlSg5s0fo | Turbogixxer Tuning | 2:36 | Ktuner v2 unboxing. What it comes with!
+- 1KnOyOvRc3s | Cameron Hill | 11:47 | Ktuner V2 Install | Driving the Si #5
+- vWGMD0qvyhs | Heeltoe | 15:17 | Ktuner V2 or JB4 for your Honda/Acura?
+- n2spmensZA0 | Wish | 4:50 | Installing Ktuner V2 on my Built 2022 Honda Civic Si + Pov Drive
+- GOV-pLUjj0E | Honda Gangtivities | 6:56 | Ktuner v2 2017 Honda Accord Sport Special Edition 9th Gen Review
+- gb4SlGfL5w0 | moddism | 14:54 | The Moddism Si Gets FASTER!! + KTuner V2 Installation Tutorial || 10th Gen Civic Si
+- JbZPyMHh474 | MAR1LYN XXX | 4:06 | Civic RS vs Sport 1.5T Turbo Ktuner with Intercooler vs Hondata
+- Av8yTkr1q9Q | MAR1LYN XXX | 11:35 | Ktuner vs Racechip Ecufast Honda Civic 1.5T Fk7 Turbo
+- xXvDg35hzpI | Rev It Up TV | 5:23 | Civic Si 1.5 Turbo: Original Vs KTuner + Intercooler
+- zoeGjgkvlBI | GridZilla | 27:34 | KTUNER VS HONDATA PART 2
+- JeNUBANhJXQ | GridZilla | 24:27 | Civic Type R Ktuner vs Hondata P1
+- LeWet3l8GBw | Rev It Up TV | 6:11 | Civic Touring (Stock) vs Civic Touring (KTuner Reflash) English Version
+- Hopk1-XdnhY | Brandon Dagdagan | 8:46 | Why I Chose HONDATA OVER KTUNER For My 10th GEN CIVIC SI!!
+- 4nZaLkkNpeA | BoostedWhipz | 5:28 | Hondata FBO Derf Tuned vs K-Tuner FBO IMW Tuned CVT 1.5T Honda Accord 2018-2020
+- ilhfiXFIQ48 | Two Step Performance | 32:57 | Installing a PRL 4847RS Turbocharger and Carbon Fiber Inlet Pipe on our 1.5T Civic.
+- 3tbJ9EA-9EA | Two Step Performance | 28:18 | Swapping the turbo on your 2022+ Civic 1.5T | UNCUT.
+- 04kPNDaIV9Y | AHC Garage | 35:29 | 11th Gen 2023 Honda Civic Si // Full PRL Motorsports & Two-Step Performance Upgrades
+- NuvanZ393cI | Two Step Performance | 5:49 | 2023 CIVIC Si TURBO UPGRADE | 27WON GIN Turbocharger Install
+- gcOKpMSyrUo | Raul Rivera | 19:27 | 2025 Honda Civic Si  11th gen | STOCK ECU | Performance Parts Break Down
+- oZC0LnZIIEU | Two Step Performance | 5:52 | 2023 CIVIC Si VALVE COVER INSTALL | NEW TSP TITANIUM HARDWARE
+- mVRtdpjEZoA | Two Step Performance | 9:14 | PRL TITANIUM INLET PIPE | Installation & First Impressions | 2022+ Civic Si
+- ROrY5DMNV38 | caraddict | 4:26 | 2017 Honda Civic 1.5T 6MT 2 step/antilag exhaust sounds RV6 downpipe, custom intake, muffler delete
+- 3LrjV-F0T1A | Cameron Hill | 11:37 | I Installed TSP Stage 1 on my 2020 Civic Si.. But Somethings NOT RIGHT
+- KUUFE8JdN6Y | zeek andrews | 3:59 | 2017 Honda Civic SI two step performance Flex Fuel Kit installation
+- cJTdHzWFZ6U | Bonehead Garage | 8:02 | TSP STAGE 1 INSTALL Why You Should Get It BEST 80$ I Have Ever Spent 2017,2018,2019,2020 Honda Civic
+- Tr9A0Pc4kbA | issafk7 | 13:19 | Unboxing 27WON Performance FMIC for 1.5T Honda Civic
+- GiB7DUOYhwU | 27WON | 2:30 | 1.5T 10th & 11th Gen Civic/Integra Billet Bypass Valve (BPV)
+- r402oUV6dyk | Unity Performance | 13:32 | 27WON Cold Air Intake (HVI) Install - 2022+ Honda Civic 1.5T/Si, 2023+ Acura Integra 1.5T
+- 3b_vVUGwiaE | 27WON | 3:55 | Choosing the right intake system for your Honda Civic 1.5L Turbo Engine (27WON CAI Tech Video)
+- zujMXgwiPqg | Moises Empire | 16:02 | Dyno tuning the 27won W2 turbo on my FBO 2018 Honda Civic Sport Hatchback FK7
+- HY2scsEGJew | 27WON | 4:23 | Performance Turbo Inlet Pipe Upgrade for 2016+ Honda Civic (27WON Honda Performance)
+- 3DQ0GfTwloE | Wrenching With Wyatt | 16:09 | We Spent $7,000 on a Honda Civic 1.5T… Here's What We Bought
+- 6Hw5VyxjGyo | Chidi Boy | 13:09 | !!27WON TURBO INLET!! SOUND CHECK #11thgencivic #27WON
+- UyUww8fImS8 | 27WON | 6:46 | 27WON Turbo Line Up Comparison
+- vR0D8KtE70o | 27WON | 3:47 | 2016+ Honda Civic Intercooler Upgrade by 27WON Performance (10th Gen Civic)
+- bvO6-GeH2S4 | Justin V. | 32:56 | 27won Turbo Inlet Pipe Install/Review for my 2025 11th Gen Honda Civic Si!
+- pr0BNSWand8 | 27WON | 2:57 | 11th Gen Honda Civic & 5th Gen Acura Integra "Gin" 1.5L Turbo Upgrade
+- neMYqPopQbY | 27WON | 5:07 | 27WON Honda Civic W2 Turbocharger System 10th Generation 1.5L Engine
+- Exg84idvlJw | MAPerformance | 12:14 | PRL Motorsports High Volume Intake System + Dyno Testing!! | Civic Type R Build Ep. 4
+- J_fnYKXQhaI | TheFOAT Media | 17:13 | Our 2022 Civic Si Makes More Power Than The New Type R FL5 | PRL Motorsports Prototype Turbo | R&D
+- rSA7qnYKHE8 | PRL Motorsports | 5:14 | 11th Gen Honda Civic / Integra 1.5L Turbo PRL Short Ram Intake System Overview & Sound
+- hi4AJpd9eIg | Edge Autosport | 10:16 | PRL COBRA INTAKE (DYNO RESULTS) | PROJECT FC3 | Edge Autosport
+- i7IaNd2dtVs | Pentagon Racing | 4:06 | 2022 Honda Civic FE 1.5T PRL USA Intercooler VS FK8R Stock Intercooler
+- c_Q4hfYvnE8 | RyanSneaks | 7:28 | How To Upload TSP Stage 1 For Non Si To Your KTUNER! Honda Civic 10th Gen!
+- YX4XXKQa_4k | Gino Diaz | 12:04 | I FINALLY TUNED MY 10TH GEN CIVIC SPORT HATCH WITH KTUNER & TWOSTEPPERFORMANCE TSP1
+- KFG5qawTdrA | Martino | 6:15 | Ktuner v1. 2 civic 1.5 turbo (Ita)
+- SqU_cIVDGqc | ClassicKydo | 6:53 | How to install TSP stage 1 tune (Ktuner)
+- 9G55fUeYVDk | Cameron Hill | 12:31 | Ktuner v1.2 Install - 2020 Civic Si | Phearable STAGE 1 TUNE!!
+- Tl0SfnpAWIg | HondaPro Jason | 6:59 | How to Quickly Add Performance & Fun to the New Honda Civic Si
+- u6KrecbDhLE | Tony Castillo | 15:17 | Turning Up the Boost in My Honda Civic Si | Phearable 1.5 RACE Tune!!!
+- ifYvb8nr5h4 | Junior Arce | 17:47 | PHEARABLE 1.5 RACE TUNE REVIEW!
+- CdJhAYaxJKk | YS Khong Driving | 6:07 | Modified Civic 1.5 Turbo by Official KTuner, Part 2/ Downhill Dash/YS Khong Driving
+- -imBwyNoGaQ | Leonardo Cruz | 12:31 | Installing KTUNER V2 on Honda Civic RS Turbo 1.5T CVT at NEOGEN
+
+## civicxi
+Discovery: forum listing pages (Engine/Exhaust/Transmission/Tuning board pages 1-9, KTuner board pages 1-6) plus WebSearch queries. 'PICK' = scheduled for fetch; others listed as candidates, skipped (hardware/exhaust/unrelated).
+- cand https://www.civicxi.com/forum/threads/66287/ , Mafless + PWG G30-770 on stock ECU
+- cand https://www.civicxi.com/forum/threads/66202/ , Aftermarket Turbocharger Tuning with Hondata
+- cand https://www.civicxi.com/forum/threads/66071/ , Exhaust tips for OEM Sport Touring Exhaust - Any product that will fit?
+- cand https://www.civicxi.com/forum/threads/66035/ , An experience with S.E.S. Electronics with a DE5 and a FL5 with engine failure
+- cand https://www.civicxi.com/forum/threads/64706/ , Car backs off rev limit durring autoX
+- cand https://www.civicxi.com/forum/threads/64527/ , 11th gen si prl flex fuel
+- cand https://www.civicxi.com/forum/threads/64514/ , Front pipe dented from manufacturer - run it or bolt stock exhaust back up?
+- cand https://www.civicxi.com/forum/threads/63993/ , eventuri intake
+- cand https://www.civicxi.com/forum/threads/63835/ , Tuning in Orlando
+- cand https://www.civicxi.com/forum/threads/63776/ , Axion industries L15ca upgraded Fuel system
+- cand https://www.civicxi.com/forum/threads/63394/ , Axion Industries Custom painted valve covers
+- cand https://www.civicxi.com/forum/threads/63220/ , Getting limited by the clutch ---Again
+- cand https://www.civicxi.com/forum/threads/62611/ , Clutch delay valve delete analysis and how-to
+- PICK https://www.civicxi.com/forum/threads/62488/ , Unresponsive Gas Pedal
+- PICK https://www.civicxi.com/forum/threads/62264/ , Honda Civic 1.5T Air Fuel Ratio Settings
+- PICK https://www.civicxi.com/forum/threads/61360/ , Tuned 1.5t non si gas mileage
+- PICK https://www.civicxi.com/forum/threads/60057/ , IAT2 Sensor on KTuner 2.0 Reading at -40F
+- cand https://www.civicxi.com/forum/threads/59582/ , Anyone install a diy flex fuel sensor?
+- PICK https://www.civicxi.com/forum/threads/59524/ , How to change values shown in CSV file for ktuner?
+- cand https://www.civicxi.com/forum/threads/59312/ , Fuel linings for e85 tuned LX
+- cand https://www.civicxi.com/forum/threads/59203/ , Muffler and body contact
+- cand https://www.civicxi.com/forum/threads/58872/ , Looking for titanium exhaust fabrication shop Florida
+- cand https://www.civicxi.com/forum/threads/58601/ , 27won downpipe (will OEM brackets work?)
+- PICK https://www.civicxi.com/forum/threads/58495/ , Tune for 11th Gen Non-si Civic
+- cand https://www.civicxi.com/forum/threads/58025/ , Hondata Flash Pro/ECU Connection Issue for 2023 FL5 Type R
+- cand https://www.civicxi.com/forum/threads/57224/ , Installed a JB4 tune on my 2024 civic si, dashboard lit up like a Christmas tree
+- cand https://www.civicxi.com/forum/threads/56823/ , Vivid Racing Titanium Exhaust (FL5)
+- cand https://www.civicxi.com/forum/threads/56563/ , 500+ WHP Civic Type R Tuned Via Cobb Accessport
+- cand https://www.civicxi.com/forum/threads/56475/ , DE5 Type S stock exhaust on FE1 Si?
+- cand https://www.civicxi.com/forum/threads/56287/ , Used FL5 TypeR ECU on Ebay (Perfect for JB Donor)
+- PICK https://www.civicxi.com/forum/threads/56286/ , About non-Si fuel upgrade
+- cand https://www.civicxi.com/forum/threads/55772/ , JST Performance/ Cobb Tuning further development
+- cand https://www.civicxi.com/forum/threads/55766/ , * Pops & Bangs *
+- cand https://www.civicxi.com/forum/threads/55765/ , Hondata CANFlex-11thGen1.5
+- cand https://www.civicxi.com/forum/threads/55541/ , 3.5 inch Cold air intake without a tune.
+- cand https://www.civicxi.com/forum/threads/55418/ , Removing FL4 top speed limiter
+- cand https://www.civicxi.com/forum/threads/55274/ , PRL N1 Exhaust - Only $575 for a limited time!
+- cand https://www.civicxi.com/forum/threads/55174/ , The Rebuild Journey of the L15C9（Non-Si） Engine
+- cand https://www.civicxi.com/forum/threads/54914/ , Hondata CANFlex for 11th gen Si
+- PICK https://www.civicxi.com/forum/threads/54736/ , Question about WOT AFR
+- PICK https://www.civicxi.com/forum/threads/54735/ , 1.5T How to learn about tuning and make a choice?
+- PICK https://www.civicxi.com/forum/threads/54713/ , E-tuning vs Hondata 93oct basemap for 1.5T FL1
+- cand https://www.civicxi.com/forum/threads/54526/ , Custom CVT Cooler for 11th Gen Honda Civic 1.5T
+- cand https://www.civicxi.com/forum/threads/54509/ , Unable to read ECU number
+- cand https://www.civicxi.com/forum/threads/54466/ , Hypothetical K-swap Question
+- cand https://www.civicxi.com/forum/threads/54454/ , Experiences with FK8TD tuning?
+- cand https://www.civicxi.com/forum/threads/54424/ , Best sounding exhaust Touring
+- cand https://www.civicxi.com/forum/threads/54315/ , Clutch pedal noise
+- cand https://www.civicxi.com/forum/threads/54293/ , Favorite MTF? - Amsoil, Redine, Motul, Torco, Honda, etc.
+- cand https://www.civicxi.com/forum/threads/54179/ , Anyone got a roadmap to 325hp? 2024 Civic Si
+- cand https://www.civicxi.com/forum/threads/54166/ , about ECU controller replacement
+- cand https://www.civicxi.com/forum/threads/53897/ , 2025+ Hybrids... Tuning?
+- cand https://www.civicxi.com/forum/threads/53789/ , Function Werk ST HB exhaust?
+- PICK https://www.civicxi.com/forum/threads/53786/ , High Positive STFT spikes on throttle lift-off
+- cand https://www.civicxi.com/forum/threads/53764/ , Need help getting +7 psi Hondata flash pro carb
+- cand https://www.civicxi.com/forum/threads/53747/ , Grinding/notchy feeling in my Sport Touring 6MT
+- cand https://www.civicxi.com/forum/threads/53722/ , CVT Cooler for 11th gen Civic
+- PICK https://www.civicxi.com/forum/threads/53703/ , '24 EX accelerates roughly at about 1700 rpm
+- cand https://www.civicxi.com/forum/threads/53646/ , Si Exhaust setups
+- cand https://www.civicxi.com/forum/threads/53624/ , Hondata question
+- PICK https://www.civicxi.com/forum/threads/53443/ , Low Turbo Pressure as a Result of Tuning
+- cand https://www.civicxi.com/forum/threads/53431/ , Has the clutch system of the 11th generation Civic weakened?
+- cand https://www.civicxi.com/forum/threads/53367/ , Removal of exhaust resonator(s)
+- cand https://www.civicxi.com/forum/threads/53356/ , Need suggestions
+- cand https://www.civicxi.com/forum/threads/53278/ , Can I engine swap my car and if so what engines?
+- cand https://www.civicxi.com/forum/threads/53265/ , Anyone running a Tomei Type D Exhaust?
+- cand https://www.civicxi.com/forum/threads/53218/ , AWE Track Exhaust
+- cand https://www.civicxi.com/forum/threads/53032/ , *PREORDERS LIVE* PRL Motorsports 2022+ Honda Civic/Acura Integra 1.5T Titanium Turbocharge
+- cand https://www.civicxi.com/forum/threads/52979/ , Best Pricing & Inventory! Exhausts / Wheels / Aero / Brakes / etc!
+- cand https://www.civicxi.com/forum/threads/52963/ , PRL Motorsports N1 Exhaust System for the 2022+ Civic/Integra are now available & shipping
+- PICK https://www.civicxi.com/forum/threads/52930/ , Axion Industries Sport Touring Dyno outcome
+- PICK https://www.civicxi.com/forum/threads/52821/ , Question about tuning
+- cand https://www.civicxi.com/forum/threads/52738/ , 10th gen flashpro compatible with the 11th gen?
+- cand https://www.civicxi.com/forum/threads/52674/ , 27WON Rear Motor Mount: Initial Impressions
+- cand https://www.civicxi.com/forum/threads/52599/ , Axion Industries Prototype Inlet/Intake all in one
+- cand https://www.civicxi.com/forum/threads/52567/ , 27won turbo inlet pipe
+- cand https://www.civicxi.com/forum/threads/52536/ , Looking for MAF Scaling help 2.0L K20C2
+- cand https://www.civicxi.com/forum/threads/52511/ , Hybrid Racing Adjustable Short Shifter is out!
+- PICK https://www.civicxi.com/forum/threads/52470/ , KTuner Base Maps VS TSP VS Phearable
+- cand https://www.civicxi.com/forum/threads/52354/ , 27won short ram intake
+- cand https://www.civicxi.com/forum/threads/52333/ , Haltech dash in our 11th gen Civic Hatchback
+- cand https://www.civicxi.com/forum/threads/52300/ , VTEC History
+- cand https://www.civicxi.com/forum/threads/52298/ , Axion Industries new Evolution 2N1 Downpipe
+- cand https://www.civicxi.com/forum/threads/52266/ , SiriMoto N1 Clutch Master Cylinder (CMC) Upgrade Kit!
+- cand https://www.civicxi.com/forum/threads/52246/ , Need info re Turbo
+- PICK https://www.civicxi.com/forum/threads/52235/ , FBO, 91 octane 2022+ Si Tester Needed @ TSP
+- PICK https://www.civicxi.com/forum/threads/52193/ , Torque talk
+- cand https://www.civicxi.com/forum/threads/52106/ , Rv6 drop in turbo R365 BB
+- PICK https://www.civicxi.com/forum/threads/52084/ , Not the same! 10th vs 11th gen Honda Civic 1.5T Downpipe Comparison 🏎️
+- cand https://www.civicxi.com/forum/threads/52051/ , Don't shift into 1st Gear or else ...
+- cand https://www.civicxi.com/forum/threads/52049/ , TSP FL5 Stage 1 Tune for the 2023 Honda Civic Type R - Now available!
+- PICK https://www.civicxi.com/forum/threads/52018/ , Anyone compare 10th and 11th gen downpipes?
+- cand https://www.civicxi.com/forum/threads/52016/ , Injen Technology 2022+ Civic & Civic Si Cold Air Intake System
+- PICK https://www.civicxi.com/forum/threads/51993/ , 2022+ 11th Gen Honda Civic FE CVT custom dyno tuned on RON 95 Race Map
+- cand https://www.civicxi.com/forum/threads/51985/ , Hondata 1.5 Fuel system E85 calibration
+- cand https://www.civicxi.com/forum/threads/51933/ , Performance Intake Air Snorkel
+- cand https://www.civicxi.com/forum/threads/51895/ , PRL N1 Exhaust VS Megan Racing single exit
+- cand https://www.civicxi.com/forum/threads/51854/ , Georgia Ktuner V2 for sale 2022+ Civic Si 1.5
+- PICK https://www.civicxi.com/forum/threads/51853/ , Ktuner Crazy knocks and misfire
+- cand https://www.civicxi.com/forum/threads/51830/ , Initial impressions of the new PRL rear motor mount.
+- cand https://www.civicxi.com/forum/threads/51804/ , 22+si oil pump?
+- cand https://www.civicxi.com/forum/threads/51792/ , Acuity Instruments short shifter installed
+- PICK https://www.civicxi.com/forum/threads/51777/ , How to get turbo boost to show on Tunerview
+- PICK https://www.civicxi.com/forum/threads/51753/ , TSP Stage 1 Tune Non Si 1.5T different map 3 question
+- cand https://www.civicxi.com/forum/threads/51716/ , PRL Motorsports 2022+ Honda Civic 1.5T Short Ram Intake System
+- cand https://www.civicxi.com/forum/threads/51682/ , PRL Motorsports Shifter Bushing Upgrades Now Available!
+- cand https://www.civicxi.com/forum/threads/51678/ , PRL discontinued 11th gen Downpipe
+- PICK https://www.civicxi.com/forum/threads/51653/ , Brand new stock 2022+ 11th Gen Honda Civic FE on Ron 95 hits the dyno
+- cand https://www.civicxi.com/forum/threads/51612/ , RV6 Type R retro fit clutch and flywheel
+- cand https://www.civicxi.com/forum/threads/51581/ , Performance Turbo Inlet Pipe - 27WON
+- PICK https://www.civicxi.com/forum/threads/51508/ , Axion Ind 2022 Civic hatch 1.5T dyno results
+- PICK https://www.civicxi.com/forum/threads/51496/ , 3xx WHP on a 2022+ 11th Gen Honda Civic FE CVT
+- cand https://www.civicxi.com/forum/threads/51482/ , PRL Motorsports Downpipe Gone?
+- PICK https://www.civicxi.com/forum/threads/51460/ , Need Ktuner V2
+- cand https://www.civicxi.com/forum/threads/51431/ , Best Aftermarket Intercooler for the 11th gen
+- cand https://www.civicxi.com/forum/threads/51370/ , FlashPro Manager MOD List Quick Start Guide - Hondata
+- cand https://www.civicxi.com/forum/threads/51352/ , Hondata Mobile Quick Start Guide | 11th Gen Civic
+- PICK https://www.civicxi.com/forum/threads/51333/ , Very low successful flash rate with ktuner 1.2
+- cand https://www.civicxi.com/forum/threads/51332/ , Very low successful flash rate with ktuner 1.2
+- cand https://www.civicxi.com/forum/threads/51320/ , PRL Motorsports Coolant Overflow Reservoir Tank 2022+ Honda Civic (1.5T & 2.0L) Now Availa
+- cand https://www.civicxi.com/forum/threads/51319/ , Hondata FlashPro 2022+ Civic 1.5T (11th Gen) Quick Start Guide
+- cand https://www.civicxi.com/forum/threads/51318/ , Easy Clutch Upgrade - SiriMoto N1 Master Cylinder Damper Delete
+- cand https://www.civicxi.com/forum/threads/51296/ , Possible to install remark catback dual exhaust on civic 2.0?
+- cand https://www.civicxi.com/forum/threads/51277/ , Possible to install PRL Turbo Inlet with Takeda Momentum Cold Air Intake?
+- cand https://www.civicxi.com/forum/threads/51260/ , 10th Gen Whiteline RMM insert installed in 11th Gen Si.
+- cand https://www.civicxi.com/forum/threads/51197/ , PRL Black Intercooler
+- cand https://www.civicxi.com/forum/threads/51133/ , 2022+ Honda Civic High Volume "Plus" Cold Air Intake Duct Release
+- cand https://www.civicxi.com/forum/threads/51114/ , Inlet and Outlet Measurements for the muffler (Civic Hatchback Sport FL2) ?
+- cand https://www.civicxi.com/forum/threads/51097/ , RV6 FK8 retrofit flywheel, and Exedy Stage 0 clutch installed.
+- cand https://www.civicxi.com/forum/threads/51081/ , Product Update - PRL Motorsports WiFi Ethanol Content Analyzer / Flex Fuel Kit
+- PICK https://www.civicxi.com/forum/threads/51069/ , Question regarding prl race maf e without a tune
+- cand https://www.civicxi.com/forum/threads/51044/ , Using a si exhaust for a sport
+- cand https://www.civicxi.com/forum/threads/50950/ , SiriMoto Short Shifter and Krispy Shift Kit for 11th Civics
+- cand https://www.civicxi.com/forum/threads/50930/ , 10th Gen Flashpro Compatibility with 11th gen
+- PICK https://www.civicxi.com/forum/threads/50925/ , 2022+ Honda Civic 1.5T L15CA Titanium Turbocharger Inlet Pipe Development
+- PICK https://www.civicxi.com/forum/threads/50874/ , ProDrager DownPipe + FrontPipe test run & custom tune on 2022 11th Gen Honda Civic RS FE1 
+- cand https://www.civicxi.com/forum/threads/50841/ , Any Aftermarket Turbos
+- PICK https://www.civicxi.com/forum/threads/50829/ , Catless downpipe review/test on 1.5T Civic Sport Touring
+- PICK https://www.civicxi.com/forum/threads/50819/ , 2022 11th Gen Honda Civic FE CVT 0-100 km/h & 1/4 mile test
+- cand https://www.civicxi.com/forum/threads/50813/ , PRL Remark exhaust
+- cand https://www.civicxi.com/forum/threads/50807/ , Sprint P08 air filter, and PRL silicon intake hose installed.
+- cand https://www.civicxi.com/forum/threads/50755/ , K&N new intake
+- cand https://www.civicxi.com/forum/threads/50736/ , Any 2.0l ecu tuning options available
+- cand https://www.civicxi.com/forum/threads/50707/ , Phearable vs TSP? Which tune for 2022 Civic Si
+- cand https://www.civicxi.com/forum/threads/50681/ , 2022 1.5T Hondata tune questions
+- cand https://www.civicxi.com/forum/threads/50673/ , JB4 Tuner up and running
+- cand https://www.civicxi.com/forum/threads/50667/ , 2022+ Honda Civic 2.0L High Volume Intake System Development
+- cand https://www.civicxi.com/forum/threads/50666/ , Ktuner // my ECU
+- PICK https://www.civicxi.com/forum/threads/50664/ , 11th Gen Honda Civic FE1 CVT hits the dyno & track
+- cand https://www.civicxi.com/forum/threads/50654/ , JB4 Tuner Civic Si Guinea Pig
+- cand https://www.civicxi.com/forum/threads/50644/ , Mod List and Order to Add
+- cand https://www.civicxi.com/forum/threads/50642/ , Any Updates on Tunes for Si?
+- cand https://www.civicxi.com/forum/threads/50637/ , Which option to select when purchasing a tune?
+- cand https://www.civicxi.com/forum/threads/50635/ , Installed Acuity Instruments shifter cable bushings.
+- cand https://www.civicxi.com/forum/threads/50634/ , PRL Motorsports Introduces New Line of Motor Mounts
+- cand https://www.civicxi.com/forum/threads/50633/ , ProDrager Exhaust System for 2022+ 11th Gen Honda Civic + Sound Clip
+- cand https://www.civicxi.com/forum/threads/50623/ , Any love for the 2.0?
+- cand https://www.civicxi.com/forum/threads/50618/ , CIVIC SI FINAL DRIVE
+- cand https://www.civicxi.com/forum/threads/50616/ , PPG 1-4 Gears installed 2022 Civic Hatch
+- cand https://www.civicxi.com/forum/threads/50610/ , I want to know who’s working on intakes?
+- cand https://www.civicxi.com/forum/threads/50590/ , RV6 K20C2 Downpipe confirmed fitment
+- cand https://www.civicxi.com/forum/threads/50587/ , 2022+ Honda Civic 1.5T High Volume Intake System Development
+- cand https://www.civicxi.com/forum/threads/50577/ , Downpipe and frontpipe
+- cand https://www.civicxi.com/forum/threads/50574/ , Stock recirculate valve sound
+- cand https://www.civicxi.com/forum/threads/50571/ , PRL Motorsports N1 Exhaust System Development for the 11th Gen Civic
+- cand https://www.civicxi.com/forum/threads/50557/ , ‘22 Si with just a front pipe?
+- cand https://www.civicxi.com/forum/threads/50553/ , My custom “axle-back” // Muffler Delete on my 2.0 hatchback.
+- cand https://www.civicxi.com/forum/threads/50551/ , KTuner V1.2 + Kínder Fire = Win
+- cand https://www.civicxi.com/forum/threads/50545/ , Aftermarket muffler
+- cand https://www.civicxi.com/forum/threads/50544/ , 11th gen Civic exhaust?
+- cand https://www.civicxi.com/forum/threads/50534/ , PRL FMIC Install
+- cand https://www.civicxi.com/forum/threads/50533/ , Short Ram or CAI for '22s w/1.5T availability?
+- cand https://www.civicxi.com/forum/threads/50531/ , Review of my mods so far - AEM CAI intake, muffler delete, Ktuner Flash V2
+- PICK https://www.civicxi.com/forum/threads/50488/ , PRL HV Downpipe and Front Pipe install in 2022 Civic Sport Touring
+- PICK https://www.civicxi.com/forum/threads/50486/ , OBD2 inconsist power to Ktuner V2
+- PICK https://www.civicxi.com/forum/threads/50481/ , 2022 Civic SI gets KTuner! An owner's review
+- PICK https://www.civicxi.com/forum/threads/50462/ , What’s the Best Tuning Device?
+- PICK https://www.civicxi.com/forum/threads/50454/ , Ktuner for 11th gen Civic - first time questions
+- PICK https://www.civicxi.com/forum/threads/50453/ , Cold Air Intake Tune
+- PICK https://www.civicxi.com/forum/threads/50452/ , Ktuner
+- cand https://www.civicxi.com/forum/threads/50424/ , PRL Motorsports Air / Oil Separator Product Development - Revisited
+- cand https://www.civicxi.com/forum/threads/50423/ , Function Werk Catback Exhaust for 2022 Civic 1.5T
+- cand https://www.civicxi.com/forum/threads/50409/ , Clutch Pedal Vibrations?
+- PICK https://www.civicxi.com/forum/threads/50406/ , TSP STAGE 1 TUNE FOR 2022+ HONDA CIVIC 1.5T NON-SI
+- cand https://www.civicxi.com/forum/threads/50399/ , 2022+ Honda Civic Exhaust System Development
+- cand https://www.civicxi.com/forum/threads/50390/ , 27WON Rear Motor Mount Launches for the 2022+ Honda Civic & Si
+- cand https://www.civicxi.com/forum/threads/50389/ , PRL Motorsports 2022 Honda Civic 1.5T Drop-In Turbocharger Upgrade Development
+- PICK https://www.civicxi.com/forum/threads/50343/ , PRL Motorsports FMIC for 2022 Civic 1.5t -- Install & Test Drrive
+- cand https://www.civicxi.com/forum/threads/50320/ , Hondata FlashPro Civic 2022 Si+ Turbo 1.5 US | CARB Tunes
+- PICK https://www.civicxi.com/forum/threads/50311/ , Oil Fouling Issue in 1.5L Turbo
+- PICK https://www.civicxi.com/forum/threads/50293/ , TSP Stage 1 1.5T Non Si tune
+- PICK https://www.civicxi.com/forum/threads/50286/ , KTuner Starter 21 Dual Tune Stage 2 -- 0-60 1/4 mile Dragy (2022 Civic Sport Touring CVT)
+- cand https://www.civicxi.com/forum/threads/50258/ , Hondata has their 2022 Civic Si ?
+- PICK https://www.civicxi.com/forum/threads/50251/ , The Tuned 11th gen Experience & Reliability Thread (for all models)
+- cand https://www.civicxi.com/forum/threads/50216/ , Hasport Rear Engine Mount install on 2022 Civic Hatchback
+- PICK https://www.civicxi.com/forum/threads/50212/ , 11th Gen Honda Civic Downpipe From 27WON Launches
+- cand https://www.civicxi.com/forum/threads/50182/ , Hondata Flex Fuel Support for 2022 Civic 1.5T - New Feature!!
+- PICK https://www.civicxi.com/forum/threads/50181/ , PRL Motorsports High flow Downpipe and Frontpipe
+- PICK https://www.civicxi.com/forum/threads/50180/ , 27WON 2022+ CIVIC TURBO PERFORMANCE DOWNPIPE 1.5T
+- PICK https://www.civicxi.com/forum/threads/50151/ , 2022 Honda Civic Hatch 6 speed 1.5t Ktuner Stage 2
+- PICK https://www.civicxi.com/forum/threads/50136/ , Turbos 101 - The Heart of Your 2022 Model Turbocharged Civic
+- cand https://www.civicxi.com/forum/threads/50081/ , 2022 Civic EX exhaust modified with Magnaflow muffler and custom tail pipes
+- cand https://www.civicxi.com/forum/threads/50051/ , PRL Motorsports 2022+ Honda Civic 1.5T Flex Fuel Ethanol Sensor Kit
+- cand https://www.civicxi.com/forum/threads/50050/ , PRL Motorsports Resonator Delete Kit for the 2022+ Honda Civic 1.5T
+- PICK https://www.civicxi.com/forum/threads/50048/ , Something not being talked about much
+- PICK https://www.civicxi.com/forum/threads/50047/ , TSP Stage 1 Tune for the 2022+ Non-Si Civic - Now available!
+- cand https://www.civicxi.com/forum/threads/50021/ , 27WON 11th Gen RMM Under development
+- PICK https://www.civicxi.com/forum/threads/50020/ , Phearable 1.5 Non-Si
+- PICK https://www.civicxi.com/forum/threads/49999/ , Tuner in Thailand gets 292 whp / 364 torque from 11th gen Civic by remapping only
+- PICK https://www.civicxi.com/forum/threads/49996/ , Any 1.5T owners do just a tune yet?
+- cand https://www.civicxi.com/forum/threads/49972/ , PRL Motorsports 11th Gen Civic 1.5T Front Pipe Development
+- cand https://www.civicxi.com/forum/threads/49947/ , 27WON Exploring the Turbo L15 Engine in the 11th gen Civic
+- cand https://www.civicxi.com/forum/threads/49943/ , 2022 Civic Sport 2.0 Sport Muffler Delete Sound Clip
+- cand https://www.civicxi.com/forum/threads/49942/ , 11th Gen Civic 1.5T Intercooler Upgrade Development & Release!
+- cand https://www.civicxi.com/forum/threads/49861/ , PRL Motorsports 1.5T Civic Stage 1 Intake Development
+- cand https://www.civicxi.com/forum/threads/49705/ , Getting mine this week!
+- PICK https://www.civicxi.com/forum/threads/49319/ , When to connect Ktuner V2 for Datalogging right Map
+- cand https://www.civicxi.com/forum/threads/49153/ , 2.0L CVT Two step?
+- cand https://www.civicxi.com/forum/threads/48558/ , Need help ktuner 1.2
+- PICK https://www.civicxi.com/forum/threads/48365/ , how does the ktuner deal with in car temps during summer?
+- PICK https://www.civicxi.com/forum/threads/47577/ , Ktuner v2 Recovering ECU! LIMP mode
+- cand https://www.civicxi.com/forum/threads/46687/ , Meets
+- PICK https://www.civicxi.com/forum/threads/46657/ , Ktuner 2 screen blacked out.
+- PICK https://www.civicxi.com/forum/threads/46604/ , Factory tune not supported(SOLVED)
+- cand https://www.civicxi.com/forum/threads/46115/ , Ktuned 2.0 gas mileage
+- cand https://www.civicxi.com/forum/threads/46036/ , Indonesia KTuner Dealer Selling KTuner Device
+- PICK https://www.civicxi.com/forum/threads/45667/ , Tunerview issues
+- PICK https://www.civicxi.com/forum/threads/45144/ , 2.0L CVT LX
+- PICK https://www.civicxi.com/forum/threads/45045/ , Cant enable sport mode with the 19.5/23 Starter Dual Flash Tune
+- PICK https://www.civicxi.com/forum/threads/45021/ , on the fly map changes dont work. instead change 2step rpm?
+- PICK https://www.civicxi.com/forum/threads/44815/ , More Setting behind The Scene
+- PICK https://www.civicxi.com/forum/threads/44677/ , Wastegate Actuator problem
+- cand https://www.civicxi.com/forum/threads/44665/ , Differences in valve and ignition timing
+- PICK https://www.civicxi.com/forum/threads/44531/ , KTuner 1.0.9.4 (software)
+- cand https://www.civicxi.com/forum/threads/44415/ , Need help ktuner v1.2 for 2020 civic si
+- PICK https://www.civicxi.com/forum/threads/44171/ , Knocking
+- cand https://www.civicxi.com/forum/threads/44143/ , An Old Guy Gets a K-Tuner
+- PICK https://www.civicxi.com/forum/threads/43862/ , W1 base map numbers
+- cand https://www.civicxi.com/forum/threads/43568/ , How can i use the launch control?
+- cand https://www.civicxi.com/forum/threads/43467/ , 2020 Model ECU support?
+- PICK https://www.civicxi.com/forum/threads/43340/ , Fuel System
+- cand https://www.civicxi.com/forum/threads/42408/ , Getting friend’s ktuner unlocked
+- PICK https://www.civicxi.com/forum/threads/42278/ , (Resolved) Issue getting reliable 23psi
+- cand https://www.civicxi.com/forum/threads/41223/ , oil dilution ktuner for 10th gen si?
+- PICK https://www.civicxi.com/forum/threads/41190/ , High altitude, no boost, how to adjust?
+- PICK https://www.civicxi.com/forum/threads/41116/ , Controlling Knock Control
+- cand https://www.civicxi.com/forum/threads/40909/ , Engine Mulfunction light after flash
+- cand https://www.civicxi.com/forum/threads/40862/ , Ktuner labor day sale?
+- PICK https://www.civicxi.com/forum/threads/40841/ , HELP: how to set-up Flex Fuel for CVT Hatchback?
+- PICK https://www.civicxi.com/forum/threads/40764/ , adjusting boost tables
+- PICK https://www.civicxi.com/forum/threads/40110/ , Feel no difference between 19.5 and 23
+- cand https://www.civicxi.com/forum/threads/40026/ , Will V1.2 work on my 2019 hatch?
+- PICK https://www.civicxi.com/forum/threads/40025/ , Running rich and misfire in all cylinders?
+- PICK https://www.civicxi.com/forum/threads/39841/ , Turbo Spool rate question
+- PICK https://www.civicxi.com/forum/threads/39663/ , How to update ECU version?
+- cand https://www.civicxi.com/forum/threads/39582/ , Ktuner Stage 1 prl cobra race intake
+- PICK https://www.civicxi.com/forum/threads/39578/ , Ktuner V2 Can't find AFR for layout
+- cand https://www.civicxi.com/forum/threads/39576/ , Back to factory tune
+- PICK https://www.civicxi.com/forum/threads/39269/ , Did my tuner damage my car?
+- cand https://www.civicxi.com/forum/threads/39249/ , Ktuner v1.2 - ACC lights staying on after flash (RESOLVED)
+- PICK https://www.civicxi.com/forum/threads/39240/ , 1.5T Non-Si CVT Tunes
+- PICK https://www.civicxi.com/forum/threads/39099/ , Used KTuner - model specific?
+- PICK https://www.civicxi.com/forum/threads/38954/ , Update to existing KTuner Maps after Oil dilution?
+- cand https://www.civicxi.com/forum/threads/38637/ , Ktuner unit being operated with multiple computers?
+- cand https://www.civicxi.com/forum/threads/38314/ , Flashing Back To Stock
+- cand https://www.civicxi.com/forum/threads/37917/ , Rolling Anti-Lag?
+- cand https://www.civicxi.com/forum/threads/37908/ , What’s next updates
+- PICK https://www.civicxi.com/forum/threads/37765/ , Standard tunes when using a Short Ram Intake?
+- cand https://www.civicxi.com/forum/threads/36716/ , Ktuner question
+- cand https://www.civicxi.com/forum/threads/36562/ , Newest release question
+- PICK https://www.civicxi.com/forum/threads/36421/ , Throttle response
+- PICK https://www.civicxi.com/forum/threads/36390/ , Ktuner on 2019 Type R, A21 ECU max boost? PROBLEM
+- cand https://www.civicxi.com/forum/threads/35914/ , Ktuner ECU unlocks Australia
+- cand https://www.civicxi.com/forum/threads/35791/ , Still having communication problems Laptop to ECU
+- cand https://www.civicxi.com/forum/threads/35722/ , Flashing back to factory
+- PICK https://www.civicxi.com/forum/threads/35654/ , Knock Control .85
+- cand https://www.civicxi.com/forum/threads/35556/ , Right angle connector
+- cand https://www.civicxi.com/forum/threads/35539/ , K Tuner Initial Install
+- PICK https://www.civicxi.com/forum/threads/35373/ , 2019 A21 Ktuned ECUs lost boost?
+- cand https://www.civicxi.com/forum/threads/35249/ , Just ordered have a question for everyone.
+- PICK https://www.civicxi.com/forum/threads/34978/ , measure torque ktuner
+- cand https://www.civicxi.com/forum/threads/34680/ , Thinking of buying Ktuner, quick question.
+- PICK https://www.civicxi.com/forum/threads/34434/ , Running Bov Spacer With Ktuner?
+- PICK https://www.civicxi.com/forum/threads/34408/ , KTuner questions for JR: Idle speed, expanded quick adjustments
+- PICK https://www.civicxi.com/forum/threads/33918/ , Risk of blowing a turbo?
+- cand https://www.civicxi.com/forum/threads/33624/ , New to flashing
+- cand https://www.civicxi.com/forum/threads/33439/ , What's the difference between Ktuner 1.2 and v2.0?
+- cand https://www.civicxi.com/forum/threads/33264/ , Steps to cycle power after a flash with v2
+- cand https://www.civicxi.com/forum/threads/32993/ , ECU unlock For Type-R any partners in the GTA?
+- cand https://www.civicxi.com/forum/threads/32987/ , Low profile k-tuner setup
+- cand https://www.civicxi.com/forum/threads/32782/ , Jan 26, 2019
+- cand https://www.civicxi.com/forum/threads/32575/ , Honda dealer oil change & Ktuner
+- cand https://www.civicxi.com/forum/threads/32421/ , KTuner V2 LED setup sheet (google sheet)
+- PICK https://www.civicxi.com/forum/threads/31934/ , Which map should use on hatch EX-L
+- cand https://www.civicxi.com/forum/threads/31517/ , Which map i have to choose for a stock european hatch
+- cand https://www.civicxi.com/forum/threads/31485/ , My Ktuner isn't working properly
+- cand https://www.civicxi.com/forum/threads/31341/ , Which base map should I go?
+- cand https://www.civicxi.com/forum/threads/30785/ , E85 on ktuner and cvt?
+- cand https://www.civicxi.com/forum/threads/30781/ , KTuner Customer Service
+- cand https://www.civicxi.com/forum/threads/30716/ , Delete
+- PICK https://www.civicxi.com/forum/threads/30576/ , Ktuner Ignition Timing
+- cand https://www.civicxi.com/forum/threads/29948/ , Car will not see bluetooth
+- cand https://www.civicxi.com/forum/threads/29942/ , New to Ktuner Mod
+- PICK https://www.civicxi.com/forum/threads/29746/ , Can someone review my logs?
+- cand https://www.civicxi.com/forum/threads/29299/ , KTuner mpg improvements?
+- cand https://www.civicxi.com/forum/threads/29227/ , v2 led help
+- cand https://www.civicxi.com/forum/threads/29030/ , Need help with Ktuner settings
+- PICK https://www.civicxi.com/forum/threads/28991/ , How much Psi can the stock clutch handle?
+- cand https://www.civicxi.com/forum/threads/28961/ , k tuner bluetooh
+- PICK https://www.civicxi.com/forum/threads/28853/ , Ktuner and lag
+- PICK https://www.civicxi.com/forum/threads/28830/ , How safe are the canned tunes for the stock clutch?
+- cand https://www.civicxi.com/forum/threads/28829/ , TunerView App
+- cand https://www.civicxi.com/forum/threads/28250/ , KTuner registration help
+- cand https://www.civicxi.com/forum/threads/28115/ , MAC support
+- PICK https://www.civicxi.com/forum/threads/27686/ , What map should i run?!?
+- cand https://www.civicxi.com/forum/threads/27203/ , Noob question re: Use of TunerView app
+- cand https://www.civicxi.com/forum/threads/27151/ , Hello from the Holy land
+- cand https://www.civicxi.com/forum/threads/27065/ , Unlocking Ktuner v1.2
+- PICK https://www.civicxi.com/forum/threads/26629/ , 24 psi on 21 psi starter map
+- cand https://www.civicxi.com/forum/threads/26175/ , PRL Cobra CAI Race Tuning
+- cand https://www.civicxi.com/forum/threads/26120/ , Awesome Customer Support
+- cand https://www.civicxi.com/forum/threads/25924/ , Ktuner V2 Unit Will Not Power On
+- cand https://www.civicxi.com/forum/threads/25750/ , General usage question
+- PICK https://www.civicxi.com/forum/threads/25729/ , New Ktuner Release (1.0.8.1) - On the Fly Map Switching & More!
+- cand https://www.civicxi.com/forum/threads/25648/ , Sensor locations
+- PICK https://www.civicxi.com/forum/threads/25624/ , K-tuner and premium fuel
+- cand https://www.civicxi.com/forum/threads/24823/ , No more VitTuned Stage 1 for sale
+- cand https://www.civicxi.com/forum/threads/24579/ , ktuner vit stage 1 cylinder misfire?
+- PICK https://www.civicxi.com/forum/threads/24443/ , Ktuner calibration settings for novice
+- cand https://www.civicxi.com/forum/threads/24352/ , Ktuner on multiple computers ?
+- cand https://www.civicxi.com/forum/threads/24197/ , 1.0.7.8 02 update ?
+- cand https://www.civicxi.com/forum/threads/23678/ , Roughly 50% error rate when flashing with KTuner 1.2
+- cand https://www.civicxi.com/forum/threads/23233/ , TunerView update?
+- cand https://www.civicxi.com/forum/threads/23197/ , Mac/IOS Ktuner?
+- PICK https://www.civicxi.com/forum/threads/22345/ , Review: KTuner X TunerView
+- PICK https://www.civicxi.com/forum/threads/21352/ , diffP metric?
+- cand https://www.civicxi.com/forum/threads/19974/ , KTuner on 2017 Civic 1.8E
+- cand https://www.civicxi.com/forum/threads/19809/ , Sponsor Events
+- cand https://www.civicxi.com/forum/threads/19408/ , Has anyone used the Hondata +6 PSI tune on CVT with Regular Fuel
+- cand https://www.civicxi.com/forum/threads/16441/ , Feature Request
+- PICK https://www.civicxi.com/forum/threads/16215/ , End user adjustments
+- cand https://www.civicxi.com/forum/threads/16014/ , Future Accord KTuner?
+- cand https://www.civicxi.com/forum/threads/15861/ , Changes or additions to ktuner 1.0.6.5?
+- cand https://www.civicxi.com/forum/threads/15503/ , FaceBook comments.
+- PICK https://www.civicxi.com/forum/threads/15330/ , question about STFT1 reading
+- cand https://www.civicxi.com/forum/threads/14625/ , Stage 2 Dual Calibration (CVT and MT)?
+- cand https://www.civicxi.com/forum/threads/13522/ , Will the non-si Ktuner work on a Si?
+- cand https://www.civicxi.com/forum/threads/13408/ , Hello Civic X
+- cand https://www.civicxi.com/forum/threads/13375/ , Welcome Ktuner to the forum.
+- PICK https://www.civicxi.com/forum/threads/231/ , Tuning and Forced Induction Glossary
+
+## civicx
+
+Discovery: WebSearch (~15 queries, site-restricted) + forum listings ktuner-discussions.81 (8 pp), ktuner.69 (6 pp), engine-exhaust-transmission-tuning.5 (12 pp) via r.jina.ai. [F]=selected for fetch, [c]=candidate only.
+
+- [c] https://www.civicx.com/forum/threads/capts-ktuner-custom-tunes-turbo-btk-engine-gb-gear-set.52877/ | CAPTS KTuner Custom Tunes, Turbo, BTK, Engine, GB & Gear Set | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/disabling-cold-start-parameters.111082/ | Disabling cold-start parameters | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-unit-is-not-on-our-system-2-0-na.43261/ | KTuner Unit is not on our system? 2.0 NA | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/im-getting-24-9-mpg-and-having-to-fill-gas-once-a-week-should-i-tune-stock-or-custom.110631/ | I'm getting 24.9 MPG and having to fill gas once a week. Should I tune stock or custom? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/does-ethanol-free-gas-make-any-difference.60865/ | Does ethanol free gas make any difference? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-locked-to-car.110474/ | KTuner V2 locked to car | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/pros-cons-of-higher-idle-targets.108915/ | Pros/Cons of higher idle targets | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/pre-tuning-checklist-non-si-1-5t-cvt.109092/ | Pre-Tuning Checklist - Non-SI 1.5T CVT | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/si-ktuner-calibrations.20639/ | SI: Ktuner Calibrations | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/obd-cable-port-on-ktuner-unit-broke-am-i-cooked.108396/ | OBD Cable Port (on Ktuner Unit) Broke... Am I Cooked? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/running-rich-after-intercooler-install.97316/ | Running Rich After Intercooler Install | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/car-started-throwing-codes-and-dash-lit-up.108392/ | Car started throwing codes and dash lit up | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/redline-safety-for-completely-stock-but-tuned-10th-gen-lx.108230/ | Redline safety for completely stock but tuned 10th gen LX | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/extremely-high-knock-con-1-but-only-when-going-80kmh-50mph.107436/ | Extremely High Knock con. (1+) but only when going 80kmh+ (50mph+) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/about-knock-control-issue.58881/ | About knock control issue | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/v1-2-vsv2.106976/ | V1.2 vsV2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/dialing-in-traction-with-bbg-and-avsa-on-cvt.106789/ | Dialing in traction with bbg and avsa on cvt | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/10th-gen-1-5t-ctv-tuning.106785/ | 10th gen 1.5t CTV tuning | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/spark-plug-gap.106417/ | Spark plug Gap | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/maf-v-in-datalog-reads-0-why-tho.106021/ | MAF.v in datalog reads 0, why tho? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ecu-compatibility.102716/ | ECU compatibility | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/dead-pedal.105519/ | Dead Pedal? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/launch-control-on-1-5t-non-si.105215/ | Launch Control on 1.5T Non-Si | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/knock-control-parameters-and-meanings.63214/ | Knock control parameters and meanings. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/learn-more-about-cylinder-fill-limitation.104359/ | Learn more about Cylinder Fill Limitation | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-seems-not-to-work-anymore-after-awhile.104207/ | Ktuner V2 seems not to work anymore after awhile | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-boost-by-gear-limits-ctr-traction-limited-at-2-psi-boost-in-1st-am-i-crazy.102519/ | KTuner Boost By Gear Limits - CTR traction limited at 2 psi boost in 1st? Am I crazy? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/monitoring-k-con-k-ret-k-count.102410/ | Monitoring K.CON, K.RET, K.COUNt. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-starter-map-knockretard-on-wot.102332/ | Aug 28, 2025 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/failed-flash-looking-for-help.101338/ | Failed Flash, looking for help | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-do-i-check-if-i-have-the-correct-tune.101153/ | How do I check if i have the correct tune? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tsp-tune-disappeared.101058/ | TSP Tune Disappeared | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-working-with-apple-silicon-in-parallels.100728/ | KTuner working with Apple Silicon in Parallels! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/difference-among-v2-and-v1-2.98932/ | Difference among V2 and V1.2? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-phearable-1-5-tune-will-not-stay-on-map-2-each-start.97037/ | Ktuner V2 Phearable 1.5 Tune - Will not stay on Map 2 each start | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/prl-race-maf-phearable-1-5-race-tune.99580/ | PRL RACE MAF & PHEARABLE 1.5 RACE TUNE? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/pherable-tune-transferable-if-unlocked.84416/ | Pherable tune - transferable if unlocked? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/quick-enable-not-available-on-my-car.99156/ | Quick enable not available on my car? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tunerview-bluetooth-connect-password-incorrect.99070/ | Tunerview Bluetooth connect password incorrect | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tunerview-bluetooth-connect-password-incorrect.99071/ | Tunerview Bluetooth connect password incorrect | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/having-p0137-code-after-installing-catless-dp-on-phearable-1-5r.97259/ | Having P0137 Code after installing catless DP on Phearable 1.5R | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/18-sport-touring-manual-hatch-ktune-and-turbo-swap.96602/ | 18' sport touring manual hatch ktune and turbo swap | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/how-to-datalog-on-v1-2.55782/ | How to datalog on V1.2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/can-i-use-ktuner-with-an-automatic-cvt-17-hatch-sport.25612/ | Can I use Ktuner with an Automatic CVT 17' Hatch Sport? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cvt-with-ktuner.96338/ | CVT with Ktuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/codes-still-coming-up-after-disabling-with-ktuner.95797/ | Codes still coming up after disabling with KTuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tuning-question.95804/ | Tuning question. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/tuning-my-2016-civic-1-5l-touring.95524/ | Tuning my 2016 civic 1.5L touring | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/can-you-use-less-than-91-octane-on-ktuner-base-maps-for-2016-non-si-1-5t.95387/ | Can you use less than 91 octane on KTuner base maps for 2016+ non-si 1.5t? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/does-tps-needs-to-be-100.95126/ | Does tps needs to be 100%? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/safe-tuning.95349/ | Safe tuning | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/changing-tunes-on-ktuner-v1-2.95257/ | Changing tunes on ktuner v1.2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/will-i-be-able-to-do-this-myself-with-no-issue.95213/ | Will i be able to do this myself with no issue? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/knock-control-levels.95011/ | Knock Control Levels | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/does-my-phearable-1-5-tune-need-to-be-updated-new-93-gas-catless-front-pipe-downpipe.94761/ | Does my phearable 1.5 tune need to be updated? New 93 gas, catless front pipe/downpipe | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/high-knock-control-and-knock-count.52797/ | high knock control and knock count? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/help-rpm-fluctuation-making-car-jerk-on-low-speed.47025/ | Help: RPM fluctuation making car jerk on low speed | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/trickle-charger-for-flashing-tunes.94365/ | Trickle Charger for Flashing Tunes | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/hesistation-stutter-at-low-rpms-tweaked-starter-21-ktuner.44508/ | Hesistation/Stutter at Low RPMs - Tweaked Starter 21 KTuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/can-i-change-maps-without-a-laptop-in-the-car-on-a-ktuner-v1-2.94275/ | Can i change maps without a laptop in the car on a Ktuner v1.2? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ignition-cut-on-k20c2.94091/ | Ignition cut on K20C2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/help-how-do-i-get-k-tuner-base-maps-1-2-and-three.94109/ | Help, how do I get k tuner base maps 1,2 and three | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/running-rich-at-wot-how-to-adjust-afr.53529/ | Running rich at WOT, how to adjust AFR? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/buying-a-ktuner.93645/ | Buying a ktuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-to-unlock-a-k-tuner.93627/ | How to unlock a k tuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/ktuner-21psi-dual-tps-cmd-stuck-at-95-during-wot-international-ecu.91058/ | Ktuner 21PSI Dual,TPS.CMD stuck at 95% during WOT - International ECU | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-11th-gen-civic-cvt-sport-touring.93257/ | Ktuner+ 11th gen civic (CVT) Sport touring | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/high-k-con-when-a-c-is-on.93085/ | High k con when A/C is on | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/should-i-tune-my-daily-fk7.93014/ | Should I tune my daily fk7? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/phearable-tune-ktuner-reflashes-tab-no-longer-updating.92860/ | Phearable Tune - KTuner Reflashes Tab no longer updating | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/same-performance-with-ktuner-starter-maps-and-factory-tune.92846/ | Same performance with Ktuner starter maps and Factory tune | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/phearable-1-5-on-2018-si-big-delay-of-throttle-response-between-gears.92813/ | Phearable 1.5 on 2018 Si, big delay of throttle response between gears | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/did-i-just-imagine-timerview-supporting-carpay.92751/ | Did I just imagine TimerView supporting Carpay? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/slight-hesitation-on-full-throttle-shift-with-tsp-stage-1.92435/ | Slight hesitation on full throttle shift with TSP stage 1 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tunerview-and-tunerview-lite-1-6-1.48803/ | TunerView and TunerView Lite 1.6.1 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-setup-problem.92523/ | ktuner setup problem | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/need-help-tuning-1-5t-non-si-civic-sedan-2016.92446/ | Need help tuning 1.5t non si civic sedan 2016 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/k-tuner-and-prl-cold-air-intake-issues.92495/ | K tuner and prl cold air intake issues | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tunerview-lite.87483/ | Tunerview Lite | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-tunerview-display.92449/ | Ktuner tunerview display | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/cant-hit-the-max-target-boost-and-maintain-it.54703/ | Can't hit the max target boost and maintain it? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v1-2.92261/ | Ktuner v1.2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v1-2-will-not-connect-via-bluetooth.61978/ | Ktuner v1.2 will not connect via Bluetooth | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/beware-of-buying-used-ktuner-devices.59434/ | Beware of buying USED Ktuner devices | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/exact-ecu-not-on-support-list.28024/ | exact ecu not on support list | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/top-speed-limit-on-ktuner-base-map.90963/ | Top speed limit on Ktuner Base map | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/ktuner-v1-2-with-civic-fk7-1-5t-cvt-need-help.87438/ | KTuner V1.2 with Civic FK7 1.5T CVT - Need Help! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/low-boost-pressure.84024/ | Low Boost Pressure | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tunerview-freeze-ktuner-v1-2-pin-diagram.87199/ | TunerView Freeze -> KTuner v1.2 Pin Diagram? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tsp-stage-1-questions.90892/ | TSP Stage 1 Questions | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/high-k-con.90689/ | High k con | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/factory-unlock-before-maintenance.90226/ | Factory unlock before maintenance? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-looking-for-16-civics-to-test-tunes.3118/ | KTuner looking for 16 Civic's to test tunes! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-tuning.89718/ | Ktuner Tuning | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/feature-request-closed-loop-at-wot-on-european-ecus.67898/ | Sep 13, 2021 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-21psi-wot-on-cvt-question.89632/ | Ktuner 21psi WOT on CVT question | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/k20c2-ktuner-v2.59744/ | K20C2 KTuner V2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/ktuner-v2-stage-2.88185/ | Ktuner v2 Stage 2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-stage-2.56041/ | Ktuner Stage 2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/the-maximum-boost-of-cvt.38287/ | The maximum boost of cvt | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/custom-tunes.87933/ | Custom tunes ? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/oil-lvls-higher-after-tune-fk7-ktuner-phearable-1-5.87872/ | Oil Lvls higher after tune?! fk7 ktuner phearable 1.5 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/estimated-horsepower.28312/ | Estimated Horsepower | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-custom-tuning.62712/ | KTuner Custom Tuning | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-mods-next.87752/ | What Mods Next? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/1-5-turbo-cvt-with-the-starter-dual-target-21-psi-tune-horsepower-dyno-results.68777/ | 1.5 Turbo (CVT) with the Starter Dual Target 21 PSI tune -> horsepower / dyno results? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ecu-number-37820-5-same-as-ecu-software-37805-5.87663/ | ECU number 37820-5**-*** same as ECU software 37805-5**-**** ??? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/stft-ltft.87594/ | Stft ltft | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/need-help-finding-tune-for-2020-civic-2-0l-cvt.87634/ | Need help finding tune for 2020 civic 2.0l cvt | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/buying-a-locked-ktuner.87612/ | Buying a locked Ktuner? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/kturner-dyno-results-k20c2.87534/ | KTURNER DYNO RESULTS? k20c2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tunerview-for-iphone-available-for-testing-on-v2-units-serial-14k.84471/ | TunerView for iPhone available for testing on V2 units serial 14K+ | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/battery-tender-charger-recommendation-for-ktuner-flash-no-outlet-available.39533/ | Battery Tender/charger recommendation for Ktuner flash (no outlet available) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/civic-sport-coupe.87121/ | Civic sport coupe | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-issues-v1-2.61860/ | Ktuner issues v1.2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-questions.87068/ | Ktuner questions | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/knock-count.86769/ | Knock count | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/boost-pressure-low.21584/ | Boost Pressure Low | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/noob-questions-about-k-tuner-setup.21533/ | Noob Questions about k tuner setup. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/ktuner-v2-bogging-full-throttle.86351/ | ktuner v2 bogging full throttle | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-app-not-resppnding.86277/ | Ktuner App Not Resppnding | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/my-dumbass-got-the-tsp-stage-one-tune-with-no-93-octane-stations-in-my-city.86049/ | My dumbass got the TSP Stage One+ tune with no 93 octane stations in my city. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/phearable-stage-1-5-tune-question-going-from-2018-to-2020.85967/ | Phearable Stage 1.5 tune question going from 2018 to 2020 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/no-vin-set-in-ecu.21133/ | No VIN # Set in ECU? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/flash-back-to-stock-honda-sensing-not-working.85738/ | Flash back to stock Honda Sensing not working | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/windows-11.68973/ | Windows 11 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/rolling-anti-lag.85473/ | Rolling anti lag | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/using-ktuner-w-maperformance-air-intake.85449/ | Using Ktuner w/ MAPerformance Air Intake | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-questions.85381/ | Ktuner questions | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/car-cant-recover-or-flash-due-to-voltage-error-on-pin-12.85313/ | Car can't recover or flash due to "voltage error on pin 12" | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tuned-in-the-winter.85278/ | Tuned in the winter? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/should-i-sell-my-ktuner-or-not.85275/ | Should I sell my ktuner or not? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/best-current-deals-for-k-tuner.85101/ | Best current deals for k tuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-error-on-pc-software-1st-time-install.85113/ | Ktuner error on PC software - 1st time install | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/intake-question.84827/ | Intake question | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/i-got-codes.84717/ | I got codes | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-software-upgrade.84648/ | Ktuner software upgrade | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/opinions.84494/ | Opinions | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-not-powering-on-with-car.46107/ | Ktuner v2 not powering on with car? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/anti-lag-safety-quesrion.22141/ | Anti-Lag Safety Quesrion | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cant-find-knock-count-in-tunerview-logs-csv.84315/ | Can't Find Knock Count In TunerView Logs/CSV? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-tsp-no-lift-shift.26992/ | Ktuner tsp no lift shift | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/question-the-impact-of-early-spool-on-the-stock-system.47427/ | Question: The impact of "Early spool" on the stock system | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/urgent-car-is-a-paper-weight.79572/ | Urgent car is a paper weight | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tuner-view-bluetooth-connect-display-issue.83784/ | Tuner View Bluetooth Connect Display Issue | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/can-ktuner-program-other-car-settings.83755/ | Can Ktuner program other car settings? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/need-help-updating-ktuner-unit-firmware.36521/ | Need help updating Ktuner unit firmware | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/continuously-failing-to-recover-ktuner-v2-0.83150/ | Continuously Failing to Recover (KTuner v2.0) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/disabling-revhang-only.83196/ | Disabling RevHang only? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-are-the-different-idle-targets-for.82929/ | What are the different Idle Targets for? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/boost-by-gear-psi-limit.82842/ | Boost by gear psi limit | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-to-know-before-ktuner.82555/ | What to know before ktuner? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/maf-scale.82478/ | Maf scale | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/ktuner-knock-control-constantly-at-a-high-value.82319/ | KTuner, Knock Control constantly at a high value. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/the-knock-control-is-soo-high-tho.82279/ | The knock control is soo high tho | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/help-knock-control-values-with-log-file.45167/ | Help: Knock control values with Log file | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/new-to-tuning.81818/ | New to tuning! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/urgent-car-wont-start-after-flash.72203/ | Urgent - Car Won't Start After Flash | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2-0l-ktuner.81130/ | 2.0L Ktuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/psi-tc-vs-psi-map.81256/ | PSI (TC) vs PSI (MAP) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/21-psi-basemap-with-no-bolt-ons.80658/ | 21 psi basemap with no bolt-ons | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/1-5t-fan-control-level-engagement-disengagement-details.72523/ | Feb 7, 2022 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-current-drain.80408/ | KTuner Current Drain? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-boost-psi-on-tunerview-lite-to-watch.80421/ | What Boost PSI on TunerView Lite to watch? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/basemap-for-prl-flex-fuel-kit-on-cvt-1-5l.80333/ | Basemap for PRL Flex Fuel kit on CVT 1.5L? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-above-radio-mount-not-fitting.80308/ | Ktuner above radio mount not fitting? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/phearable-1-5r-not-working-for-me.80287/ | Phearable 1.5R not working for me | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/should-i-upgrade-certain-aspects-of-my-car-before-getting-the-ktuner.80245/ | Should I upgrade certain aspects of my car before getting the KTuner? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/no-more-battery-voltage-option.79433/ | No more battery voltage option? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/high-knock-control-and-temperatures-on-ktuner-basemaps.79917/ | High knock control and temperatures on ktuner basemaps | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/changing-fan-engagement-temps-good-or-bad-idea.80133/ | Changing Fan Engagement Temps - Good or bad idea? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-does-the-knck-ctrl-number-actually-mean.80132/ | What does the Knck Ctrl number actually mean? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/what-to-monitor-on-ktuners-tunerview-lites-screen-in-a-tuned-car.80131/ | What to Monitor on KTuner's TunerView Lite's screen in a tuned car | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tunerview-lite-graph-vs-maximum-rpm-setting.80021/ | TunerView Lite graph vs. Maximum RPM setting | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/87-octane-tune-for-roadtrip.79252/ | 87 octane tune for roadtrip? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/e85-for-k20c2.73452/ | E85 for K20C2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-help.79050/ | KTuner help | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/4-bar-map-sensor-how-to-set-up.78946/ | 4 Bar Map Sensor (how to set up) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-do-i-view-knock-control-in-the-tuner-view-lite-app.52748/ | How do I view knock control in the tuner view lite app? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-to-look-at-study.43909/ | What to look at, study | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tuning-for-fuel-efficiency.20223/ | Tuning for fuel efficiency? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/fk7-tune.78589/ | Fk7 Tune | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/help-with-clearing-codes.38371/ | Help with clearing codes | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/fairly-new-to-tuning-need-some-help-with-ktuner-v1-2.78401/ | Fairly new to tuning, need some help with ktuner v1.2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/purchasing-k-tuner-v2.28788/ | Purchasing K tuner V2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-do-you-mount-your-v2.31068/ | How do you mount your v2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-base-map-stage-2-bolt-ons.77919/ | Ktuner Base Map Stage 2 & bolt ons | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/lowering-rev-limit-for-non-si-1-5t-cvt.77818/ | Lowering Rev Limit for Non SI 1.5T CVT | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/help-issue-after-reflashed.30642/ | HELP! Issue after Reflashed | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/honda-hack-with-ktuner-and-tuner-view.77539/ | Honda hack with ktuner and tuner view | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/help-with-ktuner.77568/ | help with ktuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-kind-of-timing-can-i-run-on-87.77544/ | What kind of timing can I run on 87? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/led-setup-for-ktuner-v2.76920/ | LED setup for Ktuner V2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/ktuner-v1-2-data-logging-showing-boost-way-over-target.33313/ | KTuner V1.2 data logging showing boost way over target? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tsp-or-phearable.76180/ | tsp or phearable? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/oil-level-light-in-first-drive-after-flashing-base-tune.106122/ | Oil level light in first drive after flashing base tune. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/ktuner-phearable-1-5r-wot-very-rich-data-log.106680/ | Ktuner Phearable 1.5r wot very rich DATA LOG | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-all-features-ecu-37820-5ag-p83.104084/ | KTuner all features ECU 37820-5AG-P83 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2016-ktuner-v2.103464/ | 2016+ Ktuner V2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-hard-should-it-be-to-plug-in-the-ktuner.71474/ | How hard should it be to plug in the KTuner? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/need-to-unlock-ktuner-but-cannot-remember-password-and-no-longer-have-access-to-the-email-used-to-set-it-up-5-years-ago.103287/ | Need to unlock KTuner but cannot remember password and no longer have access to the email  | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/acura-rdx-ktuner-not-working.102659/ | Acura RDX Ktuner not working | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/wanting-to-tune-safely-2020-civic-si.100342/ | Wanting to tune safely 2020 civic si | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2018-ex-tune-on-a-2019-ex.100156/ | 2018 ex tune on a 2019 ex | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/need-help-unlocking-ktuner-unit-to-a-unsupported-ecu-ktuner-v1-2.99727/ | Need help Unlocking Ktuner unit to a unsupported ECU (Ktuner v1.2) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2017-civic-fk7-ktuner-v1-2-usb-socket-broken.98287/ | 2017 Civic FK7 - KTuner V1.2 USB Socket Broken | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-speedometer-calibration-software-update.95615/ | KTuner Speedometer Calibration - Software Update | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/hey-jr-two-questions-about-the-artificial-rise-in-knock-control-in-the-non-sis.60553/ | Hey JR, two questions about the artificial rise in knock control in the non-Si's | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/where-to-buy-ktuner-v2.94570/ | WHERE TO BUY KTUNER V2? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v1-2-bt-ble.92569/ | KTuner V1.2 BT BLE | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ltft-ots-21-5-psi.91070/ | Ltft ots 21.5 psi | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/unlocking-ktuner-v1-2.27065/ | Unlocking Ktuner v1.2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2-0l-manual-ktuner-adjustable-options.51153/ | 2.0L Manual Ktuner adjustable options? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/psa-flash-to-factory-and-unlock-ktuner-from-ecu-prior-to-service.87744/ | PSA: Flash to Factory AND Unlock Ktuner from ECU prior to service | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/07-honda-civic-8th-gen-si.87497/ | 07 Honda Civic 8th Gen Si | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/suggestion-tunerview-for-android-auto.87439/ | Suggestion: TunerView for Android Auto | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-bluetooth-protocol.86952/ | KTuner Bluetooth Protocol | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/dim-screen-when-headlights-are-on.63071/ | Dim Screen when Headlights are on? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-not-logging-ext-data.85623/ | KTuner not logging Ext data | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-dead.66638/ | Ktuner dead? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/question-about-ktuner-and-stage-1-tune.84580/ | Question about Ktuner and Stage 1 tune | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/psi-ktuner.84389/ | PSI KTUNER | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/antilag-civic-27won-turbo.84368/ | ANTILAG CIVIC 27WON TURBO | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/sensor-locations.25648/ | Sensor locations | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/k-tuner-firmware-update-issue.83383/ | K-tuner firmware update issue | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-with-stock-tune-updated-cannot-be-solved.82426/ | Ktuner with stock tune updated | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/map-switching-in-ktuner-software.83132/ | Map switching in KTuner software | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-displaying-all-the-rpms-for-a-second-glitch.82852/ | KTuner v2 displaying all the RPMs for a second (Glitch?) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/help-ktuner-lag.79901/ | Help: Ktuner lag | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/new-throttle-response-settings.79505/ | New Throttle Response Settings | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/registration-on-ktuner-forum.62671/ | Registration on KTuner forum | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-oil-should-i-use.79945/ | what oil should I use | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/u129e.49934/ | U129E | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v1-2-19-si.79379/ | Ktuner V1.2 ? '19 Si | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/a-feedback-for-ktuner.59790/ | A Feedback for KTuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/about-ltftb1-help.77375/ | About LTFTB1 . HELP | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-much-oil-should-i-add.77334/ | How much oil should I add | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/my-v2-digital-display-screen-uh-oh.75663/ | My V2 Digital Display Screen - Uh Oh | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-long-press-sets-text-items-to-0-removes-labels.73395/ | KTuner V2 Long press sets text items to 0, removes labels | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/diagnostic-code-scanning.73279/ | Diagnostic Code Scanning | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/need-help-with-fuel-cut-settings.72704/ | NEED HELP WITH FUEL CUT SETTINGS | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tunerview-having-trouble-connecting-staying-connected.72296/ | Tunerview having trouble connecting/staying connected. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/no-live-data-on-tunerview.71770/ | No Live data on tunerview | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/knock-control-85.35654/ | Knock Control .85 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tunerview-app-without-ktuner.52459/ | Tunerview app without ktuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/new-to-ktuner.68342/ | New to Ktuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/queries-related-to-terminologies-used-in-ktuner-desktop-app-and-datalogs.68201/ | Queries related to Terminologies Used in KTuner Desktop app and Datalogs | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/high-k-control-at-low-load-highway-cruise.67763/ | High K Control at Low Load/Highway Cruise | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-2-0l-honda-civic.67470/ | Ktuner- 2.0L Honda Civic | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-are-the-differences.66837/ | What are the differences? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/just-updated-the-ktuner-software-on-my-laptop-do-i-have-to-update-the-ktuner-unit-also.66704/ | Just updated the KTuner software on my laptop - do I have to update the KTuner unit also? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-two-step-settings.64407/ | Ktuner Two Step Settings | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/error-codes.65234/ | Error Codes | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuned-2-0-gas-mileage.46115/ | Ktuned 2.0 gas mileage | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/stage-2-fk8-when.63443/ | Stage 2 FK8 when? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/1-5t-non-si-cvt-tunes.39240/ | 1.5T Non-Si CVT Tunes | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/eco-mode-as-tuned-increase.62291/ | Eco mode as tuned increase? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-forum-registration.62089/ | KTuner Forum Registration | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/oil-dilution-ktuner-for-10th-gen-si.41223/ | oil dilution ktuner for 10th gen si? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ext-can-data.61436/ | Ext CAN Data | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/questions-about-ethanol-tuning.60198/ | Questions about Ethanol Tuning | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/questions-before-buying-ktuner-for-a-2020-honda-civic-2-0l.60136/ | Questions before buying ktuner for a 2020 honda civic 2.0L | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/roughly-50-error-rate-when-flashing-with-ktuner-1-2.23678/ | Roughly 50% error rate when flashing with KTuner 1.2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-mounting-hardware.56959/ | Ktuner v2 mounting hardware | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-screen-turning-off-when-plugged-usb-to-laptop.59374/ | Ktuner v2 screen turning off when plugged usb to laptop? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/please-delete.59376/ | Please delete | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/mac-ios-ktuner.23197/ | Mac/IOS Ktuner? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-glitching.58190/ | Ktuner glitching? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-do-i-know-my-ecu-is-locked.58083/ | How do I know my ecu is locked? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/risk-of-blowing-a-turbo.33918/ | Risk of blowing a turbo? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/bad-gas-every-idiot-light-imaginable-is-lit-car-driving-fine-whats-the-issue.57764/ | Bad gas?(!) Every idiot light imaginable is lit. Car driving fine. What's the issue? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/boost-leak.53427/ | Boost leak? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tunerview-update.23233/ | TunerView update? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-restart-on-ignition-knock-questions.56901/ | Ktuner v2 restart on ignition? & knock questions | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/rolling-anti-lag.37917/ | Rolling Anti-Lag? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cvt-gearing-in-datalog.55622/ | CVT Gearing in Datalog | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-1-2-si.55247/ | Ktuner 1.2 Si | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/prl-cobra-cai-race-tuning.26175/ | PRL Cobra CAI Race Tuning | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/1-5t-cvt-non-si-with-ktuner.54708/ | 1.5t cvt non si with ktuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-lite-ethanol-meter-pegged.54399/ | KTuner Lite Ethanol Meter Pegged | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/throttle-response.36421/ | Throttle response | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2018-civic-si-prl-cai-race-maf-tune.53709/ | 2018 civic si prl CAI race maf tune | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/knock-control-0.52562/ | Knock control 0 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/getting-code-u0038-dashboard-lights-still-blinking-after-flashing-with-k-tuner.50146/ | Getting Code U0038, Dashboard lights still blinking after flashing with k tuner. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/single-map-has-three-maps.52181/ | Single Map has three Maps | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-issues.51997/ | ktuner v2 issues | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/new-to-ktuner-suggested-settings-for-a-1-5t-mt.50935/ | New to KTUNER suggested settings for a 1.5T MT? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-customer-service.30781/ | KTuner Customer Service | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/brake-maintenance-mode.50648/ | Brake maintenance mode? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-unit-will-not-power-on.25924/ | Ktuner V2 Unit Will Not Power On | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2020-si-honda-sensing-errors.50145/ | 2020 Si Honda Sensing Errors | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/getting-mine-this-week.49705/ | Getting mine this week! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/when-to-connect-ktuner-v2-for-datalogging-right-map.49319/ | When to connect Ktuner V2 for Datalogging right Map | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-led-setup-sheet-google-sheet.32421/ | KTuner V2 LED setup sheet (google sheet) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2-0l-cvt-two-step.49153/ | 2.0L CVT Two step? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-cant-find-afr-for-layout.39578/ | Ktuner V2 Can't find AFR for layout | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/need-help-ktuner-v1-2-for-2020-civic-si.44415/ | Need help ktuner v1.2 for 2020 civic si | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/need-help-ktuner-1-2.48558/ | Need help ktuner 1.2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-does-the-ktuner-deal-with-in-car-temps-during-summer.48365/ | how does the ktuner deal with in car temps during summer? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-labor-day-sale.40862/ | Ktuner labor day sale? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2020-model-ecu-support.43467/ | 2020 Model ECU support? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v2-recovering-ecu-limp-mode.47577/ | Ktuner v2 Recovering ECU! LIMP mode | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-2-screen-blacked-out.46657/ | Ktuner 2 screen blacked out. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/meets.46687/ | Meets | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/factory-tune-not-supported-solved.46604/ | Factory tune not supported(SOLVED) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/wastegate-actuator-problem.44677/ | Wastegate Actuator problem | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/indonesia-ktuner-dealer-selling-ktuner-device.46036/ | Indonesia KTuner Dealer Selling KTuner Device | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tunerview-issues.45667/ | Tunerview issues | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-1-0-9-4-software.44531/ | KTuner 1.0.9.4 (software) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2-0l-cvt-lx.45144/ | 2.0L CVT LX | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/on-the-fly-map-changes-dont-work-instead-change-2step-rpm.45021/ | on the fly map changes dont work. instead change 2step rpm? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cant-enable-sport-mode-with-the-19-5-23-starter-dual-flash-tune.45045/ | Cant enable sport mode with the 19.5/23 Starter Dual Flash Tune | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/knocking.44171/ | Knocking | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/more-setting-behind-the-scene.44815/ | More Setting behind The Scene | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/differences-in-valve-and-ignition-timing.44665/ | Differences in valve and ignition timing | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/an-old-guy-gets-a-k-tuner.44143/ | An Old Guy Gets a K-Tuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/resolved-issue-getting-reliable-23psi.42278/ | (Resolved) Issue getting reliable 23psi | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/w1-base-map-numbers.43862/ | W1 base map numbers | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-can-i-use-the-launch-control.43568/ | How can i use the launch control? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/fuel-system.43340/ | Fuel System | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/controlling-knock-control.41116/ | Controlling Knock Control | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/whats-the-difference-between-ktuner-1-2-and-v2-0.33439/ | What's the difference between Ktuner 1.2 and v2.0? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/high-altitude-no-boost-how-to-adjust.41190/ | High altitude, no boost, how to adjust? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/engine-mulfunction-light-after-flash.40909/ | Engine Mulfunction light after flash | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/help-how-to-set-up-flex-fuel-for-cvt-hatchback.40841/ | HELP: how to set-up Flex Fuel for CVT Hatchback? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/adjusting-boost-tables.40764/ | adjusting boost tables | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/feel-no-difference-between-19-5-and-23.40110/ | Feel no difference between 19.5 and 23 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/running-rich-and-misfire-in-all-cylinders.40025/ | Running rich and misfire in all cylinders? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/will-v1-2-work-on-my-2019-hatch.40026/ | Will V1.2 work on my 2019 hatch? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/turbo-spool-rate-question.39841/ | Turbo Spool rate question | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-to-update-ecu-version.39663/ | How to update ECU version? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/back-to-factory-tune.39576/ | Back to factory tune | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-stage-1-prl-cobra-race-intake.39582/ | Ktuner Stage 1 prl cobra race intake | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/feature-request.16441/ | Feature Request | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/did-my-tuner-damage-my-car.39269/ | Did my tuner damage my car? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-v1-2-acc-lights-staying-on-after-flash-resolved.39249/ | Ktuner v1.2 - ACC lights staying on after flash (RESOLVED) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/update-to-existing-ktuner-maps-after-oil-dilution.38954/ | Update to existing KTuner Maps after Oil dilution? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/used-ktuner-model-specific.39099/ | Used KTuner - model specific? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/honda-dealer-oil-change-ktuner.32575/ | Honda dealer oil change & Ktuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-unit-being-operated-with-multiple-computers.38637/ | Ktuner unit being operated with multiple computers? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/flashing-back-to-stock.38314/ | Flashing Back To Stock | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-registration-help.28250/ | KTuner registration help | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/the-tuned-civicx-experience-reliability-project.42361/ | The Tuned CivicX Experience & Reliability Project | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/10th-gen-tuning-basics.85103/ | 10th Gen Tuning Basics | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/misfires-and-you-diagnosing-misfires-on-a-2016-2021-honda-civic-1-5t.71259/ | "Misfires and You" - Diagnosing misfires on a 2016-2021 Honda Civic 1.5T | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/10th-gen-civic-1-4-mile-times.15758/ | 10th Gen Civic 1/4 Mile Times | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/list-of-tuning-software-and-e-tuners.17456/ | List of Tuning Software and E-Tuners | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-is-rev-hang.19348/ | What Is Rev Hang? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/guide-to-diy-flex-fuel-kit-for-hondata-or-ktuner.17482/ | Guide to DIY Flex Fuel Kit for Hondata or KTuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2016-honda-civic-1-5t-and-2-0l-engines-technical-presentation-specs-pics-videos.454/ | 2016 Honda Civic 1.5T and 2.0L engines technical presentation (specs, pics, videos) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/all-aftermarket-performance-based-modifications-for-the-10th-gen-1-5t.3199/ | All Aftermarket performance based modifications for the 10th gen 1.5T | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tuning-and-forced-induction-glossary.231/ | Tuning and Forced Induction Glossary | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/prl-4847rs-1-5t-turbo-dyno-results-vs-rv6-r365-red-bb.111063/ | PRL 4847RS 1.5T Turbo - Dyno Results (vs RV6 R365 Red BB) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cvt-fill-plug-keeps-blowing-off-replaced-breather-valve.111450/ | CVT fill plug keeps blowing off - replaced breather valve | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/best-pricing-inventory-exhausts-wheels-aero-brakes-etc.82648/ | Best Pricing & Inventory! Exhausts / Wheels / Aero / Brakes / etc! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2021-civic-sport-2-0-na-k20c2-function-werk-sport-exhaust-review.111407/ | 2021 Civic Sport 2.0 NA (K20c2) Function Werk Sport Exhaust Review | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2021-civic-sport-2-0-k20c2-prl-high-volume-intake-hvi-review.111331/ | 2021 Civic Sport 2.0 (K20c2) PRL High Volume Intake (HVI) Review | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/these-are-the-l15b-cams-youve-been-waiting-for-and-we-can-save-you-a-bunch-of-money-on-them.84183/ | These Are The L15B Cams You've Been Waiting For! (and we can save you a bunch of money on  | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-order-should-i-go-with-for-my-future-mods.111199/ | what order should i go with for my future mods? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/si-cr-v-turbo-on-non-si-any-experience.111074/ | Si/CR-V turbo on non-Si. Any experience? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/looking-for-catback-exhaust-recommendations-2018-civic-2-0l-k20c2.111040/ | Looking for Catback Exhaust Recommendations - 2018 Civic 2.0L (K20C2) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/exhaust-pop-when-blipping-at-3k-rpm.61828/ | Exhaust Pop when blipping at 3k rpm | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/direct-injection-fuel-pump-teardown.81988/ | Direct injection fuel pump teardown | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/when-are-aftermarket-rods-needed.110963/ | When are aftermarket rods needed | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2020-civic-si-misfiring-at-high-rpms-5k-6k.82031/ | 2020 Civic SI misfiring at high RPMS (5k-6k) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/1-5t-cvt-exhaust-upgrade.63537/ | 1.5T CVT Exhaust Upgrade | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/preliminary-review-prl-4847rs-1-5t-turbo-upgrade-vs-rv6-r365-red-bb.109648/ | Preliminary Review: PRL 4847RS 1.5T Turbo Upgrade (vs RV6 R365 Red BB) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/p0087-after-engine-rebuild.60257/ | P0087 - After Engine Rebuild | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/a-note-to-all-tuned-owners.110413/ | A note to all tuned owners | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/initial-support-ecu-ktuner-v2-vs-hondata-flashpro.110344/ | Initial Support ECU Ktuner V2 vs Hondata FlashPro | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tuning-and-reliability-questions-for-new-tuner.110231/ | Tuning and reliability questions (For new tuner) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/im-wondering-what-i-should-do-next-for-actual-power.109924/ | I'm wondering what I should do next, for actual power. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/please-help-me-find-the-parts-number-for-these-female-terminal-pins.107610/ | Please help me find the parts number for these female terminal pins | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/anyone-ever-heard-of-totlylgl-hardlag-catless-downpipe-i-want-hard-lagged-and-dream-is-like-a-2year-wait.109938/ | Anyone ever heard of TOTLYLGL Hardlag Catless Downpipe. I want hard lagged and Dream is li | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2016-2021-1-5l-turbo-wastegate-oem-part-number.105209/ | 2016-2021 1.5L Turbo Wastegate OEM Part Number | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/clicking-sound-when-releasing-clutch-pedal.108812/ | Clicking sound when releasing Clutch Pedal | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/pops-bangs.95130/ | * Pops & Bangs * | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/upgraded-fuel-system-on-non-si-1-5t.109623/ | Upgraded Fuel System on Non-Si 1.5t | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/failures-from-the-tuning-reliability-thread.54181/ | Failures from the tuning reliability thread | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/flashpro-throttle-map-question.109559/ | flashpro throttle map question | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/mileage-new-mileage-after-mods-tunes-milage-after-warranty-work.109544/ | Mileage New. Mileage after Mods/Tunes. Milage After Warranty Work | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/prl-dp-fp-to-skunk2-exhaust-issue.109507/ | PRL DP/FP to Skunk2 exhaust issue | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/first-time-p0138-what-to-do.109502/ | First time P0138... what to do? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/rv6-turbo-died-any-other-options.109398/ | RV6 Turbo Died - Any Other Options? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cvt-daily-driver-exhaust-for-fbo-for-sport-touring-hatchback.109444/ | CVT Daily driver exhaust for fbo for sport touring hatchback | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/spark-plug-change-interval-years-vs-miles.109225/ | Spark Plug Change Interval Years vs. Miles | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/broke-the-terminal-on-my-reverse-lockout-solenoid-is-it-repairable.109120/ | Broke the terminal on my reverse lockout solenoid. Is it repairable? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/prl-cobra-carb-approval.26740/ | PRL Cobra CARB approval? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/si-sedan-27won-exhaust-first-start-up-and-revs-catless.109028/ | Si Sedan - 27won exhaust first start up and revs - Catless | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/very-rich-idle-and-misfires-after-new-injectors.108831/ | Very rich idle and misfires after new injectors | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/upgraded-cmc-needed.106981/ | Upgraded CMC Needed? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/k20c2-civic-x-2-0-2020-cvt-overheating-cooler-needed.108904/ | K20C2 Civic X 2.0 2020 CVT overheating , COOLER needed | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/fc2-and-fc4-development-thread.86827/ | FC2 and FC4 Development Thread | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/pcv-bolt-spinning.104673/ | PCV Bolt Spinning | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/rv6-clutch-kit-which-side-of-clutch-faces-transmission.108463/ | RV6 clutch kit - which side of clutch faces transmission? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/rv6-catted-downpipe.108450/ | Rv6 catted downpipe | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/test-to-see-if-the-car-has-been-previously-tuned.108327/ | Test to see if the car has been previously tuned? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/w2-bb-vs-rv6-turbo-which-spools-quicker.108291/ | W2 BB vs Rv6 Turbo.. which spools quicker? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/drag-racing-dyno-results.108146/ | Drag Racing & Dyno Results | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/engine-stand-bolt-size.108130/ | Engine Stand Bolt Size | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/turbo-reliability.16156/ | Turbo reliability? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/axion-fuel-system-on-built-1-5t-l15b7.81926/ | Axion Fuel System on built 1.5T L15B7 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/avg-mpg-difference.108014/ | AVG MPG DIFFERENCE? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/k20c2-intake-manifold-mod.107957/ | K20C2 intake manifold mod | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/intake-valve-cleaning-walnut-blasting.107681/ | Intake Valve Cleaning - Walnut Blasting | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-to-diagnose-injectors.107935/ | How to diagnose injectors? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/walnut-blasting-alternative.79063/ | Walnut blasting alternative? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/intake-mods-for-1l-fk6.107812/ | Intake mods for 1L fk6? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2017-civic-1-5t-acceleration-issues.86856/ | 2017 Civic 1.5T Acceleration Issues | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/intake-airbox-mod-2-0l-na-engine-help.107781/ | Intake Airbox Mod 2.0L NA ENGINE HELP | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ngk-hx-ruthenium-plugs.79618/ | NGK HX Ruthenium plugs | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/dyno-test-no-sport-mode.107595/ | DYNO TEST - NO SPORT MODE? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/nst-lightweight-crank-pulley.16223/ | NST Lightweight Crank Pulley | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2017-si-rev-hang-delete.107450/ | 2017 si rev hang delete | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/will-they-bolt-together-no-issues.107429/ | Will they bolt together no issues? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/invidia-n1-catback-exhaust-impressions-review.87731/ | Invidia N1 Catback Exhaust Impressions & Review | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/boost-gauge.14848/ | Boost Gauge | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/where-can-i-find-this.107260/ | Where can I find this? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cvt-stalling-after-transmission-oil-change.73985/ | CVT stalling after transmission oil change | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/mishimoto-performance-intake-1-5t-heatsoak-issues.107124/ | Mishimoto Performance Intake 1.5T - Heatsoak Issues? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/prl-downpipe-gasket-kit.107214/ | PRL Downpipe Gasket Kit | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/muffler-delete-with-new-exhaust-dual-tips.107180/ | Muffler Delete with new exhaust dual tips | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/l15-oil-temp-data.90009/ | L15 oil temp data | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/blown-turbo-si-turbo-on-non-si-civic.106970/ | Blown Turbo - SI Turbo on Non SI Civic | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/invidia-200cel-downpipe-any-good.107048/ | Invidia 200CEL Downpipe? Any good? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/garrett-intercooler-help.105101/ | GARRETT INTERCOOLER HELP!! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/engine-mods-for-k20c2.33018/ | Engine mods for K20C2? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/bought-a-tuned-18-si-need-advice.106339/ | Bought a Tuned 18 Si, Need Advice | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/downpipe-to-stock-frontpipe-gasket.106585/ | Downpipe to stock frontpipe gasket | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/10th-gen-exhaust-tuning.106784/ | 10th Gen Exhaust Tuning | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/pairing-aftermarket-exhaust-with-cvt.17035/ | Pairing aftermarket exhaust with CVT | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/carbon-buildup-on-valves-in-gdi.51346/ | Carbon buildup on valves in GDI | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cvt-with-full-bolt-ons-and-turbo-upgrade.44604/ | CVT with Full Bolt Ons and Turbo Upgrade | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/the-corrosive-nature-of-e85-fuel.106356/ | The corrosive nature of E85 fuel. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/check-engine-emission-light-on-off-related-the-capless-system.106394/ | check engine emission light on/off, related the capless system? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/crc-gdi-ivd-intake-valve-turbo-cleaner.12775/ | CRC GDI IVD Intake Valve & Turbo Cleaner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2021-civic-sport-2-0-k20c2-rv6-catted-downpipe-review.105688/ | 2021 Civic Sport 2.0 (K20c2) RV6 Catted Downpipe Review | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cvt-upgrade-path.106280/ | CVT Upgrade Path -? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/gear-whine-after-rv6-retrofit-flywheel-clutch-install-need-help-stumped.106033/ | GEAR WHINE(?) AFTER RV6 Retrofit Flywheel/Clutch Install - NEED HELP - STUMPED | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/another-2016-2-0l-cvt-sensor-leak.106131/ | Another 2016 2.0L CVT sensor leak | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/check-engine-light-after-tune-p0128.71350/ | Check engine light after tune P0128 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/track-brake-setup-for-fk7-and-brake-pad-help.105966/ | Track Brake Setup for FK7 and brake pad help | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/misfire-help-needed.105441/ | Misfire help needed! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/27won-exhaust-prl-dp.105641/ | 27Won exhaust + PRL DP? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/major-oil-leak-after-arp-headstuds.105630/ | MAJOR oil leak after ARP headstuds | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/pistons-for-1-5t-cvt.105615/ | Pistons for 1.5t CVT | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/map-exhaust-noise-question-street-vs-race.105609/ | MAP Exhaust Noise Question - Street vs Race | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/oil-coolers-the-fiasco.84676/ | Oil Coolers: The Fiasco | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/findings-civic-turbo-wastegate-actuator.87810/ | Apr 6, 2024 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/27won-cai-difficulty-installing.105461/ | 27WON CAI Difficulty Installing | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/civic-x-1-5-cvt-chip-tuning-question.105420/ | Civic X 1.5 CVT Chip Tuning Question | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/civic-1-0-turbo-flash-tuning.28585/ | Civic 1.0 Turbo flash tuning | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/60-130-time-slow.105201/ | 60-130 Time Slow? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/engine-swap-civic-16-l15b7-l15be.104224/ | engine swap civic 16 L15B7/L15BE | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/getting-the-fuel-pump-recall-done-and-ktuned-do-i-need-to-reflash-the-ecu-back-to-factory.104958/ | Getting the fuel pump recall done and Ktuned. Do I need to reflash the ECU back to factory | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/1-by-1-headstud-replacement-now-my-cabin-smells-like-fuel.104897/ | 1 by 1 headstud replacement: now my cabin smells like fuel | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/valvetronic-muffler.104689/ | Valvetronic muffler | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2016-honda-civic-ex-2-0l-misfire.104832/ | 2016 Honda Civic EX 2.0L Misfire | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/function-werk-front-pipe-gain-2-0-k20c2.103743/ | Function Werk Front Pipe Gain 2.0/K20c2 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/question-for-those-that-have-the-prl-tip-carbon-version.104604/ | Question for those that have the PRL TIP Carbon version | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tuning-and-accord-injectors.104365/ | Tuning and Accord injectors | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/the-difference-between-the-fuel-injectors-of-the-civic-10-and-cr-v.104192/ | The difference between the fuel injectors of the Civic 10 and CR-V. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/need-help-finding-budget-dp-and-front-pipe-for-1-5t-l15b7.104020/ | Need help finding budget dp and front pipe for 1.5T (L15B7) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2016-civic-stuttering-issue-after-tune-and-head-gasket-replacement.104011/ | 2016 Civic Stuttering Issue After Tune and Head Gasket Replacement | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/a-quieter-aftermarket-exhaust-for-the-1-5t-sport.103838/ | a "quieter" aftermarket exhaust for the 1.5t sport | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/action-clutch-high-engagement.34406/ | Action Clutch High Engagement | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/looking-for-feedback-on-the-blox-racing-exhaust-for-sedan-hatchbacks.36356/ | Looking for feedback on the Blox Racing exhaust for Sedan/Hatchbacks | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/looking-for-mishimoto-intercooler-parts-help.103728/ | Looking for mishimoto Intercooler Parts Help! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/56-homemade-flex-fuel-kit.103700/ | $56 homemade flex fuel kit | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/retrofitting-a-lifepo4-starter-battery-battery-relocation-project.103701/ | Retrofitting a LiFePO4 Starter Battery + Battery Relocation Project | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/gauge-pods-e85-oil-temp-oil-pressure-boost-afr.55162/ | Gauge Pods/E85/Oil Temp/Oil Pressure/Boost/AFR | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ktuner-basemaps-for-27won-w1-turbo-now-available.30740/ | KTuner basemaps for 27WON W1 turbo now available | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/optimal-rev-limit-with-cvt.103489/ | Optimal rev limit with CVT? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2017-civic-hatchback.103339/ | 2017 civic hatchback | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-to-clean-throttle-body.103248/ | How to clean throttle body | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/exhaust-leak.103146/ | Exhaust leak | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/prl-flex-fuel-sensor-accuracy-help.103064/ | PRL flex fuel sensor accuracy HELP | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/acura-adx.102757/ | Acura ADX | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/fuel-injectors.102779/ | Fuel Injectors??? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-intake-do-you-have-and-what-are-your-iats.91654/ | What intake do you have and what are your IATs? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/should-i-worry-about-this-defect.102622/ | Should i worry about this defect | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/is-there-any-exhaust-for-2-0l-fc2-sedan.48644/ | Is There Any Exhaust For 2.0L FC2? (Sedan) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/stock-airbox-modified-for-cold-air.23420/ | Stock airbox modified for cold air. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/avoiding-heat-soak.34911/ | Avoiding Heat Soak | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/can-i-use-exhausts-for-1-5t-in-a-2-0l.102493/ | Can I use exhausts for 1.5T in a 2.0L? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/phearable-1-5r-cvt-review.69362/ | Phearable 1.5R CVT Review | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/backfire-under-wot.68799/ | Backfire under wot :-( | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/removing-intake-resonator-box.3360/ | Removing Intake Resonator Box | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/exhaust-pops-on-wot.48751/ | Exhaust pops on WOT | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/drive-a-tuned-10th-gen-have-i-got-a-thread-for-you.72548/ | Drive a tuned 10th gen? Have I got a thread for YOU! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/fk7-fbo-i-want-more-power-what-next.100884/ | FK7 FBO, I want more power , what next? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ethonal-on-ktuner-spiking.56108/ | Ethonal % on Ktuner spiking | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/my-test-of-the-phearable-1-5-race-non-si-tune.67975/ | My test of the Phearable 1.5 Race (non-Si) tune | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2018-anti-theft-reset.71137/ | 2018 Anti theft reset?? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/anyone-know-where-this-piece-goes-on-this-ebay-intake.100178/ | Anyone know where this piece goes on this eBay intake | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/the-definitive-l15b-c-engine-guide.100957/ | The Definitive L15B/C Engine Guide | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/question-bout-my-motor.102043/ | Question bout my motor | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/humming-squeaking-noise-when-depressing-clutch-pedal.102008/ | Humming/squeaking noise when depressing clutch pedal | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/psa-for-those-wanting-a-full-true-3-exhaust.101955/ | PSA - For those wanting a full true 3" exhaust. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/phearable-1-5r-tune.101882/ | Phearable 1.5r tune | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/trouble-with-27won-race-maf-scaling-on-ktuner.76479/ | Trouble with 27WON Race maf scaling on Ktuner | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/modified-diy-afe-takeda-cold-air-intake-into-hybrid.73488/ | Modified DIY aFe Takeda Cold Air Intake into Hybrid | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2019-honda-civic-si-engine-rattle.101269/ | 2019 Honda Civic si engine rattle | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/arp-208-4308-headstuds-non-vtec-sohc-engine.100623/ | ARP 208-4308 headstuds (non-vtec SOHC engine) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/stiff-steering.101019/ | Stiff Steering | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/need-advice-for-sourcing-1-5l-block.100701/ | Need advice for sourcing 1.5L block | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/should-i-detune-for-state-emissions-testing-or-will-i-be-fine.100706/ | Should I detune for state emissions testing or will I be fine? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/rebuilding-head-what-studs-tf-works-or-arp.100368/ | REBUILDING HEAD- what studs TF works or ARP | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/frontpipe-to-mid-pipe-bolts-civic-si.100773/ | Frontpipe to mid pipe bolts, Civic si | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/rev9-intercooler-civic-si-install-review.34192/ | Rev9 Intercooler Civic SI Install Review | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/catless-downpipe-options.100503/ | Catless downpipe options | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cold-air-intake-help.52666/ | Cold air intake help | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/rv6-365-black-turbo-hondata-ots-tune.100331/ | RV6 365 Black Turbo Hondata OTS Tune | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2017-civic-ex-l-paddle-shifter-installation-help.100550/ | 2017 Civic EX-L paddle shifter installation help | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/transmission-control-module-swap.87937/ | Transmission Control module Swap | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/does-changing-the-clutch-really-require-replacing-all-these-bolts.100319/ | Does changing the clutch really require replacing all these bolts?? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2020-2-0na-civic-pan-bolt-snapped-half-way-options.100460/ | 2020 2.0na civic pan bolt snapped half way. Options? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/rv6-r365bb-red-turbo-kelford-cams-stage-1-tsp-arp-head-studs.100284/ | RV6 R365BB Red Turbo + Kelford Cams Stage 1 + TSP ARP Head Studs | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2016-civic-touring-engine-swap.96872/ | 2016 Civic Touring Engine Swap | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cvt-mods.100259/ | CVT - Mods | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-turbo-should-i-buy.100193/ | What turbo should I buy? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/spark-plug-gap-2018-civic-ex-t-1-5l.100204/ | Spark plug gap 2018 Civic ex-t 1.5L | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/boomba-bov-to-recirculating-valve.65480/ | Boomba bov to recirculating valve | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/temu-intercooler-anyone-give-it-a-try.99778/ | Temu Intercooler??? Anyone Give it a Try? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/thoughts-on-this-external-cvt-filter-kit-cooler.99892/ | Thoughts on this external cvt filter kit/cooler | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2017-ex-t-cvt-upgrade-list-help.35956/ | 2017 EX-T CVT Upgrade list help | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2017-honda-civic-hatchback-has-white-smoke.99076/ | 2017 Honda Civic Hatchback has white smoke | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/prl-hvi-race-maf.82752/ | PRL HVI Race MAF | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/honda-civic-1-5-vtec-turbo-prestige-5dr-cvt-exhaust.99679/ | Honda Civic 1.5 VTEC Turbo Prestige 5dr CVT Exhaust? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/fmic-recommendations.99562/ | FMIC recommendations? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/hps-silicone-hoses.73295/ | HPS Silicone Hoses | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/psa-mishimoto-intake-aem-dry-filter-21-2027-discontinued.99475/ | PSA: Mishimoto Intake AEM Dry Filter (21-2027 discontinued) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/clutch-squeak.98844/ | Clutch squeak? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cae-shifter-on-si.84824/ | CAE shifter on Si | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/stand-alone-ecu.85991/ | Stand-alone ECU | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/differences-between-non-si-manual-transmissions-transmission-failure-transmission-swap-on-jack-stands-thread.98103/ | Differences Between Non-Si Manual Transmissions/Transmission Failure/Transmission Swap on  | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/knock-tap-noise-from-engine-possible-vtc-actuator-or-chain-tensioner.99147/ | Knock, tap noise from engine. Possible VTC actuator or chain tensioner? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/warning-lights-and-recalibrations-on-2017-civic.95679/ | Warning lights and recalibrations on 2017 civic | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-part-is-it-59-b-metts-cooling-system-bracket.99213/ | What part is it? 59#B metts (cooling system bracket??) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ecm-failure-can-a-tune-cause-this.99027/ | ECM Failure: Can a Tune Cause This? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/pcv-hose-related-issues-recommend-reading-just-in-case.92270/ | PCV HOSE RELATED ISSUES (recommend reading just in case) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/1-5-turbo-skunk2-head-studs-opinions.98890/ | 1.5 turbo Skunk2 head studs- opinions? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/tuned-car-failures-and-the-human-element.98838/ | Tuned car failures and the human element | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/will-any-of-these-catback-exhaust-systems-fit-my-civic.83615/ | Will any of these catback exhaust systems fit my civic? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/uh-oh-my-oil-smells-of-gas.71520/ | Uh, oh! My oil smells of Gas!!! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/oem-vs-aftermarket-clutch-honda-civic-si-2020.83416/ | OEM vs Aftermarket Clutch Honda Civic si 2020 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/can-someone-please-tell-me-what-the-hell-is-going-on-here.97966/ | Can someone please tell me what the hell is going on here | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/whats-the-spark-plug-gap-spec-for-a-2016-honda-civic-lx-2-0l.97915/ | What's the spark plug gap spec for a 2016 Honda Civic lx 2.0L? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/popped-out-of-gear-on-the-highway-shifter-is-limp-any-ideas-still-on-the-side-of-the-road-lol-waiting-for-tools.97910/ | Popped out of gear on the highway.. shifter is limp. Any ideas? Still on the side of the r | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/si-coupe-exhaust-on-a-non-si-coupe.78892/ | SI coupe exhaust on a non-SI coupe? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/scratches-on-engine-next-to-tensioner-pulley.97757/ | Scratches on engine next to tensioner pulley | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/craziest-10th-gen-civic-build.97673/ | Craziest 10th gen civic build! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-to-remove-clutch-slave-cylinder-roll-pins.97571/ | How to remove Clutch Slave Cylinder roll pins? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/knock-control-absurdly-high-and-psi-tc-not-reading.79680/ | KNOCK CONTROL absurdly high, and PSI (TC) not reading | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/engine-noise.97490/ | Engine noise | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/si-vs-non-si-oem-airbox.47467/ | Si Vs Non Si oem airbox | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2017-ex-l-sedan-1-5l-cvt-exhaust-help.79065/ | 2017 EX-L SEDAN 1.5L CVT EXHAUST HELP!?!?! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/fuel-trims-and-cold-weather-question.44142/ | Fuel trims and cold weather question | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/a-very-strange-knock-control-issue-can-the-experts-help.87992/ | A Very Strange Knock Control Issue ... Can the Experts Help? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/fs-2018-civic-si-toronto-canada.97317/ | FS - 2018 Civic Si - Toronto, Canada | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/85-with-93-for-pheareable-1-5r.97049/ | 85 with 93 for pheareable 1.5R | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/remark-single-exit-type-r-exhaust-on-si-sedan.97003/ | Remark Single Exit Type R Exhaust on SI Sedan | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/deciding-which-exhaust-to-choose.97015/ | Deciding which exhaust to choose. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/custom-air-intake.96969/ | Custom air intake | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/lsd-for-cvt-2-0.28800/ | LSD for CVT 2.0? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/lower-rasp.96921/ | Lower rasp | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-is-this-short-shifter.96855/ | What is this short shifter? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/codes-after-stage-2-with-pops-from-phearable.96912/ | Codes after stage 2 with pops from phearable | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2-bolts-snapped-in-a-downpipe-i-picked-up.96896/ | 2 Bolts snapped in a Downpipe I picked up | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/pedal-commander.23551/ | PEDAL COMMANDER?? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/issue-with-vtc-going-full-retard-after-tr3-cams.96709/ | Issue with VTC going full retard after TR3 cams | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/looking-for-a-solution-for-exhaust-on-2017-1-5t-ex-sedan.96689/ | Looking for a solution for exhaust on 2017 1,5T EX sedan | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/flowmaster-dbx-muffler.3309/ | Flowmaster DBX muffler | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/rough-idle-very-intermittent.96673/ | Rough idle very intermittent | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tuning.96657/ | Tuning | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/engine-making-ticking-noise.96544/ | Engine making ticking noise | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/does-the-vibrant-ultra-quiet-resonator-fit-the-original-resonator-location.95339/ | Does the vibrant ultra quiet resonator fit the original resonator location? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/lsd-for-cvt-1-5l-vapor-or-real.88347/ | LSD for CVT 1.5L - vapor or real? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-is-your-ltft.96503/ | What is your ltft? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/make-low-boost-until-4k-rpm-feel-weird-help.94759/ | Make low boost until 4k Rpm feel weird Help | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tsp-titanium-exhaust-stud-kit-and-rampage-titanium-exhaust-stud-kit-comparison.90087/ | TSP Titanium Exhaust Stud Kit and Rampage Titanium Exhaust Stud Kit comparison | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/pedal-commander-anyone-with-experience-with-this.9551/ | Pedal Commander - Anyone with experience with this? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/best-intake-for-tuned-1-5t-cvt.96377/ | Best intake for tuned 1.5T CVT | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/looking-to-remove-my-intake-resonator.80105/ | Looking to remove my intake resonator | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/disable-electric-power-steering-eps.85899/ | Disable Electric Power Steering (EPS) ? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/11th-gen-to-10th-gen-exhaust.96203/ | 11th Gen to 10th Gen exhaust? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/fk8-cobb-accessport-v3-custom-tuning-options.94956/ | FK8 Cobb Accessport V3 Custom Tuning Options | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/act-clutch-install-grinds-in-gear-with-clutch-pressed-to-the-floor.96007/ | ACT clutch install, grinds in gear with clutch pressed to the floor | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/hondata-flashpro-is-now-carb-legal.11592/ | Hondata FlashPro is now CARB legal | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/upgrade-si-fuel-injectors.92304/ | Upgrade Si Fuel Injectors | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/does-this-1-5t-sound-normal.86127/ | Does this 1.5T sound normal? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/help-me-find-a-part-number-please-1-5t.95485/ | Help me find a part number? (Please) 1.5T | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/is-there-something-wrong-with-my-maf-with-datalog-pic.27210/ | Is there something wrong with my MAF (with datalog pic) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/how-long-have-you-guys-had-your-pherable-1-5r-tune-and-have-you-encountered-any-issues.95364/ | How long have you guys had your Pherable 1.5r tune and have you encountered any issues? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-is-knock-control-egr-and-how-to-interpret-it.95169/ | What is 'Knock Control EGR' and how to interpret it ? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/new-prl-motorsports-coolant-reservoir-installed.90998/ | New PRL Motorsports Coolant Reservoir Installed! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cheapest-way-to-get-rid-of-rev-hang-on-2016-1-5t.95219/ | Cheapest way to get rid of rev hang on 2016+ 1.5t? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/knock-control-sensor-what-does-it-pick-up.39809/ | Knock control sensor, what does it pick up? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cvt-transmission-ticking-sound.94702/ | CVT Transmission Ticking Sound | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/hondata-canflex-10thgen1-5.95129/ | Hondata CANFlex-10thGen1.5 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/quiet-aftermarket-exhaust-setup-and-cutting-hole-in-bumper-for-exhaust-tip.85190/ | "Quiet" Aftermarket Exhaust Setup and Cutting Hole in Bumper for Exhaust Tip | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tsp-l15-turbo-head-stud-kit-for-2016-1-5t-engine-by-arp.74803/ | TSP L15 Turbo Head Stud Kit for 2016+ 1.5T Engine (by ARP) | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/ordered-the-borla-s-for-my-1-5t-hatchback-sport.94554/ | Ordered the Borla S for my 1.5T Hatchback Sport | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/compression-test.67152/ | Compression test? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/what-intake-type-would-you-recommend-for-hot-but-wet-climate-and-nice-sounds.94974/ | What Intake type would you recommend for hot but wet climate and nice sounds | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/blox-racing-58mm-throttle-body.52201/ | Blox racing 58mm throttle body | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/2017-1-5t-blown-head-gskt-too.86968/ | 2017 1.5t blown head gskt too! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/inline-pro-head-stud-failure-how-common-is-it.94782/ | Inline pro head stud failure how common is it? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/dropped-10mm-socket-rolling-around-in-one-place-and-can-not-find-it-for-the-life-of-me.94655/ | Dropped 10mm socket. Rolling around in one place and can NOT find it for the life of me! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/honda-civic-2015-cvt-plug.94660/ | Honda Civic 2015 CVT Plug | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/more-displacement.49720/ | More Displacement? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/any-experience-with-bluespark-ecu-remap.94560/ | Any experience with Bluespark ECU remap? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/prl-garret-gtx2867r-turbo-kit-vs-regular-gtx2867r.94461/ | PRL Garret GTX2867R turbo kit vs regular GTX2867R | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/clutch-chatter.55839/ | Clutch Chatter | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/aliexpress-aluminum-civic-1-5t-turbo-inlet-pipe-discussion.57472/ | Aliexpress aluminum Civic 1.5t turbo inlet pipe discussion | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/engine-misfire-at-high-boost.94390/ | Engine misfire at High boost | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/knock-control-observations.22915/ | Knock control observations | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/engine-sound.75077/ | Engine sound | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/jmautosports-still-selling-catless-downpipes-should-i-trust-it.94095/ | Jmautosports still selling catless downpipes. Should I trust it? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/please-help-p0304-misfire-code-yet.94182/ | Please help. P0304 misfire code yet | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/prl-short-ram-intake-sri-vs-cobra-cold-air-intake-is-the-cai-worth-the-extra-cost-and-why.50846/ | PRL Short Ram Intake (SRI) Vs Cobra Cold Air Intake: Is the CAI worth the extra cost and w | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/positive-pressure-in-pcv-hose.94052/ | Positive pressure in pcv hose? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/160-mph-261-km-h-civic-1-5t-speed-limit-removed.6584/ | 160 mph (261 km/h) Civic 1.5T speed limit Removed!! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/whistle-whine-under-wot.60875/ | Whistle/whine under WOT? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/ltft-at-14-on-phearable-1-5-tune-okay.93139/ | LTFT at -14% on Phearable 1.5 tune okay? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/lets-talk-spark-plugs.38367/ | Let's Talk Spark Plugs | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tsp-stage-1-questions.75913/ | TSP Stage 1 Questions | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/o2-defouler-but-p0420-code-will-it-effect-my-illinois-smog-test.93726/ | O2 defouler but P0420 code, will it effect my illinois smog test? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/cheapest-place-to-buy-injectors-online-that-is-reputable.93696/ | Cheapest place to buy injectors online that is reputable ? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/direct-injection-carbon-buildup-problem.507/ | Direct injection carbon buildup problem | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/camshaft-position-sensor-wiring-chewed-by-rodent-how-difficult-is-the-fix.86425/ | Camshaft position sensor wiring chewed by rodent, how difficult is the fix? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/transmission.93651/ | Transmission | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/hondata-1-5-fuel-system.81958/ | Hondata 1.5 fuel system | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/hondata-canflex-10-gen-si.93387/ | Hondata CANFlex 10 gen Si | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/oil-transmission-and-p0741.93409/ | Oil Transmission and P0741 | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/tsp-stage-one-vs-phearable-stage-1-5-race.68230/ | TSP Stage One+ VS. Phearable Stage 1.5 race | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/where-is-the-engine-coolant-drain-bolt.49501/ | Where is the engine coolant drain bolt?! | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/are-you-tuned-come-join-us.62176/ | Are you tuned? Come join us. | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/add-paddle-shifters-to-2016-honda-civic-ex-t-sedan.33400/ | Add Paddle Shifters to 2016 Honda Civic EX-T Sedan | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/perhaps-a-dumb-question-but-why-cant-i-use-87-fuel-with-a-tune.93280/ | perhaps a dumb question, but why can't i use 87 fuel with a tune? | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/prl-intercooler-fmic-v2-with-vargas-turbocharger-technologies-charge-pipes-for-civic-si-my-experience.90105/ | PRL Intercooler (FMIC V2) with Vargas Turbocharger Technologies charge pipes for Civic SI  | T2 (10th gen 1.5T) KTuner/tuning thread
+- [c] https://www.civicx.com/forum/threads/catless-down-pipe.92960/ | Catless down pipe | T2 (10th gen 1.5T) KTuner/tuning thread
+- [F] https://www.civicx.com/forum/threads/aggressive-dual-21-ktuner-without-forced-knock-control-rise.60757/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/ktuner-dual-tune-on-the-fly-map-switching.34553/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/whats-the-most-aggressive-ktuner-v2-tune-i-can-use-on-my-stock-1-5t-cvt.52490/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/tuning-1-5t-cvt-with-ktuner.54706/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/k-tuner-tune-questions-for-cvt-1-5t.31175/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/cvt-with-ktuner-worth-custom-tune.39826/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/knock-control-significance.29457/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/ktuner-knock-control-question.31884/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/high-knock-control-reading-after-ktuner-v2-flash.19473/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/high-knock-control-during-wot.71665/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/sky-high-kcon-also-bad-fuel-trims-need-help-16-cvt-ktuner.79395/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/problem-low-boost-issue-getting-reliable-22-5psi.50891/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/no-9-boost-base-1-5t.27523/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/ktuner-and-intake.55046/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/can-anybody-help-me-with-a-maf-curve-tune-on-the-ktuner-platform.68752/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/maperformance-intake-tune.86902/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/adjusting-fuel-tables.47850/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/prl-race-maf-turbo-inlet-with-ktuner.79558/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/best-way-to-test-fuel-trims.20669/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/prl-catted-downpipe-ktuner-help.52210/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/how-to-tune-car-for-catless-downpipe.67621/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/updating-tune-when-i-get-a-downpipe.74266/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/cel-p0420-after-exhaust-install.22077/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/at-what-iat-do-you-start-to-see-heat-soak.51779/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/iat1-and-iat2-question-which-is-usually-hotter.50001/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/high-iat-with-1-5r-tune.98511/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/inconsistent-throttle-response-and-acceleration.86407/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/can-someone-further-explain-these-3-ktuner-adjustments.34559/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/quick-enables-quick-adjustment-recommendations.24903/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/ktuner-v2-and-rev-hang.53849/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/did-ktuner-modify-the-cvt-torque-limit-table.40687/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/1-5t-cvt-ktuner-general-questions.66438/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/ktuner-v2-on-an-ext-cvt-running-91-standard-fuel-what-kind-of-gains-can-i-expect-and-whats-safe-tuning-wise.68331/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/ktuner-flex-fuel-question.27803/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/cvt-flex-fuel-tune.72756/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/my-experience-with-hondata-vs-ktuner.38719/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/ktuner-datalogging-extended-data-option.63678/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/what-is-the-current-best-ots-tune-for-ktuner-v1-2-on-stock-civic-1-5t-non-si.71112/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/pros-and-cons-of-ktuning-a-civic.79635/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/my-ktuner-experience-an-ongoing-journal.29033/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/newly-available-quick-adjustments-for-tsp-stage-1-and-stage-2-tunes-throttle-responsiveness-and-padding.55955/ | from WebSearch | T2
+- [F] https://www.civicx.com/forum/threads/hands-on-with-tsps-stage-1-tune-for-the-1-5t-non-si.39135/ | from WebSearch | T2
+
+## civic11forum
+
+Discovery: WebSearch (~10 queries) + tag pages (/tags/ktuner p1-5, tune, phearable, tsp, knock-control, tuning, hondata, downpipe). No KTuner subforum exists. [F]=selected, [c]=candidate only.
+
+- [F] https://www.civic11forum.com/threads/1-5-ex-cvt-exhaust-question.6876/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/2024-si-ktuner.6865/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/22-civic-si-phearable-1-5-vs-22-civic-si-tsp-tune-video.2700/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/23-civic-ktuner-and-warranties.4382/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/27won-turbo-withought-tune.9320/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/axion-ind-first-6-speed-1-5-t-ktuner-stage-2-install.1089/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/bnib-ktuner-v1-2-w-tsp-stage-1-street-tune.4149/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/can-an-automatic-cvt-transmission-be-upgraded-or-am-i-screwed.6433/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/civic-si-ktuner-2-0-first-impressions-questions.1807/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/code-p0046.9731/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/down-pipe-issue.9321/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/downpipe-and-tune-on-22-civic-1-5t.7730/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/downpipe.9131/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/emissions-system-problem-after-flashing-to-tsp-stage-1-tune.8478/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/error-code-p2a01.6667/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/fuel-quality-and-knock-control.7390/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/going-from-cobb-to-ktuner.9520/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/going-limp.6521/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/help-downpipe-question.8136/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/how-much-horsepower-am-i-making.8636/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/how-to-pump-e85-into-civic.8857/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/is-this-knock-or-is-this-the-fuel-injectors.8355/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/k-con-knock-control.6222/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/knock-on-oem-tune.9810/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/ktuner-coming-for-our-platform.592/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/ktuner-driving-impressions-who-wants-more-power.663/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/ktuner-install-on-a-2022-civic-hatchback-sport-touring-cvt.1164/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/ktuner-numbers.8148/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/ktuner-on-the-sport-touring.1196/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/ktuner-or-hondata.5401/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/ktuner-question.8127/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/ktuner-v2.2690/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/ktuner-v2.5994/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/ktuner.1433/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/new-touring-sedan-should-i-tune-and-hpd.2762/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/p0046-on-ktuner-with-tsp-tune.4166/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/p0046-on-ktuner-with-tsp-tune.4167/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/power-gains-from-aftermarket-intake.4627/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/resolved-phearable-stage-1-5-tune.5219/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/some-questions-about-tuning.9460/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/throttle-delay.7574/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/tsp-or-phearable.4540/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/tsp-stage-1-2022-civic-si.6151/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/tuning-question.6658/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/tuning.5688/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/tuning.8318/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/turbo-flutter-while-pushing-higher-boost.9097/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/update-on-weird-engine-sound.8206/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/whats-a-safe-amount-of-power-to-boost-the-1-5t-to.341/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/where-to-begin-with-mods.5562/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/which-tuner-would-you-use.1795/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [F] https://www.civic11forum.com/threads/will-tuning-eliminate-rev-hang.7487/ | T1 (11th gen 1.5T/Si) KTuner thread
+- [c] https://www.civic11forum.com/threads/ktuner-scammer-found-edpartt-gmail-com-and-other-names.8128/ | Ktuner SCAMMER FOUND: edpartt@gmail.com (and other names)
+- [c] https://www.civic11forum.com/threads/phearable-tune-question.7234/ | Phearable Tune Question
+- [c] https://www.civic11forum.com/threads/ktuner-is-mounted.6951/ | Ktuner is Mounted!!
+- [c] https://www.civic11forum.com/threads/new-prl-tip-ptp-turbo-blanket-installed.6924/ | New PRL TIP + PTP Turbo Blanket installed!
+- [c] https://www.civic11forum.com/threads/can-the-ktuner-turn-on-with-the-car.6923/ | Can the KTuner turn on with the car?
+- [c] https://www.civic11forum.com/threads/where-do-would-you-have-your-ktuner-mounted.6849/ | Where do/would you have your KTuner mounted?
+- [c] https://www.civic11forum.com/threads/does-anyone-have-a-ktuner-for-sale-send-to-brazil.6193/ | Does anyone have a Ktuner for sale??? Send to Brazil!
+- [c] https://www.civic11forum.com/threads/down-pipe-front-pipe-options-for-2025-civic-sport.9164/ | Down Pipe/Front Pipe Options for 2025+ Civic Sport
+- [c] https://www.civic11forum.com/threads/k-tuner-for-sale.8819/ | K tuner for sale
+- [c] https://www.civic11forum.com/threads/hondata-tune-for-11th-gen-non-si.7257/ | Hondata Tune for 11th Gen Non si
+- [c] https://www.civic11forum.com/threads/plm-downpipe.7017/ | PLM Downpipe
+- [c] https://www.civic11forum.com/threads/2-0na-tuned-performance.5968/ | 2.0NA Tuned Performance
+- [c] https://www.civic11forum.com/threads/need-help-with-tuning-north-nj.4697/ | Need help with tuning - North NJ
+- [c] https://www.civic11forum.com/threads/labor-day-sales-live-tsp.10739/ | Labor Day Sales | LIVE @ TSP!
+- [c] https://www.civic11forum.com/threads/fourth-of-july-sales-live-tsp.10380/ | Fourth of July Sales | LIVE @ TSP!
+- [c] https://www.civic11forum.com/threads/new-tsp-hibiki-series-valved-exhaust-system-for-22-26-honda-civic-si.10373/ | NEW @ TSP Hibiki Series Valved Exhaust System for 22-26 Honda Civic Si
+- [c] https://www.civic11forum.com/threads/hps-memorial-day-sale-save-10-live-tsp.10201/ | HPS Memorial Day Sale - Save 10% | LIVE @ TSP!
+- [c] https://www.civic11forum.com/threads/alpharex-memorial-day-sale-save-10-live-tsp.10177/ | AlphaRex Memorial Day Sale - Save 10% | LIVE @ TSP!
+- [c] https://www.civic11forum.com/threads/prl-tax-refund-sale-save-15-live-tsp.9967/ | PRL Tax Refund Sale - Save 15% | LIVE @ TSP!
+- [c] https://www.civic11forum.com/threads/ark-tax-refund-sale-save-20-live-tsp.9910/ | ARK Tax Refund Sale - Save 20% | Live @ TSP!
+- [c] https://www.civic11forum.com/threads/pre-bfcm-sales-live-tsp.9446/ | Pre-BFCM Sales - Live @ TSP!
+- [c] https://www.civic11forum.com/threads/labor-day-sales-live-tsp.9174/ | Labor Day Sales - LIVE @ TSP!
+- [c] https://www.civic11forum.com/threads/anybody-ever-used-liqui-moly-20l-top-tec-6600-motor-oil-sae-0w20.8555/ | Anybody ever used LIQUI MOLY 20L Top Tec 6600 Motor Oil SAE 0W20
+- [c] https://www.civic11forum.com/threads/pherable-stage-2-k20c2-review.7573/ | Pherable Stage 2 K20C2 review
+- [c] https://www.civic11forum.com/threads/k20c2-na.5221/ | K20C2 NA
+- [c] https://www.civic11forum.com/threads/is-it-worth-bumping-the-n-a-2-0-redline-up-just-a-wee-bit.4833/ | Is it worth bumping the N/A 2.0 redline up just a wee bit?
+- [c] https://www.civic11forum.com/threads/new-25-si.8342/ | New 25 Si
+- [c] https://www.civic11forum.com/threads/2024-civic-hb-1-5t-hondata-tune-issues.6926/ | 2024 Civic HB 1.5T hondata Tune Issues
+- [c] https://www.civic11forum.com/threads/is-there-a-valet-mode.5063/ | Is there a valet mode?
+- [c] https://www.civic11forum.com/threads/2022-civic-touring-1-5t-new-to-hondata.867/ | 2022 Civic Touring 1.5T - New to Hondata
+- [c] https://www.civic11forum.com/threads/rv6-downpipe-for-the-2-0l.10379/ | RV6 Downpipe for the 2.0L
+- [c] https://www.civic11forum.com/threads/aftermarket-exhausts-and-downpipes.9720/ | Aftermarket Exhausts and Downpipes
+- [c] https://www.civic11forum.com/threads/sound-recording-w-tsp-high-efficiency-downpipe.9349/ | Sound recording w/ TSP High Efficiency Downpipe?
+- [c] https://www.civic11forum.com/threads/27won-turbo-back-exhaust.9120/ | 27WON Turbo Back Exhaust
+- [c] https://www.civic11forum.com/threads/is-this-a-bad-prl-downpipe-gasket-or-am-i-tripping.8674/ | Is this a bad PRL downpipe gasket? Or am I tripping
+- [c] https://www.civic11forum.com/threads/looking-for-a-trustworthy-performance-shop-or-person-near-houston.8554/ | Looking for a trustworthy performance shop or person near Houston
+- [c] https://www.civic11forum.com/threads/k20c2-catted-downpipe-plm-vs-rv6.7681/ | K20C2 catted downpipe PLM vs RV6?
+- [c] https://www.civic11forum.com/threads/opinion-requested-intercooler-or-downpipe-next.7101/ | OPINION REQUESTED: Intercooler or Downpipe next?
+
+## ktuner-official
+
+KTuner Help (every page in table_of_contents.htm, 144 pages) plus ktuner.com application/FAQ/downloads pages. All fetched direct via Python urllib, 10+ s apart, no blocks.
+
+- http://www.ktuner.com/KTunerHelp/2017__civic_type_r.htm | 2017+ Civic Type-R
+- http://www.ktuner.com/KTunerHelp/_boost_by_gear.htm | Boost By Gear
+- http://www.ktuner.com/KTunerHelp/account_registration.htm | Account Registration
+- http://www.ktuner.com/KTunerHelp/advanced_vsa.htm | Advanced VSA
+- http://www.ktuner.com/KTunerHelp/advanced_vsa_control_strategy.htm | Advanced VSA Control Strategy
+- http://www.ktuner.com/KTunerHelp/anti_lag.htm | Anti-lag
+- http://www.ktuner.com/KTunerHelp/application_menu_bar.htm | Application menu bar
+- http://www.ktuner.com/KTunerHelp/boost_by_gear_limits.htm | Boost By Gear Limits
+- http://www.ktuner.com/KTunerHelp/boost_target_ramp_rate.htm | Boost Target Ramp Rate
+- http://www.ktuner.com/KTunerHelp/can_gateway_option.htm | CAN Gateway Option
+- http://www.ktuner.com/KTunerHelp/changing_colors.htm | Changing Colors
+- http://www.ktuner.com/KTunerHelp/changing_parameters.htm | Changing Parameters
+- http://www.ktuner.com/KTunerHelp/civic_accord_flex_fuel_tuning.htm | Civic/Accord Flex Fuel Tuning
+- http://www.ktuner.com/KTunerHelp/civic_accord_turbo.htm | Civic/Accord Turbo
+- http://www.ktuner.com/KTunerHelp/civicx_accordx_platform.htm | CivicX/AccordX Platform
+- http://www.ktuner.com/KTunerHelp/closed_loop_settings.htm | Closed Loop Settings
+- http://www.ktuner.com/KTunerHelp/communication_failure.htm | Communication Failure
+- http://www.ktuner.com/KTunerHelp/connecting_to_an_ecu.htm | Connecting To An ECU
+- http://www.ktuner.com/KTunerHelp/dash_camera_mode_switching.htm | Dash/Camera Mode Switching
+- http://www.ktuner.com/KTunerHelp/dbw_idle_throttle_flow_rate.htm | DBW Idle Throttle Flow Rate
+- http://www.ktuner.com/KTunerHelp/dbw_maps.htm | DBW Maps
+- http://www.ktuner.com/KTunerHelp/designing_a_layout.htm | Designing A Layout
+- http://www.ktuner.com/KTunerHelp/disable_boost_target_dampening.htm | Disable Boost Target Dampening
+- http://www.ktuner.com/KTunerHelp/disable_rev_hang.htm | Disable Rev Hang
+- http://www.ktuner.com/KTunerHelp/disables_monitors.htm | Disables/Monitors
+- http://www.ktuner.com/KTunerHelp/download_and_reflash_the_ecu.htm | Download And Reflash The ECU
+- http://www.ktuner.com/KTunerHelp/dual_boost_targets.htm | Dual Boost Targets
+- http://www.ktuner.com/KTunerHelp/early_spool.htm | Early Spool
+- http://www.ktuner.com/KTunerHelp/eco_button.htm | ECO Button
+- http://www.ktuner.com/KTunerHelp/ecu_recovery.htm | ECU Recovery
+- http://www.ktuner.com/KTunerHelp/edit.htm | Edit
+- http://www.ktuner.com/KTunerHelp/example_of_parameters.htm | Example Of Parameters
+- http://www.ktuner.com/KTunerHelp/file.htm | File
+- http://www.ktuner.com/KTunerHelp/final_boost_target.htm | Final Boost Target
+- http://www.ktuner.com/KTunerHelp/flashing__what_to_expect.htm | Flashing: What To Expect
+- http://www.ktuner.com/KTunerHelp/flashing_tunes_with_tunerview.htm | Flashing Tunes With TunerView
+- http://www.ktuner.com/KTunerHelp/flex_fuel_converter.htm | Flex Fuel Converter
+- http://www.ktuner.com/KTunerHelp/flex_fuel_tuning.htm | Flex Fuel Tuning
+- http://www.ktuner.com/KTunerHelp/fuel_cut_settings.htm | Fuel Cut Settings
+- http://www.ktuner.com/KTunerHelp/fuel_injector_dead_times.htm | Fuel Injector Dead Times
+- http://www.ktuner.com/KTunerHelp/full_throttle_shift.htm | Full Throttle Shift
+- http://www.ktuner.com/KTunerHelp/general_parameters.htm | General Parameters
+- http://www.ktuner.com/KTunerHelp/general_platforms.htm | General Platforms
+- http://www.ktuner.com/KTunerHelp/general_tuning_logic.htm | General Tuning Logic
+- http://www.ktuner.com/KTunerHelp/getting_started_part_1.htm | Getting Started Part 1
+- http://www.ktuner.com/KTunerHelp/hardware_installation.htm | Hardware Installation
+- http://www.ktuner.com/KTunerHelp/hardware_status_leds.htm | Hardware Status LEDs
+- http://www.ktuner.com/KTunerHelp/help_menu.htm | Help Menu
+- http://www.ktuner.com/KTunerHelp/idle_targets.htm | Idle Targets
+- http://www.ktuner.com/KTunerHelp/ignition_timing_and_knock_control.htm | Ignition Timing And Knock Control
+- http://www.ktuner.com/KTunerHelp/index.htm | Welcome
+- http://www.ktuner.com/KTunerHelp/injector_sizing.htm | Injector Sizing
+- http://www.ktuner.com/KTunerHelp/item_abbreviations.htm | Item Abbreviations
+- http://www.ktuner.com/KTunerHelp/ktuner_advanced_feature_logic.htm | KTuner Advanced Feature Logic
+- http://www.ktuner.com/KTunerHelp/ktuner_in_ecu_interface.htm | KTuner In-ECU Interface
+- http://www.ktuner.com/KTunerHelp/ktunerecu.htm | KTunerECU
+- http://www.ktuner.com/KTunerHelp/ktunerecu_r1.htm | KTunerECU R1
+- http://www.ktuner.com/KTunerHelp/ktunerecu_settings_window.htm | KTunerECU Settings window
+- http://www.ktuner.com/KTunerHelp/ktunerecu_traction_control.htm | KTunerECU Traction Control
+- http://www.ktuner.com/KTunerHelp/ktunerflash_v1_2_flashing_tutorial.htm | KTunerFlash V1.2 Flashing Tutorial
+- http://www.ktuner.com/KTunerHelp/ktunerflash_v1_2_obd2_interface.htm | KTunerFlash V1.2 OBD2 Interface
+- http://www.ktuner.com/KTunerHelp/ktunerflash_v1_flashing_tutorial.htm | KTunerFlash V1 Flashing Tutorial
+- http://www.ktuner.com/KTunerHelp/ktunerflash_v1_obd2_interface.htm | KTunerFlash V1 OBD2 Interface
+- http://www.ktuner.com/KTunerHelp/ktunerflash_v2_setup_tutorial.htm | KTunerFlash V2 Setup Tutorial
+- http://www.ktuner.com/KTunerHelp/ktunerflash_v2_touch_1.htm | KTunerFlash V2 Touch
+- http://www.ktuner.com/KTunerHelp/ktunerflash_v2_touch_2.htm | KTunerFlash V2 Touch
+- http://www.ktuner.com/KTunerHelp/layout_window.htm | Layout Window
+- http://www.ktuner.com/KTunerHelp/locking_to_unlocking_from_an_ecu.htm | Locking To/Unlocking From An ECU
+- http://www.ktuner.com/KTunerHelp/maf_settings.htm | MAF Settings
+- http://www.ktuner.com/KTunerHelp/minimal_lambda_setpoint.htm | Minimal Lambda Setpoint
+- http://www.ktuner.com/KTunerHelp/nominal_lambda_for_component_protection.htm | Nominal Lambda For Component Protection
+- http://www.ktuner.com/KTunerHelp/on_board_logging.htm | On Board Logging
+- http://www.ktuner.com/KTunerHelp/on_board_logging_parameters_1.htm | On Board Logging Parameters
+- http://www.ktuner.com/KTunerHelp/on_board_logging_parameters_2.htm | On Board Logging Parameters
+- http://www.ktuner.com/KTunerHelp/on_board_logging_sessions_window.htm | On Board Logging Sessions Window
+- http://www.ktuner.com/KTunerHelp/on_the_fly_adjustable_launch_control.htm | On The Fly Adjustable Launch Control
+- http://www.ktuner.com/KTunerHelp/on_the_fly_map_switching.htm | On The Fly Map Switching
+- http://www.ktuner.com/KTunerHelp/pairing_and_connecting.htm | Pairing And Connecting
+- http://www.ktuner.com/KTunerHelp/quick_adjustments.htm | Quick Adjustments
+- http://www.ktuner.com/KTunerHelp/quick_boost_by_gear_settings.htm | Quick Boost By Gear Settings
+- http://www.ktuner.com/KTunerHelp/quick_enables.htm | Quick Enables
+- http://www.ktuner.com/KTunerHelp/r1_flex_fuel_tuning.htm | R1 Flex Fuel Tuning
+- http://www.ktuner.com/KTunerHelp/real_time_tuning_options.htm | Real-Time Tuning Options
+- http://www.ktuner.com/KTunerHelp/recent_datalogs.htm | Recent Datalogs
+- http://www.ktuner.com/KTunerHelp/recent_tunes.htm | Recent Tunes
+- http://www.ktuner.com/KTunerHelp/rev_limits.htm | Rev Limits
+- http://www.ktuner.com/KTunerHelp/rev_limits_by_gear_and_temperature.htm | Rev Limits By Gear And Temperature
+- http://www.ktuner.com/KTunerHelp/revision_1_hardware_pinouts.htm | Revision 1 Hardware Pinouts
+- http://www.ktuner.com/KTunerHelp/s2000.htm | S2000
+- http://www.ktuner.com/KTunerHelp/s2000_flex_fuel_tuning.htm | S2000 Flex Fuel Tuning
+- http://www.ktuner.com/KTunerHelp/set_protocol.htm | Set Protocol
+- http://www.ktuner.com/KTunerHelp/setting_protocol.htm | Setting Protocol
+- https://ktuner.com/16civicturbo/ | 2016-2021 Civic 1.5 Turbo – KTuner LLC
+- https://ktuner.com/22civicsi/ | 22+ Civic Si – KTuner LLC
+- https://ktuner.com/22civicturbo/ | 22+ Civic 1.5T – KTuner LLC
+- https://ktuner.com/23integra/ | 23+ Integra – KTuner LLC
+- https://ktuner.com/downloads/ | Downloads – KTuner LLC
+- https://ktuner.com/faq/ | FAQ – KTuner LLC
+- http://www.ktuner.com/KTunerHelp/software_operation.htm | Software Operation
+- http://www.ktuner.com/KTunerHelp/switching_layouts.htm | Switching Layouts
+- http://www.ktuner.com/KTunerHelp/throttle_padding.htm | Throttle Padding
+- http://www.ktuner.com/KTunerHelp/throttle_responsiveness.htm | Throttle Responsiveness
+- http://www.ktuner.com/KTunerHelp/toolbar.htm | Toolbar
+- http://www.ktuner.com/KTunerHelp/tools.htm | Tools
+- http://www.ktuner.com/KTunerHelp/torque_targets_per_mode.htm | Torque Targets Per Mode
+- http://www.ktuner.com/KTunerHelp/tunerview_app.htm | TunerView App
+- http://www.ktuner.com/KTunerHelp/tunerview_lite.htm | TunerView Lite
+- http://www.ktuner.com/KTunerHelp/tunerview_lite_version_history.htm | TunerView Lite Version History
+- http://www.ktuner.com/KTunerHelp/tunerview_video_guides.htm | TunerView Video Guides
+- http://www.ktuner.com/KTunerHelp/tunerview_with_google_maps_integration.htm | TunerView With Google Maps Integration
+- http://www.ktuner.com/KTunerHelp/tuning.htm | Tuning
+- http://www.ktuner.com/KTunerHelp/tuning_information.htm | Tuning Information
+- http://www.ktuner.com/KTunerHelp/tuning_maps_1.htm | Tuning Maps
+- http://www.ktuner.com/KTunerHelp/tuning_with_ktuner.htm | Tuning With KTuner
+- http://www.ktuner.com/KTunerHelp/turbo_pressure_limit_based_on_atmospheric_pressure.htm | Turbo Pressure Limit Based On Atmospheric Pressure
+- http://www.ktuner.com/KTunerHelp/turbo_pressure_limit_based_on_engine_temperature.htm | Turbo Pressure Limit Based On Engine Temperature
+- http://www.ktuner.com/KTunerHelp/turbo_responsiveness.htm | Turbo Responsiveness
+- http://www.ktuner.com/KTunerHelp/turbo_spool.htm | Turbo Spool
+- http://www.ktuner.com/KTunerHelp/tutorial_videos.htm | Tutorial Videos
+- http://www.ktuner.com/KTunerHelp/v1_2_bluetooth_setup.htm | V1.2 Bluetooth Setup
+- http://www.ktuner.com/KTunerHelp/v1_2_communication_failure.htm | V1.2 Communication Failure
+- http://www.ktuner.com/KTunerHelp/v1_2_ecu_recovery.htm | V1.2 ECU Recovery
+- http://www.ktuner.com/KTunerHelp/v1_2_hardware_installation.htm | V1.2 Hardware Installation
+- http://www.ktuner.com/KTunerHelp/v1_2_led_status_meanings.htm | V1.2 LED Status Meanings
+- http://www.ktuner.com/KTunerHelp/v1_2_locking_to_unlocking_from_an_ecu.htm | V1.2 Locking To/Unlocking From An ECU
+- http://www.ktuner.com/KTunerHelp/v1_2_reflashing_the_ecu.htm | V1.2 Reflashing The ECU
+- http://www.ktuner.com/KTunerHelp/v1_2_uploading_a_tune_to_ktuner_flash.htm | V1.2 Uploading A Tune To KTuner Flash
+- http://www.ktuner.com/KTunerHelp/v1_communication_failure.htm | V1 Communication Failure
+- http://www.ktuner.com/KTunerHelp/v1_ecu_recovery.htm | V1 ECU Recovery
+- http://www.ktuner.com/KTunerHelp/v1_hardware_installation.htm | V1 Hardware Installation
+- http://www.ktuner.com/KTunerHelp/v1_locking_to_unlocking_from_an_ecu.htm | V1 Locking To/Unlocking From An ECU
+- http://www.ktuner.com/KTunerHelp/v1_reflashing_the_ecu.htm | V1 Reflashing The ECU
+- http://www.ktuner.com/KTunerHelp/v1_windows_manual_driver_installation.htm | V1 Windows Manual Driver Installation
+- http://www.ktuner.com/KTunerHelp/v2_bluetooth_setup.htm | V2 Bluetooth Setup
+- http://www.ktuner.com/KTunerHelp/v2_extended_data.htm | V2 Extended Data
+- http://www.ktuner.com/KTunerHelp/v2_flashing_tunes.htm | V2 Flashing Tunes
+- http://www.ktuner.com/KTunerHelp/v2_ktunerflash_v2_led_setup.htm | V2 KTunerFlash V2 LED Setup
+- http://www.ktuner.com/KTunerHelp/v2_locking_to_unlocking_from_an_ecu.htm | V2 Locking To/Unlocking From An ECU
+- http://www.ktuner.com/KTunerHelp/v2_main_menu.htm | V2 Main Menu
+- http://www.ktuner.com/KTunerHelp/v2_mounting.htm | V2 Mounting
+- http://www.ktuner.com/KTunerHelp/v2_quick_start_guide.htm | V2 Quick Start Guide
+- http://www.ktuner.com/KTunerHelp/v2_uploading_a_tune_to_ktunerflash.htm | V2 Uploading A Tune To KTunerFlash
+- http://www.ktuner.com/KTunerHelp/version_history.htm | Version History
+- http://www.ktuner.com/KTunerHelp/video_recording_mode.htm | Video Recording Mode
+- http://www.ktuner.com/KTunerHelp/vtc_limits.htm | VTC LImits
+- http://www.ktuner.com/KTunerHelp/vtec.htm | VTEC
+- http://www.ktuner.com/KTunerHelp/vtec_engagement_window.htm | VTEC Engagement Window
+- http://www.ktuner.com/KTunerHelp/warning__power_requirements.htm | WARNING: Power Requirements
+- http://www.ktuner.com/KTunerHelp/window_items.htm | Window Items
+- http://www.ktuner.com/KTunerHelp/windows_manual_driver_installation.htm | Windows Manual Driver Installation
+
+## vendors
+
+- https://www.27won.com/blog/11th-gen-honda-civic-turbocharger-design-blog-pt-4-feel-the-power | 11th Gen Honda Civic Turbocharger Design Blog Pt 4. - FEEL THE POWER
+- https://www.hybrid-racing.com/products/ktuner-v2-0-ecu-flash-tuning-package | KTuner V2.0 ECU Flash Tuner for Accord/Civic/Fit/S2000
+- https://www.phearable.net/tuning-software/11th-gen-civic/11th-gen-civic-non-si/ | Tuning Software :: 11th Gen Civic Si & Non-Si :: 11th Gen Civic Non-Si - Engine 
+- https://www.phearable.net/tuning-software/11th-gen-civic/11th-gen-civic-si/ | Tuning Software :: 11th Gen Civic Si & Non-Si :: 11th Gen Civic Si - Engine Part
+- https://www.phearable.net/information/tech-area/11th-gen-civic-modification-guide.html | Information :: Tech Area :: 11th Gen Civic 1.5T Modification Guide
+- https://www.phearable.net/information/tech-area/5thgenintegra-modificationguide.html | Information :: Tech Area :: 5th Gen Acura Integra 1.5T Modification Guide
+- https://www.phearable.net/information/tech-area/ktuner-v1.2-vs-v2-touch-comparison.html | Information :: Tech Area :: Ktuner V1.2 VS V2 Touch Comparison
+- https://www.phearable.net/tuning-software/11th-gen-civic/11th-gen-civic-non-si/stage1-5-nonsi-11thgen.html | Tuning Software :: 11th Gen Civic Si & Non-Si :: 11th Gen Civic Non-Si :: Pheara
+- https://www.phearable.net/tuning-software/11th-gen-civic/11th-gen-civic-si/ktuner-11thgen-honda-civic-si-stage-1-5-race-tune.html | Tuning Software :: 11th Gen Civic Si & Non-Si :: 11th Gen Civic Si :: Phearable.
+- https://www.phearable.net/tuning-software/11th-gen-civic/11th-gen-civic-si/phearable-net-ktuner-11th-gen-honda-civic-si-stage-2-5-race-flex-tune.html | Tuning Software :: 11th Gen Civic Si & Non-Si :: 11th Gen Civic Si :: Phearable.
+- https://www.phearable.net/information/tech-area.html | Engine Tuning Solutions | Tech Area - Phearable.net
+- https://www.phearable.net/information/tech-area/ktunerflashv2touchtuneslotupload.html | Information :: Tech Area :: How to upload a tune to a Ktuner Flash V2 Touch tune
+- https://prlmotorsports.com/blogs/news/prl-1-5t-turbo-blog | From Stock to Serious: PRL 1.5T Drop In Turbo Dyno Testing | PRL Motorsports
+- https://twostepperformance.com/products/2022-civic-turbo-performance-downpipe-1-5t | 2022+ Civic 1.5T Downpipe | Turbo Exhaust Upgrade
+- https://www.twostepperformance.com/products/2022-1-5t-civic-integra-turbocharger-upgrade-gin | 2022+ Civic 1.5T & Integra Turbocharger Upgrade Kit
+- https://www.twostepperformance.com/blogs/install-guides/installation-guide-for-tsp-stage-tunes-for-ktuner-or-hondata | Installation Guide for TSP Stage Tunes: KTuner & Hondata
+- https://www.twostepperformance.com/products/tsp-stage-1-tune-for-2022-honda-civic-1-5t-non-si | TSP Stage 1 Tune for 2022+ Honda Civic 1.5T Non-Si
+- https://www.twostepperformance.com/products/new-tsp-stage-1-tune-for-2022-honda-civic-si | TSP Stage 1 Tune for 2022+ Honda Civic Si: Power Upgrade
+- https://www.twostepperformance.com/products/tsp-stage-1-tune-for-the-2023-integra-1-5t | TSP Stage 1 Tune for the 2023+ Integra 1.5T
+- https://www.twostepperformance.com/products/stage-1-to-stage-one-upgrade-for-the-2022-si-existing-stage-1-owners-only | Stage One+ for the 2022+ Si / 2023+ 1.5T Integra
+- https://www.twostepperformance.com/products/tsp-stage-2-flex-fuel-tune-for-2017-2020-honda-civic-si-ktuner-only | TSP Stage 2 Flex Fuel Tune for 2022+ Honda Civic Si / 2023+ 1.5T Integ
+
+Not fetched (blocked 403 to urllib; the 27WON blog was read via Scrapling make_request): https://store.27won.com/ktuner-v2-honda-civic.html
+Not raw-saved, search-result only: https://prlmotorsports.com/ (other), https://www.hybrid-racing.com/products/rv6-performance-16-21-civic-15t-catted-downpipe-front-pipe-combo
+
+## tiktok
+
+Search-result URLs only (page text never fetched):
+- https://www.tiktok.com/@tunedbycapts/video/7521568804875357458 | @tunedbycapts | caption: KTuner V 1.2 PoPs + feature added for 10th Gen Honda Civic FC1 CVT
+- https://www.tiktok.com/@kcautoworkshop_oe/video/7423399660498275602 | @kcautoworkshop_oe | caption: Civic Fc Remap Stage2 below 2K
+- https://www.tiktok.com/@over9303/video/7344574025642839301 | @over9303 | caption: Dando REMAP em casa - Civic g9 (skip tier)
+- https://www.tiktok.com/tag/ktune , https://www.tiktok.com/tag/ktuned , https://www.tiktok.com/discover/honda-tuning-suite-tutorial , https://www.tiktok.com/discover/how-to-tune-a-2025-honda-civic-sport , https://www.tiktok.com/discover/how-to-make-cvt-engine-pop-tune , https://www.tiktok.com/discover/11-gen-civic-sport-mods (discovery/tag pages)
+
+## ktuner-forum
+
+- https://ktuner.com/forums/ | disabled; notice only (see raw/ktuner-forum/forum-index.md)
+
+## civic11forum (extra, added after WebSearch round 2)
+- [F] https://www.civic11forum.com/threads/ktuned-my-2022-si.2152/ | T1 KTuner/downpipe/DTC thread
+- [F] https://www.civic11forum.com/threads/2022-civic-si-tuned-to-rock.4405/ | T1 KTuner/downpipe/DTC thread
+- [F] https://www.civic11forum.com/threads/how-can-i-disable-my-o2-sensor.6071/ | T1 KTuner/downpipe/DTC thread
+- [F] https://www.civic11forum.com/threads/p0420-dtc-came-out-after-installing-an-aftermarket-downpipe.6948/ | T1 KTuner/downpipe/DTC thread
+- [F] https://www.civic11forum.com/threads/emissions-cel-with-tsp-downpipe-1-5t.8441/ | T1 KTuner/downpipe/DTC thread
+- [F] https://www.civic11forum.com/threads/o2-spacer-questions.7817/ | T1 KTuner/downpipe/DTC thread
+- [F] https://www.civic11forum.com/threads/catless-downpipe.1357/ | T1 KTuner/downpipe/DTC thread
+- [F] https://www.civic11forum.com/threads/prl-catless-downpipe-install.3398/ | T1 KTuner/downpipe/DTC thread
+- [F] https://www.civic11forum.com/threads/phearable-tune-question.7234/ | T1 KTuner/downpipe/DTC thread
+- [F] https://www.civic11forum.com/threads/plm-downpipe.7017/ | T1 KTuner/downpipe/DTC thread
+- [F] https://www.civic11forum.com/threads/opinion-requested-intercooler-or-downpipe-next.7101/ | T1 KTuner/downpipe/DTC thread
+
+## ktuner-forum (via Wayback; live forum disabled)
+
+Snapshots fetched as web.archive.org/web/<ts>id_/<url>; full snapshot URL is in each raw header.
+- https://ktuner.com/forums/ | KTuner forum index (disabled)
+- https://www.ktuner.com/forums/viewtopic.php?f=62&p=10037&sid=04991183c4c10e2e8a237403bb5ba41a | New version Ktuner lost some function for 17+ CR-V - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=1005&sid=87f64700f4075a602b263fb3160f122d | Baemap Creator is Empty - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=21&p=10088&sid=accf81aa8b8f5d1fe0d207bb071c8d02 | New Tuner will not register. - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=11&p=10233&sid=04991183c4c10e2e8a237403bb5ba41a | Tuning cvt issue - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=15&p=10250&sid=04991183c4c10e2e8a237403bb5ba41a | Feature questions - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=58&p=10265&sid=04991183c4c10e2e8a237403bb5ba41a | Factory Calibration Honda?? - KTuner.com
+- https://ktuner.com/forums/viewtopic.php?f=13&p=10391&sid=65bb4eca199c2049a4f5566a7e8cabc6 | How does KTuner handle advanced tuning for VTEC transition points on a
+- https://www.ktuner.com/forums/viewtopic.php?f=62&p=10432&sid=accf81aa8b8f5d1fe0d207bb071c8d02 | New version Ktuner lost some function for 17+ CR-V - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=13&p=10479&sid=accf81aa8b8f5d1fe0d207bb071c8d02 | Can I use my K-Tuner tune file on another car? - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=15&p=10507&sid=accf81aa8b8f5d1fe0d207bb071c8d02 | Incompatible request for help - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=1403&sid=0d85e647734df9b2829e4e314921b1fc | Support For Boost & Additional Features - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=1404&sid=0d85e647734df9b2829e4e314921b1fc | Support For Boost & Additional Features - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=4994&sid=87f64700f4075a602b263fb3160f122d | Baemap Creator is Empty - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=4996&sid=87f64700f4075a602b263fb3160f122d | Baemap Creator is Empty - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=4999&sid=87f64700f4075a602b263fb3160f122d | Baemap Creator is Empty - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=5&sid=095243ad5e75ef2a3eb2d69ee92ad57a | Welcome to KTuner - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=5476&sid=b89e881883e13c99a208421970b19c5f | Error codes wont go away. Car is in limp mode please help!!! - KTuner.
+- https://www.ktuner.com/forums/viewtopic.php?p=5477&sid=b89e881883e13c99a208421970b19c5f | Error codes wont go away. Car is in limp mode please help!!! - KTuner.
+- http://www.ktuner.com/forums/viewtopic.php?f=11&p=5897 | KTuner.com • View topic - 2-Step Limit to Restart Settings
+- http://www.ktuner.com/forums/viewtopic.php?f=62&p=6166 | KTuner.com • View topic - Flash starter 21 psi map but feel slow
+- https://www.ktuner.com/forums/viewtopic.php?p=6755&sid=0f56d069b7d9c94916726d6e8c254fb3 | Fuel trims & maf scale - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=6759&sid=0f56d069b7d9c94916726d6e8c254fb3 | Fuel trims & maf scale - KTuner.com
+- https://ktuner.com/forums/viewtopic.php?p=6887&sid=eb035dddd6fc951e9b58ee64b3140857 | Hardware not installed properly error when uploading tune - KTuner.com
+- https://ktuner.com/forums/viewtopic.php?p=6892&sid=eb035dddd6fc951e9b58ee64b3140857 | Hardware not installed properly error when uploading tune - KTuner.com
+- https://ktuner.com/forums/viewtopic.php?p=6895&sid=eb035dddd6fc951e9b58ee64b3140857 | Hardware not installed properly error when uploading tune - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=7230&sid=aaf3a3f6ee8a2cf958b5abcd56372a15 | Speedo calibration not working - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?p=7245&sid=5374ee25eef60fd0c2ab6637786e698a | Settings with a PRL Cat back downpipe - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?p=7246&sid=5374ee25eef60fd0c2ab6637786e698a | Settings with a PRL Cat back downpipe - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=30&p=7274 | KTuner.com • View topic - Ktuner V2 R18 06-11 basemaps?
+- https://www.ktuner.com/forums/viewtopic.php?p=7283&sid=e34234526befc546a849ef96930adc98 | Turn off close loop - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=65&p=7981&sid=76a3d2b26916ba30faab7705c98244e6 | Unable to reset dash malfunction indicators!! - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=8072&sid=2a7600346b8b8d5431fd901254e676dd | Power Cycling = Limp Mode? - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=13&p=8230&sid=fb0b16e4dec7a65cb587982841cb017f | KTuner Version 1.0.10.6 - Clear All Module Errors - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=15&p=8379&sid=df524303a9a1996cf61c9af9adc9fc7e | HELP! Ktuner Authenticating issues - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=65&p=8392&sid=68c7160af49e97ed5e402e02847cf0fd | 2006 Acura rl - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=65&p=8668&sid=7fc68b03e7f9221474d875ebe9be180b | Fuel adjustment in park - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=12&p=8695&sid=7fc68b03e7f9221474d875ebe9be180b | rsx auto base ? - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=15&p=8958&sid=ebc3a2788c581178245345e203aabf69 | Do I get tech supports if I buy a used KTuner? - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=73&p=8970&sid=7d27e368853e3ecca824d869caec541d | KTunerFlash V1.2 Solid Blue/Green - Can't lock to ECU - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=62&p=9064&sid=28530a8c5ce10b46567891510aad3e8c | Second generation CRV 02-06 - Page 2 - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=9165&sid=7d87046c87fcd886e42d772a820a7497 | 2015 intake/maf high flow cat downpipes - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=9166&sid=7d87046c87fcd886e42d772a820a7497 | 2015 intake/maf high flow cat downpipes - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=9170&sid=7d87046c87fcd886e42d772a820a7497 | 2015 intake/maf high flow cat downpipes - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=65&p=9224&sid=7d27e368853e3ecca824d869caec541d | Ktuner problem - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=11&p=9289&sid=245ce8bcaa481bf0fda27e78ff271483 | How do I save a reflash - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=9305&sid=ea15d3b18bb2fd20dbd966ddfca5a08f | Speedometer Calibration - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=12&p=9511&sid=28530a8c5ce10b46567891510aad3e8c | Did I fry my ecu somehow? - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=11&p=9540&sid=53b7f66da1c36d050b6b7d1b87548e63 | End user TSX reflash fail - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=21&p=9555&sid=28530a8c5ce10b46567891510aad3e8c | KTuner on Parallels (M1) - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=15&p=9625&sid=28530a8c5ce10b46567891510aad3e8c | Ecus - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?p=9720&sid=898fb4f460e83dcdd1b727f3abb93662 | Welcome to KTuner - Page 11 - KTuner.com
+- https://ktuner.com/forums/viewtopic.php?f=12&p=9751&sid=a7a0edae6f87cd061485227bc64aa30c | END_user input harness. - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=58&p=9917&sid=018ab008855f0ab774d9474c7da73fd6 | Is it possible to see what flash is currently running? - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=13&p=9966&sid=b0a0364bf542be63779554fa11571edb | Can I use this KTuner? New to Ktuner - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=13&t=152&sid=d2db19ad0b4cf9d70a8deb550d124d49 | new update 1.0.2.30 - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=62&t=1570&p=6149&sid=2357f918e22f24e76c63a145c721fecb | CR-V RW2 (Gen5-2019) v1.2 EUDM - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?t=1638 | Knock control - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?t=173 | Baemap Creator is Empty - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?t=1745 | Error codes wont go away. Car is in limp mode please help!!! - KTuner.
+- http://www.ktuner.com/forums/viewtopic.php?f=62&t=1751&sid=2357f918e22f24e76c63a145c721fecb | 2003 CR-V AWD 2.4L FI DOHC 4cyl - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=62&t=1842&sid=2357f918e22f24e76c63a145c721fecb | Base map slower than stock? - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=62&t=1903&sid=2357f918e22f24e76c63a145c721fecb | Flash starter 21 psi map but feel slow - KTuner.com
+- https://ktuner.com/forums/viewtopic.php?t=1908 | Air conditioning in kmiata help - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=13&t=2065&sid=0f56d069b7d9c94916726d6e8c254fb3 | Fuel trims & maf scale - KTuner.com
+- https://ktuner.com/forums/viewtopic.php?t=2099 | Hardware not installed properly error when uploading tune - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?t=2106 | Fuel cut at partial throttle only - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?t=2265 | Disables and 2 Step not working - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=12&t=2454&sid=0d183387ee48ad8db868784d7bc28cd0 | Can PND ECU with end user work in an 05 rsx type s? - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=21&t=2570&p=8932&sid=bec640e0f7cf5675301e3fe4d00c9189 | Can't get base Ktuner tunes - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=13&t=2602&sid=178654c8ec497686f36704975b3bd9e7 | Odyssey and Pilot Support - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=21&t=2633&sid=cde5a97acf17b55074f7389fdb114e68 | Ktuner V2 software not connecting to Unit - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=15&t=2674&sid=e53c3dc76010e2445f0df223c0b3a4a8 | Error - Low Voltage on Pin - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=13&t=2678&p=9444&sid=178654c8ec497686f36704975b3bd9e7 | Ktuner V1.2 not prompting to lock. - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=13&t=2687&sid=0d18ba4b4a9bd27bd492886c3a5fd106 | Aftermarket Wideband Input Questions - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=15&t=2733&sid=be92dda24ea5848caf19f80ce38faeff | TLX Type S extended support? - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=15&t=2743&sid=d2db19ad0b4cf9d70a8deb550d124d49 | EGR DELETE - KTuner.com
+- https://ktuner.com/forums/viewtopic.php?f=65&t=2764&p=9799&sid=f04b971e48807cc65ab5650878e121a1 | TUNERVIEW OUT FINALLY FOR IOS - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=15&t=2847&sid=be92dda24ea5848caf19f80ce38faeff | Base Tune Map For RV6 Downpipe Acura Ilx - KTuner.com
+- https://ktuner.com/forums/viewtopic.php?f=15&t=2871&sid=248e0831b3be96eb15baaa02b4882836 | ITBs on a K24a2 - KTuner.com
+- https://ktuner.com/forums/viewtopic.php?f=15&t=2925&p=10324&sid=248e0831b3be96eb15baaa02b4882836 | Ktuner stage 2 21+ tlx 2.0 question. - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=30&t=434&p=2624 | KTuner.com • View topic - civic type r 2017
+- https://www.ktuner.com/forums/viewtopic.php?f=58&t=505&sid=0d183387ee48ad8db868784d7bc28cd0 | magnetic mount? - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=62&t=523&sid=2357f918e22f24e76c63a145c721fecb | Second generation CRV 02-06 - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=62&t=607&p=2773&sid=2357f918e22f24e76c63a145c721fecb | higher millage tune for 2017 CRV (Gen 5) - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=62&t=725&p=3322&sid=2357f918e22f24e76c63a145c721fecb | CRV-III - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=12&t=807&sid=0d183387ee48ad8db868784d7bc28cd0 | IAT Sensor Options - KTuner.com
+- https://www.ktuner.com/forums/viewtopic.php?f=12&t=814&sid=d2db19ad0b4cf9d70a8deb550d124d49 | Flex Fuel Issues - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=62&t=831&sid=2357f918e22f24e76c63a145c721fecb | 17-18 CR-V Fuel Dilution ECU Update - KTuner.com
+- http://www.ktuner.com/forums/viewtopic.php?f=62&t=881&p=3997&sid=2357f918e22f24e76c63a145c721fecb | New version Ktuner lost some function for 17+ CR-V - KTuner.com
+
+## ktuner-forum pass 2 (kept topics, via Wayback)
+- https://www.ktuner.com/forums/viewtopic.php?f=16&p=10004&sid=a7dd88cd778940de21bc499a6661878a | k24a4 w/ crv awd auto trans
+- https://www.ktuner.com/forums/viewtopic.php?f=67&p=10115&sid=04991183c4c10e2e8a237403bb5ba41a | Limitations / Thresholds
+- https://www.ktuner.com/forums/viewtopic.php?f=71&p=10261&sid=04991183c4c10e2e8a237403bb5ba41a | ECU Supported? 64B-AA1
+- https://www.ktuner.com/forums/viewtopic.php?f=6&p=10365&sid=c242651ef51537e99cd7e97a9d07664d | ECU Not Getting Power
+- https://www.ktuner.com/forums/viewtopic.php?f=61&p=10397&sid=b416778357f883b29f47012bf3bb94c1 | 2016 TLX ZF 9 Speed potential tuning options?
+- https://www.ktuner.com/forums/viewtopic.php?f=54&p=10455&sid=8c476fd348ac76561875507aa5464cce | Strong smell of fuel
+- https://www.ktuner.com/forums/viewtopic.php?f=7&p=10533&sid=c242651ef51537e99cd7e97a9d07664d | DBW to DBC conversion
+- https://www.ktuner.com/forums/viewtopic.php?f=62&p=10556&sid=b416778357f883b29f47012bf3bb94c1 | ecu info and boost maps
+- https://www.ktuner.com/forums/viewtopic.php?f=15&p=10581&sid=017c912878a53973a032f20cd0dd37fe | Compatibility of KTuner with 2022 Honda Civic Sport 2.0L
+- https://www.ktuner.com/forums/viewtopic.php?f=2&p=10585&sid=017c912878a53973a032f20cd0dd37fe | Stage 2 Accord 1.5t- Oil Grade
+- https://www.ktuner.com/forums/viewtopic.php?f=40&p=10588&sid=b416778357f883b29f47012bf3bb94c1 | Would the 91 octace tune cover ported intake/intake spacer?
+- http://www.ktuner.com/forums/viewtopic.php?f=12&p=1158&sid=f4ee4bd0e234f7581dc4623bc805c47a | BOOST BY GEAR MAC SOLENOID
+- https://www.ktuner.com/forums/viewtopic.php?f=44&p=1329&sid=3c3a1ec3042d75a90472c08d2878d270 | 2011 Acura TSX V6 trials and tribulations
+- http://www.ktuner.com/forums/viewtopic.php?f=13&p=1338&sid=f4ee4bd0e234f7581dc4623bc805c47a | Individual cylinder fuel trim
+- http://www.ktuner.com/forums/viewtopic.php?f=19&p=1347&sid=f4ee4bd0e234f7581dc4623bc805c47a | Ecu Pin Locations
+- http://www.ktuner.com/forums/viewtopic.php?f=18&p=1727&sid=bf013d4685f70a9a475ba5f72420e12f | 1996 civic cam angles
+- http://www.ktuner.com/forums/viewtopic.php?f=15&p=2811 | 2013 Accord V6 AT Paddle Shifting Update Suggestion
+- http://www.ktuner.com/forums/viewtopic.php?p=2951 | IACV Tuning
+- http://www.ktuner.com/forums/viewtopic.php?f=19&p=2986 | 2006 - Boost Capability?
+- http://www.ktuner.com/forums/viewtopic.php?f=54&p=3019 | Dual tunes
+- http://www.ktuner.com/forums/viewtopic.php?f=26&p=3068&sid=7a88bc66956a3a9db265c875d747af53 | ECT2 and ecu connection
+- http://www.ktuner.com/forums/viewtopic.php?f=18&p=3139 | 04 K24a2 (TSX) into '01 Insight
+- http://www.ktuner.com/forums/viewtopic.php?f=33&p=3291 | element ecu in a turbo EP3
+- http://www.ktuner.com/forums/viewtopic.php?f=54&p=3441 | False knock and misfire reading
+- http://www.ktuner.com/forums/viewtopic.php?f=23&p=3544 | Base maps for 06-11 Civic si
+- http://www.ktuner.com/forums/viewtopic.php?p=3774 | Base tune with Boost Support
+- http://www.ktuner.com/forums/viewtopic.php?f=9&p=529&sid=f4ee4bd0e234f7581dc4623bc805c47a | Ktuner trouble installation
+- http://www.ktuner.com/forums/viewtopic.php?p=5391 | ECU software not on the Supported List!
+- http://www.ktuner.com/forums/viewtopic.php?p=6282 | Unlocked unit won't lock to my ECU. HELP!
+- http://www.ktuner.com/forums/viewtopic.php?f=39&p=7253 | Any Advice On Automatic V6 tune
+- http://www.ktuner.com/forums/viewtopic.php?f=17&p=7268 | 08 A/T element
+- https://www.ktuner.com/forums/viewtopic.php?f=67&p=7295&sid=7fc68b03e7f9221474d875ebe9be180b | 2021 RDX Stage 2 Tune
+- https://www.ktuner.com/forums/viewtopic.php?f=53&p=7648&sid=7fc68b03e7f9221474d875ebe9be180b | US market 2016 HRV 1.8 LX CVT
+- https://www.ktuner.com/forums/viewtopic.php?f=26&p=8518&sid=7767d14edc97957e975fdceede1d8369 | Tuning for E85 using the stock O2 sensor?
+- https://www.ktuner.com/forums/viewtopic.php?f=2&p=9129&sid=ce33476b0b2aa1ac36a920482219fa11 | My first time here …
+- https://www.ktuner.com/forums/viewtopic.php?f=7&p=9215&sid=ce33476b0b2aa1ac36a920482219fa11 | Reverse Lockout
+- https://www.ktuner.com/forums/viewtopic.php?f=57&p=9722&sid=c9c91df4ac3f68b2889690d65fbcd647 | GK5 2STEP
+- https://www.ktuner.com/forums/viewtopic.php?f=23&p=9837&sid=018ab008855f0ab774d9474c7da73fd6 | Aftermarket Android Head Unit - Page 2
+- https://www.ktuner.com/forums/viewtopic.php?f=67&p=9870&sid=018ab008855f0ab774d9474c7da73fd6 | 2021 RDX KTuner Software
+- https://www.ktuner.com/forums/viewtopic.php?f=25&p=9886&sid=018ab008855f0ab774d9474c7da73fd6 | Please support the TSX
+- https://www.ktuner.com/forums/viewtopic.php?f=49&p=9972&sid=04991183c4c10e2e8a237403bb5ba41a | Boost? - Page 4
+- https://www.ktuner.com/forums/viewtopic.php?f=23&t=1575&sid=1c28b5d66e04936cde8df89a5082912b | Misfire and knock count
+- http://www.ktuner.com/forums/viewtopic.php?t=1589&p=4955 | turbo boost
+- https://www.ktuner.com/forums/viewtopic.php?f=31&t=1590&sid=c242651ef51537e99cd7e97a9d07664d | Retaining ECO button features and setting DBW to be linear
+- http://www.ktuner.com/forums/viewtopic.php?t=1593&p=4920 | Car was disabled for a day because two ECU’s showed up
+- http://www.ktuner.com/forums/viewtopic.php?t=1594&p=4923 | Do any members offer a be all/end all tune??
+- http://www.ktuner.com/forums/viewtopic.php?t=1596&p=4929 | 2018 1.5T CVT Accord Questions
+- http://www.ktuner.com/forums/viewtopic.php?t=1597&p=4928 | FK8 Anti Lag/ 2 step?
+- http://www.ktuner.com/forums/viewtopic.php?t=1598&p=4932 | Does this version (13-17 Accord V6) have Full Throttle Shift
+- http://www.ktuner.com/forums/viewtopic.php?f=31&t=160&p=1006 | Weird VSS Datalog reading
+- https://www.ktuner.com/forums/viewtopic.php?f=66&t=1607&sid=f23bd532366315b62efa872430891836 | FK2 dyno
+- http://www.ktuner.com/forums/viewtopic.php?f=15&t=1617 | Horsepower/Torque?
+- https://www.ktuner.com/forums/viewtopic.php?f=24&t=1639&p=5117&sid=2bde62f5f50aedaa32afbf30ca9f9b65 | Speed density tuning always lean
+- https://www.ktuner.com/forums/viewtopic.php?f=35&t=1696&sid=cbe9b3c3f3abd6d8391b0a3c1f20d4b5 | 2015 Civic EX CVT
+- http://www.ktuner.com/forums/viewtopic.php?t=1711&p=5328 | Missing Base Maps?
+- http://www.ktuner.com/forums/viewtopic.php?t=1712&p=5332 | Canadian data log
+- http://www.ktuner.com/forums/viewtopic.php?t=1714&p=5335 | Car was running fine for months and then went to limp mode
+- http://www.ktuner.com/forums/viewtopic.php?t=1716&p=5340 | Locking Ecu to Ktuner
+- http://www.ktuner.com/forums/viewtopic.php?t=1719&p=5347 | New to tuners
+- https://www.ktuner.com/forums/viewtopic.php?f=24&t=1723&sid=2bde62f5f50aedaa32afbf30ca9f9b65 | fuel gauge and fuel consumption are off
+- https://www.ktuner.com/forums/viewtopic.php?f=49&t=1741&sid=bdee8a6d48cfdd2a154852156b00e6cb | Any new turbo information?
+- http://www.ktuner.com/forums/viewtopic.php?t=1744&p=5459 | Fuel Injector Scaling
+- https://www.ktuner.com/forums/viewtopic.php?f=24&t=1766&p=9049&sid=2bde62f5f50aedaa32afbf30ca9f9b65 | WOT enrichment and WOT enrichment Cat heating
+- http://www.ktuner.com/forums/viewtopic.php?t=1781&p=5618 | ktuner ecu questions
+- http://www.ktuner.com/forums/viewtopic.php?t=1786&p=5629 | Feature Roadmap
+- http://www.ktuner.com/forums/viewtopic.php?t=1787&p=5633 | Downloading Tunes from Ecu
+- http://www.ktuner.com/forums/viewtopic.php?t=1795&p=5654 | Disabling Pin for Bluetooth?
+- http://www.ktuner.com/forums/viewtopic.php?t=1804&p=5672 | Extremely high knock count and other issues
+- https://www.ktuner.com/forums/viewtopic.php?f=63&t=1832&p=5820&sid=b896a66ed0244f38d1f3fb91dfe13b71 | Manual EUDM support?
+- http://www.ktuner.com/forums/viewtopic.php?t=1877 | Quick Adjustments
+- http://www.ktuner.com/forums/viewtopic.php?t=1892&p=6113 | ECU-37820-5AN-J610
+- http://www.ktuner.com/forums/viewtopic.php?t=1893&p=6118 | Full description of Adjustments Toolbar?
+- http://www.ktuner.com/forums/viewtopic.php?t=1898&p=6135 | Missing settings (AG-Q61)
+- http://www.ktuner.com/forums/viewtopic.php?t=1899&p=6147 | Sup people?
+- http://www.ktuner.com/forums/viewtopic.php?f=65&t=1930&p=7015 | Tunerview Freezing
+- http://www.ktuner.com/forums/viewtopic.php?t=2004&p=6484 | AFTER FLASHING -Warning Light displays HELP !!!!!!
+- http://www.ktuner.com/forums/viewtopic.php?f=65&t=2010 | tunerview lite no bluetooth found
+- https://www.ktuner.com/forums/viewtopic.php?f=23&t=2022&sid=1c28b5d66e04936cde8df89a5082912b | After flash, Honda HDS HIM cannot connect?
+- http://www.ktuner.com/forums/viewtopic.php?t=2024&p=6581 | Rev limiter
+- https://www.ktuner.com/forums/viewtopic.php?f=27&t=2093&sid=93c11ae3b16fe1d44d8b3536b85113f7 | MPG drop since tuning
+- https://www.ktuner.com/forums/viewtopic.php?f=9&t=2096&sid=1ef582be9daaee6d0b3aaf4bd7519bf9 | KTuner End User Board for 06-07 Accord
+- https://www.ktuner.com/forums/viewtopic.php?f=67&t=2134&sid=1e4d6febf823d2847dbded18172b14ff | Quick adjustments
+- https://www.ktuner.com/forums/viewtopic.php?f=23&t=2148&sid=1c28b5d66e04936cde8df89a5082912b | Custom MAP sensor
+- https://www.ktuner.com/forums/viewtopic.php?f=17&t=2206&sid=b1d8548864eb8bed002411eaa5b43679 | 08 turbo Knock control
+- https://www.ktuner.com/forums/viewtopic.php?f=52&t=2213&sid=56e026911bcb9333f54894379870235a | Touch V2 ability to tune for boost?
+- https://www.ktuner.com/forums/viewtopic.php?f=2&t=2241&sid=d141c04dc55a78dac798ceafbd89ec36 | 2019 Civic Si Coupe
+- https://www.ktuner.com/forums/viewtopic.php?f=24&t=2272&p=7628&sid=2bde62f5f50aedaa32afbf30ca9f9b65 | Remapped ecu
+- https://www.ktuner.com/forums/viewtopic.php?f=38&t=2285&p=7789&sid=5026507e0ba64d4050167518693bd593 | Extra Gauges with Ktuner V2
+- https://www.ktuner.com/forums/viewtopic.php?f=38&t=2295&p=7740&sid=5026507e0ba64d4050167518693bd593 | P0101 with speed density map
+- https://www.ktuner.com/forums/viewtopic.php?f=2&t=2321&p=7854&sid=d141c04dc55a78dac798ceafbd89ec36 | 2013 Accord V6
+- https://www.ktuner.com/forums/viewtopic.php?f=55&t=2343&sid=894cb91c1ace2085100d47273b8c11cd | Rev Hang Option
+- https://www.ktuner.com/forums/viewtopic.php?f=49&t=2348&p=8000&sid=bdee8a6d48cfdd2a154852156b00e6cb | Ktuner
+- https://www.ktuner.com/forums/viewtopic.php?f=64&t=2408&sid=bec640e0f7cf5675301e3fe4d00c9189 | KTuner for 87 octane gas?
+- https://www.ktuner.com/forums/viewtopic.php?f=71&t=2429&p=8350&sid=ab3a62fa7043dd56fa18f966632aaf24 | Hatchback availability and misc ?s
+- https://www.ktuner.com/forums/viewtopic.php?f=72&t=2485&p=8565&sid=a68535a49d359eb14496529a4254d09f | ETA?
+- https://www.ktuner.com/forums/viewtopic.php?f=71&t=2522&sid=ab3a62fa7043dd56fa18f966632aaf24 | Help needed, Civic 1.5T
+- http://www.ktuner.com/forums/viewtopic.php?t=253&p=1404 | Support For Boost & Additional Features
+- https://www.ktuner.com/forums/viewtopic.php?f=64&t=2543&sid=0d18ba4b4a9bd27bd492886c3a5fd106 | Knock Control on Factory Tune
+- https://www.ktuner.com/forums/viewtopic.php?f=71&t=2547&sid=ab3a62fa7043dd56fa18f966632aaf24 | Rev Hang
+- https://www.ktuner.com/forums/viewtopic.php?f=16&t=2566&p=8928&sid=264d693dc5bde25552e6ef5fba57b943 | Running out of fuel? - Page 2
+- https://www.ktuner.com/forums/viewtopic.php?f=16&t=2569&p=8930&sid=bec640e0f7cf5675301e3fe4d00c9189 | KTuner PRB hard to start
+- https://www.ktuner.com/forums/viewtopic.php?f=54&t=2571&sid=bec640e0f7cf5675301e3fe4d00c9189 | Rolling anti lag
+- http://www.ktuner.com/forums/viewtopic.php?f=31&t=260 | Boost control solenoid
+- https://www.ktuner.com/forums/viewtopic.php?f=34&t=2616&p=9156&sid=80b3b049dcfa1b12e8170319b5a0ef2e | 4 Bar Map support
+- https://www.ktuner.com/forums/viewtopic.php?f=60&t=2620 | 2015 intake/maf high flow cat downpipes
+- https://www.ktuner.com/forums/viewtopic.php?f=22&t=2651&sid=9ccdfb1bdec7a6997caca31e9f19cded | Speedometer Calibration
+- https://www.ktuner.com/forums/viewtopic.php?f=22&t=2665&p=9374&sid=9ccdfb1bdec7a6997caca31e9f19cded | Automatic to Manual Swap - Manual ECU Required?
+- https://www.ktuner.com/forums/viewtopic.php?f=23&t=2671&sid=1c28b5d66e04936cde8df89a5082912b | Throttle response
+- https://www.ktuner.com/forums/viewtopic.php?f=40&t=2675&p=9449&sid=178654c8ec497686f36704975b3bd9e7 | KTuner Not Disabling O2 & EGR
+- https://www.ktuner.com/forums/viewtopic.php?f=40&t=2677&p=9447&sid=178654c8ec497686f36704975b3bd9e7 | Understanding the 91+ Octane tune
+- https://www.ktuner.com/forums/viewtopic.php?f=71&t=2723&p=9623&sid=ab3a62fa7043dd56fa18f966632aaf24 | 2023 Si Throttle Padding
+- https://www.ktuner.com/forums/viewtopic.php?f=27&t=273&sid=93c11ae3b16fe1d44d8b3536b85113f7 | China version civic si available of Ktuner?
+- https://www.ktuner.com/forums/viewtopic.php?f=71&t=2771&sid=ab3a62fa7043dd56fa18f966632aaf24 | Auto Start/Stop
+- https://www.ktuner.com/forums/viewtopic.php?f=22&t=2782&p=9872&sid=9ccdfb1bdec7a6997caca31e9f19cded | Tuning for boost/MAP sensor support
+- https://www.ktuner.com/forums/viewtopic.php?f=71&t=2798&sid=0d183387ee48ad8db868784d7bc28cd0 | feature update requirement
+- https://ktuner.com/forums/viewtopic.php?f=15&t=2806&p=10221&sid=248e0831b3be96eb15baaa02b4882836 | KTuner is in OBDII port, doesn't remember setting
+- https://www.ktuner.com/forums/viewtopic.php?f=28&t=2808&p=10074&sid=e895feb433e02fda674140a1c1836a6f | No pops above 3k rpm
+- https://www.ktuner.com/forums/viewtopic.php?f=23&t=2825&sid=1c28b5d66e04936cde8df89a5082912b | Vtec window - mBar
+- https://www.ktuner.com/forums/viewtopic.php?f=2&t=2829&sid=d141c04dc55a78dac798ceafbd89ec36 | 2021 Accord 2.0T - Honestly just talk me into it
+- https://www.ktuner.com/forums/viewtopic.php?f=64&t=2848&p=10105&sid=be92dda24ea5848caf19f80ce38faeff | Stage 2 CVT Power figures
+- https://www.ktuner.com/forums/viewtopic.php?hilit=locked&f=54&t=2859&p=10133 | Can i unlock KTuner V2?
+- https://www.ktuner.com/forums/viewtopic.php?f=2&t=2877&sid=67ee5b0d34284b27eb3611d0351c93e6 | Newbie
+- https://ktuner.com/forums/viewtopic.php?f=15&t=2904&sid=248e0831b3be96eb15baaa02b4882836 | General data access
+- https://ktuner.com/forums/viewtopic.php?f=15&t=2906&p=10277&sid=248e0831b3be96eb15baaa02b4882836 | Ktuner's Hardware Failures issues
+- https://ktuner.com/forums/viewtopic.php?f=72&t=2932&p=10339&sid=f04b971e48807cc65ab5650878e121a1 | Running Rich on Tune 1 for 2022 sport sedan
+- https://ktuner.com/forums/viewtopic.php?f=54&t=2957&p=10451&sid=f04b971e48807cc65ab5650878e121a1 | Need some help here!
+- https://www.ktuner.com/forums/viewtopic.php?f=28&t=462&p=2271&sid=e895feb433e02fda674140a1c1836a6f | CVT and Ktuner questions
+- https://www.ktuner.com/forums/viewtopic.php?f=27&t=480&p=3638&sid=93c11ae3b16fe1d44d8b3536b85113f7 | 1000cc Injectors - Page 2
+- https://www.ktuner.com/forums/viewtopic.php?f=55&t=511&p=2482&sid=894cb91c1ace2085100d47273b8c11cd | KTuner update?
+- https://www.ktuner.com/forums/viewtopic.php?f=23&t=562&p=8796&sid=1c28b5d66e04936cde8df89a5082912b | Rev limits for 2006-2011 Civic Si
+- http://www.ktuner.com/forums/viewtopic.php?t=612&p=2802 | Let get it started
+- https://www.ktuner.com/forums/viewtopic.php?f=54&t=625&sid=0d183387ee48ad8db868784d7bc28cd0 | Tuneviwerlite
+- https://www.ktuner.com/forums/viewtopic.php?f=24&t=633&p=9485&sid=2bde62f5f50aedaa32afbf30ca9f9b65 | Boost control and
+- http://www.ktuner.com/forums/viewtopic.php?t=642&p=3104 | Reflash?
+- http://www.ktuner.com/forums/viewtopic.php?t=647&p=2931 | 2018 Accord 1.5T Tuning
+- http://www.ktuner.com/forums/viewtopic.php?f=65&t=650&p=2954 | Flex fuel converter
+- http://www.ktuner.com/forums/viewtopic.php?t=656&p=2969 | Ktuner issues on laptop
+- http://www.ktuner.com/forums/viewtopic.php?t=669 | Few Quick Clarifying Questions
+- https://www.ktuner.com/forums/viewtopic.php?f=55&t=679&p=3079&sid=894cb91c1ace2085100d47273b8c11cd | Body options like automatic door locking, honks, etc.
+- http://www.ktuner.com/forums/viewtopic.php?f=15&t=684 | Ktuner Problem
+- http://www.ktuner.com/forums/viewtopic.php?f=15&t=696&p=3166 | Ktuner cycles between connected and disconnected
+- http://www.ktuner.com/forums/viewtopic.php?t=702&p=3176 | Using an Apple MacBook Pro with KTuner V2
+- https://www.ktuner.com/forums/viewtopic.php?f=22&t=71&p=8258&sid=46c6d621ba2e169dc84e076bca5f02b1 | Welcome! - Page 2
+- http://www.ktuner.com/forums/viewtopic.php?t=710&p=3528 | 07-08 Element Turbo
+- http://www.ktuner.com/forums/viewtopic.php?t=712&p=3245 | No tunes to upload or chose from. :(
+- http://www.ktuner.com/forums/viewtopic.php?t=768&p=5666 | Knock control weird after using Lucus octane boost
+- http://www.ktuner.com/forums/viewtopic.php?t=775&p=4922 | New Ktuner Driving Issues
+- http://www.ktuner.com/forums/viewtopic.php?f=65&t=810&p=3700 | Ktuner maf
+- https://www.ktuner.com/forums/viewtopic.php?f=34&t=817&p=3722&sid=80b3b049dcfa1b12e8170319b5a0ef2e | New to Turbo tuning
+- http://www.ktuner.com/forums/viewtopic.php?t=828&p=3757 | Ktuner v2
+- http://www.ktuner.com/forums/viewtopic.php?t=830&p=3770 | 2017 Aus Civic 1.8L KTuner?
+- http://www.ktuner.com/forums/viewtopic.php?t=833&p=3772 | Missing Tunes
+- https://www.ktuner.com/forums/viewtopic.php?f=4&t=888&p=4036&sid=ab2e44e63a5c6f599a4a8f0a20148b61 | 05 civic si (EP3)

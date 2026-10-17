@@ -1,0 +1,124 @@
+# civicxi.com crawl log (2026-10-17)
+Access: all fetches via the public reader https://r.jina.ai/<url> over plain Python urllib (no challenge solving). civicxi.com itself was never hit directly. Pace >= 11 s between requests; a few overlapped with a second listing job early on. No 429s or blocks seen.
+## Discovery
+Forum listing pages via reader: Engine/Exhaust/Transmission/Tuning board pages 1-10 (board stops at ~9 pages), KTuner board pages 1-7, tags/tune, tags/ktuner (empty). 350 distinct threads listed (see sources.md ## civicxi).
+WebSearch queries (many returned civicx.com instead; domain filter civicxi.com worked better): ktuner 1.5T tune; knock control; boost target TunerView; starter map CVT; MAF scaling intake fuel trims; downpipe; IAT heat soak; 1.5T non-Si tune; knock retard boost wastegate overboost; tuned 11th gen reliability; quick adjustments throttle; E85 flex fuel ktuner Integra; Integra ktuner; phearable 1.5R; AFR lambda WOT; underboost wastegate; 27WON intake trims; CVT slipping clutch; check engine after flash; TunerView log; V2 non-Si dyno; hot weather IAT; Acura Integra ktuner; TSP non-Si CVT mpg.
+## Counts
+Threads fetched: 115 (all ok, 0 failed). Pages fetched: 144 (+ pages 4-24 of thread 50251 added in a second pass, so that thread has all 26 pages). Posts saved: ~815+. Claims: 156 in claims/civicxi.jsonl (T1 61, T2 70, T3 25).
+Notes: jina sometimes returned stripped pages (missing posts, dates) - fetcher retried once; some threads have gaps. Posts that are video/image only (e.g. CAPTS Malaysia FE CVT dyno threads 51993, 51653, 51496, 50664, 50874, 50819) have no text, so no claims. Hardware/vendor threads were fetched but only skimmed for tuning facts. Several fetched threads (e.g. 50136, 52084, 50925, 50343, 53629, 39099, 31934, 27686, 45144, 60057, 59524) yielded no checkable claims. Tier in raw headers: T1 = id >= 49000 non-Si, T2 = older 10th gen era, T3 = Si/Type R/Integra Type S titled.
+## Threads (id | status | pages | posts | title)
+- https://www.civicxi.com/forum/threads/62488/ | ok | [1] of 1 | 1 | 1.5T - Unresponsive Gas Pedal
+- https://www.civicxi.com/forum/threads/62264/ | ok | [1] of 1 | 3 | Honda Civic 1.5T Air Fuel Ratio Settings
+- https://www.civicxi.com/forum/threads/61360/ | ok | [1] of 1 | 12 | Tuned 1.5t non si gas mileage
+- https://www.civicxi.com/forum/threads/60057/ | ok | [1] of 1 | 2 | Si - IAT2 Sensor on KTuner 2.0 Reading at -40F
+- https://www.civicxi.com/forum/threads/59524/ | ok | [1] of 1 | 1 | 2.0L - How to change values shown in CSV file for ktuner?
+- https://www.civicxi.com/forum/threads/58495/ | ok | [1] of 1 | 7 | Tune for 11th Gen Non-si Civic
+- https://www.civicxi.com/forum/threads/56286/ | ok | [1] of 1 | 4 | 1.5T - About non-Si fuel upgrade
+- https://www.civicxi.com/forum/threads/54736/ | ok | [1] of 1 | 3 | 1.5T - Question about WOT AFR
+- https://www.civicxi.com/forum/threads/54735/ | ok | [1] of 1 | 4 | 1.5T - How to learn about tuning and make a choice?
+- https://www.civicxi.com/forum/threads/54713/ | ok | [1] of 1 | 3 | 1.5T - E-tuning vs Hondata 93oct basemap for 1.5T FL1
+- https://www.civicxi.com/forum/threads/53786/ | ok | [1] of 1 | 2 | High Positive STFT spikes on throttle lift-off
+- https://www.civicxi.com/forum/threads/53703/ | ok | [1] of 1 | 1 | '24 EX accelerates roughly at about 1700 rpm
+- https://www.civicxi.com/forum/threads/53629/ | ok | [1, 2, 3, 4, 5] of 5 | 45 | Reducing Under Hood and Intake Temperatures
+- https://www.civicxi.com/forum/threads/53443/ | ok | [1, 2] of 2 | 12 | Low Turbo Pressure as a Result of Tuning
+- https://www.civicxi.com/forum/threads/52930/ | ok | [1] of 1 | 4 | Axion Industries Sport Touring Dyno outcome
+- https://www.civicxi.com/forum/threads/52821/ | ok | [1] of 1 | 8 | Question about tuning
+- https://www.civicxi.com/forum/threads/52470/ | ok | [1] of 1 | 4 | 1.5T - KTuner Base Maps VS TSP VS Phearable
+- https://www.civicxi.com/forum/threads/52235/ | ok | [1] of 1 | 1 | FBO, 91 octane 2022+ Si Tester Needed @ TSP
+- https://www.civicxi.com/forum/threads/52193/ | ok | [1] of 1 | 1 | Torque talk
+- https://www.civicxi.com/forum/threads/52084/ | ok | [1] of 1 | 1 | 1.5T - Not the same! 10th vs 11th gen Honda Civic 1.5T Downpipe Comparison 🏎️
+- https://www.civicxi.com/forum/threads/52018/ | ok | [1, 2] of 2 | 16 | Anyone compare 10th and 11th gen downpipes?
+- https://www.civicxi.com/forum/threads/51993/ | ok | [1] of 1 | 1 | 1.5T - 2022+ 11th Gen Honda Civic FE CVT custom dyno tuned on RON 95 Race Map
+- https://www.civicxi.com/forum/threads/51853/ | ok | [1] of 1 | 4 | Ktuner Crazy knocks and misfire
+- https://www.civicxi.com/forum/threads/51777/ | ok | [1] of 1 | 2 | How to get turbo boost to show on Tunerview
+- https://www.civicxi.com/forum/threads/51753/ | ok | [1] of 1 | 2 | 1.5T - TSP Stage 1 Tune Non Si 1.5T different map 3 question
+- https://www.civicxi.com/forum/threads/51653/ | ok | [1] of 1 | 1 | Brand new stock 2022+ 11th Gen Honda Civic FE on Ron 95 hits the dyno
+- https://www.civicxi.com/forum/threads/51508/ | ok | [1] of 1 | 1 | Axion Ind 2022 Civic hatch 1.5T dyno results
+- https://www.civicxi.com/forum/threads/51496/ | ok | [1] of 1 | 2 | 3xx WHP on a 2022+ 11th Gen Honda Civic FE CVT
+- https://www.civicxi.com/forum/threads/51460/ | ok | [1] of 1 | 4 | 1.5T - Need Ktuner V2
+- https://www.civicxi.com/forum/threads/51333/ | ok | [1] of 1 | 7 | Very low successful flash rate with ktuner 1.2
+- https://www.civicxi.com/forum/threads/51069/ | ok | [1] of 1 | 1 | 1.5T - Question regarding prl race maf e without a tune
+- https://www.civicxi.com/forum/threads/50925/ | ok | [1, 2, 3, 4, 5] of 5 | 34 | 2022+ Honda Civic 1.5T L15CA Titanium Turbocharger Inlet Pipe Development
+- https://www.civicxi.com/forum/threads/50874/ | ok | [1] of 1 | 1 | ProDrager DownPipe + FrontPipe test run & custom tune on 2022 11th Gen Honda Civ
+- https://www.civicxi.com/forum/threads/50829/ | ok | [1] of 1 | 5 | 1.5T - Catless downpipe review/test on 1.5T Civic Sport Touring
+- https://www.civicxi.com/forum/threads/50819/ | ok | [1] of 1 | 1 | 2022 11th Gen Honda Civic FE CVT 0-100 km/h & 1/4 mile test
+- https://www.civicxi.com/forum/threads/50664/ | ok | [1] of 1 | 8 | 11th Gen Honda Civic FE1 CVT hits the dyno & track
+- https://www.civicxi.com/forum/threads/50488/ | ok | [1, 2] of 2 | 16 | PRL HV Downpipe and Front Pipe install in 2022 Civic Sport Touring
+- https://www.civicxi.com/forum/threads/50486/ | ok | [1] of 1 | 6 | OBD2 inconsist power to Ktuner V2
+- https://www.civicxi.com/forum/threads/50481/ | ok | [1] of 1 | 4 | 2022 Civic SI gets KTuner! An owner's review
+- https://www.civicxi.com/forum/threads/50462/ | ok | [1] of 1 | 9 | What’s the Best Tuning Device?
+- https://www.civicxi.com/forum/threads/50454/ | ok | [1] of 1 | 4 | Ktuner for 11th gen Civic - first time questions
+- https://www.civicxi.com/forum/threads/50453/ | ok | [1] of 1 | 5 | Cold Air Intake Tune
+- https://www.civicxi.com/forum/threads/50452/ | ok | [1] of 1 | 7 | 2.0L - Ktuner
+- https://www.civicxi.com/forum/threads/50406/ | ok | [1] of 1 | 4 | TSP STAGE 1 TUNE FOR 2022+ HONDA CIVIC 1.5T NON-SI
+- https://www.civicxi.com/forum/threads/50343/ | ok | [1] of 1 | 5 | PRL Motorsports FMIC for 2022 Civic 1.5t -- Install & Test Drrive
+- https://www.civicxi.com/forum/threads/50311/ | ok | [1] of 1 | 6 | Oil Fouling Issue in 1.5L Turbo
+- https://www.civicxi.com/forum/threads/50293/ | ok | [1] of 1 | 5 | TSP Stage 1 1.5T Non Si tune
+- https://www.civicxi.com/forum/threads/50286/ | ok | [1] of 1 | 10 | KTuner Starter 21 Dual Tune Stage 2 -- 0-60 1/4 mile Dragy (2022 Civic Sport Tou
+- https://www.civicxi.com/forum/threads/50251/ | ok | [1, 2, 3, 25, 26] of 26 | 49 | The Tuned 11th gen Experience & Reliability Thread (for all models)
+- https://www.civicxi.com/forum/threads/50212/ | ok | [1, 2] of 2 | 9 | 11th Gen Honda Civic Downpipe From 27WON Launches
+- https://www.civicxi.com/forum/threads/50181/ | ok | [1] of 1 | 1 | PRL Motorsports High flow Downpipe and Frontpipe
+- https://www.civicxi.com/forum/threads/50180/ | ok | [1] of 1 | 3 | 27WON 2022+ CIVIC TURBO PERFORMANCE DOWNPIPE 1.5T
+- https://www.civicxi.com/forum/threads/50151/ | ok | [1] of 1 | 1 | 2022 Honda Civic Hatch 6 speed 1.5t Ktuner Stage 2
+- https://www.civicxi.com/forum/threads/50136/ | ok | [1] of 1 | 1 | Turbos 101 - The Heart of Your 2022 Model Turbocharged Civic
+- https://www.civicxi.com/forum/threads/50048/ | ok | [1, 2] of 2 | 17 | Something not being talked about much
+- https://www.civicxi.com/forum/threads/50047/ | ok | [1] of 1 | 7 | 1.5T - TSP Stage 1 Tune for the 2022+ Non-Si Civic - Now available!
+- https://www.civicxi.com/forum/threads/50020/ | ok | [1] of 1 | 1 | Phearable 1.5 Non-Si
+- https://www.civicxi.com/forum/threads/49999/ | ok | [1] of 1 | 6 | Tuner in Thailand gets 292 whp / 364 torque from 11th gen Civic by remapping onl
+- https://www.civicxi.com/forum/threads/49996/ | ok | [1, 2, 3] of 3 | 38 | Any 1.5T owners do just a tune yet?
+- https://www.civicxi.com/forum/threads/49319/ | ok | [1] of 1 | 5 | When to connect Ktuner V2 for Datalogging right Map
+- https://www.civicxi.com/forum/threads/48365/ | ok | [1] of 1 | 3 | how does the ktuner deal with in car temps during summer?
+- https://www.civicxi.com/forum/threads/47577/ | ok | [1] of 1 | 2 | Ktuner v2 Recovering ECU!  LIMP mode
+- https://www.civicxi.com/forum/threads/46657/ | ok | [1] of 1 | 5 | Ktuner 2 screen blacked out.
+- https://www.civicxi.com/forum/threads/46604/ | ok | [1] of 1 | 2 | Factory tune not supported(SOLVED)
+- https://www.civicxi.com/forum/threads/45667/ | ok | [1] of 1 | 2 | Tunerview issues
+- https://www.civicxi.com/forum/threads/45144/ | ok | [1] of 1 | 5 | 2.0L CVT LX
+- https://www.civicxi.com/forum/threads/45045/ | ok | [1] of 1 | 2 | Cant enable sport mode with the 19.5/23 Starter Dual Flash Tune
+- https://www.civicxi.com/forum/threads/45021/ | ok | [1] of 1 | 4 | on the fly map changes dont work. instead change 2step rpm?
+- https://www.civicxi.com/forum/threads/44815/ | ok | [1] of 1 | 2 | More Setting behind The Scene
+- https://www.civicxi.com/forum/threads/44677/ | ok | [1] of 1 | 4 | Wastegate Actuator problem
+- https://www.civicxi.com/forum/threads/44531/ | ok | [1, 2] of 2 | 8 | KTuner 1.0.9.4 (software)
+- https://www.civicxi.com/forum/threads/44171/ | ok | [1] of 1 | 6 | Knocking
+- https://www.civicxi.com/forum/threads/43862/ | ok | [1] of 1 | 2 | W1 base map numbers
+- https://www.civicxi.com/forum/threads/43340/ | ok | [1] of 1 | 4 | Fuel System
+- https://www.civicxi.com/forum/threads/42278/ | ok | [1, 2] of 2 | 10 | (Resolved) Issue getting reliable 23psi
+- https://www.civicxi.com/forum/threads/41190/ | ok | [1] of 1 | 6 | High altitude, no boost, how to adjust?
+- https://www.civicxi.com/forum/threads/41116/ | ok | [1, 2] of 2 | 21 | Controlling Knock Control
+- https://www.civicxi.com/forum/threads/40841/ | ok | [1] of 1 | 2 | HELP: how to set-up Flex Fuel for CVT Hatchback?
+- https://www.civicxi.com/forum/threads/40764/ | ok | [1] of 1 | 4 | adjusting boost tables
+- https://www.civicxi.com/forum/threads/40110/ | ok | [1, 2] of 2 | 18 | Feel no difference between 19.5 and 23
+- https://www.civicxi.com/forum/threads/40025/ | ok | [1] of 1 | 3 | Running rich and misfire in all cylinders?
+- https://www.civicxi.com/forum/threads/39841/ | ok | [1, 2] of 2 | 12 | Turbo Spool rate question
+- https://www.civicxi.com/forum/threads/39663/ | ok | [1] of 1 | 2 | How to update ECU version?
+- https://www.civicxi.com/forum/threads/39578/ | ok | [1] of 1 | 6 | Ktuner V2 Can't find AFR for layout
+- https://www.civicxi.com/forum/threads/39269/ | ok | [1] of 1 | 5 | Did my tuner damage my car?
+- https://www.civicxi.com/forum/threads/39240/ | ok | [1] of 1 | 7 | 1.5T Non-Si CVT Tunes
+- https://www.civicxi.com/forum/threads/39099/ | ok | [1] of 1 | 2 | Used KTuner - model specific?
+- https://www.civicxi.com/forum/threads/38954/ | ok | [1] of 1 | 3 | Update to existing KTuner Maps after Oil dilution?
+- https://www.civicxi.com/forum/threads/38412/ | ok | [1] of 1 | 7 | What is Knock Count and Knock Control (defined)
+- https://www.civicxi.com/forum/threads/37765/ | ok | [1] of 1 | 3 | Standard tunes when using a Short Ram Intake?
+- https://www.civicxi.com/forum/threads/36421/ | ok | [1] of 1 | 14 | Throttle response
+- https://www.civicxi.com/forum/threads/36390/ | ok | [1] of 1 | 2 | Ktuner on 2019 Type R, A21 ECU max boost? PROBLEM
+- https://www.civicxi.com/forum/threads/35654/ | ok | [1] of 1 | 8 | Knock Control .85
+- https://www.civicxi.com/forum/threads/35373/ | ok | [1] of 1 | 15 | 2019 A21 Ktuned ECUs lost boost?
+- https://www.civicxi.com/forum/threads/34978/ | ok | [1] of 1 | 2 | measure torque ktuner
+- https://www.civicxi.com/forum/threads/34434/ | ok | [1] of 1 | 6 | Running Bov Spacer With Ktuner?
+- https://www.civicxi.com/forum/threads/34408/ | ok | [1] of 1 | 2 | KTuner questions for JR: Idle speed, expanded quick adjustments
+- https://www.civicxi.com/forum/threads/33918/ | ok | [1, 2, 3] of 3 | 24 | Risk of blowing a turbo?
+- https://www.civicxi.com/forum/threads/31934/ | ok | [1] of 1 | 2 | Which map should use on hatch EX-L
+- https://www.civicxi.com/forum/threads/30576/ | ok | [1] of 1 | 3 | Ktuner Ignition Timing
+- https://www.civicxi.com/forum/threads/29746/ | ok | [1] of 1 | 4 | Can someone review my logs?
+- https://www.civicxi.com/forum/threads/28991/ | ok | [1] of 1 | 8 | How much Psi can the stock clutch handle?
+- https://www.civicxi.com/forum/threads/28853/ | ok | [1, 2] of 2 | 23 | Ktuner and lag
+- https://www.civicxi.com/forum/threads/28830/ | ok | [1] of 1 | 10 | How safe are the canned tunes for the stock clutch?
+- https://www.civicxi.com/forum/threads/27686/ | ok | [1] of 1 | 2 | What map should i run?!?
+- https://www.civicxi.com/forum/threads/26629/ | ok | [1] of 1 | 8 | 24 psi on 21 psi starter map
+- https://www.civicxi.com/forum/threads/25729/ | ok | [1, 2] of 2 | 29 | New Ktuner Release (1.0.8.1) - On the Fly Map Switching & More!
+- https://www.civicxi.com/forum/threads/25624/ | ok | [1, 2] of 2 | 26 | K-tuner and premium fuel
+- https://www.civicxi.com/forum/threads/24443/ | ok | [1] of 1 | 5 | Ktuner calibration settings for novice
+- https://www.civicxi.com/forum/threads/23884/ | ok | [1] of 1 | 3 | CAI's and Fuel Trims
+- https://www.civicxi.com/forum/threads/22345/ | ok | [1] of 1 | 8 | Review: KTuner X TunerView
+- https://www.civicxi.com/forum/threads/21352/ | ok | [1] of 1 | 3 | diffP metric?
+- https://www.civicxi.com/forum/threads/16215/ | ok | [1] of 1 | 8 | End user adjustments
+- https://www.civicxi.com/forum/threads/15330/ | ok | [1] of 1 | 2 | question about STFT1 reading
+- https://www.civicxi.com/forum/threads/231/ | ok | [1] of 1 | 8 | Tuning and Forced Induction Glossary

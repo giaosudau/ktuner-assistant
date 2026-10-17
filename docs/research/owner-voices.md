@@ -137,7 +137,7 @@ Ranked by how directly they match this owner (E10, hot climate, Starter 21 Dual,
 ## 6. Method and access notes (for the next research run)
 
 - **CivicX / CivicXI** block headless browsers (Cloudflare). They were read through the `r.jina.ai/<url>` reader. **Civic11forum** works the same way.
-- **Scrapling MCP** (added 17 Oct 2026): a plain `make_request` gets 403 on CivicX; `stealthy_fetch` with `solve_cloudflare: true` reads it. Selector `article.message .bbWrapper` with `extraction_type: "text"` keeps only the post bodies; add `/page-N` for later pages.
+- **Scrapling MCP** (added 17 Oct 2026): a plain `make_request` gets 403 on CivicX. Don't solve Cloudflare challenges; `make_request` on `https://r.jina.ai/<url>` reads the thread over plain HTTP (a few posts per page can be missing). Add `/page-N` for later pages.
 - **Reddit blocks Anthropic's crawler.** It is excluded on purpose; don't route around it.
 - **Hondata forum** (Cloudflare captcha) was not reached. **DuckDuckGo HTML** shows a captcha after about 2 queries. Use the built-in web search for discovery.
 - **crawl4ai** Docker (`localhost:11235`) works for vendor sites with `Authorization: Bearer $CRAWL4AI_API_TOKEN`. The MCP entry was added with an unset variable, so its header is empty; re-add it with the right variable.

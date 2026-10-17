@@ -1,0 +1,13 @@
+# civicx run log (2026-10-17)
+
+Discovery: ~25 WebSearch queries (site civicx.com) on KTuner knock control, boost target, datalog, stage 1/2, CVT, throttle/quick adjustments, MAF/intake, downpipe, IAT, E85/flex, custom tune, reliability, Hondata vs KTuner, TunerView, altitude, oil dilution, software releases. Listing pages read through r.jina.ai: forums ktuner-discussions.81 (8 pp), ktuner.69 (6 pp), engine-exhaust-transmission-tuning.5 (12 pp), ~640 thread links recorded in sources.md (## civicx; [F] = selected 83, [c] = candidates only).
+
+Access problems (important):
+- civicx.com returned HTTP 403 to r.jina.ai (and to direct Scrapling/WebFetch requests) after the listing crawl and first fetch attempts, from about 13:00 until 13:41 on 2026-10-17. It then worked for ~25 minutes (19 threads fetched, 25 s then 13 s spacing) and returned 403 again from about 16:50. Repeated probes every 4 minutes until 17:40 stayed blocked. I did not try to get around the block (no challenge solving, no alternate scrapers).
+- Result: 19 threads fetched in full or in part (raw/civicx/<slug>.md), 1 thread logged BLOCKED (no-9-boost-base-1-5t) and about 63 selected threads never fetched.
+- Fallback: raw/civicx/websearch-summaries.md holds what the WebSearch summarizer reported for 35 more civicx threads. Claims taken from it are prefixed "[search-summary]" in the claim text; their "quotes" are fragments the summarizer attributed to posts and may not be verbatim. Treat them as lower confidence until the thread is read.
+
+Fetched threads (ok): reliability project 42361 (page 1 only; reader gave no page count), aggressive-dual-21 60757 (pp 1-3, 13, 14), starter-dual-21 dyno 68777, dual-tune OTF 34553, cvt-with-ktuner-worth-custom-tune 39826, k-tuner-tune-questions-for-cvt 31175, tuning-1-5t-cvt-with-ktuner 54706, strange knock control 87992, high knock control during WOT 71665, high knock control after v2 flash 19473 (4 pp), adjusting boost tables 40764, knock control significance 29457, ktuner knock control question 31884, boost over target 33313 (2 pp), FK7 1.5T CVT need help 87438, low boost 22.5psi 50891, terminology thread 68201, sky high kcon 79395 (2 pp), most aggressive v2 tune 52490.
+Blocked: no-9-boost-base-1-5t.27523.
+Claims: 131 in claims/civicx.jsonl (T2): about 50 from full reads, about 81 from search summaries. Tier T2 (10th gen 1.5T), a few T3-like Si/FK7 mentions are marked T2 because the tune logic is the same.
+Parser notes: post authors and dates are partly missing in raw files for the page layout used by the reliability thread; signatures stripped in the viewer only.
