@@ -891,6 +891,22 @@ test('Boost step proof pull: overshoot is the one held 0.5 s, a spike is not', (
   const held = proofPull((l, i, dt) => { if (dt >= 3 && dt < 3.8) l.boost[i] = 23; });
   assert.equal(K.checkDrive(held).ins.floored[0].over, 2, '+2 psi held 0.8 s is');
 });
+// §6.7: TPS Command falling while the pedal holds is VSA closing the throttle. That pull
+// is kept and marked, and it never counts as a Boost step proof pull.
+test('a floored pull where VSA closes the throttle is marked and never a proof pull', () => {
+  const C = require('../engine/kta-car.js');
+  const meta = { fileName: 'TunerView_20260822_090322.csv', now: 0 };
+  const clean = proofPull((l, i) => { l.tpsCmd[i] = 100; });
+  assert.equal(K.checkDrive(clean).ins.floored[0].vsa, false);
+  assert.equal(C.carIngest(C.carEmpty(), clean, meta).state.drives['20260822-090322'].proofPulls.length, 1);
+  const vsa = proofPull((l, i, dt) => { l.tpsCmd[i] = dt >= 3 && dt < 4 ? 70 : 100; });
+  assert.equal(K.checkDrive(vsa).ins.floored[0].vsa, true);
+  assert.equal(C.carIngest(C.carEmpty(), vsa, meta).state.drives['20260822-090322'].proofPulls.length, 0);
+  // The foot easing off is the driver, not VSA.
+  const eased = proofPull((l, i, dt) => { l.tpsCmd[i] = dt >= 3 && dt < 4 ? 80 : 100; if (dt >= 3 && dt < 4) l.tps[i] = 86; });
+  assert.equal(K.checkDrive(eased).ins.floored[0].vsa, false);
+});
+
 test('a one-row boost target jump is a glitch: removed and counted; a step that holds is kept', () => {
   const p = K.parseCSV(csv('aug22-0903'));
   const col = p.headers.indexOf('Turbo Pressure Target (PSI)');

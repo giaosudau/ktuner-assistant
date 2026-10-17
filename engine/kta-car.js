@@ -282,7 +282,8 @@
   var STEP_GATES = KTA.THRESHOLDS && KTA.THRESHOLDS.boost_step_gates ? KTA.THRESHOLDS.boost_step_gates.value : null;
   function proofPullsOf(floored) {
     if (!STEP_GATES) return [];
-    return (floored || []).filter(function (f) { return f.holdAbove3500S >= STEP_GATES.hold_s; }).map(function (f) {
+    // A pull VSA cut short (the throttle command fell while the foot held) proves nothing.
+    return (floored || []).filter(function (f) { return f.holdAbove3500S >= STEP_GATES.hold_s && !f.vsa; }).map(function (f) {
       return { t0: f.t0, holdS: f.holdAbove3500S, target: f.target, targetRpm: f.targetRpm, under: f.under, over: f.over,
         afrLeanest: f.afrLeanest, fpPct: f.fpPct, ign: f.ign, ewg: f.ewg, ewgHeld: f.ewgHeld };
     });

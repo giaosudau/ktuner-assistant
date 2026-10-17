@@ -35,6 +35,8 @@
     floored: { holdS: 2, rpmMax: 3500, spoolPsi: 15, onTarget: 0.9, proofRpm: 3500 }, // a floored pull (ticket 10): foot down 2 s from
                                      // 3,500 rpm or under; spool = boost first at 15 psi; on target = 90 % of it;
                                      // the Boost step reads the part held above proofRpm (ticket 16)
+    vsa: { cmdDrop: 10, footHold: 2 }, // % points: TPS Command falls 10 below its peak in a floored pull while the
+                                     // foot holds within 2 of where it was: VSA closing the throttle, the pull does not count (§6.7)
     accelPedal: 60,                  // % throttle command held for an acceleration window
     pullIatGood: 48,                 // deg C at the start of a pull
     hotDrive: 45,                    // deg C IAT while moving: a hot-afternoon drive
@@ -331,6 +333,15 @@
         // The Boost step proof (ticket 16): the part of the pull held above 3,500 rpm,
         // the rows a step edits, and what the gates read there.
         var up = mask(n, function (i) { return i >= r.i0 && i <= r.i1 && log.rpm[i] >= FL.proofRpm; });
+        // VSA stepping in (§6.7): the throttle command falls while the foot holds.
+        var vsa = false;
+        if (has.tpsCmd && footKey !== 'tpsCmd') {
+          for (var pk = -1, vi = r.i0; vi <= r.i1; vi++) {
+            if (!isNum(log.tpsCmd[vi])) continue;
+            if (pk < 0 || log.tpsCmd[vi] > log.tpsCmd[pk]) pk = vi;
+            else if (log.tpsCmd[pk] - log.tpsCmd[vi] >= DL.vsa.cmdDrop && foot[vi] >= foot[pk] - DL.vsa.footHold) vsa = true;
+          }
+        }
         var gap = new Float64Array(n), above = new Float64Array(n), fpr = new Float64Array(n), tMax = -Infinity, tRpm = NaN;
         for (var j = 0; j < n; j++) {
           gap[j] = up[j] && has.boost && has.boostTarget ? log.boostTarget[j] - log.boost[j] : NaN;
@@ -342,7 +353,7 @@
           t0: r1(r.t0), rpm0: r0(log.rpm[r.i0]), spoolRpm: r0(spool),
           lagS: lagI >= 0 ? r1(log.t[lagI] - r.t0) : null,
           ewg: lagI >= 0 && has.wgPos ? r1(log.wgPos[lagI]) : null,
-          gear: has.gear ? r0(log.gear[r.i0]) : null, iat: has.iat ? r0(log.iat[r.i0]) : null,
+          gear: has.gear ? r0(log.gear[r.i0]) : null, iat: has.iat ? r0(log.iat[r.i0]) : null, vsa: vsa,
           holdAbove3500S: r1(secs(log, up)),
           target: r1(tMax), targetRpm: r0(tRpm),
           // Overshoot is the one held boost_step_gates.overshoot_hold_s (0.5 s): KTuner calls a 1-3 psi spike normal (§6.5).
