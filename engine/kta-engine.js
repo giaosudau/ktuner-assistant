@@ -534,7 +534,7 @@
   KTA.buildLog = function (parsed, mapping) {
     var map = mapping || KTA.detectChannels(parsed.headers, parsed.columns);
     var n = parsed.rows, H = parsed.headers, C = parsed.columns;
-    var log = { n: n, has: {}, units: {}, notes: parsed.notes ? parsed.notes.slice() : [], mapping: map, headers: H, glitches: {}, capped: {} };
+    var log = { n: n, has: {}, units: {}, notes: parsed.notes ? parsed.notes.slice() : [], mapping: map, headers: H, glitches: {}, capped: {}, pinned: {} };
     function col(key) { return map[key] == null || Array.isArray(map[key]) ? null : C[map[key]]; }
     function hdr(key) { return map[key] == null || Array.isArray(map[key]) ? '' : unitHint(H[map[key]]); }
     function put(key, arr) { log[key] = arr; log.has[key] = !!arr && finite(arr).length > 0; }
@@ -604,6 +604,9 @@
       } else if (!/%|pct|percent/.test(h) && quantile(absA, 0.99) <= 0.35 && quantile(a, 0.9) - quantile(a, 0.1) > 0.002) {
         a = scaled(a, function (v) { return v * 100; }); log.units[key] = 'fraction converted to %';
       } else log.units[key] = '%';
+      // Pinned at -100 on (nearly) every row: bank 2 picked on this one-bank engine, a logger
+      // fault, not a trim (ktuner-community-knowledge.md §6.4). The glitch filter blanks it.
+      if (quantile(a, 0.9) <= -99) log.pinned[key] = true;
       put(key, a);
     });
 
@@ -1121,6 +1124,9 @@
       var stF = has.stft ? chanFlat(log.stft) : true, ltF = has.ltft ? chanFlat(log.ltft) : true;
       if (stF && ltF) { if (has.stft) flatCh.stft = true; if (has.ltft) flatCh.ltft = true; }
     }
+    // One trim column pinned at -100 leaves the total trim unknown, however the other reads.
+    if (log.pinned && log.pinned.stft) flatCh.stft = true;
+    if (log.pinned && log.pinned.ltft) flatCh.ltft = true;
     if (chanFlat(log.kControl)) flatCh.kControl = true;
     if (chanFlat(log.fp)) flatCh.fp = true;
     if (chanFlat(log.iat)) flatCh.iat = true;

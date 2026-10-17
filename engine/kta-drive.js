@@ -363,7 +363,8 @@
     }
 
     // ---- closed-loop fuel trims by load: does the AFM still read the new intake right?
-    if (load && (has.stft || has.ltft)) {
+    // Not from a trim column pinned at -100 (a logger fault, kta-engine buildLog): the total is unknown.
+    if (load && (has.stft || has.ltft) && !(log.pinned && (log.pinned.stft || log.pinned.ltft))) {
       var trim = new Float64Array(n);
       for (var ti = 0; ti < n; ti++) {
         var s1 = has.stft ? log.stft[ti] : 0, l1 = has.ltft ? log.ltft[ti] : 0;

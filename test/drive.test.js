@@ -257,6 +257,31 @@ test('issue 01: a missing Safety channel makes the drive Can\'t tell and names i
   assert.ok(noTrims.an.cantTell.channels.includes('trims'));
 });
 
+// A trim column pinned at −100 is the logger, not the engine: bank 2 picked on this
+// one-bank engine (ktuner-community-knowledge.md §6.4). Can't tell, never a trims Stop.
+function setColumn(text, headerName, value) {
+  const lines = text.split('\n');
+  const at = lines[0].split(';').findIndex((h) => h.trim() === headerName);
+  assert.ok(at >= 0, 'column present: ' + headerName);
+  return lines.map((l, i) => { if (i < 2 || !l) return l; const c = l.split(';'); c[at] = String(typeof value === 'function' ? value(i) : value); return c.join(';'); }).join('\n');
+}
+test('a trim column pinned at -100 is Can\'t tell, never a trims Stop', () => {
+  const full = csv('sep05-0756');
+  // STFT pinned, LTFT reading about -18: today the trims line grades LTFT alone and says Stop.
+  const pinned = K.checkDrive(K.readLog(setColumn(setColumn(full, 'STFT B1', -100), 'LTFT B1', (i) => -18 + (i % 3) * 0.8)));
+  assert.equal(check(pinned.an, 'trims').status, 'nodata', check(pinned.an, 'trims').display);
+  assert.equal(pinned.verdict, 'nodata');
+  assert.equal(pinned.an.cantTell.reason, 'safetyChannels');
+  assert.ok(pinned.an.cantTell.flat.includes('trims'), JSON.stringify(pinned.an.cantTell));
+  assert.ok(!pinned.plan.all.some((a) => a.id === 'fix:trims' || a.id === 'afm'), pinned.plan.all.map((a) => a.id).join(','));
+  // The same with LTFT pinned: and the Car history keeps no trim number from it.
+  const ltft = K.readLog(setColumn(full, 'LTFT B1', -100));
+  assert.equal(K.checkDrive(ltft).verdict, 'nodata');
+  const C = require('../engine/kta-car.js');
+  const sum = C.carIngest(C.carEmpty(), ltft, { fileName: 'TunerView_20260905_075634.csv', now: 0 }).state.drives['20260905-075634'];
+  assert.equal(sum.trimWorst, null);
+});
+
 test('issue 01: the engine\'s internal status names never reach the screen', () => {
   const fs = require('fs');
   const window = {};
