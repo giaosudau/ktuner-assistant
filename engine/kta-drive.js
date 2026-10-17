@@ -369,8 +369,8 @@
         var s1 = has.stft ? log.stft[ti] : 0, l1 = has.ltft ? log.ltft[ti] : 0;
         trim[ti] = isNum(s1) && isNum(l1) ? ((1 + s1 / 100) * (1 + l1 / 100) - 1) * 100 : NaN;
       }
-      var inB = I._boostMask;
-      var cl = mask(n, function (i) { return warm[i] && (!has.lam || (isNum(log.lam[i]) && log.lam[i] >= 0.925 && log.lam[i] <= 1.06)) && !(inB && inB[i]); });
+      var inB = I._boostMask, frozen = U.stftFrozenMask(log); // open loop is not trimmed (kta-engine closedLoop)
+      var cl = mask(n, function (i) { return warm[i] && !frozen[i] && (!has.lam || (isNum(log.lam[i]) && log.lam[i] >= 0.925 && log.lam[i] <= 1.06)) && !(inB && inB[i]); });
       var tb = [[-12, -8], [-8, -5], [-5, -2], [-2, 1], [1, 4], [4, 8]].map(function (bd) {
         var m = mask(n, function (i) { return cl[i] && moving[i] && load[i] >= bd[0] && load[i] < bd[1]; });
         return { from: bd[0], to: bd[1], seconds: r0(secs(log, m)), trim: r1(q(trim, 0.5, m)), lo: r1(q(trim, 0.1, m)), hi: r1(q(trim, 0.9, m)) };

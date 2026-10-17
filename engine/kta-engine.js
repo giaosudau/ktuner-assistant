@@ -174,6 +174,7 @@
     mafStepMax: 0.10,                      // max AFM change per round (fraction)
     minBinWeight: 8,                       // closed-loop samples per AFM point
     minWotWeight: 3,                       // settled WOT samples per AFM point
+    closedLoop: { mapPsiMax: 8, stftFrozenS: 2 }, // trims feed the AFM curve below 8 psi MAP and never from STFT held at 0 (open loop)
     boostCeilingPsi: 24,                   // never above 24 psi; the real ceiling is the Final Boost Target peak (ADR 0007)
     wotTargetAfr: { min: 11.0, max: 12.0 } // allowed WOT command band (display AFR)
   };
@@ -515,6 +516,21 @@
   }
   KTA.util.rollingMedian = rollingMedian;
 
+  // STFT held at exactly 0 for LIMITS.closedLoop.stftFrozenS or more: the ECU is not
+  // trimming (open loop). In closed loop KTuner's STFT steps 0.78 % at a time and passes
+  // through 0 for well under that. 1 marks a frozen row.
+  function stftFrozenMask(log) {
+    var n = log.n, out = new Uint8Array(n);
+    if (!log.has.stft) return out;
+    for (var z0 = -1, i = 0; i <= n; i++) {
+      if (i < n && log.stft[i] === 0) { if (z0 < 0) z0 = i; continue; }
+      if (z0 >= 0 && log.t[i - 1] - log.t[z0] >= KTA.LIMITS.closedLoop.stftFrozenS) for (var k = z0; k < i; k++) out[k] = 1;
+      z0 = -1;
+    }
+    return out;
+  }
+  KTA.util.stftFrozenMask = stftFrozenMask;
+
   KTA.buildLog = function (parsed, mapping) {
     var map = mapping || KTA.detectChannels(parsed.headers, parsed.columns);
     var n = parsed.rows, H = parsed.headers, C = parsed.columns;
@@ -842,9 +858,13 @@
       e.duration = round(e.t1 - e.t0, 1);
     });
 
+    // Open loop is not trimmed, so it never feeds the AFM curve (ktuner-community-knowledge.md
+    // §6.3): at 8 psi of MAP and up this car's STFT is exactly 0 on almost every warm row.
+    var stftFrozen = stftFrozenMask(log);
     var win = Math.max(1, Math.round(0.5 / dt));
     for (i = 0; i < n; i++) {
-      var ok = warm[i] && !inEvent[i] && (has.stft || has.ltft);
+      var ok = warm[i] && !inEvent[i] && (has.stft || has.ltft) && !stftFrozen[i];
+      if (ok && has.load) ok = log.load[i] < L.closedLoop.mapPsiMax;
       if (ok && has.loop) ok = log.loop[i] >= 0.5;
       if (ok && has.lamCmd) ok = Math.abs(log.lamCmd[i] - 1) <= 0.03;
       if (ok && has.lam) ok = log.lam[i] > 0.85 && log.lam[i] < 1.15;

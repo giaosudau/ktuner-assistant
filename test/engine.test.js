@@ -353,6 +353,27 @@ test('knock control: RON95-level is fine, a high held level is a Watch with no h
   assert.ok(Math.abs(kc.data.timingCost - 3.0) < 0.15, 'costs about 3.0°: ' + kc.data.timingCost);
 });
 
+// The airflow-curve correction reads closed-loop trims only (ktuner-community-knowledge.md
+// §6.3): at 8 psi of MAP and up this car is in open loop, and STFT held at exactly 0
+// is the ECU not trimming. Neither stretch may move the AFM curve.
+test('airflow correction: rows at 8 psi and up, or with STFT frozen at 0, are dropped', () => {
+  const rows = ['Time,RPM,VSS,MAP (PSI),STFT (%),LTFT (%),AFM Hz,AFR,ECT,TPS'];
+  for (let i = 0; i < 900; i++) {
+    const t = (i / 10).toFixed(1);
+    if (i < 500) rows.push(t + ',2000,60,-5,' + [0.8, 0, -0.8][i % 3] + ',0,3000,14.7,90,30'); // closed-loop cruise, trims 0
+    else if (i < 700) rows.push(t + ',2800,80,9,10,10,6000,14.7,90,30');                     // 9 psi: open loop
+    else rows.push(t + ',2400,70,-2,0,-12,4500,14.7,90,30');                                  // STFT frozen at 0 for 20 s
+  }
+  const an = K.analyze(K.readLog(rows.join('\n')), {});
+  const near = (hz) => an.maf.cl.filter((b) => Math.abs(b.hz - hz) < 100).reduce((s, b) => s + b.weight, 0);
+  // Every cruise row counts, the zeros STFT passes through in closed loop included
+  // (KTuner logs it in 0.78 % steps).
+  assert.equal(near(3000), 500);
+  assert.equal(near(6000), 0, 'the 9 psi rows do not');
+  assert.equal(near(4500), 0, 'the frozen-STFT rows do not');
+  assert.equal(status(an, 'fuel', 'trims'), 'good');
+});
+
 test('no torque line: the CVT is judged on slip, Watch-only', () => {
   const slipOf = (an) => an.gates.flatMap((g) => g.checks).find((c) => c.id === 'slip');
   for (const id of ['before', 'after', 'hot']) {
