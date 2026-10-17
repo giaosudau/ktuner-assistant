@@ -840,6 +840,41 @@ test('Boost step proof pull: time held above 3,500 rpm and the gate numbers ther
   assert.equal(sum.proofIgn, 8);
 });
 
+// §6.5: a Boost step reads overshoot held 0.5 s or more (KTuner calls a 1–3 psi spike
+// normal), and a target that jumps for one row and comes straight back is a logger
+// glitch (one row on 30 Aug logs a 51.7 psi target), not the target the table asked for.
+function proofPull(edit) {
+  return cloneLog(drive('aug22-0903').log, (l) => {
+    let i0 = 0;
+    while (l.t[i0] < 20) i0++;
+    for (let k = -5; l.t[i0 + k] <= l.t[i0] + 8; k++) {
+      const i = i0 + k, dt = l.t[i] - l.t[i0], on = k >= 0 && dt <= 7;
+      l.tps[i] = on ? 95 : 20;
+      l.rpm[i] = on ? Math.min(3000 + 500 * dt, 5000) : 2000;
+      l.boostTarget[i] = on ? 21 : 5;
+      l.boost[i] = on ? 21.5 : 5;
+      if (on) edit(l, i, dt);
+    }
+  });
+}
+test('Boost step proof pull: overshoot is the one held 0.5 s, a spike is not', () => {
+  const spike = proofPull((l, i, dt) => { if (dt >= 3 && dt < 3.2) l.boost[i] = 24; });
+  assert.equal(K.checkDrive(spike).ins.floored[0].over, 0.5, 'a 0.2 s spike to +3 psi is not the overshoot');
+  const held = proofPull((l, i, dt) => { if (dt >= 3 && dt < 3.8) l.boost[i] = 23; });
+  assert.equal(K.checkDrive(held).ins.floored[0].over, 2, '+2 psi held 0.8 s is');
+});
+test('a one-row boost target jump is a glitch: removed and counted; a step that holds is kept', () => {
+  const p = K.parseCSV(csv('aug22-0903'));
+  const col = p.headers.indexOf('Turbo Pressure Target (PSI)');
+  p.columns[col][500] = p.columns[col][499] + 20;
+  const log = K.buildLog(p);
+  assert.ok(Number.isNaN(log.boostTarget[500]));
+  assert.equal(log.glitches.boostTarget, (drive('aug22-0903').log.glitches.boostTarget || 0) + 1);
+  // A real step that holds is kept.
+  for (let i = 600; i < 700; i++) p.columns[col][i] = 18;
+  assert.equal(K.buildLog(p).boostTarget[600], 18);
+});
+
 // Ticket 16: undershoot is read with the wastegate where it was measured, the
 // part held above 3,500 rpm (not at spool, where the gate is always shut).
 test('Boost step proof pull: the wastegate held above 3,500 rpm', () => {

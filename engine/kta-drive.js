@@ -17,6 +17,8 @@
   'use strict';
   var U = KTA.util, isNum = U.isNum, round = U.round, median = U.median, quantile = U.quantile;
   var GAS = KTA.GAS_SCALE;
+  // How long an overshoot must hold to count on a Boost step proof pull (data/thresholds.json).
+  var STEP_HOLD_S = KTA.THRESHOLDS && KTA.THRESHOLDS.boost_step_gates ? KTA.THRESHOLDS.boost_step_gates.value.overshoot_hold_s : NaN;
 
   var DL = KTA.DRIVE_LIMITS = {
     warmEct: 70,                     // deg C: below this the ECU runs warm-up corrections
@@ -80,6 +82,18 @@
     var lo = 0, hi = log.n;
     while (lo < hi) { var mid = (lo + hi) >> 1; if (log.t[mid] < time) lo = mid + 1; else hi = mid; }
     return lo;
+  }
+  // The largest value held `secs` or more: every window that long inside m counts its smallest value.
+  function heldMax(log, a, m, secs) {
+    var best = NaN;
+    for (var i = 0; i < log.n; i++) {
+      if (!m[i] || !isNum(a[i])) continue;
+      for (var lo = a[i], j = i; j < log.n && m[j] && isNum(a[j]); j++) {
+        if (a[j] < lo) lo = a[j];
+        if (log.t[j] - log.t[i] >= secs) { if (!(lo <= best)) best = lo; break; }
+      }
+    }
+    return best;
   }
   function vals(a, i0, i1, keep) { var o = []; if (!a) return o; for (var i = i0; i < i1; i++) if ((!keep || keep[i]) && isNum(a[i])) o.push(a[i]); return o; }
   function qa(o, p) { return o.length ? quantile(o, p) : NaN; }
@@ -317,9 +331,10 @@
         // The Boost step proof (ticket 16): the part of the pull held above 3,500 rpm,
         // the rows a step edits, and what the gates read there.
         var up = mask(n, function (i) { return i >= r.i0 && i <= r.i1 && log.rpm[i] >= FL.proofRpm; });
-        var gap = new Float64Array(n), fpr = new Float64Array(n), tMax = -Infinity, tRpm = NaN;
+        var gap = new Float64Array(n), above = new Float64Array(n), fpr = new Float64Array(n), tMax = -Infinity, tRpm = NaN;
         for (var j = 0; j < n; j++) {
           gap[j] = up[j] && has.boost && has.boostTarget ? log.boostTarget[j] - log.boost[j] : NaN;
+          above[j] = -gap[j];
           fpr[j] = up[j] && has.fp && has.fpTarget && log.fpTarget[j] > 0 ? log.fp[j] / log.fpTarget[j] * 100 : NaN;
           if (up[j] && has.boostTarget && log.boostTarget[j] > tMax) { tMax = log.boostTarget[j]; tRpm = log.rpm[j]; }
         }
@@ -330,7 +345,8 @@
           gear: has.gear ? r0(log.gear[r.i0]) : null, iat: has.iat ? r0(log.iat[r.i0]) : null,
           holdAbove3500S: r1(secs(log, up)),
           target: r1(tMax), targetRpm: r0(tRpm),
-          under: r1(q(gap, 0.5, up)), over: r1(-q(gap, 0, up)),
+          // Overshoot is the one held boost_step_gates.overshoot_hold_s (0.5 s): KTuner calls a 1-3 psi spike normal (§6.5).
+          under: r1(q(gap, 0.5, up)), over: r1(heldMax(log, above, up, STEP_HOLD_S)),
           // The wastegate where the undershoot is read: shut there means the turbo's limit or a leak (ticket 16).
           ewgHeld: has.wgPos ? r1(q(log.wgPos, 0.5, up)) : null,
           afrLeanest: r2(q(log.lam, 1, up) * GAS), fpPct: r0(q(fpr, 0.05, up)), ign: r1(q(log.ign, 0.5, up))

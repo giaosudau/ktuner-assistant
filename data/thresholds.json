@@ -26,12 +26,12 @@
     "value": {
       "pedal_pct": 85, "hold_s": 4, "rpm_min": 3500, "pulls_min": 2,
       "rows_rpm": [3500, 4000, 4500], "cell_min_psi": 15,
-      "target_gap_psi": 0.5, "undershoot_psi": 1.5, "overshoot_psi": 1.5, "total_psi": 24,
+      "target_gap_psi": 0.5, "undershoot_psi": 1.5, "overshoot_psi": 1.5, "overshoot_hold_s": 0.5, "total_psi": 24,
       "kc_max": 0.56, "afr_lean_max": 12.0, "difp_min_pct": 90, "trim_max_pct": 5, "ign_drop_deg": 1.0
     },
     "unit": "mixed (%, s, rpm, psi, score, AFR, deg)",
     "basis": "judgement",
-    "source": "ticket 16 (proof pull: pedal 85 % held 4 s above 3,500 rpm, 2 pulls, rows 3,500-4,500; the pass gates), ticket 13 (overshoot tightened to 1.5 and target + overshoot 24; ignition achieved vs the last proven Map version, drop over 1°; DIFP 90 %; Knock Control 0.56 kept, read settled), ticket 17 (the logged target must reach the table: within 0.5 psi), ticket 06 D1 (undershoot 1.5, AFR never leaner than 12.0, trims ±5 %)",
+    "source": "ticket 16 (proof pull: pedal 85 % held 4 s above 3,500 rpm, 2 pulls, rows 3,500-4,500; the pass gates), ticket 13 (overshoot tightened to 1.5 and target + overshoot 24; ignition achieved vs the last proven Map version, drop over 1°; DIFP 90 %; Knock Control 0.56 kept, read settled), ticket 17 (the logged target must reach the table: within 0.5 psi), ticket 06 D1 (undershoot 1.5, AFR never leaner than 12.0, trims ±5 %), ktuner-community-knowledge.md §6.5 (overshoot judged held 0.5 s: KTuner calls a 1-3 psi spike normal)",
     "note": "A Boost step is offered, and kept, only when every gate passes on the latest Cool drive's proof pulls and the latest hot drive's Knock Control. No Honda tuner publishes these numbers: they are our judgement on the shared tuner method (ticket 13)."
   },
   "maf_step_max_pct": {

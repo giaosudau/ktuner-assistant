@@ -722,6 +722,17 @@
       if (cap) log.capped.afr = cap;
       put(key, out);
     });
+    // Boost target moves in steps that hold. One row 3 psi or more off both neighbours, which
+    // agree with each other, is a read error (30 Aug logs one row at 51.7 psi, §6.5).
+    if (log.has.boostTarget) {
+      var tg = log.boostTarget, tgOut = Float64Array.from(tg), tgBad = 0;
+      for (i = 1; i + 1 < n; i++) {
+        var tp = tg[i - 1], tn = tg[i + 1];
+        if (isNum(tg[i]) && isNum(tp) && isNum(tn) && Math.abs(tp - tn) <= 1.5 && Math.abs(tg[i] - tp) >= 3 && Math.abs(tg[i] - tn) >= 3) { tgOut[i] = NaN; tgBad++; }
+      }
+      glitch('boostTarget', tgBad);
+      put('boostTarget', tgOut);
+    }
     // Knock control moves in small steps; a lone sample far from its neighbours is a read error.
     if (log.has.kControl) {
       var kcMed = rollingMedian(log.kControl, Math.max(2, Math.round(1 / log.dt))), kcOut = new Float64Array(n), kcBad = 0;
