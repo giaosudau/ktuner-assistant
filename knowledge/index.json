@@ -18,7 +18,7 @@
     },
     {
      "name": "flash-start",
-     "value": 0.58,
+     "value": 0.59,
      "unit": "score"
     },
     {
@@ -32,7 +32,51 @@
     "section": "§3"
    },
    "status": "current",
-   "body": "After every new Flash the Fuel-quality score starts high, around 0.58, and falls back to the Baseline with calm driving. A start at or below 0.60 that settles toward 0.49 is what a fresh flash does. It is never an Unexplained change, and it never sets a Verdict on its own. Give it ten to fifteen calm minutes before judging fuel or heat, because the score needs that long to relearn. If the score does not settle, or if it climbs again in traffic, that later rise is the finding, judged on its own. The Shakedown drive exists for exactly this pattern."
+   "body": "After every new Flash KTuner sets the Fuel-quality score to 0.59, and it falls back to the Baseline with calm driving. A start at or below 0.60 that settles toward 0.49 is what a fresh flash does. It is never an Unexplained change, and it never sets a Verdict on its own. Give it ten to fifteen calm minutes before judging fuel or heat, because the score needs that long to relearn. If the score does not settle, or if it climbs again in traffic, that later rise is the finding, judged on its own. The Shakedown drive exists for exactly this pattern."
+  },
+  {
+   "id": "kc-boost-by-gear",
+   "title": "Boost By Gear Limits only limit, and yours are off",
+   "kind": "ktuner-howto",
+   "topics": [
+    "boost",
+    "tables",
+    "boost-by-gear",
+    "ktuner"
+   ],
+   "applies-when": "The owner asks about Boost By Gear, or how KTuner protects a CVT.",
+   "numbers": [
+    {
+     "name": "bbg-off-value",
+     "value": 35.4,
+     "unit": "psi"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/ktuner-community-knowledge.md",
+    "section": "§4"
+   },
+   "status": "current",
+   "body": "Boost By Gear Limits is one table per gear, rpm by atmospheric pressure, and it only limits: wherever the boost table asks less, the table wins, so values above every target mean no limit. Your map holds 35.4 psi everywhere, so no gear limit is active. KTuner's own tool for sparing a CVT is a first-gear limit, and its quick settings offer flat or ramped versions. The app explains it and does not write this table, and which gear number your CVT reports to it is unconfirmed."
+  },
+  {
+   "id": "kc-boost-codes",
+   "title": "Boost codes P0046 and P0299, and what to log",
+   "kind": "owner-question",
+   "topics": [
+    "dtc",
+    "boost",
+    "wastegate",
+    "leak"
+   ],
+   "applies-when": "The owner reports P0046 or P0299, a limp with a dead pedal, or boost that misses target.",
+   "numbers": [],
+   "source": {
+    "doc": "docs/research/ktuner-community-knowledge.md",
+    "section": "§4"
+   },
+   "status": "current",
+   "body": "P0046 means the ECU can't hold the wastegate where it commands it. On this generation owners traced it to a sticking wastegate actuator, and to a pinhole leak in the vacuum line on the charge pipe; a new downpipe seemed to fix it only for a while. P0299 is underboost. In your log, compare EWG Position with EWG Target, and boost with its target: a position that doesn't follow its target points to the actuator; boost under target with the wastegate shut points to a leak or the turbo's limit. Fix the hardware first; no map change."
   },
   {
    "id": "kc-boost-step",
@@ -78,6 +122,21 @@
      "unit": "%"
     },
     {
+     "name": "floored-lo",
+     "value": 100.0,
+     "unit": "%"
+    },
+    {
+     "name": "floored-hi",
+     "value": 113.0,
+     "unit": "%"
+    },
+    {
+     "name": "tps-max-logged",
+     "value": 94.0,
+     "unit": "%"
+    },
+    {
      "name": "hold-s",
      "value": 4.0,
      "unit": "s"
@@ -116,11 +175,6 @@
      "name": "rail-min",
      "value": 90.0,
      "unit": "%"
-    },
-    {
-     "name": "hot-kc-today",
-     "value": 0.64,
-     "unit": "score"
     }
    ],
    "source": {
@@ -128,7 +182,7 @@
     "section": "§8"
    },
    "status": "current",
-   "body": "A Boost step adds 1 psi to Boost Target 2 Normal, Low and High cam, in the 3,500 to 4,500 rpm rows, never above the map's Final Boost Target peak, 23.4 here. Only the second tune gets it, so switching to the first undoes it; a proven step is copied to the others. Offered when the latest Cool drive holds two floored pulls (pedal 85 percent or more, held 4 seconds above 3,500 rpm) and a hot drive passes too. Gates: the logged target moved; undershoot and overshoot each within 1.5 psi, target plus overshoot at most 24; timing within 1 degree of the last proven version; Knock Control settled, not rising, at most 0.56 below 5,200 rpm; mixture never leaner than 12.0; fuel pressure at least 90 percent of target. The first failure undoes it. Today it is closed: the hot drive reached 0.64, no floored pull yet."
+   "body": "A Boost step adds 1 psi to Boost Target 2 Normal, Low and High cam, 3,500 to 4,500 rpm rows, never above the Final Boost Target peak, 23.4 here. Only the second tune gets it; a proven step is copied to the others. Offered when the latest Cool drive holds two floored pulls held 4 seconds above 3,500 rpm and a hot drive passes too. Floored is pedal 85 percent or more until a key-on reading sets it: on these cars floored reads 100 to 113, yours never above 94. Gates: target moved; under- and overshoot held half a second within 1.5 psi, total at most 24; timing within 1 degree of the last proven version; Knock Control settled, at most 0.56 below 5,200 rpm; mixture never leaner than 12.0; fuel pressure at least 90 percent of target. The first failure undoes it."
   },
   {
    "id": "kc-cvt",
@@ -233,7 +287,7 @@
     "section": "§3"
    },
    "status": "current",
-   "body": "The 400-cell catted pipes from TSP and RV6 claim no warning light, and owners report none: that is the shop's pick. The 200-cell 27WON pipe sets P0420 for most owners within days. Catless makes about 0 to 6 whp over a good catted pipe (owner and vendor reports), brings exhaust smell into the cabin, always sets P0420, and risks the đăng kiểm tailpipe gas test; an unapproved modification can also be fined 65 to 75 million VND. The tune response is the same for all three: no map change, and a small boost trim only if a log proves boost holds above target. Ask which pipe is fitted: older RV6 pipes were 300-cell."
+   "body": "The 400-cell catted pipes from TSP and RV6 claim no warning light, and most owners report none, though a few see the rear-sensor code P2A01, or a light only in heavy rain or on long highway runs: that is still the shop's pick. The 200-cell 27WON pipe sets P0420 for most owners within days. Catless makes about 0 to 6 whp over a good catted pipe (owner and vendor reports), brings exhaust smell into the cabin, always sets P0420, and risks the đăng kiểm tailpipe gas test; an unapproved modification can also be fined 65 to 75 million VND. The tune response is the same for all three: no map change, and a small boost trim only if a log proves boost holds above target. Ask which pipe is fitted: older RV6 pipes were 300-cell."
   },
   {
    "id": "kc-downpipe",
@@ -517,6 +571,51 @@
    "body": "The Starter 21 map asks 18 psi in ECO and 21 psi in Normal and Sport, and the file tops out at 23.4 psi of final target. These logs were measured with a downpipe and front pipe already fitted: at the highest boost logged, up to 19.9 psi, the wastegate sits about 2.5 percent open, against 8.0 percent at idle and cruise and 65.5 percent at its most open. Nearly all exhaust already drives the turbine, so more boost mostly means more heat, not more power. KTuner claims the map adds up to 58 lb-ft, or 79 Nm, over a stock car rated 240 Nm and 176 hp. Gains from here come from cooler air and good habits, and more boost only from a step proven on your logs. Most drives end with no map change, and that is an answer, not a gap."
   },
   {
+   "id": "kc-final-boost-target",
+   "title": "Final Boost Target passes the target through and caps it",
+   "kind": "ktuner-howto",
+   "topics": [
+    "boost",
+    "tables",
+    "final-boost-target",
+    "ktuner"
+   ],
+   "applies-when": "The owner asks what Final Boost Target does, or whether it limits boost.",
+   "numbers": [
+    {
+     "name": "final-target-top",
+     "value": 23.4,
+     "unit": "psi"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/ktuner-community-knowledge.md",
+    "section": "§4"
+   },
+   "status": "current",
+   "body": "Final Boost Target takes the incoming target, from the boost table, the part-pedal target or the Boost By Gear limit, passes it nearly one to one, and caps it at its last column header. Raising that cap means changing the header and its whole column. On your map every column is the same in every rpm row and the top is 23.4 psi, so it passes your target through and is not what holds a pull below the table. The app explains it and never edits it."
+  },
+  {
+   "id": "kc-flash-howto",
+   "title": "Flashing with KTuner: power, the key, and what is normal after",
+   "kind": "ktuner-howto",
+   "topics": [
+    "flash",
+    "recovery",
+    "cel",
+    "ktuner",
+    "help"
+   ],
+   "applies-when": "The owner is about to flash, a flash failed, or warning lights came on after a flash.",
+   "numbers": [],
+   "source": {
+    "doc": "docs/research/ktuner-community-knowledge.md",
+    "section": "§4"
+   },
+   "status": "current",
+   "body": "Put a battery charger on the car and power the V2 from a strong port: low voltage is what fails flashes. Ignition on, engine off, never running. When it finishes, key off for ten seconds, back on, and wait for flash successful. Warning lights during the flash are normal, and driver-assist warnings can stay until you have driven ten to fifteen minutes. A failed flash leaves the car unable to start: reconnect and accept recovery, which returns it to factory. A Recovery prompt while the engine runs means a loose cable: say no. Error codes right after a flash usually mean the wrong codebase: start the tune with the one that matches the unit info. If the V2 stops waking with the car, set CAN Gateway to Yes. Saving a tune to the V2 is not flashing it: the next log proves the change."
+  },
+  {
    "id": "kc-fuel-test",
    "title": "Is premium fuel worth it? Test it tank against tank",
    "kind": "play",
@@ -650,7 +749,7 @@
   },
   {
    "id": "kc-high-rpm",
-   "title": "Score rises above 5,200 rpm do not count",
+   "title": "Score rises above 5,200 rpm do not count while the artificial rise is on",
    "kind": "fact",
    "topics": [
     "knock",
@@ -662,14 +761,19 @@
      "name": "high-rpm-from",
      "value": 5200.0,
      "unit": "rpm"
+    },
+    {
+     "name": "forced-rise-cost",
+     "value": 2.0,
+     "unit": "deg"
     }
    ],
    "source": {
-    "doc": "docs/research/owner-voices.md",
+    "doc": "docs/research/ktuner-community-knowledge.md",
     "section": "§3"
    },
    "status": "current",
-   "body": "Non-Si ECUs raise Knock Control on purpose above about 5,200 rpm. Starter and base maps can switch this off with a checkbox, while some locked tunes keep it. Those rises say nothing about fuel quality or heat, so they are excluded from fuel and heat verdicts. This owner rarely revs past 5,200 rpm, with only two rises on one drive up there. A rise at high revs alone never opens a step and never changes a Verdict. Judge the tank by what the score does in normal driving and in traffic, where heat and lugging are the real movers."
+   "body": "Non-Si ECUs raise Knock Control on purpose above about 5,200 rpm. KTuner can remove it with Quick Enables, Eliminate Artificial Knock Control Rise; on this car's Starter map that box is off, so the rise is present, and the Car profile records the box. While it is off, those rises say nothing about fuel quality or heat and are excluded from fuel and heat verdicts; the forced rise costs about 2 degrees only at the top of a pull. If the box is ever ticked, a rise up there is real knock and counts like any other. This owner rarely revs past 5,200 rpm. Judge the tank by what the score does in normal driving and in traffic, where heat and lugging are the real movers."
   },
   {
    "id": "kc-iat-retard",
@@ -729,7 +833,7 @@
   },
   {
    "id": "kc-iat2-side",
-   "title": "IAT2 can sit before or after the intercooler, depending on the ECU",
+   "title": "IAT is after the intercooler, IAT2 before the turbo",
    "kind": "fact",
    "topics": [
     "heat",
@@ -740,13 +844,24 @@
     "gauges"
    ],
    "applies-when": "The owner asks what IAT2 measures, or a reply would judge the intercooler from IAT2.",
-   "numbers": [],
+   "numbers": [
+    {
+     "name": "ic-added-lo",
+     "value": 2.0,
+     "unit": "°C"
+    },
+    {
+     "name": "ic-added-hi",
+     "value": 6.0,
+     "unit": "°C"
+    }
+   ],
    "source": {
-    "doc": "docs/research/forum-afr-maf-research.md",
-    "section": "§1 claim 7"
+    "doc": "docs/research/fact-check.md",
+    "section": "§4"
    },
    "status": "current",
-   "body": "Owners of the same engine read IAT2 differently: on some ECUs it is the air after the intercooler, on others the air before it. An owner showed a Southeast Asian ECU reading it after the intercooler, matching another tuning tool, while another owner reports before. So the shop never assumes which side IAT2 is on for this car. Until it is confirmed, intercooler health is not judged from IAT2 alone. A clue in your own log: air before the intercooler, straight off the turbo, runs far hotter on a long pull than air after it."
+   "body": "On this car IAT is the manifold air after the intercooler and IAT2 the inlet air before the turbo. Under boost IAT reads 2 to 6 °C above IAT2, which only works that way round, and KTuner's gauge names and owners of the same engine label them the same. So the intercooler is judged by IAT minus IAT2 under boost: a gap that grows over back-to-back pulls means it is saturating. Some owners report other ECUs of this engine the other way round, so on a new car check the sign of the gap before trusting it."
   },
   {
    "id": "kc-ignition-formula",
@@ -803,9 +918,19 @@
      "unit": "deg"
     },
     {
-     "name": "final-logged-example",
-     "value": 19.0,
-     "unit": "deg"
+     "name": "kc-floor",
+     "value": 0.49,
+     "unit": "score"
+    },
+    {
+     "name": "kc-same-step-hi",
+     "value": 0.54,
+     "unit": "score"
+    },
+    {
+     "name": "retard-at-floor",
+     "value": 5.0,
+     "unit": "°"
     }
    ],
    "source": {
@@ -813,7 +938,27 @@
     "section": "§1"
    },
    "status": "current",
-   "body": "KTuner's help gives the rule: ignition table plus knock ignition limitation, minus knock retard, is the final timing, and the ECU uses the lesser of that and the table, so it never runs more than the table. Knock retard is Knock Control times the knock retard table. Their example: 21 plus 2 is 23 degrees; Knock Control 0.38 times a table value of 10 is 3.8 degrees of retard, so the final is 19.2. The log rounds both: retard shows as 3.5 and ignition as 19. So follow three gauges together, Actual Ign, Knock Control and Knock Retard, and never read meaning into a half-degree change. Intake-temperature corrections can also ride in the knock limit in the background."
+   "body": "KTuner's help gives the rule: ignition table plus knock ignition limitation, minus knock retard, is the final timing, and the ECU uses the lesser of that and the table, so it never runs more than the table. Knock retard is Knock Control times the knock retard table. Their example: 21 plus 2 is 23 degrees; Knock Control 0.38 times a table value of 10 is 3.8 degrees of retard, so the final is 19.2. The log shows both in steps and cuts down rather than rounding: the example logs the retard as 3.5. On TunerView, ignition and retard both move in half-degree steps; the one-degree ignition step is for OBD loggers. Under boost every score from 0.49 to 0.54 logs the same 5 degrees of retard, so read Knock Control itself. Follow Actual Ign, Knock Control and Knock Retard together, and never read meaning into a half-degree change."
+  },
+  {
+   "id": "kc-log-channels",
+   "title": "The gauges the shop reads, by their KTuner names",
+   "kind": "ktuner-howto",
+   "topics": [
+    "logging",
+    "tunerview",
+    "gauges",
+    "channels",
+    "datalog"
+   ],
+   "applies-when": "The owner asks which gauges to log, what a gauge abbreviation means, or why a log reads Can't tell.",
+   "numbers": [],
+   "source": {
+    "doc": "docs/research/ktuner-community-knowledge.md",
+    "section": "§4"
+   },
+   "status": "current",
+   "body": "KTuner's short gauge names and the CSV's long names are the same gauges. K.Cont is Knock Control, the Fuel-quality score; K.Ret is Knock Retard; A.Ignition is Ignition. TC.Target and TC.Press are Turbo Pressure Target and Turbo Pressure, read at the turbo before the throttle, while MAP is the manifold. EWG.Posi and EWG.Target are the wastegate; DIFPress and DIFP.Target are fuel pressure; Wideband is the O2 column. TPS is your foot on the pedal and TPS.C is TPS Command, the throttle plate. Log bank one trims only: a trim pinned at its lowest value is a wrong bank or a dead channel and reads Can't tell. Your logger already records all of these; still missing are AFR Command and MAF Hz, which the airflow and mixture checks need. Knock Count is a misfire count, not knock."
   },
   {
    "id": "kc-log-gate",
@@ -918,6 +1063,32 @@
    "body": "Ask which housing is fitted before touching anything: factory airbox, a street housing, or a larger Race housing. The street housings read near stock, so they keep the Factory curve. The Race curves read 1.29 to 1.43 times the air at the same sensor frequency, so a Race preset on a street housing runs about forty percent rich and the trims clamp trying to pull it back. After any airflow Flash, drive calm first and make no pull until trims sit within 5 percent. Trims beyond 10 percent across most of the range mean the curve is wrong for the hardware: revert, do not tune around it. Never infer the housing from the brand."
   },
   {
+   "id": "kc-maf-trim-direction",
+   "title": "Which way a trim moves the airflow curve",
+   "kind": "ktuner-howto",
+   "topics": [
+    "maf",
+    "afm",
+    "airflow",
+    "trims",
+    "calibration"
+   ],
+   "applies-when": "The owner asks how to correct MAF Scaling from a CSV, or which way a trim points.",
+   "numbers": [
+    {
+     "name": "ol-start-psi",
+     "value": 8.0,
+     "unit": "psi"
+    }
+   ],
+   "source": {
+    "doc": "docs/research/ktuner-community-knowledge.md",
+    "section": "§4"
+   },
+   "status": "current",
+   "body": "A positive trim means the ECU added fuel because it measured too little air, so the airflow points covering that airflow move up by about that percent; a negative trim moves them down. Average the trims at each point over warm, steady driving, and throw away the rows where you lift off or coast, which read zero or spike, and the first seconds after a throttle change. Reach the higher points with a slow, steady roll-on, not a stab. Apply part of the correction, keep the curve rising, flash, and log again. On this car only rows below about 8 psi count: above that the trims freeze. Owners and KTuner staff describe the same method."
+  },
+  {
    "id": "kc-maf-wot-calibration",
    "title": "How tuners correct the full-throttle end of the airflow curve",
    "kind": "ktuner-howto",
@@ -1007,6 +1178,25 @@
    "body": "On the 1.5T, the Knock Count and Misfire gauges are not the ones to judge by. KTuner support told owners that the count is tied to misfire detection, and experienced owners ignore both on this platform. The number that matters is the Fuel-quality score: it is the ECU's learned margin, and it is what the shop reads. AFR Adj is not the mixture to watch either: watch the measured AFR against AFR Command. So a rising count on its own is no reason to buy spark plugs or change the map; a step up in the Fuel-quality score is."
   },
   {
+   "id": "kc-octane-booster",
+   "title": "Don't add octane booster",
+   "kind": "owner-question",
+   "topics": [
+    "fuel",
+    "octane",
+    "booster",
+    "knock"
+   ],
+   "applies-when": "The owner asks about octane booster or additives.",
+   "numbers": [],
+   "source": {
+    "doc": "docs/research/ktuner-community-knowledge.md",
+    "section": "§4"
+   },
+   "status": "current",
+   "body": "Don't add octane booster. KTuner staff, a vendor and the long-running owner reliability thread all advise against it, and one engine failure in the largest owner census lists booster as a possible cause. If you suspect the fuel, try a different busy station, or E10 RON97, and compare tank against tank by Knock Control on matched drives."
+  },
+  {
    "id": "kc-oil",
    "title": "Oil grade and keeping the revs up",
    "kind": "rule",
@@ -1087,7 +1277,7 @@
   },
   {
    "id": "kc-open-loop-wot",
-   "title": "At full throttle the trims may stop correcting the mixture",
+   "title": "Under boost the trims stop correcting the mixture",
    "kind": "fact",
    "topics": [
     "mixture",
@@ -1100,13 +1290,24 @@
     "fuel"
    ],
    "applies-when": "The owner asks why trims look fine but full-throttle mixture is off, or what open loop means.",
-   "numbers": [],
+   "numbers": [
+    {
+     "name": "ol-start-psi",
+     "value": 8.0,
+     "unit": "psi"
+    },
+    {
+     "name": "ol-full-psi",
+     "value": 12.0,
+     "unit": "psi"
+    }
+   ],
    "source": {
-    "doc": "docs/research/forum-afr-maf-research.md",
-    "section": "§1 claims 1 and 2"
+    "doc": "docs/research/ktuner-community-knowledge.md",
+    "section": "§3"
    },
    "status": "current",
-   "body": "On the earlier-generation Civic 1.5T, owners report that ECUs sold outside the US go open loop at full throttle: short-term trim sits flat at zero, so the trims cannot correct the mixture there and only the airflow calibration (MAF Scaling) decides it. US ECUs stay in closed loop longer. It has not been confirmed for this car's ECU, so read it on your own log: if short-term trim is flat at zero under boost, full-throttle mixture is open loop, and your cruise trims say nothing about it. Then judge the measured mixture against AFR Command, the value the ECU actually asked for, which can differ from the table. Read the loop state from the trims, never from a status number alone."
+   "body": "On this car it is confirmed from the logs: short-term trim reads exactly zero on every warm row at 12 psi and above, and on nearly all from about 8 psi, while lower down it moves as normal. So under boost the ECU runs open loop: the trims neither correct the mixture nor say anything about the airflow curve there, and only the airflow calibration (MAF Scaling) and the map's target decide it. An airflow correction uses only rows below about 8 psi, where the trims are live. Judge full-throttle mixture against AFR Command, the value the ECU actually asked for, which can differ from the table. Read the loop state from the trims, never from a status number alone."
   },
   {
    "id": "kc-p0420",
@@ -1533,7 +1734,7 @@
   },
   {
    "id": "kc-table-wot",
-   "title": "WOT Enrich is the full-throttle mixture target",
+   "title": "WOT Enrichment is the full-throttle mixture target",
    "kind": "ktuner-howto",
    "topics": [
     "afr",
@@ -1543,7 +1744,7 @@
     "tables",
     "ktuner"
    ],
-   "applies-when": "The owner asks about AFR, lambda or WOT Enrich, or a mixture change is in the plan.",
+   "applies-when": "The owner asks about AFR, lambda or WOT Enrichment, or a mixture change is in the plan.",
    "numbers": [
     {
      "name": "wot-target-top",
@@ -1566,7 +1767,7 @@
     "section": "§2 Step C and §3"
    },
    "status": "current",
-   "body": "WOT Enrich (KTuner calls it Nominal Lambda for Component Protection) holds the mixture the ECU aims for, by rpm and load, Low and High cam. Cruise and light load stay at 14.7 for the catalyst; the highest load columns ask 11.0. It is a target, not a fix: change it only after the airflow table is right, with trims within 5 percent, and in steps of 0.2 AFR or less, watching Knock Control on every pull. Leaner at full throttle trades knock and exhaust heat margin for a little power; richer than asked is safe. Low and High are changed together."
+   "body": "WOT Enrichment (WOT Enrich in the map file; its load axis is the air per stroke, in milligrams) holds the mixture the ECU aims for, by rpm and load, Low and High cam. KTuner's Nominal Lambda for Component Protection page is for the Type R, not this car. Cruise and light load stay at 14.7 for the catalyst; the highest load columns ask 11.0. It is a target, not a fix: change it only after the airflow table is right, with trims within 5 percent, and in steps of 0.2 AFR or less, watching Knock Control on every pull. Leaner at full throttle trades knock and exhaust heat margin for a little power; richer than asked is safe. Low and High are changed together."
   },
   {
    "id": "kc-timing-percent",
@@ -1832,7 +2033,6 @@
    "kc-map-switching",
    "kc-misfire-gauges",
    "kc-oil",
-   "kc-open-loop-wot",
    "kc-ranges",
    "kc-rich-wot",
    "kc-table-ignition",
@@ -1854,6 +2054,7 @@
    "kc-trims"
   ],
   "100": [
+   "kc-boost-step",
    "kc-cvt",
    "kc-drive-brief"
   ],
@@ -1866,9 +2067,13 @@
    "kc-table-wot",
    "kc-wot-lean-timing"
   ],
+  "113": [
+   "kc-boost-step"
+  ],
   "12": [
    "kc-boost-step",
    "kc-downpipe",
+   "kc-open-loop-wot",
    "kc-rich-wot"
   ],
   "14": [
@@ -1904,6 +2109,8 @@
    "kc-dual-boost-targets",
    "kc-expectations",
    "kc-heat-soak",
+   "kc-high-rpm",
+   "kc-iat2-side",
    "kc-ignition-formula",
    "kc-maf-wot-calibration",
    "kc-map-switching",
@@ -1938,6 +2145,7 @@
   "23": [
    "kc-boost-step",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-heat-soak",
    "kc-ignition-formula",
    "kc-table-boost"
@@ -1978,6 +2186,7 @@
    "kc-oil"
   ],
   "35": [
+   "kc-boost-by-gear",
    "kc-heat-soak"
   ],
   "38": [
@@ -1987,9 +2196,11 @@
    "kc-heat-soak"
   ],
   "4": [
+   "kc-boost-by-gear",
    "kc-boost-step",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-iat-retard",
    "kc-table-boost"
   ],
@@ -2018,6 +2229,7 @@
    "kc-after-flash",
    "kc-fuel-test",
    "kc-heat-soak",
+   "kc-ignition-formula",
    "kc-ranges",
    "kc-timing-percent"
   ],
@@ -2050,6 +2262,9 @@
   "53": [
    "kc-ranges"
   ],
+  "54": [
+   "kc-ignition-formula"
+  ],
   "56": [
    "kc-boost-step",
    "kc-ranges"
@@ -2058,19 +2273,21 @@
    "kc-heat-soak"
   ],
   "58": [
-   "kc-after-flash",
    "kc-expectations"
+  ],
+  "59": [
+   "kc-after-flash"
   ],
   "5t": [
    "kc-dual-boost-targets",
    "kc-misfire-gauges",
-   "kc-open-loop-wot",
    "kc-wot-lean-timing"
   ],
   "6": [
    "kc-downpipe-catted-catless",
    "kc-fuel-test",
    "kc-heat-soak",
+   "kc-iat2-side",
    "kc-ranges",
    "kc-trims"
   ],
@@ -2084,7 +2301,6 @@
    "kc-ranges"
   ],
   "64": [
-   "kc-boost-step",
    "kc-heat-soak"
   ],
   "65": [
@@ -2129,6 +2345,8 @@
    "kc-expectations",
    "kc-fuel-test",
    "kc-ignition-formula",
+   "kc-maf-trim-direction",
+   "kc-open-loop-wot",
    "kc-trims"
   ],
   "80": [
@@ -2164,11 +2382,16 @@
   "91": [
    "kc-e10"
   ],
+  "94": [
+   "kc-boost-step"
+  ],
   "95": [
    "kc-cvt"
   ],
   "a": [
    "kc-after-flash",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-cvt",
    "kc-downpipe",
@@ -2177,18 +2400,23 @@
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat-retard",
    "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -2208,16 +2436,23 @@
    "kc-tune-order",
    "kc-wot-lean-timing"
   ],
+  "abbreviation": [
+   "kc-log-channels"
+  ],
   "about": [
+   "kc-boost-by-gear",
    "kc-downpipe-catted-catless",
    "kc-e10",
    "kc-expectations",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-high-rpm",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -2231,6 +2466,7 @@
   ],
   "above": [
    "kc-after-flash",
+   "kc-boost-by-gear",
    "kc-boost-step",
    "kc-cvt",
    "kc-downpipe",
@@ -2239,12 +2475,18 @@
    "kc-fuel-test",
    "kc-high-rpm",
    "kc-iat-retard",
+   "kc-iat2-side",
+   "kc-maf-trim-direction",
+   "kc-open-loop-wot",
    "kc-ranges",
    "kc-rich-wot"
   ],
   "acceleration": [
    "kc-heat-soak",
    "kc-shakedown"
+  ],
+  "accept": [
+   "kc-flash-howto"
   ],
   "across": [
    "kc-cvt",
@@ -2255,6 +2497,7 @@
    "kc-downpipe"
   ],
   "active": [
+   "kc-boost-by-gear",
    "kc-table-boost"
   ],
   "actual": [
@@ -2265,17 +2508,25 @@
    "kc-log-gate",
    "kc-open-loop-wot"
   ],
+  "actuator": [
+   "kc-boost-codes"
+  ],
   "add": [
+   "kc-octane-booster",
    "kc-table-ignition",
    "kc-timing-percent",
    "kc-tune-one-thing",
    "kc-wot-lean-timing"
   ],
   "added": [
+   "kc-maf-trim-direction",
    "kc-rich-wot"
   ],
   "adding": [
    "kc-e10"
+  ],
+  "additives": [
+   "kc-octane-booster"
   ],
   "adds": [
    "kc-boost-step",
@@ -2293,14 +2544,19 @@
   "adjustments": [
    "kc-quick-adjustments"
   ],
+  "advise": [
+   "kc-octane-booster"
+  ],
   "afm": [
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-open-loop-wot",
    "kc-table-maf"
   ],
   "afr": [
    "kc-drive-brief",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
@@ -2313,10 +2569,12 @@
    "kc-after-flash",
    "kc-downpipe",
    "kc-drive-brief",
+   "kc-flash-howto",
    "kc-heat-soak",
    "kc-iat-retard",
    "kc-iat2-side",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-p0420",
    "kc-shakedown",
    "kc-table-boost",
@@ -2331,6 +2589,7 @@
    "kc-after-flash",
    "kc-fuel-test",
    "kc-log-gate",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-table-maf",
    "kc-tune-one-thing"
@@ -2343,6 +2602,7 @@
    "kc-log-gate",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
    "kc-open-loop-wot",
    "kc-power-sources",
@@ -2359,10 +2619,12 @@
    "kc-iat-retard",
    "kc-iat2-side",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-power-sources",
    "kc-shakedown",
    "kc-table-maf",
+   "kc-table-wot",
    "kc-trim-cause",
    "kc-trims",
    "kc-tune-order"
@@ -2372,9 +2634,11 @@
   ],
   "airflow": [
    "kc-e10",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-open-loop-wot",
    "kc-table-maf",
@@ -2391,13 +2655,14 @@
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-expectations",
+   "kc-log-channels",
    "kc-map-switching",
+   "kc-octane-booster",
    "kc-oil",
+   "kc-open-loop-wot",
    "kc-trims"
   ],
   "alone": [
-   "kc-high-rpm",
-   "kc-iat2-side",
    "kc-maf-data-rules",
    "kc-open-loop-wot",
    "kc-trims",
@@ -2406,12 +2671,12 @@
   "already": [
    "kc-downpipe",
    "kc-expectations",
+   "kc-log-channels",
    "kc-timing-percent",
    "kc-tune-one-thing"
   ],
   "also": [
-   "kc-downpipe-catted-catless",
-   "kc-ignition-formula"
+   "kc-downpipe-catted-catless"
   ],
   "always": [
    "kc-downpipe-catted-catless"
@@ -2425,10 +2690,10 @@
    "kc-drive-brief",
    "kc-expectations",
    "kc-heat-soak",
-   "kc-iat2-side",
    "kc-maf-data-rules",
    "kc-maf-housing",
    "kc-oil",
+   "kc-open-loop-wot",
    "kc-p0420",
    "kc-rich-wot",
    "kc-table-maf",
@@ -2436,6 +2701,8 @@
   ],
   "and": [
    "kc-after-flash",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-cvt",
    "kc-downpipe",
@@ -2444,17 +2711,23 @@
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat-retard",
+   "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -2476,7 +2749,6 @@
   ],
   "another": [
    "kc-heat-soak",
-   "kc-iat2-side",
    "kc-maf-wot-calibration",
    "kc-tune-order"
   ],
@@ -2486,6 +2758,7 @@
   "any": [
    "kc-cvt",
    "kc-heat-soak",
+   "kc-high-rpm",
    "kc-iat-retard",
    "kc-log-gate",
    "kc-maf-data-rules",
@@ -2497,6 +2770,7 @@
   ],
   "anything": [
    "kc-maf-housing",
+   "kc-open-loop-wot",
    "kc-table-maf",
    "kc-trims",
    "kc-tune-one-thing",
@@ -2509,8 +2783,10 @@
    "kc-oil"
   ],
   "app": [
+   "kc-boost-by-gear",
    "kc-cvt",
    "kc-drive-brief",
+   "kc-final-boost-target",
    "kc-quick-adjustments",
    "kc-table-ignition"
   ],
@@ -2523,6 +2799,7 @@
    "kc-rich-wot"
   ],
   "apply": [
+   "kc-maf-trim-direction",
    "kc-tune-one-thing"
   ],
   "applying": [
@@ -2532,10 +2809,14 @@
    "kc-table-boost"
   ],
   "are": [
+   "kc-boost-by-gear",
+   "kc-flash-howto",
    "kc-high-rpm",
+   "kc-log-channels",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-open-loop-wot",
    "kc-ranges",
    "kc-table-maf",
    "kc-table-wot",
@@ -2544,12 +2825,14 @@
    "kc-trims"
   ],
   "around": [
-   "kc-after-flash",
    "kc-maf-data-rules",
    "kc-maf-housing"
   ],
   "arrives": [
    "kc-downpipe"
+  ],
+  "artificial": [
+   "kc-high-rpm"
   ],
   "as": [
    "kc-cvt",
@@ -2557,11 +2840,10 @@
    "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-map-switching",
+   "kc-octane-booster",
+   "kc-open-loop-wot",
    "kc-ranges",
    "kc-table-boost"
-  ],
-  "asian": [
-   "kc-iat2-side"
   ],
   "ask": [
    "kc-downpipe-catted-catless",
@@ -2575,6 +2857,7 @@
    "kc-table-wot"
   ],
   "asks": [
+   "kc-boost-by-gear",
    "kc-boost-step",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
@@ -2582,15 +2865,19 @@
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-fuel-test",
    "kc-iat-retard",
    "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -2607,8 +2894,8 @@
    "kc-tune-order",
    "kc-wot-lean-timing"
   ],
-  "assumes": [
-   "kc-iat2-side"
+  "assist": [
+   "kc-flash-howto"
   ],
   "at": [
    "kc-after-flash",
@@ -2617,13 +2904,16 @@
    "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat-retard",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -2637,8 +2927,14 @@
    "kc-trims",
    "kc-tune-one-thing"
   ],
+  "atmospheric": [
+   "kc-boost-by-gear"
+  ],
   "attach": [
    "kc-dual-boost-targets"
+  ],
+  "average": [
+   "kc-maf-trim-direction"
   ],
   "averaged": [
    "kc-maf-data-rules"
@@ -2648,28 +2944,33 @@
   ],
   "away": [
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-timing-percent"
+  ],
+  "axis": [
+   "kc-table-wot"
   ],
   "back": [
    "kc-after-flash",
    "kc-cvt",
    "kc-downpipe",
+   "kc-flash-howto",
    "kc-fuel-test",
+   "kc-iat2-side",
    "kc-maf-housing",
    "kc-shakedown",
    "kc-trim-cause",
    "kc-trims"
-  ],
-  "background": [
-   "kc-ignition-formula"
   ],
   "band": [
    "kc-oil",
    "kc-trim-cause",
    "kc-trims"
   ],
+  "bank": [
+   "kc-log-channels"
+  ],
   "base": [
-   "kc-high-rpm",
    "kc-table-ignition",
    "kc-timing-percent"
   ],
@@ -2684,6 +2985,9 @@
    "kc-table-ignition",
    "kc-wot-lean-timing"
   ],
+  "battery": [
+   "kc-flash-howto"
+  ],
   "be": [
    "kc-boost-step",
    "kc-downpipe-catted-catless",
@@ -2694,10 +2998,8 @@
   ],
   "because": [
    "kc-after-flash",
-   "kc-fuel-test"
-  ],
-  "been": [
-   "kc-open-loop-wot"
+   "kc-fuel-test",
+   "kc-maf-trim-direction"
   ],
   "before": [
    "kc-after-flash",
@@ -2705,6 +3007,7 @@
    "kc-heat-soak",
    "kc-iat-retard",
    "kc-iat2-side",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
@@ -2725,9 +3028,12 @@
   "below": [
    "kc-after-flash",
    "kc-boost-step",
+   "kc-final-boost-target",
    "kc-fuel-test",
    "kc-heat-soak",
+   "kc-maf-trim-direction",
    "kc-oil",
+   "kc-open-loop-wot",
    "kc-ranges"
   ],
   "bend": [
@@ -2767,13 +3073,18 @@
    "kc-tune-one-thing"
   ],
   "boost": [
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-cvt",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-dual-boost-targets",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-heat-soak",
+   "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-map-switching",
    "kc-open-loop-wot",
    "kc-power-sources",
@@ -2786,12 +3097,18 @@
   "boosted": [
    "kc-timing-percent"
   ],
+  "booster": [
+   "kc-octane-booster"
+  ],
   "both": [
    "kc-downpipe",
    "kc-fuel-test",
    "kc-ignition-formula",
    "kc-misfire-gauges",
    "kc-p0420"
+  ],
+  "box": [
+   "kc-high-rpm"
   ],
   "brake": [
    "kc-cvt"
@@ -2809,6 +3126,9 @@
   "burns": [
    "kc-e10"
   ],
+  "busy": [
+   "kc-octane-booster"
+  ],
   "but": [
    "kc-cvt",
    "kc-open-loop-wot",
@@ -2824,13 +3144,19 @@
    "kc-misfire-gauges"
   ],
   "by": [
+   "kc-boost-by-gear",
    "kc-drive-brief",
    "kc-e10",
+   "kc-final-boost-target",
    "kc-fuel-test",
    "kc-high-rpm",
+   "kc-iat2-side",
+   "kc-log-channels",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-power-sources",
    "kc-table-boost",
    "kc-table-ignition",
@@ -2843,10 +3169,15 @@
    "kc-drive-brief",
    "kc-fuel-test",
    "kc-heat-soak",
-   "kc-iat-retard"
+   "kc-iat-retard",
+   "kc-iat2-side",
+   "kc-log-channels"
   ],
   "cabin": [
    "kc-downpipe-catted-catless"
+  ],
+  "cable": [
+   "kc-flash-howto"
   ],
   "calculation": [
    "kc-table-maf"
@@ -2856,14 +3187,12 @@
   ],
   "calibration": [
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-open-loop-wot"
   ],
   "called": [
    "kc-table-maf"
-  ],
-  "calls": [
-   "kc-table-wot"
   ],
   "calm": [
    "kc-after-flash",
@@ -2884,17 +3213,19 @@
    "kc-table-wot"
   ],
   "came": [
-   "kc-downpipe"
+   "kc-downpipe",
+   "kc-flash-howto"
   ],
   "can": [
+   "kc-boost-codes",
    "kc-cvt",
    "kc-downpipe-catted-catless",
    "kc-drive-brief",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-high-rpm",
    "kc-iat-retard",
-   "kc-iat2-side",
-   "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-open-loop-wot",
@@ -2910,10 +3241,10 @@
   ],
   "cannot": [
    "kc-map-switching",
-   "kc-open-loop-wot",
    "kc-trims"
   ],
   "cap": [
+   "kc-final-boost-target",
    "kc-power-sources",
    "kc-table-boost"
   ],
@@ -2921,16 +3252,20 @@
    "kc-power-sources"
   ],
   "caps": [
+   "kc-final-boost-target",
    "kc-power-sources"
   ],
   "car": [
    "kc-cvt",
    "kc-downpipe",
    "kc-expectations",
+   "kc-flash-howto",
    "kc-heat-soak",
+   "kc-high-rpm",
    "kc-iat-retard",
    "kc-iat2-side",
    "kc-log-gate",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-oil",
@@ -2939,6 +3274,7 @@
    "kc-quick-adjustments",
    "kc-ranges",
    "kc-rich-wot",
+   "kc-table-wot",
    "kc-timing-percent",
    "kc-trims",
    "kc-wot-lean-timing"
@@ -2956,6 +3292,9 @@
   "carry": [
    "kc-map-switching"
   ],
+  "cars": [
+   "kc-boost-step"
+  ],
   "case": [
    "kc-oil"
   ],
@@ -2972,6 +3311,7 @@
    "kc-p0420"
   ],
   "cause": [
+   "kc-octane-booster",
    "kc-quick-adjustments",
    "kc-trim-cause",
    "kc-trims",
@@ -2982,6 +3322,7 @@
   ],
   "cel": [
    "kc-downpipe-catted-catless",
+   "kc-flash-howto",
    "kc-p0420"
   ],
   "cell": [
@@ -2995,14 +3336,20 @@
    "kc-timing-percent",
    "kc-tune-one-thing"
   ],
+  "census": [
+   "kc-octane-booster"
+  ],
   "change": [
    "kc-after-flash",
+   "kc-boost-codes",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-expectations",
+   "kc-flash-howto",
    "kc-iat-retard",
    "kc-ignition-formula",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
    "kc-quick-adjustments",
@@ -3022,42 +3369,50 @@
   "changes": [
    "kc-downpipe",
    "kc-e10",
-   "kc-high-rpm",
    "kc-maf-data-rules",
    "kc-map-switching",
    "kc-tune-one-thing"
   ],
+  "changing": [
+   "kc-final-boost-target"
+  ],
   "channel": [
    "kc-dual-boost-targets",
+   "kc-log-channels",
    "kc-map-switching",
    "kc-rich-wot",
    "kc-timing-percent"
   ],
+  "channels": [
+   "kc-log-channels"
+  ],
   "charge": [
+   "kc-boost-codes",
    "kc-power-sources"
+  ],
+  "charger": [
+   "kc-flash-howto"
   ],
   "cheaper": [
    "kc-power-sources"
   ],
   "check": [
    "kc-downpipe",
+   "kc-iat2-side",
    "kc-p0420",
    "kc-trim-cause"
-  ],
-  "checkbox": [
-   "kc-high-rpm"
   ],
   "checked": [
    "kc-log-gate"
   ],
   "checks": [
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-wot-calibration",
    "kc-p0420"
   ],
   "civic": [
-   "kc-downpipe",
-   "kc-open-loop-wot"
+   "kc-downpipe"
   ],
   "claim": [
    "kc-downpipe-catted-catless"
@@ -3077,16 +3432,23 @@
    "kc-table-boost"
   ],
   "closed": [
-   "kc-boost-step",
    "kc-e10",
    "kc-open-loop-wot"
   ],
-  "clue": [
-   "kc-iat2-side"
+  "coast": [
+   "kc-maf-trim-direction"
   ],
   "code": [
    "kc-downpipe",
+   "kc-downpipe-catted-catless",
    "kc-p0420"
+  ],
+  "codebase": [
+   "kc-flash-howto"
+  ],
+  "codes": [
+   "kc-boost-codes",
+   "kc-flash-howto"
   ],
   "cold": [
    "kc-downpipe",
@@ -3095,6 +3457,10 @@
   ],
   "collects": [
    "kc-table-ignition"
+  ],
+  "column": [
+   "kc-final-boost-target",
+   "kc-log-channels"
   ],
   "columns": [
    "kc-table-wot"
@@ -3111,6 +3477,7 @@
   ],
   "command": [
    "kc-drive-brief",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
@@ -3121,11 +3488,16 @@
   "commanded": [
    "kc-maf-wot-calibration"
   ],
+  "commands": [
+   "kc-boost-codes"
+  ],
   "commonly": [
    "kc-table-maf"
   ],
   "compare": [
-   "kc-dual-boost-targets"
+   "kc-boost-codes",
+   "kc-dual-boost-targets",
+   "kc-octane-booster"
   ],
   "component": [
    "kc-table-wot"
@@ -3134,8 +3506,10 @@
    "kc-tune-order"
   ],
   "confirmed": [
-   "kc-iat2-side",
    "kc-open-loop-wot"
+  ],
+  "cont": [
+   "kc-log-channels"
   ],
   "control": [
    "kc-boost-step",
@@ -3143,6 +3517,8 @@
    "kc-high-rpm",
    "kc-iat-retard",
    "kc-ignition-formula",
+   "kc-log-channels",
+   "kc-octane-booster",
    "kc-ranges",
    "kc-table-ignition",
    "kc-table-wot",
@@ -3169,6 +3545,7 @@
    "kc-maf-wot-calibration"
   ],
   "correct": [
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-open-loop-wot"
   ],
@@ -3182,10 +3559,9 @@
   ],
   "correction": [
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
+   "kc-open-loop-wot",
    "kc-table-maf"
-  ],
-  "corrections": [
-   "kc-ignition-formula"
   ],
   "correctly": [
    "kc-shakedown",
@@ -3202,16 +3578,23 @@
    "kc-downpipe-catted-catless",
    "kc-fuel-test",
    "kc-heat-soak",
+   "kc-high-rpm",
    "kc-iat-retard",
    "kc-ranges",
    "kc-rich-wot"
   ],
   "count": [
    "kc-high-rpm",
+   "kc-log-channels",
+   "kc-maf-trim-direction",
    "kc-misfire-gauges",
    "kc-tune-one-thing"
   ],
+  "counts": [
+   "kc-high-rpm"
+  ],
   "covering": [
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration"
   ],
   "credited": [
@@ -3222,7 +3605,6 @@
    "kc-e10",
    "kc-expectations",
    "kc-map-switching",
-   "kc-open-loop-wot",
    "kc-table-wot",
    "kc-timing-percent",
    "kc-trims"
@@ -3232,6 +3614,8 @@
   ],
   "csv": [
    "kc-drive-brief",
+   "kc-log-channels",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration"
   ],
   "cure": [
@@ -3241,7 +3625,9 @@
    "kc-e10",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
+   "kc-open-loop-wot",
    "kc-table-maf",
    "kc-trim-cause"
   ],
@@ -3255,7 +3641,11 @@
    "kc-maf-wot-calibration",
    "kc-ranges"
   ],
+  "cuts": [
+   "kc-ignition-formula"
+  ],
   "cvt": [
+   "kc-boost-by-gear",
    "kc-cvt",
    "kc-power-sources",
    "kc-quick-adjustments",
@@ -3278,18 +3668,25 @@
   ],
   "datalog": [
    "kc-boost-step",
-   "kc-ignition-formula"
+   "kc-ignition-formula",
+   "kc-log-channels"
   ],
   "days": [
    "kc-downpipe-catted-catless",
    "kc-dual-boost-targets",
    "kc-p0420"
   ],
+  "dead": [
+   "kc-boost-codes",
+   "kc-log-channels"
+  ],
+  "decide": [
+   "kc-open-loop-wot"
+  ],
   "decided": [
    "kc-ignition-formula"
   ],
   "decides": [
-   "kc-open-loop-wot",
    "kc-tune-one-thing"
   ],
   "degree": [
@@ -3299,6 +3696,7 @@
   ],
   "degrees": [
    "kc-fuel-test",
+   "kc-high-rpm",
    "kc-iat-retard",
    "kc-ignition-formula",
    "kc-ranges",
@@ -3308,8 +3706,8 @@
   "delivers": [
    "kc-e10"
   ],
-  "depending": [
-   "kc-iat2-side"
+  "describe": [
+   "kc-maf-trim-direction"
   ],
   "detection": [
    "kc-misfire-gauges",
@@ -3327,16 +3725,21 @@
    "kc-fuel-test"
   ],
   "different": [
-   "kc-fuel-test"
+   "kc-fuel-test",
+   "kc-octane-booster"
   ],
-  "differently": [
-   "kc-iat2-side"
+  "difp": [
+   "kc-log-channels"
+  ],
+  "difpress": [
+   "kc-log-channels"
   ],
   "digitized": [
    "kc-map-switching",
    "kc-table-boost"
   ],
   "direction": [
+   "kc-maf-trim-direction",
    "kc-wot-lean-timing"
   ],
   "disables": [
@@ -3349,7 +3752,9 @@
   ],
   "does": [
    "kc-after-flash",
+   "kc-boost-by-gear",
    "kc-dual-boost-targets",
+   "kc-final-boost-target",
    "kc-high-rpm",
    "kc-iat-retard",
    "kc-p0420",
@@ -3360,22 +3765,28 @@
    "kc-trim-cause"
   ],
   "doesn": [
+   "kc-boost-codes",
    "kc-downpipe",
    "kc-table-ignition"
   ],
   "don": [
    "kc-dual-boost-targets",
+   "kc-octane-booster",
    "kc-table-ignition"
   ],
   "done": [
    "kc-maf-wot-calibration"
   ],
   "down": [
+   "kc-ignition-formula",
+   "kc-maf-trim-direction",
    "kc-oil",
+   "kc-open-loop-wot",
    "kc-power-sources",
    "kc-table-boost"
   ],
   "downpipe": [
+   "kc-boost-codes",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-expectations",
@@ -3399,12 +3810,19 @@
    "kc-trims",
    "kc-wot-lean-timing"
   ],
+  "driven": [
+   "kc-flash-howto"
+  ],
+  "driver": [
+   "kc-flash-howto"
+  ],
   "drives": [
    "kc-cvt",
    "kc-dual-boost-targets",
    "kc-expectations",
    "kc-fuel-test",
    "kc-heat-soak",
+   "kc-octane-booster",
    "kc-ranges"
   ],
   "driving": [
@@ -3412,6 +3830,7 @@
    "kc-cvt",
    "kc-high-rpm",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-map-switching",
    "kc-ranges",
    "kc-shakedown",
@@ -3423,8 +3842,14 @@
   "drops": [
    "kc-e10"
   ],
+  "dtc": [
+   "kc-boost-codes"
+  ],
   "dual": [
    "kc-dual-boost-targets"
+  ],
+  "during": [
+   "kc-flash-howto"
   ],
   "dyno": [
    "kc-downpipe",
@@ -3438,6 +3863,7 @@
    "kc-e10",
    "kc-fuel-test",
    "kc-iat-retard",
+   "kc-octane-booster",
    "kc-power-sources",
    "kc-rich-wot",
    "kc-timing-percent",
@@ -3445,11 +3871,11 @@
    "kc-wot-lean-timing"
   ],
   "each": [
-   "kc-boost-step",
    "kc-downpipe-catted-catless",
    "kc-dual-boost-targets",
    "kc-fuel-test",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-map-switching",
    "kc-power-sources",
    "kc-quick-adjustments",
@@ -3459,7 +3885,6 @@
   ],
   "earlier": [
    "kc-downpipe",
-   "kc-open-loop-wot",
    "kc-shakedown",
    "kc-trim-cause"
   ],
@@ -3476,13 +3901,14 @@
    "kc-e10"
   ],
   "ecu": [
+   "kc-boost-codes",
    "kc-cvt",
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-fuel-test",
-   "kc-iat2-side",
    "kc-ignition-formula",
    "kc-log-gate",
+   "kc-maf-trim-direction",
    "kc-misfire-gauges",
    "kc-open-loop-wot",
    "kc-power-sources",
@@ -3495,12 +3921,14 @@
   ],
   "ecus": [
    "kc-high-rpm",
-   "kc-iat2-side",
-   "kc-open-loop-wot"
+   "kc-iat2-side"
   ],
   "edit": [
    "kc-table-ignition",
    "kc-table-maf"
+  ],
+  "edits": [
+   "kc-final-boost-target"
   ],
   "efficiency": [
    "kc-p0420"
@@ -3512,12 +3940,18 @@
    "kc-misfire-gauges",
    "kc-trims"
   ],
+  "eliminate": [
+   "kc-high-rpm"
+  ],
   "else": [
    "kc-e10",
    "kc-table-maf"
   ],
   "empty": [
    "kc-drive-brief"
+  ],
+  "enables": [
+   "kc-high-rpm"
   ],
   "end": [
    "kc-cvt",
@@ -3531,9 +3965,11 @@
   ],
   "engine": [
    "kc-downpipe",
+   "kc-flash-howto",
    "kc-iat2-side",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration",
+   "kc-octane-booster",
    "kc-oil",
    "kc-p0420",
    "kc-shakedown",
@@ -3546,10 +3982,14 @@
   "enrich": [
    "kc-table-wot"
   ],
+  "enrichment": [
+   "kc-table-wot"
+  ],
   "entry": [
    "kc-p0420"
   ],
   "error": [
+   "kc-flash-howto",
    "kc-tune-order"
   ],
   "estimate": [
@@ -3566,14 +4006,19 @@
   ],
   "ever": [
    "kc-e10",
+   "kc-high-rpm",
    "kc-table-ignition"
   ],
   "every": [
    "kc-after-flash",
+   "kc-boost-by-gear",
    "kc-drive-brief",
+   "kc-final-boost-target",
    "kc-heat-soak",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-wot-calibration",
+   "kc-open-loop-wot",
    "kc-quick-adjustments",
    "kc-rich-wot",
    "kc-table-maf",
@@ -3586,14 +4031,20 @@
    "kc-table-boost"
   ],
   "everywhere": [
+   "kc-boost-by-gear",
    "kc-ranges",
    "kc-trim-cause"
   ],
   "evidence": [
    "kc-tune-one-thing"
   ],
+  "ewg": [
+   "kc-boost-codes",
+   "kc-log-channels"
+  ],
   "exactly": [
-   "kc-after-flash"
+   "kc-after-flash",
+   "kc-open-loop-wot"
   ],
   "example": [
    "kc-ignition-formula"
@@ -3627,7 +4078,9 @@
    "kc-fuel-test"
   ],
   "explains": [
+   "kc-boost-by-gear",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-quick-adjustments"
   ],
   "export": [
@@ -3645,15 +4098,23 @@
   ],
   "factory": [
    "kc-cvt",
+   "kc-flash-howto",
    "kc-maf-housing",
    "kc-power-sources",
    "kc-quick-adjustments",
    "kc-table-boost",
    "kc-table-maf"
   ],
+  "failed": [
+   "kc-flash-howto"
+  ],
+  "fails": [
+   "kc-flash-howto"
+  ],
   "failure": [
    "kc-boost-step",
-   "kc-log-gate"
+   "kc-log-gate",
+   "kc-octane-booster"
   ],
   "failures": [
    "kc-cvt"
@@ -3663,7 +4124,6 @@
    "kc-heat-soak"
   ],
   "far": [
-   "kc-iat2-side",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
    "kc-trims"
@@ -3688,6 +4148,7 @@
    "kc-iat-retard"
   ],
   "few": [
+   "kc-downpipe-catted-catless",
    "kc-iat-retard",
    "kc-maf-data-rules"
   ],
@@ -3695,11 +4156,13 @@
    "kc-oil"
   ],
   "fifteen": [
-   "kc-after-flash"
+   "kc-after-flash",
+   "kc-flash-howto"
   ],
   "file": [
    "kc-expectations",
    "kc-shakedown",
+   "kc-table-wot",
    "kc-trim-cause"
   ],
   "fill": [
@@ -3709,6 +4172,7 @@
   "final": [
    "kc-boost-step",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-ignition-formula",
    "kc-table-boost",
    "kc-table-ignition"
@@ -3727,14 +4191,20 @@
   "fined": [
    "kc-downpipe-catted-catless"
   ],
+  "finishes": [
+   "kc-flash-howto"
+  ],
   "fire": [
    "kc-power-sources"
   ],
   "first": [
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-drive-brief",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-oil",
    "kc-shakedown",
    "kc-table-maf",
@@ -3759,6 +4229,7 @@
    "kc-oil"
   ],
   "fix": [
+   "kc-boost-codes",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-table-maf",
@@ -3780,21 +4251,25 @@
    "kc-after-flash",
    "kc-drive-brief",
    "kc-dual-boost-targets",
+   "kc-flash-howto",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-shakedown",
    "kc-trim-cause",
    "kc-tune-one-thing"
   ],
   "flashes": [
+   "kc-flash-howto",
    "kc-table-maf"
   ],
   "flashing": [
+   "kc-flash-howto",
    "kc-shakedown"
   ],
   "flat": [
+   "kc-boost-by-gear",
    "kc-expectations",
-   "kc-open-loop-wot",
    "kc-table-boost"
   ],
   "floor": [
@@ -3816,6 +4291,7 @@
    "kc-map-switching"
   ],
   "follow": [
+   "kc-boost-codes",
    "kc-ignition-formula"
   ],
   "follows": [
@@ -3824,10 +4300,13 @@
    "kc-table-boost"
   ],
   "foot": [
+   "kc-log-channels",
    "kc-oil"
   ],
   "for": [
    "kc-after-flash",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-cvt",
    "kc-downpipe",
@@ -3835,7 +4314,8 @@
    "kc-drive-brief",
    "kc-e10",
    "kc-expectations",
-   "kc-iat2-side",
+   "kc-flash-howto",
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-housing",
    "kc-oil",
@@ -3851,6 +4331,9 @@
    "kc-table-wot",
    "kc-trim-cause",
    "kc-wot-lean-timing"
+  ],
+  "forced": [
+   "kc-high-rpm"
   ],
   "forces": [
    "kc-power-sources"
@@ -3871,6 +4354,9 @@
   "fourth": [
    "kc-tune-order"
   ],
+  "freeze": [
+   "kc-maf-trim-direction"
+  ],
   "frequency": [
    "kc-maf-housing",
    "kc-table-maf"
@@ -3883,10 +4369,14 @@
    "kc-downpipe-catted-catless",
    "kc-drive-brief",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-high-rpm",
    "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-open-loop-wot",
    "kc-power-sources",
@@ -3918,8 +4408,11 @@
    "kc-e10",
    "kc-fuel-test",
    "kc-high-rpm",
+   "kc-log-channels",
+   "kc-maf-trim-direction",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-open-loop-wot",
    "kc-p0420",
    "kc-power-sources",
@@ -3962,7 +4455,8 @@
   ],
   "gap": [
    "kc-expectations",
-   "kc-fuel-test"
+   "kc-fuel-test",
+   "kc-iat2-side"
   ],
   "gas": [
    "kc-downpipe-catted-catless",
@@ -3977,24 +4471,31 @@
   "gates": [
    "kc-boost-step"
   ],
+  "gateway": [
+   "kc-flash-howto"
+  ],
   "gauge": [
    "kc-drive-brief",
+   "kc-iat2-side",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-misfire-gauges"
   ],
   "gauges": [
    "kc-iat2-side",
-   "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-misfire-gauges"
   ],
   "gear": [
+   "kc-boost-by-gear",
+   "kc-final-boost-target",
    "kc-maf-wot-calibration",
    "kc-table-boost",
    "kc-tune-one-thing"
   ],
   "generation": [
-   "kc-open-loop-wot"
+   "kc-boost-codes"
   ],
   "get": [
    "kc-power-sources"
@@ -4010,8 +4511,7 @@
    "kc-ignition-formula"
   ],
   "go": [
-   "kc-drive-brief",
-   "kc-open-loop-wot"
+   "kc-drive-brief"
   ],
   "goes": [
    "kc-map-switching"
@@ -4033,6 +4533,9 @@
   "grams": [
    "kc-table-maf"
   ],
+  "grows": [
+   "kc-iat2-side"
+  ],
   "guide": [
    "kc-maf-data-rules"
   ],
@@ -4044,6 +4547,7 @@
    "kc-expectations"
   ],
   "half": [
+   "kc-boost-step",
    "kc-heat-soak",
    "kc-ignition-formula",
    "kc-rich-wot"
@@ -4064,25 +4568,28 @@
    "kc-wot-lean-timing"
   ],
   "hardware": [
+   "kc-boost-codes",
    "kc-maf-housing"
   ],
   "has": [
    "kc-downpipe",
    "kc-expectations",
-   "kc-open-loop-wot",
    "kc-ranges",
    "kc-table-boost",
    "kc-wot-lean-timing"
   ],
+  "have": [
+   "kc-flash-howto"
+  ],
   "hcf": [
    "kc-cvt"
+  ],
+  "header": [
+   "kc-final-boost-target"
   ],
   "headroom": [
    "kc-expectations",
    "kc-log-gate"
-  ],
-  "health": [
-   "kc-iat2-side"
   ],
   "healthy": [
    "kc-trims",
@@ -4108,13 +4615,15 @@
    "kc-iat-retard"
   ],
   "heavy": [
-   "kc-cvt"
+   "kc-cvt",
+   "kc-downpipe-catted-catless"
   ],
   "held": [
    "kc-boost-step",
    "kc-ranges"
   ],
   "help": [
+   "kc-flash-howto",
    "kc-ignition-formula",
    "kc-quick-adjustments"
   ],
@@ -4132,7 +4641,6 @@
    "kc-p0420"
   ],
   "high": [
-   "kc-after-flash",
    "kc-boost-step",
    "kc-high-rpm",
    "kc-iat-retard",
@@ -4143,12 +4651,16 @@
    "kc-timing-percent"
   ],
   "higher": [
+   "kc-maf-trim-direction",
    "kc-ranges",
    "kc-trim-cause"
   ],
   "highest": [
    "kc-expectations",
    "kc-table-wot"
+  ],
+  "highway": [
+   "kc-downpipe-catted-catless"
   ],
   "his": [
    "kc-wot-lean-timing"
@@ -4157,14 +4669,17 @@
    "kc-p0420"
   ],
   "hold": [
+   "kc-boost-codes",
    "kc-drive-brief",
    "kc-map-switching",
    "kc-table-boost"
   ],
   "holds": [
+   "kc-boost-by-gear",
    "kc-boost-step",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
+   "kc-final-boost-target",
    "kc-map-switching",
    "kc-table-wot",
    "kc-timing-percent"
@@ -4186,9 +4701,6 @@
    "kc-iat-retard",
    "kc-power-sources"
   ],
-  "hotter": [
-   "kc-iat2-side"
-  ],
   "hottest": [
    "kc-ranges"
   ],
@@ -4206,16 +4718,21 @@
    "kc-table-maf"
   ],
   "how": [
+   "kc-boost-by-gear",
    "kc-boost-step",
    "kc-drive-brief",
    "kc-dual-boost-targets",
    "kc-ignition-formula",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-power-sources",
    "kc-table-ignition",
    "kc-tune-one-thing"
+  ],
+  "howto": [
+   "kc-flash-howto"
   ],
   "hp": [
    "kc-expectations"
@@ -4225,6 +4742,7 @@
   ],
   "hz": [
    "kc-drive-brief",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-wot-calibration"
   ],
@@ -4250,7 +4768,9 @@
    "kc-after-flash",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
-   "kc-open-loop-wot",
+   "kc-flash-howto",
+   "kc-high-rpm",
+   "kc-octane-booster",
    "kc-quick-adjustments",
    "kc-shakedown"
   ],
@@ -4259,8 +4779,10 @@
    "kc-table-ignition"
   ],
   "ignition": [
+   "kc-flash-howto",
    "kc-iat-retard",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-map-switching",
    "kc-oil",
    "kc-power-sources",
@@ -4279,25 +4801,26 @@
   ],
   "in": [
    "kc-after-flash",
-   "kc-boost-step",
+   "kc-boost-codes",
    "kc-cvt",
    "kc-downpipe",
+   "kc-downpipe-catted-catless",
    "kc-drive-brief",
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat-retard",
-   "kc-iat2-side",
    "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
-   "kc-open-loop-wot",
    "kc-p0420",
    "kc-power-sources",
    "kc-quick-adjustments",
@@ -4313,14 +4836,21 @@
   "included": [
    "kc-drive-brief"
   ],
+  "incoming": [
+   "kc-final-boost-target"
+  ],
   "independent": [
    "kc-downpipe"
   ],
   "infer": [
    "kc-maf-housing"
   ],
+  "info": [
+   "kc-flash-howto"
+  ],
   "inlet": [
-   "kc-heat-soak"
+   "kc-heat-soak",
+   "kc-iat2-side"
   ],
   "inside": [
    "kc-fuel-test"
@@ -4342,7 +4872,6 @@
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-iat-retard",
-   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
@@ -4364,6 +4893,8 @@
   ],
   "is": [
    "kc-after-flash",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-cvt",
    "kc-downpipe",
@@ -4372,11 +4903,15 @@
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-heat-soak",
+   "kc-high-rpm",
    "kc-iat-retard",
    "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
@@ -4403,11 +4938,15 @@
   ],
   "it": [
    "kc-after-flash",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-drive-brief",
    "kc-dual-boost-targets",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
@@ -4416,8 +4955,10 @@
    "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -4435,8 +4976,12 @@
   ],
   "its": [
    "kc-after-flash",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-fuel-test",
+   "kc-log-channels",
    "kc-map-switching",
    "kc-misfire-gauges",
    "kc-oil",
@@ -4444,10 +4989,12 @@
    "kc-ranges",
    "kc-shakedown",
    "kc-table-boost",
+   "kc-table-wot",
    "kc-tune-order"
   ],
   "itself": [
    "kc-e10",
+   "kc-ignition-formula",
    "kc-quick-adjustments",
    "kc-shakedown"
   ],
@@ -4488,8 +5035,13 @@
    "kc-e10",
    "kc-shakedown"
   ],
+  "k": [
+   "kc-log-channels"
+  ],
   "kc": [
    "kc-after-flash",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-cvt",
    "kc-downpipe",
@@ -4498,18 +5050,23 @@
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat-retard",
    "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -4532,8 +5089,8 @@
   "keep": [
    "kc-cvt",
    "kc-drive-brief",
-   "kc-high-rpm",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-p0420",
    "kc-power-sources",
@@ -4548,6 +5105,10 @@
    "kc-p0420",
    "kc-table-boost",
    "kc-wot-lean-timing"
+  ],
+  "key": [
+   "kc-boost-step",
+   "kc-flash-howto"
   ],
   "kiểm": [
    "kc-downpipe-catted-catless",
@@ -4564,8 +5125,10 @@
    "kc-high-rpm",
    "kc-iat-retard",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-power-sources",
    "kc-ranges",
    "kc-rich-wot",
@@ -4577,22 +5140,34 @@
    "kc-tune-order"
   ],
   "ktuner": [
+   "kc-after-flash",
+   "kc-boost-by-gear",
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
+   "kc-high-rpm",
    "kc-iat-retard",
+   "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-p0420",
    "kc-quick-adjustments",
    "kc-table-boost",
    "kc-table-ignition",
    "kc-table-maf",
    "kc-table-wot"
+  ],
+  "label": [
+   "kc-iat2-side"
   ],
   "labelled": [
    "kc-ranges"
@@ -4619,8 +5194,12 @@
    "kc-maf-housing",
    "kc-table-maf"
   ],
+  "largest": [
+   "kc-octane-booster"
+  ],
   "last": [
-   "kc-boost-step"
+   "kc-boost-step",
+   "kc-final-boost-target"
   ],
   "later": [
    "kc-after-flash"
@@ -4638,6 +5217,7 @@
    "kc-expectations"
   ],
   "leak": [
+   "kc-boost-codes",
    "kc-downpipe",
    "kc-p0420",
    "kc-trim-cause"
@@ -4673,6 +5253,9 @@
    "kc-log-gate",
    "kc-maf-data-rules"
   ],
+  "leaves": [
+   "kc-flash-howto"
+  ],
   "left": [
    "kc-expectations",
    "kc-maf-data-rules"
@@ -4681,6 +5264,7 @@
    "kc-drive-brief"
   ],
   "less": [
+   "kc-boost-by-gear",
    "kc-e10",
    "kc-fuel-test",
    "kc-iat-retard",
@@ -4705,6 +5289,7 @@
   ],
   "lift": [
    "kc-drive-brief",
+   "kc-maf-trim-direction",
    "kc-power-sources"
   ],
   "light": [
@@ -4714,14 +5299,20 @@
   "lightly": [
    "kc-maf-data-rules"
   ],
+  "lights": [
+   "kc-flash-howto"
+  ],
   "like": [
    "kc-drive-brief",
+   "kc-high-rpm",
    "kc-table-boost",
    "kc-wot-lean-timing"
   ],
   "limit": [
+   "kc-boost-by-gear",
+   "kc-boost-codes",
+   "kc-final-boost-target",
    "kc-iat-retard",
-   "kc-ignition-formula",
    "kc-table-boost",
    "kc-table-ignition"
   ],
@@ -4735,11 +5326,22 @@
    "kc-table-boost"
   ],
   "limits": [
+   "kc-boost-by-gear",
+   "kc-final-boost-target",
    "kc-ranges",
    "kc-table-boost"
   ],
+  "limp": [
+   "kc-boost-codes"
+  ],
+  "line": [
+   "kc-boost-codes"
+  ],
   "list": [
    "kc-log-gate"
+  ],
+  "lists": [
+   "kc-octane-booster"
   ],
   "litre": [
    "kc-e10"
@@ -4747,11 +5349,13 @@
   "little": [
    "kc-downpipe",
    "kc-e10",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-rich-wot",
    "kc-table-wot"
   ],
   "live": [
+   "kc-open-loop-wot",
    "kc-quick-adjustments",
    "kc-rich-wot"
   ],
@@ -4771,23 +5375,24 @@
    "kc-trim-cause"
   ],
   "locked": [
-   "kc-high-rpm",
    "kc-wot-lean-timing"
   ],
   "log": [
+   "kc-boost-codes",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-drive-brief",
    "kc-dual-boost-targets",
+   "kc-flash-howto",
    "kc-fuel-test",
-   "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
-   "kc-open-loop-wot",
    "kc-quick-adjustments",
    "kc-table-ignition",
    "kc-tune-one-thing",
@@ -4795,7 +5400,6 @@
    "kc-wot-lean-timing"
   ],
   "logged": [
-   "kc-boost-step",
    "kc-expectations",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration",
@@ -4805,11 +5409,16 @@
    "kc-timing-percent"
   ],
   "logger": [
+   "kc-log-channels",
    "kc-log-gate"
+  ],
+  "loggers": [
+   "kc-ignition-formula"
   ],
   "logging": [
    "kc-drive-brief",
    "kc-fuel-test",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-tune-one-thing"
   ],
@@ -4818,17 +5427,18 @@
    "kc-downpipe",
    "kc-expectations",
    "kc-fuel-test",
+   "kc-ignition-formula",
    "kc-map-switching",
+   "kc-open-loop-wot",
    "kc-table-maf",
    "kc-tune-one-thing"
   ],
   "long": [
    "kc-after-flash",
-   "kc-iat2-side",
-   "kc-map-switching"
-  ],
-  "longer": [
-   "kc-open-loop-wot"
+   "kc-downpipe-catted-catless",
+   "kc-log-channels",
+   "kc-map-switching",
+   "kc-octane-booster"
   ],
   "look": [
    "kc-open-loop-wot",
@@ -4839,12 +5449,16 @@
    "kc-maf-data-rules",
    "kc-open-loop-wot"
   ],
+  "loose": [
+   "kc-flash-howto"
+  ],
   "lost": [
    "kc-wot-lean-timing"
   ],
   "low": [
    "kc-boost-step",
    "kc-cvt",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-iat-retard",
    "kc-oil",
@@ -4856,11 +5470,15 @@
   ],
   "lower": [
    "kc-ignition-formula",
+   "kc-open-loop-wot",
    "kc-rich-wot",
    "kc-table-ignition"
   ],
   "lowers": [
    "kc-downpipe"
+  ],
+  "lowest": [
+   "kc-log-channels"
   ],
   "lugging": [
    "kc-high-rpm",
@@ -4871,9 +5489,11 @@
   ],
   "maf": [
    "kc-drive-brief",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-open-loop-wot",
    "kc-table-maf"
@@ -4901,34 +5521,41 @@
    "kc-cvt"
   ],
   "manifold": [
-   "kc-heat-soak"
+   "kc-heat-soak",
+   "kc-iat2-side",
+   "kc-log-channels"
   ],
   "manual": [
    "kc-oil"
   ],
   "map": [
-   "kc-boost-step",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-fuel-test",
+   "kc-high-rpm",
    "kc-iat-retard",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-open-loop-wot",
    "kc-power-sources",
    "kc-quick-adjustments",
    "kc-rich-wot",
    "kc-shakedown",
    "kc-table-boost",
    "kc-table-ignition",
+   "kc-table-wot",
    "kc-trim-cause",
    "kc-tune-one-thing",
    "kc-tune-order"
   ],
   "maps": [
-   "kc-high-rpm",
    "kc-map-switching",
    "kc-table-boost"
   ],
@@ -4945,13 +5572,12 @@
    "kc-trim-cause"
   ],
   "matched": [
+   "kc-octane-booster",
    "kc-quick-adjustments"
   ],
   "matches": [
+   "kc-flash-howto",
    "kc-tune-order"
-  ],
-  "matching": [
-   "kc-iat2-side"
   ],
   "matters": [
    "kc-misfire-gauges"
@@ -4962,10 +5588,9 @@
   "maximum": [
    "kc-ranges"
   ],
-  "may": [
-   "kc-open-loop-wot"
-  ],
   "mean": [
+   "kc-boost-by-gear",
+   "kc-flash-howto",
    "kc-maf-housing",
    "kc-trim-cause"
   ],
@@ -4973,8 +5598,14 @@
    "kc-ignition-formula"
   ],
   "means": [
+   "kc-boost-codes",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
+   "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-oil",
    "kc-open-loop-wot",
@@ -4990,9 +5621,9 @@
   ],
   "measured": [
    "kc-expectations",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
-   "kc-open-loop-wot",
    "kc-ranges"
   ],
   "measurement": [
@@ -5008,6 +5639,7 @@
   ],
   "method": [
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-tune-one-thing"
   ],
   "mid": [
@@ -5016,6 +5648,9 @@
   "middle": [
    "kc-trims"
   ],
+  "milligrams": [
+   "kc-table-wot"
+  ],
   "million": [
    "kc-downpipe-catted-catless"
   ],
@@ -5023,6 +5658,7 @@
    "kc-maf-data-rules"
   ],
   "minus": [
+   "kc-iat2-side",
    "kc-ignition-formula",
    "kc-table-ignition"
   ],
@@ -5034,12 +5670,14 @@
   "minutes": [
    "kc-after-flash",
    "kc-drive-brief",
+   "kc-flash-howto",
    "kc-heat-soak",
    "kc-iat-retard",
    "kc-log-gate",
    "kc-shakedown"
   ],
   "misfire": [
+   "kc-log-channels",
    "kc-misfire-gauges"
   ],
   "mismatch": [
@@ -5049,13 +5687,18 @@
    "kc-p0420"
   ],
   "misses": [
+   "kc-boost-codes",
    "kc-log-gate"
+  ],
+  "missing": [
+   "kc-log-channels"
   ],
   "mixed": [
    "kc-maf-data-rules"
   ],
   "mixture": [
    "kc-boost-step",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
@@ -5112,8 +5755,10 @@
    "kc-expectations"
   ],
   "move": [
+   "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-p0420",
    "kc-timing-percent"
   ],
@@ -5122,6 +5767,10 @@
   ],
   "movers": [
    "kc-high-rpm"
+  ],
+  "moves": [
+   "kc-maf-trim-direction",
+   "kc-open-loop-wot"
   ],
   "moving": [
    "kc-drive-brief",
@@ -5144,6 +5793,8 @@
    "kc-shakedown"
   ],
   "names": [
+   "kc-iat2-side",
+   "kc-log-channels",
    "kc-ranges",
    "kc-trim-cause"
   ],
@@ -5157,7 +5808,12 @@
    "kc-wot-lean-timing"
   ],
   "nearly": [
-   "kc-expectations"
+   "kc-expectations",
+   "kc-final-boost-target",
+   "kc-open-loop-wot"
+  ],
+  "need": [
+   "kc-log-channels"
   ],
   "needs": [
    "kc-after-flash",
@@ -5166,16 +5822,20 @@
   ],
   "negative": [
    "kc-e10",
+   "kc-maf-trim-direction",
    "kc-timing-percent",
    "kc-trims"
+  ],
+  "neither": [
+   "kc-open-loop-wot"
   ],
   "never": [
    "kc-after-flash",
    "kc-boost-step",
    "kc-cvt",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
-   "kc-high-rpm",
-   "kc-iat2-side",
    "kc-ignition-formula",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
@@ -5194,12 +5854,15 @@
   ],
   "new": [
    "kc-after-flash",
+   "kc-boost-codes",
+   "kc-iat2-side",
    "kc-shakedown"
   ],
   "newer": [
    "kc-oil"
   ],
   "next": [
+   "kc-flash-howto",
    "kc-shakedown",
    "kc-tune-one-thing"
   ],
@@ -5207,13 +5870,15 @@
    "kc-expectations"
   ],
   "no": [
-   "kc-boost-step",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-cvt",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-log-gate",
    "kc-maf-housing",
@@ -5247,11 +5912,16 @@
    "kc-downpipe-catted-catless",
    "kc-p0420"
   ],
+  "nor": [
+   "kc-open-loop-wot"
+  ],
   "normal": [
    "kc-boost-step",
    "kc-dual-boost-targets",
    "kc-expectations",
+   "kc-flash-howto",
    "kc-high-rpm",
+   "kc-open-loop-wot",
    "kc-table-boost",
    "kc-table-maf"
   ],
@@ -5260,20 +5930,22 @@
   ],
   "not": [
    "kc-after-flash",
-   "kc-boost-step",
+   "kc-boost-by-gear",
    "kc-cvt",
    "kc-downpipe",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat-retard",
-   "kc-iat2-side",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
    "kc-oil",
-   "kc-open-loop-wot",
    "kc-p0420",
    "kc-power-sources",
    "kc-quick-adjustments",
@@ -5296,11 +5968,11 @@
    "kc-iat-retard",
    "kc-log-gate",
    "kc-map-switching",
-   "kc-open-loop-wot",
    "kc-p0420",
    "kc-power-sources"
   ],
   "number": [
+   "kc-boost-by-gear",
    "kc-cvt",
    "kc-log-gate",
    "kc-misfire-gauges",
@@ -5311,10 +5983,15 @@
    "kc-maf-wot-calibration"
   ],
   "o2": [
+   "kc-log-channels",
    "kc-p0420"
   ],
+  "obd": [
+   "kc-ignition-formula"
+  ],
   "octane": [
-   "kc-e10"
+   "kc-e10",
+   "kc-octane-booster"
   ],
   "odd": [
    "kc-maf-data-rules"
@@ -5325,11 +6002,14 @@
    "kc-drive-brief",
    "kc-expectations",
    "kc-fuel-test",
+   "kc-high-rpm",
    "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-oil",
@@ -5347,15 +6027,20 @@
    "kc-wot-lean-timing"
   ],
   "off": [
+   "kc-boost-by-gear",
+   "kc-flash-howto",
    "kc-high-rpm",
-   "kc-iat2-side",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-open-loop-wot",
    "kc-p0420",
    "kc-quick-adjustments",
    "kc-table-maf",
    "kc-trim-cause",
    "kc-tune-one-thing"
+  ],
+  "offer": [
+   "kc-boost-by-gear"
   ],
   "offered": [
    "kc-boost-step"
@@ -5379,21 +6064,30 @@
   ],
   "on": [
    "kc-after-flash",
+   "kc-boost-codes",
+   "kc-boost-step",
    "kc-cvt",
    "kc-downpipe",
+   "kc-downpipe-catted-catless",
    "kc-drive-brief",
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat-retard",
    "kc-iat2-side",
+   "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -5415,15 +6109,20 @@
    "kc-tune-one-thing"
   ],
   "one": [
+   "kc-boost-by-gear",
    "kc-boost-step",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-heat-soak",
-   "kc-high-rpm",
+   "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration",
    "kc-map-switching",
+   "kc-octane-booster",
    "kc-p0420",
    "kc-quick-adjustments",
    "kc-shakedown",
@@ -5439,6 +6138,8 @@
    "kc-timing-percent"
   ],
   "only": [
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
@@ -5447,8 +6148,11 @@
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
+   "kc-iat2-side",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-open-loop-wot",
@@ -5466,11 +6170,10 @@
    "kc-open-loop-wot",
    "kc-quick-adjustments"
   ],
-  "opens": [
-   "kc-high-rpm"
-  ],
   "or": [
    "kc-after-flash",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-cvt",
    "kc-downpipe",
@@ -5479,18 +6182,23 @@
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat-retard",
    "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -5513,9 +6221,12 @@
   "order": [
    "kc-tune-order"
   ],
-  "others": [
-   "kc-boost-step",
+  "other": [
+   "kc-high-rpm",
    "kc-iat2-side"
+  ],
+  "others": [
+   "kc-boost-step"
   ],
   "otherwise": [
    "kc-dual-boost-targets"
@@ -5531,13 +6242,14 @@
    "kc-p0420"
   ],
   "outside": [
-   "kc-open-loop-wot",
    "kc-trims"
   ],
   "over": [
    "kc-downpipe-catted-catless",
    "kc-expectations",
    "kc-heat-soak",
+   "kc-iat2-side",
+   "kc-maf-trim-direction",
    "kc-ranges",
    "kc-table-boost",
    "kc-table-ignition",
@@ -5548,18 +6260,19 @@
   ],
   "own": [
    "kc-after-flash",
+   "kc-boost-by-gear",
    "kc-cvt",
    "kc-e10",
-   "kc-iat2-side",
    "kc-ignition-formula",
    "kc-misfire-gauges",
-   "kc-open-loop-wot",
    "kc-shakedown",
    "kc-table-boost",
    "kc-table-ignition",
    "kc-wot-lean-timing"
   ],
   "owner": [
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
@@ -5567,16 +6280,21 @@
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-high-rpm",
    "kc-iat-retard",
    "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -5594,16 +6312,23 @@
    "kc-wot-lean-timing"
   ],
   "owners": [
+   "kc-boost-codes",
    "kc-cvt",
    "kc-downpipe-catted-catless",
    "kc-iat2-side",
+   "kc-maf-trim-direction",
    "kc-misfire-gauges",
-   "kc-open-loop-wot",
    "kc-p0420"
   ],
   "oxygen": [
    "kc-downpipe",
    "kc-p0420"
+  ],
+  "p0046": [
+   "kc-boost-codes"
+  ],
+  "p0299": [
+   "kc-boost-codes"
   ],
   "p0420": [
    "kc-downpipe-catted-catless",
@@ -5612,8 +6337,14 @@
   "p1039": [
    "kc-p0420"
   ],
+  "p2a01": [
+   "kc-downpipe-catted-catless"
+  ],
   "paddle": [
    "kc-oil"
+  ],
+  "page": [
+   "kc-table-wot"
   ],
   "pair": [
    "kc-fuel-test"
@@ -5628,7 +6359,9 @@
    "kc-drive-brief"
   ],
   "part": [
+   "kc-final-boost-target",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-table-maf",
    "kc-trim-cause",
    "kc-tune-one-thing"
@@ -5643,7 +6376,8 @@
    "kc-table-boost"
   ],
   "passes": [
-   "kc-boost-step"
+   "kc-boost-step",
+   "kc-final-boost-target"
   ],
   "past": [
    "kc-high-rpm",
@@ -5661,18 +6395,23 @@
    "kc-heat-soak"
   ],
   "pedal": [
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-drive-brief",
+   "kc-final-boost-target",
+   "kc-log-channels",
    "kc-oil",
    "kc-power-sources",
    "kc-quick-adjustments",
    "kc-table-boost"
   ],
   "per": [
+   "kc-boost-by-gear",
    "kc-e10",
    "kc-maf-wot-calibration",
    "kc-oil",
    "kc-table-maf",
+   "kc-table-wot",
    "kc-tune-one-thing"
   ],
   "percent": [
@@ -5680,6 +6419,7 @@
    "kc-e10",
    "kc-expectations",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-quick-adjustments",
    "kc-shakedown",
    "kc-table-maf",
@@ -5705,7 +6445,14 @@
   "picks": [
    "kc-dual-boost-targets"
   ],
+  "pinhole": [
+   "kc-boost-codes"
+  ],
+  "pinned": [
+   "kc-log-channels"
+  ],
   "pipe": [
+   "kc-boost-codes",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-expectations",
@@ -5725,6 +6472,9 @@
   "plans": [
    "kc-downpipe"
   ],
+  "plate": [
+   "kc-log-channels"
+  ],
   "plateaus": [
    "kc-table-boost"
   ],
@@ -5735,32 +6485,46 @@
    "kc-misfire-gauges"
   ],
   "plus": [
-   "kc-boost-step",
    "kc-ignition-formula",
    "kc-table-ignition",
    "kc-timing-percent"
   ],
   "point": [
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-power-sources",
    "kc-ranges"
   ],
   "points": [
+   "kc-boost-codes",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-ranges",
    "kc-table-maf",
    "kc-wot-lean-timing"
   ],
+  "port": [
+   "kc-flash-howto"
+  ],
+  "posi": [
+   "kc-log-channels"
+  ],
+  "position": [
+   "kc-boost-codes"
+  ],
   "positive": [
+   "kc-maf-trim-direction",
    "kc-trims"
   ],
   "possible": [
-   "kc-downpipe"
+   "kc-downpipe",
+   "kc-octane-booster"
   ],
   "power": [
    "kc-downpipe",
    "kc-expectations",
+   "kc-flash-howto",
    "kc-heat-soak",
    "kc-iat-retard",
    "kc-power-sources",
@@ -5778,6 +6542,9 @@
   "premium": [
    "kc-fuel-test"
   ],
+  "present": [
+   "kc-high-rpm"
+  ],
   "preset": [
    "kc-maf-housing",
    "kc-table-maf",
@@ -5788,14 +6555,17 @@
   ],
   "press": [
    "kc-drive-brief",
+   "kc-log-channels",
    "kc-map-switching"
   ],
   "pressing": [
    "kc-oil"
   ],
   "pressure": [
+   "kc-boost-by-gear",
    "kc-boost-step",
    "kc-downpipe",
+   "kc-log-channels",
    "kc-power-sources",
    "kc-tune-order"
   ],
@@ -5804,6 +6574,12 @@
   ],
   "professional": [
    "kc-table-ignition"
+  ],
+  "profile": [
+   "kc-high-rpm"
+  ],
+  "prompt": [
+   "kc-flash-howto"
   ],
   "proof": [
    "kc-boost-step",
@@ -5816,6 +6592,7 @@
    "kc-table-wot"
   ],
   "protects": [
+   "kc-boost-by-gear",
    "kc-cvt"
   ],
   "prove": [
@@ -5832,6 +6609,7 @@
   "proves": [
    "kc-downpipe",
    "kc-downpipe-catted-catless",
+   "kc-flash-howto",
    "kc-shakedown"
   ],
   "proving": [
@@ -5841,21 +6619,25 @@
    "kc-cvt"
   ],
   "psi": [
+   "kc-boost-by-gear",
    "kc-boost-step",
    "kc-dual-boost-targets",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-heat-soak",
+   "kc-maf-trim-direction",
+   "kc-open-loop-wot",
    "kc-rich-wot",
    "kc-table-boost"
   ],
   "pull": [
-   "kc-boost-step",
    "kc-cvt",
    "kc-drive-brief",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-heat-soak",
+   "kc-high-rpm",
    "kc-iat-retard",
-   "kc-iat2-side",
    "kc-maf-housing",
    "kc-quick-adjustments",
    "kc-table-wot",
@@ -5870,6 +6652,7 @@
    "kc-drive-brief",
    "kc-heat-soak",
    "kc-iat-retard",
+   "kc-iat2-side",
    "kc-maf-wot-calibration",
    "kc-quick-adjustments",
    "kc-shakedown",
@@ -5887,20 +6670,32 @@
    "kc-high-rpm",
    "kc-power-sources"
   ],
+  "put": [
+   "kc-flash-howto"
+  ],
   "quality": [
    "kc-after-flash",
    "kc-e10",
    "kc-high-rpm",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-misfire-gauges",
    "kc-ranges"
   ],
   "quick": [
+   "kc-boost-by-gear",
+   "kc-high-rpm",
    "kc-quick-adjustments"
+  ],
+  "r": [
+   "kc-table-wot"
   ],
   "race": [
    "kc-maf-housing",
    "kc-table-maf"
+  ],
+  "rain": [
+   "kc-downpipe-catted-catless"
   ],
   "raise": [
    "kc-boost-step",
@@ -5909,9 +6704,15 @@
   "raises": [
    "kc-fuel-test"
   ],
+  "raising": [
+   "kc-final-boost-target"
+  ],
   "ramp": [
    "kc-quick-adjustments",
    "kc-table-boost"
+  ],
+  "ramped": [
+   "kc-boost-by-gear"
   ],
   "ramps": [
    "kc-quick-adjustments"
@@ -5935,21 +6736,27 @@
    "kc-expectations",
    "kc-oil"
   ],
+  "rather": [
+   "kc-ignition-formula"
+  ],
   "ratings": [
    "kc-oil"
   ],
+  "reach": [
+   "kc-maf-trim-direction"
+  ],
   "reached": [
-   "kc-boost-step",
    "kc-ranges"
   ],
   "read": [
    "kc-drive-brief",
    "kc-fuel-test",
    "kc-heat-soak",
-   "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-open-loop-wot",
    "kc-quick-adjustments",
@@ -5961,12 +6768,16 @@
    "kc-log-gate"
   ],
   "reading": [
-   "kc-iat2-side",
+   "kc-boost-step",
    "kc-rich-wot"
   ],
   "reads": [
+   "kc-boost-step",
    "kc-drive-brief",
+   "kc-iat2-side",
+   "kc-log-channels",
    "kc-misfire-gauges",
+   "kc-open-loop-wot",
    "kc-p0420",
    "kc-ranges",
    "kc-rich-wot",
@@ -5978,6 +6789,7 @@
   ],
   "rear": [
    "kc-downpipe",
+   "kc-downpipe-catted-catless",
    "kc-p0420"
   ],
   "reason": [
@@ -5987,19 +6799,30 @@
   "reassurance": [
    "kc-after-flash"
   ],
+  "reconnect": [
+   "kc-flash-howto"
+  ],
   "recorded": [
    "kc-downpipe",
    "kc-shakedown"
   ],
   "records": [
    "kc-dual-boost-targets",
+   "kc-high-rpm",
+   "kc-log-channels",
    "kc-map-switching"
+  ],
+  "recovery": [
+   "kc-flash-howto"
   ],
   "reflash": [
    "kc-tune-order"
   ],
   "relearn": [
    "kc-after-flash"
+  ],
+  "reliability": [
+   "kc-octane-booster"
   ],
   "remedy": [
    "kc-tune-order"
@@ -6008,6 +6831,7 @@
    "kc-tune-one-thing"
   ],
   "remove": [
+   "kc-high-rpm",
    "kc-table-ignition",
    "kc-timing-percent"
   ],
@@ -6030,12 +6854,13 @@
   "report": [
    "kc-cvt",
    "kc-downpipe-catted-catless",
-   "kc-open-loop-wot",
+   "kc-iat2-side",
    "kc-p0420"
   ],
   "reports": [
-   "kc-downpipe-catted-catless",
-   "kc-iat2-side"
+   "kc-boost-by-gear",
+   "kc-boost-codes",
+   "kc-downpipe-catted-catless"
   ],
   "require": [
    "kc-oil"
@@ -6056,14 +6881,21 @@
    "kc-maf-data-rules",
    "kc-power-sources"
   ],
+  "ret": [
+   "kc-log-channels"
+  ],
   "retailers": [
    "kc-fuel-test"
   ],
   "retard": [
    "kc-iat-retard",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-ranges",
    "kc-table-ignition"
+  ],
+  "returns": [
+   "kc-flash-howto"
   ],
   "rev": [
    "kc-oil"
@@ -6089,10 +6921,8 @@
    "kc-rich-wot",
    "kc-table-wot"
   ],
-  "ride": [
-   "kc-ignition-formula"
-  ],
   "right": [
+   "kc-flash-howto",
    "kc-table-wot",
    "kc-trim-cause"
   ],
@@ -6107,7 +6937,7 @@
    "kc-timing-percent"
   ],
   "rising": [
-   "kc-boost-step",
+   "kc-maf-trim-direction",
    "kc-misfire-gauges",
    "kc-tune-order"
   ],
@@ -6124,6 +6954,7 @@
   ],
   "roll": [
    "kc-drive-brief",
+   "kc-maf-trim-direction",
    "kc-tune-one-thing"
   ],
   "ron95": [
@@ -6134,27 +6965,39 @@
    "kc-timing-percent"
   ],
   "ron97": [
-   "kc-fuel-test"
+   "kc-fuel-test",
+   "kc-octane-booster"
   ],
   "round": [
+   "kc-iat2-side",
    "kc-maf-wot-calibration",
    "kc-table-maf",
    "kc-tune-one-thing"
   ],
+  "rounding": [
+   "kc-ignition-formula"
+  ],
   "rounds": [
-   "kc-ignition-formula",
    "kc-maf-data-rules"
   ],
   "route": [
    "kc-fuel-test"
   ],
+  "row": [
+   "kc-final-boost-target",
+   "kc-open-loop-wot"
+  ],
   "rows": [
    "kc-boost-step",
-   "kc-maf-data-rules"
+   "kc-maf-data-rules",
+   "kc-maf-trim-direction",
+   "kc-open-loop-wot"
   ],
   "rpm": [
+   "kc-boost-by-gear",
    "kc-boost-step",
    "kc-downpipe",
+   "kc-final-boost-target",
    "kc-fuel-test",
    "kc-high-rpm",
    "kc-oil",
@@ -6178,29 +7021,37 @@
    "kc-oil"
   ],
   "running": [
+   "kc-flash-howto",
+   "kc-octane-booster",
    "kc-wot-lean-timing"
   ],
   "runs": [
+   "kc-downpipe-catted-catless",
    "kc-dual-boost-targets",
+   "kc-flash-howto",
    "kc-heat-soak",
-   "kc-iat2-side",
    "kc-ignition-formula",
    "kc-maf-housing",
+   "kc-open-loop-wot",
    "kc-timing-percent"
   ],
   "rv6": [
    "kc-downpipe-catted-catless"
   ],
   "s": [
-   "kc-boost-step",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-cvt",
    "kc-downpipe-catted-catless",
    "kc-drive-brief",
    "kc-e10",
    "kc-fuel-test",
    "kc-heat-soak",
+   "kc-high-rpm",
    "kc-iat-retard",
+   "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-wot-calibration",
    "kc-map-switching",
@@ -6211,6 +7062,7 @@
    "kc-quick-adjustments",
    "kc-table-ignition",
    "kc-table-maf",
+   "kc-table-wot",
    "kc-timing-percent",
    "kc-tune-order",
    "kc-wot-lean-timing"
@@ -6230,10 +7082,14 @@
    "kc-downpipe-catted-catless",
    "kc-dual-boost-targets",
    "kc-e10",
+   "kc-final-boost-target",
    "kc-fuel-test",
    "kc-iat-retard",
    "kc-iat2-side",
+   "kc-ignition-formula",
+   "kc-log-channels",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-power-sources",
@@ -6249,10 +7105,17 @@
   "sat": [
    "kc-trims"
   ],
+  "saturating": [
+   "kc-iat2-side"
+  ],
   "save": [
    "kc-shakedown"
   ],
+  "saving": [
+   "kc-flash-howto"
+  ],
   "say": [
+   "kc-flash-howto",
    "kc-high-rpm",
    "kc-open-loop-wot",
    "kc-shakedown"
@@ -6263,6 +7126,7 @@
   "scaling": [
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-open-loop-wot",
    "kc-table-maf",
    "kc-tune-order"
@@ -6278,6 +7142,8 @@
    "kc-after-flash",
    "kc-fuel-test",
    "kc-high-rpm",
+   "kc-ignition-formula",
+   "kc-log-channels",
    "kc-misfire-gauges",
    "kc-oil",
    "kc-ranges",
@@ -6293,11 +7159,17 @@
   ],
   "seconds": [
    "kc-boost-step",
+   "kc-flash-howto",
+   "kc-maf-trim-direction",
    "kc-ranges",
    "kc-table-boost"
   ],
   "see": [
+   "kc-downpipe-catted-catless",
    "kc-timing-percent"
+  ],
+  "seemed": [
+   "kc-boost-codes"
   ],
   "seen": [
    "kc-cvt",
@@ -6321,6 +7193,7 @@
   ],
   "sensor": [
    "kc-downpipe",
+   "kc-downpipe-catted-catless",
    "kc-e10",
    "kc-log-gate",
    "kc-maf-housing",
@@ -6334,11 +7207,13 @@
   ],
   "set": [
    "kc-drive-brief",
+   "kc-flash-howto",
    "kc-p0420",
    "kc-table-ignition"
   ],
   "sets": [
    "kc-after-flash",
+   "kc-boost-step",
    "kc-cvt",
    "kc-downpipe-catted-catless",
    "kc-ignition-formula",
@@ -6347,6 +7222,9 @@
   "setting": [
    "kc-map-switching",
    "kc-quick-adjustments"
+  ],
+  "settings": [
+   "kc-boost-by-gear"
   ],
   "settle": [
    "kc-after-flash",
@@ -6385,12 +7263,13 @@
   "shop": [
    "kc-downpipe-catted-catless",
    "kc-drive-brief",
-   "kc-iat2-side",
+   "kc-log-channels",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
    "kc-wot-lean-timing"
   ],
   "short": [
+   "kc-log-channels",
    "kc-open-loop-wot"
   ],
   "shot": [
@@ -6405,9 +7284,6 @@
    "kc-fuel-test",
    "kc-tune-one-thing",
    "kc-tune-order"
-  ],
-  "showed": [
-   "kc-iat2-side"
   ],
   "shown": [
    "kc-wot-lean-timing"
@@ -6424,6 +7300,7 @@
    "kc-trims"
   ],
   "shut": [
+   "kc-boost-codes",
    "kc-quick-adjustments"
   ],
   "si": [
@@ -6433,13 +7310,15 @@
    "kc-iat2-side",
    "kc-rich-wot"
   ],
+  "sign": [
+   "kc-iat2-side"
+  ],
   "similar": [
    "kc-heat-soak"
   ],
   "sit": [
    "kc-e10",
    "kc-fuel-test",
-   "kc-iat2-side",
    "kc-maf-housing",
    "kc-quick-adjustments",
    "kc-table-maf",
@@ -6448,7 +7327,6 @@
   "sits": [
    "kc-expectations",
    "kc-maf-wot-calibration",
-   "kc-open-loop-wot",
    "kc-power-sources",
    "kc-rich-wot",
    "kc-timing-percent"
@@ -6468,6 +7346,7 @@
   ],
   "slow": [
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-p0420"
   ],
   "slower": [
@@ -6492,12 +7371,13 @@
    "kc-table-maf"
   ],
   "so": [
-   "kc-boost-step",
+   "kc-boost-by-gear",
    "kc-downpipe",
    "kc-drive-brief",
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-fuel-test",
    "kc-high-rpm",
    "kc-iat-retard",
@@ -6505,6 +7385,7 @@
    "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
@@ -6528,11 +7409,7 @@
   "soaked": [
    "kc-iat-retard"
   ],
-  "sold": [
-   "kc-open-loop-wot"
-  ],
   "some": [
-   "kc-high-rpm",
    "kc-iat2-side"
   ],
   "something": [
@@ -6550,14 +7427,14 @@
   "sources": [
    "kc-power-sources"
   ],
-  "southeast": [
-   "kc-iat2-side"
-  ],
   "sp": [
    "kc-oil"
   ],
   "spacer": [
    "kc-p0420"
+  ],
+  "sparing": [
+   "kc-boost-by-gear"
   ],
   "spark": [
    "kc-downpipe",
@@ -6576,6 +7453,9 @@
    "kc-drive-brief",
    "kc-shakedown"
   ],
+  "spike": [
+   "kc-maf-trim-direction"
+  ],
   "spool": [
    "kc-downpipe",
    "kc-quick-adjustments"
@@ -6584,11 +7464,19 @@
    "kc-dual-boost-targets",
    "kc-expectations"
   ],
+  "stab": [
+   "kc-maf-trim-direction"
+  ],
   "stabbing": [
    "kc-tune-one-thing"
   ],
+  "staff": [
+   "kc-maf-trim-direction",
+   "kc-octane-booster"
+  ],
   "start": [
    "kc-after-flash",
+   "kc-flash-howto",
    "kc-heat-soak",
    "kc-table-ignition"
   ],
@@ -6614,12 +7502,15 @@
   "state": [
    "kc-open-loop-wot"
   ],
+  "station": [
+   "kc-octane-booster"
+  ],
   "status": [
    "kc-open-loop-wot"
   ],
   "stay": [
+   "kc-flash-howto",
    "kc-oil",
-   "kc-open-loop-wot",
    "kc-rich-wot",
    "kc-table-wot"
   ],
@@ -6636,6 +7527,7 @@
    "kc-cvt",
    "kc-drive-brief",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-shakedown",
    "kc-table-maf"
   ],
@@ -6644,17 +7536,23 @@
    "kc-drive-brief",
    "kc-expectations",
    "kc-fuel-test",
-   "kc-high-rpm",
+   "kc-ignition-formula",
    "kc-misfire-gauges",
    "kc-shakedown",
    "kc-tune-order"
   ],
   "steps": [
+   "kc-ignition-formula",
    "kc-table-ignition",
    "kc-table-wot"
   ],
+  "sticking": [
+   "kc-boost-codes"
+  ],
   "still": [
    "kc-cvt",
+   "kc-downpipe-catted-catless",
+   "kc-log-channels",
    "kc-quick-adjustments"
   ],
   "stock": [
@@ -6675,11 +7573,11 @@
    "kc-tune-order"
   ],
   "stops": [
+   "kc-flash-howto",
    "kc-maf-data-rules"
   ],
   "straight": [
-   "kc-drive-brief",
-   "kc-iat2-side"
+   "kc-drive-brief"
   ],
   "street": [
    "kc-maf-housing",
@@ -6691,11 +7589,20 @@
   "stretch": [
    "kc-shakedown"
   ],
+  "stroke": [
+   "kc-table-wot"
+  ],
+  "strong": [
+   "kc-flash-howto"
+  ],
   "stuck": [
    "kc-log-gate"
   ],
   "subtract": [
    "kc-trims"
+  ],
+  "successful": [
+   "kc-flash-howto"
   ],
   "such": [
    "kc-cvt",
@@ -6714,30 +7621,36 @@
   "supported": [
    "kc-map-switching"
   ],
+  "suspect": [
+   "kc-octane-booster"
+  ],
   "swap": [
    "kc-p0420"
   ],
   "switch": [
    "kc-dual-boost-targets",
-   "kc-high-rpm",
    "kc-map-switching",
    "kc-p0420"
   ],
   "switching": [
-   "kc-boost-step",
    "kc-map-switching",
    "kc-p0420",
    "kc-tune-one-thing"
   ],
   "t": [
+   "kc-boost-codes",
    "kc-downpipe",
    "kc-dual-boost-targets",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
+   "kc-octane-booster",
    "kc-table-ignition"
   ],
   "table": [
+   "kc-boost-by-gear",
    "kc-dual-boost-targets",
+   "kc-final-boost-target",
    "kc-ignition-formula",
    "kc-maf-wot-calibration",
    "kc-open-loop-wot",
@@ -6749,7 +7662,9 @@
    "kc-tune-order"
   ],
   "tables": [
+   "kc-boost-by-gear",
    "kc-dual-boost-targets",
+   "kc-final-boost-target",
    "kc-ignition-formula",
    "kc-maf-wot-calibration",
    "kc-quick-adjustments",
@@ -6770,21 +7685,28 @@
    "kc-iat-retard"
   ],
   "takes": [
+   "kc-final-boost-target",
    "kc-iat-retard",
    "kc-timing-percent"
   ],
   "tank": [
    "kc-fuel-test",
-   "kc-high-rpm"
+   "kc-high-rpm",
+   "kc-octane-booster"
   ],
   "target": [
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-log-channels",
    "kc-log-gate",
+   "kc-open-loop-wot",
    "kc-quick-adjustments",
    "kc-rich-wot",
    "kc-table-boost",
@@ -6802,13 +7724,18 @@
   "taste": [
    "kc-quick-adjustments"
   ],
+  "tc": [
+   "kc-log-channels"
+  ],
   "teach": [
    "kc-timing-percent"
+  ],
+  "tell": [
+   "kc-log-channels"
   ],
   "temperature": [
    "kc-cvt",
    "kc-iat-retard",
-   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-maf-wot-calibration"
   ],
@@ -6816,7 +7743,8 @@
    "kc-heat-soak"
   ],
   "ten": [
-   "kc-after-flash"
+   "kc-after-flash",
+   "kc-flash-howto"
   ],
   "term": [
    "kc-open-loop-wot"
@@ -6832,7 +7760,6 @@
   ],
   "than": [
    "kc-boost-step",
-   "kc-iat2-side",
    "kc-ignition-formula",
    "kc-maf-wot-calibration",
    "kc-oil",
@@ -6842,21 +7769,26 @@
   ],
   "that": [
    "kc-after-flash",
+   "kc-boost-codes",
    "kc-cvt",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
+   "kc-high-rpm",
    "kc-iat-retard",
+   "kc-iat2-side",
    "kc-ignition-formula",
    "kc-log-gate",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
    "kc-oil",
-   "kc-open-loop-wot",
    "kc-p0420",
    "kc-power-sources",
    "kc-quick-adjustments",
@@ -6869,6 +7801,8 @@
   ],
   "the": [
    "kc-after-flash",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-cvt",
    "kc-downpipe",
@@ -6877,18 +7811,23 @@
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-iat-retard",
    "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
+   "kc-octane-booster",
    "kc-oil",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -6909,10 +7848,13 @@
    "kc-wot-lean-timing"
   ],
   "their": [
-   "kc-ignition-formula"
+   "kc-ignition-formula",
+   "kc-log-channels"
   ],
   "them": [
    "kc-downpipe",
+   "kc-iat2-side",
+   "kc-maf-trim-direction",
    "kc-quick-adjustments",
    "kc-table-ignition",
    "kc-timing-percent"
@@ -6921,7 +7863,6 @@
    "kc-drive-brief",
    "kc-fuel-test",
    "kc-maf-data-rules",
-   "kc-open-loop-wot",
    "kc-p0420",
    "kc-table-maf",
    "kc-trim-cause",
@@ -6940,12 +7881,13 @@
    "kc-trims"
   ],
   "these": [
+   "kc-boost-step",
    "kc-expectations",
+   "kc-log-channels",
    "kc-quick-adjustments",
    "kc-table-ignition"
   ],
   "they": [
-   "kc-high-rpm",
    "kc-maf-housing",
    "kc-map-switching"
   ],
@@ -6962,6 +7904,8 @@
   ],
   "this": [
    "kc-after-flash",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-cvt",
    "kc-downpipe",
    "kc-expectations",
@@ -6969,6 +7913,7 @@
    "kc-high-rpm",
    "kc-iat-retard",
    "kc-iat2-side",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-misfire-gauges",
@@ -6981,6 +7926,7 @@
    "kc-rich-wot",
    "kc-table-boost",
    "kc-table-ignition",
+   "kc-table-wot",
    "kc-timing-percent",
    "kc-trims",
    "kc-wot-lean-timing"
@@ -6991,7 +7937,11 @@
    "kc-oil"
   ],
   "though": [
+   "kc-downpipe-catted-catless",
    "kc-rich-wot"
+  ],
+  "thread": [
+   "kc-octane-booster"
   ],
   "threads": [
    "kc-p0420"
@@ -6999,13 +7949,14 @@
   "three": [
    "kc-downpipe-catted-catless",
    "kc-heat-soak",
-   "kc-ignition-formula",
    "kc-maf-data-rules",
    "kc-map-switching",
    "kc-table-boost"
   ],
   "throttle": [
+   "kc-log-channels",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-open-loop-wot",
@@ -7020,11 +7971,18 @@
    "kc-wot-lean-timing"
   ],
   "through": [
+   "kc-final-boost-target",
    "kc-iat-retard",
    "kc-timing-percent"
   ],
+  "throw": [
+   "kc-maf-trim-direction"
+  ],
   "thrown": [
    "kc-maf-data-rules"
+  ],
+  "ticked": [
+   "kc-high-rpm"
   ],
   "tied": [
    "kc-misfire-gauges"
@@ -7059,6 +8017,8 @@
   ],
   "to": [
    "kc-after-flash",
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
@@ -7066,10 +8026,16 @@
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-heat-soak",
    "kc-iat-retard",
+   "kc-iat2-side",
+   "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-misfire-gauges",
    "kc-oil",
@@ -7085,9 +8051,6 @@
    "kc-tune-one-thing",
    "kc-wot-lean-timing"
   ],
-  "today": [
-   "kc-boost-step"
-  ],
   "together": [
    "kc-ignition-formula",
    "kc-table-boost",
@@ -7100,15 +8063,18 @@
    "kc-boost-step",
    "kc-dual-boost-targets",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration"
   ],
   "tool": [
-   "kc-iat2-side"
+   "kc-boost-by-gear"
   ],
   "tools": [
    "kc-maf-data-rules"
   ],
   "top": [
+   "kc-final-boost-target",
+   "kc-high-rpm",
    "kc-iat-retard",
    "kc-maf-wot-calibration",
    "kc-oil"
@@ -7127,6 +8093,7 @@
    "kc-table-boost"
   ],
   "total": [
+   "kc-boost-step",
    "kc-trims"
   ],
   "touch": [
@@ -7141,6 +8108,12 @@
   ],
   "toward": [
    "kc-after-flash"
+  ],
+  "tps": [
+   "kc-log-channels"
+  ],
+  "traced": [
+   "kc-boost-codes"
   ],
   "trades": [
    "kc-table-wot"
@@ -7169,6 +8142,8 @@
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-e10",
+   "kc-log-channels",
+   "kc-maf-trim-direction",
    "kc-open-loop-wot",
    "kc-trim-cause",
    "kc-trims"
@@ -7176,8 +8151,10 @@
   "trims": [
    "kc-drive-brief",
    "kc-e10",
+   "kc-log-channels",
    "kc-maf-data-rules",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-open-loop-wot",
    "kc-p0420",
@@ -7191,7 +8168,11 @@
   "trust": [
    "kc-dual-boost-targets"
   ],
+  "trusting": [
+   "kc-iat2-side"
+  ],
   "try": [
+   "kc-octane-booster",
    "kc-timing-percent"
   ],
   "trying": [
@@ -7205,6 +8186,7 @@
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-dual-boost-targets",
+   "kc-flash-howto",
    "kc-heat-soak",
    "kc-maf-housing",
    "kc-map-switching",
@@ -7230,16 +8212,16 @@
   ],
   "tunerview": [
    "kc-drive-brief",
+   "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-misfire-gauges"
   ],
   "tunes": [
-   "kc-high-rpm",
    "kc-map-switching",
    "kc-table-boost"
   ],
   "tuning": [
-   "kc-iat2-side",
    "kc-tune-one-thing",
    "kc-tune-order"
   ],
@@ -7248,10 +8230,12 @@
    "kc-power-sources"
   ],
   "turbo": [
+   "kc-boost-codes",
    "kc-boost-step",
    "kc-downpipe",
    "kc-expectations",
    "kc-iat2-side",
+   "kc-log-channels",
    "kc-map-switching",
    "kc-p0420",
    "kc-quick-adjustments",
@@ -7271,20 +8255,32 @@
    "kc-boost-step",
    "kc-dual-boost-targets",
    "kc-heat-soak",
-   "kc-high-rpm",
    "kc-maf-data-rules"
+  ],
+  "type": [
+   "kc-table-wot"
   ],
   "typical": [
    "kc-timing-percent"
   ],
+  "unable": [
+   "kc-flash-howto"
+  ],
   "unapproved": [
    "kc-downpipe-catted-catless"
   ],
+  "unconfirmed": [
+   "kc-boost-by-gear"
+  ],
   "under": [
+   "kc-boost-codes",
+   "kc-boost-step",
    "kc-cvt",
    "kc-drive-brief",
    "kc-e10",
    "kc-heat-soak",
+   "kc-iat2-side",
+   "kc-ignition-formula",
    "kc-open-loop-wot",
    "kc-p0420",
    "kc-ranges",
@@ -7292,8 +8288,8 @@
    "kc-timing-percent",
    "kc-tune-order"
   ],
-  "undershoot": [
-   "kc-boost-step"
+  "underboost": [
+   "kc-boost-codes"
   ],
   "undo": [
    "kc-shakedown",
@@ -7305,6 +8301,9 @@
   "unexplained": [
    "kc-after-flash"
   ],
+  "unit": [
+   "kc-flash-howto"
+  ],
   "unmetered": [
    "kc-trim-cause"
   ],
@@ -7312,9 +8311,10 @@
    "kc-map-switching"
   ],
   "until": [
+   "kc-boost-step",
    "kc-drive-brief",
+   "kc-flash-howto",
    "kc-fuel-test",
-   "kc-iat2-side",
    "kc-maf-housing",
    "kc-shakedown",
    "kc-table-maf",
@@ -7328,6 +8328,7 @@
    "kc-expectations",
    "kc-high-rpm",
    "kc-iat-retard",
+   "kc-maf-trim-direction",
    "kc-misfire-gauges",
    "kc-oil",
    "kc-quick-adjustments",
@@ -7339,8 +8340,7 @@
    "kc-log-gate"
   ],
   "us": [
-   "kc-e10",
-   "kc-open-loop-wot"
+   "kc-e10"
   ],
   "usable": [
    "kc-tune-order"
@@ -7352,7 +8352,8 @@
   ],
   "uses": [
    "kc-dual-boost-targets",
-   "kc-ignition-formula"
+   "kc-ignition-formula",
+   "kc-open-loop-wot"
   ],
   "usual": [
    "kc-e10",
@@ -7360,22 +8361,31 @@
    "kc-maf-data-rules"
   ],
   "usually": [
+   "kc-flash-howto",
    "kc-trim-cause"
+  ],
+  "v2": [
+   "kc-flash-howto"
+  ],
+  "vacuum": [
+   "kc-boost-codes"
   ],
   "value": [
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-open-loop-wot"
   ],
   "values": [
+   "kc-boost-by-gear",
    "kc-table-boost"
   ],
   "vendor": [
    "kc-downpipe",
-   "kc-downpipe-catted-catless"
+   "kc-downpipe-catted-catless",
+   "kc-octane-booster"
   ],
   "verdict": [
    "kc-after-flash",
-   "kc-high-rpm",
    "kc-log-gate",
    "kc-rich-wot"
   ],
@@ -7385,15 +8395,27 @@
   "version": [
    "kc-boost-step"
   ],
+  "versions": [
+   "kc-boost-by-gear"
+  ],
   "vietnam": [
    "kc-e10"
   ],
   "vnd": [
    "kc-downpipe-catted-catless"
   ],
+  "voltage": [
+   "kc-flash-howto"
+  ],
+  "wait": [
+   "kc-flash-howto"
+  ],
   "waits": [
    "kc-shakedown",
    "kc-trims"
+  ],
+  "waking": [
+   "kc-flash-howto"
   ],
   "wants": [
    "kc-table-boost",
@@ -7401,6 +8423,8 @@
   ],
   "warm": [
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
+   "kc-open-loop-wot",
    "kc-shakedown",
    "kc-trims",
    "kc-tune-one-thing"
@@ -7408,14 +8432,20 @@
   "warning": [
    "kc-cvt",
    "kc-downpipe-catted-catless",
+   "kc-flash-howto",
    "kc-p0420"
+  ],
+  "warnings": [
+   "kc-flash-howto"
   ],
   "was": [
    "kc-shakedown",
    "kc-table-maf"
   ],
   "wastegate": [
+   "kc-boost-codes",
    "kc-expectations",
+   "kc-log-channels",
    "kc-quick-adjustments"
   ],
   "watch": [
@@ -7429,6 +8459,8 @@
    "kc-table-wot"
   ],
   "way": [
+   "kc-iat2-side",
+   "kc-maf-trim-direction",
    "kc-timing-percent",
    "kc-trims"
   ],
@@ -7439,15 +8471,19 @@
   ],
   "what": [
    "kc-after-flash",
+   "kc-boost-codes",
    "kc-cvt",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-dual-boost-targets",
+   "kc-final-boost-target",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-high-rpm",
    "kc-iat-retard",
    "kc-iat2-side",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-maf-data-rules",
    "kc-misfire-gauges",
@@ -7466,6 +8502,7 @@
   "when": [
    "kc-boost-step",
    "kc-dual-boost-targets",
+   "kc-flash-howto",
    "kc-iat-retard",
    "kc-log-gate",
    "kc-maf-wot-calibration",
@@ -7475,8 +8512,11 @@
    "kc-drive-brief"
   ],
   "where": [
+   "kc-boost-codes",
    "kc-high-rpm",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
+   "kc-open-loop-wot",
    "kc-power-sources",
    "kc-quick-adjustments",
    "kc-rich-wot",
@@ -7484,17 +8524,25 @@
    "kc-timing-percent",
    "kc-wot-lean-timing"
   ],
+  "wherever": [
+   "kc-boost-by-gear"
+  ],
   "whether": [
    "kc-downpipe-catted-catless",
+   "kc-final-boost-target",
    "kc-fuel-test",
    "kc-rich-wot",
    "kc-tune-order"
   ],
   "which": [
+   "kc-boost-by-gear",
    "kc-downpipe-catted-catless",
    "kc-dual-boost-targets",
+   "kc-flash-howto",
    "kc-iat2-side",
+   "kc-log-channels",
    "kc-maf-housing",
+   "kc-maf-trim-direction",
    "kc-misfire-gauges",
    "kc-oil",
    "kc-open-loop-wot",
@@ -7505,13 +8553,16 @@
    "kc-tune-one-thing"
   ],
   "while": [
+   "kc-boost-codes",
    "kc-dual-boost-targets",
+   "kc-flash-howto",
    "kc-heat-soak",
    "kc-high-rpm",
-   "kc-iat2-side",
+   "kc-log-channels",
    "kc-log-gate",
    "kc-map-switching",
    "kc-oil",
+   "kc-open-loop-wot",
    "kc-quick-adjustments",
    "kc-timing-percent"
   ],
@@ -7519,6 +8570,7 @@
    "kc-wot-lean-timing"
   ],
   "whole": [
+   "kc-final-boost-target",
    "kc-tune-one-thing"
   ],
   "whose": [
@@ -7531,26 +8583,36 @@
   "why": [
    "kc-iat-retard",
    "kc-ignition-formula",
+   "kc-log-channels",
    "kc-open-loop-wot",
    "kc-table-maf",
    "kc-tune-order",
    "kc-wot-lean-timing"
   ],
+  "wideband": [
+   "kc-log-channels"
+  ],
   "win": [
    "kc-fuel-test"
   ],
+  "wins": [
+   "kc-boost-by-gear"
+  ],
   "with": [
    "kc-after-flash",
+   "kc-boost-codes",
    "kc-cvt",
    "kc-downpipe",
    "kc-drive-brief",
    "kc-dual-boost-targets",
    "kc-expectations",
+   "kc-flash-howto",
    "kc-fuel-test",
    "kc-heat-soak",
    "kc-high-rpm",
    "kc-ignition-formula",
    "kc-maf-data-rules",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
    "kc-map-switching",
    "kc-oil",
@@ -7586,6 +8648,7 @@
    "kc-wot-lean-timing"
   ],
   "works": [
+   "kc-iat2-side",
    "kc-map-switching",
    "kc-p0420",
    "kc-timing-percent",
@@ -7616,6 +8679,9 @@
    "kc-ranges",
    "kc-wot-lean-timing"
   ],
+  "write": [
+   "kc-boost-by-gear"
+  ],
   "writes": [
    "kc-quick-adjustments"
   ],
@@ -7623,6 +8689,8 @@
    "kc-e10"
   ],
   "wrong": [
+   "kc-flash-howto",
+   "kc-log-channels",
    "kc-maf-housing",
    "kc-maf-wot-calibration",
    "kc-power-sources",
@@ -7633,28 +8701,40 @@
   "x": [
    "kc-downpipe"
   ],
+  "yes": [
+   "kc-flash-howto"
+  ],
   "yet": [
-   "kc-boost-step",
    "kc-cvt",
    "kc-map-switching"
   ],
   "you": [
    "kc-drive-brief",
    "kc-dual-boost-targets",
+   "kc-flash-howto",
+   "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
+   "kc-octane-booster",
    "kc-table-maf",
    "kc-tune-one-thing"
   ],
   "your": [
+   "kc-boost-by-gear",
+   "kc-boost-codes",
    "kc-downpipe",
    "kc-expectations",
+   "kc-final-boost-target",
    "kc-fuel-test",
-   "kc-iat2-side",
-   "kc-open-loop-wot",
+   "kc-log-channels",
    "kc-quick-adjustments"
+  ],
+  "yours": [
+   "kc-boost-by-gear",
+   "kc-boost-step"
   ],
   "zero": [
    "kc-cvt",
+   "kc-maf-trim-direction",
    "kc-open-loop-wot"
   ],
   "đăng": [

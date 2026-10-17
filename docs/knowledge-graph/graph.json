@@ -5,11 +5,11 @@
   "nodes": {
    "adr": 8,
    "area": 9,
-   "card": 49,
+   "card": 53,
    "channel": 32,
    "claim": 11,
    "data": 14,
-   "doc": 17,
+   "doc": 18,
    "family": 6,
    "mod": 5,
    "module": 62,
@@ -23,33 +23,33 @@
    "trait": 5
   },
   "edges": {
-   "about": 76,
+   "about": 80,
    "affects": 11,
    "bounds": 59,
    "calls": 49,
    "changes": 14,
    "checks": 1,
-   "cites": 19,
+   "cites": 17,
    "defines": 51,
    "explained-by": 19,
    "gated-by": 14,
    "implemented-by": 21,
-   "imports": 183,
+   "imports": 185,
    "in-family": 39,
    "loads": 3,
-   "mentions": 282,
+   "mentions": 316,
    "method": 56,
    "next": 17,
-   "reads": 55,
+   "reads": 56,
    "reads-channel": 39,
    "runs": 1,
    "serves": 20,
-   "sourced-from": 92,
+   "sourced-from": 99,
    "superseded-by": 7,
    "tests": 55,
    "touches": 172,
-   "uses": 47,
-   "uses-term": 584,
+   "uses": 48,
+   "uses-term": 590,
    "works-on": 5,
    "wraps": 1
   }
@@ -198,8 +198,36 @@
    "card_kind": "fact",
    "topics": "knock, flash, shakedown",
    "applies_when": "A Drive starts with a Fuel-quality score above the Baseline after a Flash.",
-   "body": "After every new Flash the Fuel-quality score starts high, around 0.58, and falls back to the Baseline with calm driving. A start at or below 0.60 that settles toward 0.49 is what a fresh flash does. It is never an Unexplained change, and it never sets a Verdict on its own. Give it ten to fifteen calm minutes before judging fuel or heat, because the score needs that long to relearn. If the score does not settle, or if it climbs again in traffic, that later rise is the finding, judged on its own. The Shakedown drive exists for exactly this pattern.",
+   "body": "After every new Flash KTuner sets the Fuel-quality score to 0.59, and it falls back to the Baseline with calm driving. A start at or below 0.60 that settles toward 0.49 is what a fresh flash does. It is never an Unexplained change, and it never sets a Verdict on its own. Give it ten to fifteen calm minutes before judging fuel or heat, because the score needs that long to relearn. If the score does not settle, or if it climbs again in traffic, that later rise is the finding, judged on its own. The Shakedown drive exists for exactly this pattern.",
    "source": "docs/research/owner-voices.md §3"
+  },
+  {
+   "id": "card:kc-boost-by-gear",
+   "kind": "card",
+   "label": "kc-boost-by-gear",
+   "area": "knowledge",
+   "path": "knowledge/cards/kc-boost-by-gear.md",
+   "description": "Boost By Gear Limits only limit, and yours are off",
+   "status": "current",
+   "card_kind": "ktuner-howto",
+   "topics": "boost, tables, boost-by-gear, ktuner",
+   "applies_when": "The owner asks about Boost By Gear, or how KTuner protects a CVT.",
+   "body": "Boost By Gear Limits is one table per gear, rpm by atmospheric pressure, and it only limits: wherever the boost table asks less, the table wins, so values above every target mean no limit. Your map holds 35.4 psi everywhere, so no gear limit is active. KTuner's own tool for sparing a CVT is a first-gear limit, and its quick settings offer flat or ramped versions. The app explains it and does not write this table, and which gear number your CVT reports to it is unconfirmed.",
+   "source": "docs/research/ktuner-community-knowledge.md §4"
+  },
+  {
+   "id": "card:kc-boost-codes",
+   "kind": "card",
+   "label": "kc-boost-codes",
+   "area": "knowledge",
+   "path": "knowledge/cards/kc-boost-codes.md",
+   "description": "Boost codes P0046 and P0299, and what to log",
+   "status": "current",
+   "card_kind": "owner-question",
+   "topics": "dtc, boost, wastegate, leak",
+   "applies_when": "The owner reports P0046 or P0299, a limp with a dead pedal, or boost that misses target.",
+   "body": "P0046 means the ECU can't hold the wastegate where it commands it. On this generation owners traced it to a sticking wastegate actuator, and to a pinhole leak in the vacuum line on the charge pipe; a new downpipe seemed to fix it only for a while. P0299 is underboost. In your log, compare EWG Position with EWG Target, and boost with its target: a position that doesn't follow its target points to the actuator; boost under target with the wastegate shut points to a leak or the turbo's limit. Fix the hardware first; no map change.",
+   "source": "docs/research/ktuner-community-knowledge.md §4"
   },
   {
    "id": "card:kc-boost-step",
@@ -212,7 +240,7 @@
    "card_kind": "play",
    "topics": "boost, step, proof, datalog, turbo",
    "applies_when": "The owner asks for more boost, or asks how a boost raise would be proven.",
-   "body": "A Boost step adds 1 psi to Boost Target 2 Normal, Low and High cam, in the 3,500 to 4,500 rpm rows, never above the map's Final Boost Target peak, 23.4 here. Only the second tune gets it, so switching to the first undoes it; a proven step is copied to the others. Offered when the latest Cool drive holds two floored pulls (pedal 85 percent or more, held 4 seconds above 3,500 rpm) and a hot drive passes too. Gates: the logged target moved; undershoot and overshoot each within 1.5 psi, target plus overshoot at most 24; timing within 1 degree of the last proven version; Knock Control settled, not rising, at most 0.56 below 5,200 rpm; mixture never leaner than 12.0; fuel pressure at least 90 percent of target. The first failure undoes it. Today it is closed: the hot drive reached 0.64, no floored pull yet.",
+   "body": "A Boost step adds 1 psi to Boost Target 2 Normal, Low and High cam, 3,500 to 4,500 rpm rows, never above the Final Boost Target peak, 23.4 here. Only the second tune gets it; a proven step is copied to the others. Offered when the latest Cool drive holds two floored pulls held 4 seconds above 3,500 rpm and a hot drive passes too. Floored is pedal 85 percent or more until a key-on reading sets it: on these cars floored reads 100 to 113, yours never above 94. Gates: target moved; under- and overshoot held half a second within 1.5 psi, total at most 24; timing within 1 degree of the last proven version; Knock Control settled, at most 0.56 below 5,200 rpm; mixture never leaner than 12.0; fuel pressure at least 90 percent of target. The first failure undoes it.",
    "source": "docs/research/downpipe-power-research.md §8"
   },
   {
@@ -254,7 +282,7 @@
    "card_kind": "owner-question",
    "topics": "downpipe, catless, catted, cel, inspection, exhaust",
    "applies_when": "The owner asks which downpipe to buy, or whether a catless pipe is worth it.",
-   "body": "The 400-cell catted pipes from TSP and RV6 claim no warning light, and owners report none: that is the shop's pick. The 200-cell 27WON pipe sets P0420 for most owners within days. Catless makes about 0 to 6 whp over a good catted pipe (owner and vendor reports), brings exhaust smell into the cabin, always sets P0420, and risks the đăng kiểm tailpipe gas test; an unapproved modification can also be fined 65 to 75 million VND. The tune response is the same for all three: no map change, and a small boost trim only if a log proves boost holds above target. Ask which pipe is fitted: older RV6 pipes were 300-cell.",
+   "body": "The 400-cell catted pipes from TSP and RV6 claim no warning light, and most owners report none, though a few see the rear-sensor code P2A01, or a light only in heavy rain or on long highway runs: that is still the shop's pick. The 200-cell 27WON pipe sets P0420 for most owners within days. Catless makes about 0 to 6 whp over a good catted pipe (owner and vendor reports), brings exhaust smell into the cabin, always sets P0420, and risks the đăng kiểm tailpipe gas test; an unapproved modification can also be fined 65 to 75 million VND. The tune response is the same for all three: no map change, and a small boost trim only if a log proves boost holds above target. Ask which pipe is fitted: older RV6 pipes were 300-cell.",
    "source": "docs/research/downpipe-power-research.md §3"
   },
   {
@@ -328,6 +356,34 @@
    "source": "docs/research/fact-check.md §4; downpipe-power-research.md §2 and §8"
   },
   {
+   "id": "card:kc-final-boost-target",
+   "kind": "card",
+   "label": "kc-final-boost-target",
+   "area": "knowledge",
+   "path": "knowledge/cards/kc-final-boost-target.md",
+   "description": "Final Boost Target passes the target through and caps it",
+   "status": "current",
+   "card_kind": "ktuner-howto",
+   "topics": "boost, tables, final-boost-target, ktuner",
+   "applies_when": "The owner asks what Final Boost Target does, or whether it limits boost.",
+   "body": "Final Boost Target takes the incoming target, from the boost table, the part-pedal target or the Boost By Gear limit, passes it nearly one to one, and caps it at its last column header. Raising that cap means changing the header and its whole column. On your map every column is the same in every rpm row and the top is 23.4 psi, so it passes your target through and is not what holds a pull below the table. The app explains it and never edits it.",
+   "source": "docs/research/ktuner-community-knowledge.md §4"
+  },
+  {
+   "id": "card:kc-flash-howto",
+   "kind": "card",
+   "label": "kc-flash-howto",
+   "area": "knowledge",
+   "path": "knowledge/cards/kc-flash-howto.md",
+   "description": "Flashing with KTuner: power, the key, and what is normal after",
+   "status": "current",
+   "card_kind": "ktuner-howto",
+   "topics": "flash, recovery, cel, ktuner, help",
+   "applies_when": "The owner is about to flash, a flash failed, or warning lights came on after a flash.",
+   "body": "Put a battery charger on the car and power the V2 from a strong port: low voltage is what fails flashes. Ignition on, engine off, never running. When it finishes, key off for ten seconds, back on, and wait for flash successful. Warning lights during the flash are normal, and driver-assist warnings can stay until you have driven ten to fifteen minutes. A failed flash leaves the car unable to start: reconnect and accept recovery, which returns it to factory. A Recovery prompt while the engine runs means a loose cable: say no. Error codes right after a flash usually mean the wrong codebase: start the tune with the one that matches the unit info. If the V2 stops waking with the car, set CAN Gateway to Yes. Saving a tune to the V2 is not flashing it: the next log proves the change.",
+   "source": "docs/research/ktuner-community-knowledge.md §4"
+  },
+  {
    "id": "card:kc-fuel-test",
    "kind": "card",
    "label": "kc-fuel-test",
@@ -361,13 +417,13 @@
    "label": "kc-high-rpm",
    "area": "knowledge",
    "path": "knowledge/cards/kc-high-rpm.md",
-   "description": "Score rises above 5,200 rpm do not count",
+   "description": "Score rises above 5,200 rpm do not count while the artificial rise is on",
    "status": "current",
    "card_kind": "fact",
    "topics": "knock, rpm",
    "applies_when": "A Drive shows Fuel-quality score rises at high revs.",
-   "body": "Non-Si ECUs raise Knock Control on purpose above about 5,200 rpm. Starter and base maps can switch this off with a checkbox, while some locked tunes keep it. Those rises say nothing about fuel quality or heat, so they are excluded from fuel and heat verdicts. This owner rarely revs past 5,200 rpm, with only two rises on one drive up there. A rise at high revs alone never opens a step and never changes a Verdict. Judge the tank by what the score does in normal driving and in traffic, where heat and lugging are the real movers.",
-   "source": "docs/research/owner-voices.md §3"
+   "body": "Non-Si ECUs raise Knock Control on purpose above about 5,200 rpm. KTuner can remove it with Quick Enables, Eliminate Artificial Knock Control Rise; on this car's Starter map that box is off, so the rise is present, and the Car profile records the box. While it is off, those rises say nothing about fuel quality or heat and are excluded from fuel and heat verdicts; the forced rise costs about 2 degrees only at the top of a pull. If the box is ever ticked, a rise up there is real knock and counts like any other. This owner rarely revs past 5,200 rpm. Judge the tank by what the score does in normal driving and in traffic, where heat and lugging are the real movers.",
+   "source": "docs/research/ktuner-community-knowledge.md §3"
   },
   {
    "id": "card:kc-iat-retard",
@@ -389,13 +445,13 @@
    "label": "kc-iat2-side",
    "area": "knowledge",
    "path": "knowledge/cards/kc-iat2-side.md",
-   "description": "IAT2 can sit before or after the intercooler, depending on the ECU",
+   "description": "IAT is after the intercooler, IAT2 before the turbo",
    "status": "current",
    "card_kind": "fact",
    "topics": "heat, iat, iat2, intercooler, sensors, gauges",
    "applies_when": "The owner asks what IAT2 measures, or a reply would judge the intercooler from IAT2.",
-   "body": "Owners of the same engine read IAT2 differently: on some ECUs it is the air after the intercooler, on others the air before it. An owner showed a Southeast Asian ECU reading it after the intercooler, matching another tuning tool, while another owner reports before. So the shop never assumes which side IAT2 is on for this car. Until it is confirmed, intercooler health is not judged from IAT2 alone. A clue in your own log: air before the intercooler, straight off the turbo, runs far hotter on a long pull than air after it.",
-   "source": "docs/research/forum-afr-maf-research.md §1 claim 7"
+   "body": "On this car IAT is the manifold air after the intercooler and IAT2 the inlet air before the turbo. Under boost IAT reads 2 to 6 °C above IAT2, which only works that way round, and KTuner's gauge names and owners of the same engine label them the same. So the intercooler is judged by IAT minus IAT2 under boost: a gap that grows over back-to-back pulls means it is saturating. Some owners report other ECUs of this engine the other way round, so on a new car check the sign of the gap before trusting it.",
+   "source": "docs/research/fact-check.md §4"
   },
   {
    "id": "card:kc-ignition-formula",
@@ -408,7 +464,7 @@
    "card_kind": "ktuner-howto",
    "topics": "ignition, retard, formula, tables, ktuner, datalog",
    "applies_when": "The owner asks how timing is decided, why Actual Ign is lower than the table, or what Knock Retard means.",
-   "body": "KTuner's help gives the rule: ignition table plus knock ignition limitation, minus knock retard, is the final timing, and the ECU uses the lesser of that and the table, so it never runs more than the table. Knock retard is Knock Control times the knock retard table. Their example: 21 plus 2 is 23 degrees; Knock Control 0.38 times a table value of 10 is 3.8 degrees of retard, so the final is 19.2. The log rounds both: retard shows as 3.5 and ignition as 19. So follow three gauges together, Actual Ign, Knock Control and Knock Retard, and never read meaning into a half-degree change. Intake-temperature corrections can also ride in the knock limit in the background.",
+   "body": "KTuner's help gives the rule: ignition table plus knock ignition limitation, minus knock retard, is the final timing, and the ECU uses the lesser of that and the table, so it never runs more than the table. Knock retard is Knock Control times the knock retard table. Their example: 21 plus 2 is 23 degrees; Knock Control 0.38 times a table value of 10 is 3.8 degrees of retard, so the final is 19.2. The log shows both in steps and cuts down rather than rounding: the example logs the retard as 3.5. On TunerView, ignition and retard both move in half-degree steps; the one-degree ignition step is for OBD loggers. Under boost every score from 0.49 to 0.54 logs the same 5 degrees of retard, so read Knock Control itself. Follow Actual Ign, Knock Control and Knock Retard together, and never read meaning into a half-degree change.",
    "source": "docs/research/ktuner-help-pages.md §1"
   },
   {
@@ -424,6 +480,20 @@
    "applies_when": "Never returned as current. Kept so the agent never repeats it.",
    "body": "Replaced. The forum figure sat above where this car already loses timing everywhere, so no-hard-driving starts lower, held over a full minute. See the current card for the timing-cost cut points.",
    "source": "docs/research/fact-check.md §2"
+  },
+  {
+   "id": "card:kc-log-channels",
+   "kind": "card",
+   "label": "kc-log-channels",
+   "area": "knowledge",
+   "path": "knowledge/cards/kc-log-channels.md",
+   "description": "The gauges the shop reads, by their KTuner names",
+   "status": "current",
+   "card_kind": "ktuner-howto",
+   "topics": "logging, tunerview, gauges, channels, datalog",
+   "applies_when": "The owner asks which gauges to log, what a gauge abbreviation means, or why a log reads Can't tell.",
+   "body": "KTuner's short gauge names and the CSV's long names are the same gauges. K.Cont is Knock Control, the Fuel-quality score; K.Ret is Knock Retard; A.Ignition is Ignition. TC.Target and TC.Press are Turbo Pressure Target and Turbo Pressure, read at the turbo before the throttle, while MAP is the manifold. EWG.Posi and EWG.Target are the wastegate; DIFPress and DIFP.Target are fuel pressure; Wideband is the O2 column. TPS is your foot on the pedal and TPS.C is TPS Command, the throttle plate. Log bank one trims only: a trim pinned at its lowest value is a wrong bank or a dead channel and reads Can't tell. Your logger already records all of these; still missing are AFR Command and MAF Hz, which the airflow and mixture checks need. Knock Count is a misfire count, not knock.",
+   "source": "docs/research/ktuner-community-knowledge.md §4"
   },
   {
    "id": "card:kc-log-gate",
@@ -468,6 +538,20 @@
    "source": "docs/research/afr-tuning-research.md §1"
   },
   {
+   "id": "card:kc-maf-trim-direction",
+   "kind": "card",
+   "label": "kc-maf-trim-direction",
+   "area": "knowledge",
+   "path": "knowledge/cards/kc-maf-trim-direction.md",
+   "description": "Which way a trim moves the airflow curve",
+   "status": "current",
+   "card_kind": "ktuner-howto",
+   "topics": "maf, afm, airflow, trims, calibration",
+   "applies_when": "The owner asks how to correct MAF Scaling from a CSV, or which way a trim points.",
+   "body": "A positive trim means the ECU added fuel because it measured too little air, so the airflow points covering that airflow move up by about that percent; a negative trim moves them down. Average the trims at each point over warm, steady driving, and throw away the rows where you lift off or coast, which read zero or spike, and the first seconds after a throttle change. Reach the higher points with a slow, steady roll-on, not a stab. Apply part of the correction, keep the curve rising, flash, and log again. On this car only rows below about 8 psi count: above that the trims freeze. Owners and KTuner staff describe the same method.",
+   "source": "docs/research/ktuner-community-knowledge.md §4"
+  },
+  {
    "id": "card:kc-maf-wot-calibration",
    "kind": "card",
    "label": "kc-maf-wot-calibration",
@@ -510,6 +594,20 @@
    "source": "docs/research/forum-afr-maf-research.md §1 claim 6"
   },
   {
+   "id": "card:kc-octane-booster",
+   "kind": "card",
+   "label": "kc-octane-booster",
+   "area": "knowledge",
+   "path": "knowledge/cards/kc-octane-booster.md",
+   "description": "Don't add octane booster",
+   "status": "current",
+   "card_kind": "owner-question",
+   "topics": "fuel, octane, booster, knock",
+   "applies_when": "The owner asks about octane booster or additives.",
+   "body": "Don't add octane booster. KTuner staff, a vendor and the long-running owner reliability thread all advise against it, and one engine failure in the largest owner census lists booster as a possible cause. If you suspect the fuel, try a different busy station, or E10 RON97, and compare tank against tank by Knock Control on matched drives.",
+   "source": "docs/research/ktuner-community-knowledge.md §4"
+  },
+  {
    "id": "card:kc-oil",
    "kind": "card",
    "label": "kc-oil",
@@ -529,13 +627,13 @@
    "label": "kc-open-loop-wot",
    "area": "knowledge",
    "path": "knowledge/cards/kc-open-loop-wot.md",
-   "description": "At full throttle the trims may stop correcting the mixture",
+   "description": "Under boost the trims stop correcting the mixture",
    "status": "current",
    "card_kind": "fact",
    "topics": "mixture, trims, open-loop, closed-loop, maf, afm, wot, fuel",
    "applies_when": "The owner asks why trims look fine but full-throttle mixture is off, or what open loop means.",
-   "body": "On the earlier-generation Civic 1.5T, owners report that ECUs sold outside the US go open loop at full throttle: short-term trim sits flat at zero, so the trims cannot correct the mixture there and only the airflow calibration (MAF Scaling) decides it. US ECUs stay in closed loop longer. It has not been confirmed for this car's ECU, so read it on your own log: if short-term trim is flat at zero under boost, full-throttle mixture is open loop, and your cruise trims say nothing about it. Then judge the measured mixture against AFR Command, the value the ECU actually asked for, which can differ from the table. Read the loop state from the trims, never from a status number alone.",
-   "source": "docs/research/forum-afr-maf-research.md §1 claims 1 and 2"
+   "body": "On this car it is confirmed from the logs: short-term trim reads exactly zero on every warm row at 12 psi and above, and on nearly all from about 8 psi, while lower down it moves as normal. So under boost the ECU runs open loop: the trims neither correct the mixture nor say anything about the airflow curve there, and only the airflow calibration (MAF Scaling) and the map's target decide it. An airflow correction uses only rows below about 8 psi, where the trims are live. Judge full-throttle mixture against AFR Command, the value the ECU actually asked for, which can differ from the table. Read the loop state from the trims, never from a status number alone.",
+   "source": "docs/research/ktuner-community-knowledge.md §3"
   },
   {
    "id": "card:kc-p0420",
@@ -697,12 +795,12 @@
    "label": "kc-table-wot",
    "area": "knowledge",
    "path": "knowledge/cards/kc-table-wot.md",
-   "description": "WOT Enrich is the full-throttle mixture target",
+   "description": "WOT Enrichment is the full-throttle mixture target",
    "status": "current",
    "card_kind": "ktuner-howto",
    "topics": "afr, mixture, lambda, wot, tables, ktuner",
-   "applies_when": "The owner asks about AFR, lambda or WOT Enrich, or a mixture change is in the plan.",
-   "body": "WOT Enrich (KTuner calls it Nominal Lambda for Component Protection) holds the mixture the ECU aims for, by rpm and load, Low and High cam. Cruise and light load stay at 14.7 for the catalyst; the highest load columns ask 11.0. It is a target, not a fix: change it only after the airflow table is right, with trims within 5 percent, and in steps of 0.2 AFR or less, watching Knock Control on every pull. Leaner at full throttle trades knock and exhaust heat margin for a little power; richer than asked is safe. Low and High are changed together.",
+   "applies_when": "The owner asks about AFR, lambda or WOT Enrichment, or a mixture change is in the plan.",
+   "body": "WOT Enrichment (WOT Enrich in the map file; its load axis is the air per stroke, in milligrams) holds the mixture the ECU aims for, by rpm and load, Low and High cam. KTuner's Nominal Lambda for Component Protection page is for the Type R, not this car. Cruise and light load stay at 14.7 for the catalyst; the highest load columns ask 11.0. It is a target, not a fix: change it only after the airflow table is right, with trims within 5 percent, and in steps of 0.2 AFR or less, watching Knock Control on every pull. Leaner at full throttle trades knock and exhaust heat margin for a little power; richer than asked is safe. Low and High are changed together.",
    "source": "docs/research/afr-tuning-research.md §2 Step C and §3"
   },
   {
@@ -816,36 +914,6 @@
    "applies_when": "The owner asks to lean the full-throttle target for power, or why the mixture lever is locked.",
    "body": "An owner who calibrated his own 1.5T found that running full-throttle mixture near or past 11.5 made the ECU pull timing hard, so it lost power instead of gaining it; 11 to 11.2 worked best on his car. That is one car, not a rule, but it is the same direction this car's data points: no gain shown from leaning, and a real risk. That is why the shop keeps the full-throttle mixture target where the basemap has it. What would change that is a log with AFR Command, the car healthy in heat, and a like-for-like proof drive.",
    "source": "docs/research/forum-afr-maf-research.md §1 claim 4"
-  },
-  {
-   "id": "card:kp-how-boost-by-gear-limits-work",
-   "kind": "card",
-   "label": "kp-how-boost-by-gear-limits-work",
-   "area": "knowledge",
-   "path": "knowledge/proposed/kp-how-boost-by-gear-limits-work.md",
-   "description": "How Boost By Gear Limits work",
-   "status": "proposed",
-   "body": "What Boost By Gear Limits caps (per gear, in psi), how it applies on a CVT car, and how it interacts with the boost targets."
-  },
-  {
-   "id": "card:kp-how-the-final-boost-target-is-arbitrated",
-   "kind": "card",
-   "label": "kp-how-the-final-boost-target-is-arbitrated",
-   "area": "knowledge",
-   "path": "knowledge/proposed/kp-how-the-final-boost-target-is-arbitrated.md",
-   "description": "How the Final Boost Target is arbitrated",
-   "status": "proposed",
-   "body": "How KTuner's Final Boost Target is chosen from the boost target tables and limits, and when it is the value the ECU aims for."
-  },
-  {
-   "id": "card:kp-which-way-a-fuel-trim-points-when-correcting-the-airflow-cur",
-   "kind": "card",
-   "label": "kp-which-way-a-fuel-trim-points-when-correcting-the-airflow-cur",
-   "area": "knowledge",
-   "path": "knowledge/proposed/kp-which-way-a-fuel-trim-points-when-correcting-the-airflow-cur.md",
-   "description": "Which way a fuel trim points when correcting the airflow curve",
-   "status": "proposed",
-   "body": "In a KTuner log, a positive fuel trim means the ECU added fuel because the mixture measured lean, so the airflow point covering that airflow reads slightly low and needs a small upward correction. A negative trim means the opposite. Corrections aim the trims back toward zero, a few percent per round, with the curve kept smooth. Not yet confirmed on this car's ECU."
   },
   {
    "id": "channel:afr",
@@ -1514,6 +1582,15 @@
    "lines": 321
   },
   {
+   "id": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "doc",
+   "label": "ktuner-community-knowledge.md",
+   "area": "docs",
+   "path": "docs/research/ktuner-community-knowledge.md",
+   "description": "KTuner community knowledge for our car: what checks out, what changes",
+   "lines": 121
+  },
+  {
    "id": "file:docs/research/ktuner-help-pages.md",
    "kind": "doc",
    "label": "ktuner-help-pages.md",
@@ -1538,7 +1615,7 @@
    "area": "docs",
    "path": "docs/research/owner-voices.md",
    "description": "Owner voices: what real 1.5T owners ask, what the community answers, and what this car's logs say",
-   "lines": 139
+   "lines": 147
   },
   {
    "id": "file:docs/research/tuner-play-panel.md",
@@ -1583,7 +1660,7 @@
    "area": "engine",
    "path": "engine/kta-car.js",
    "description": "KTA car module: one owner's Car history, Flashes, Shakedown drive,",
-   "lines": 2711
+   "lines": 2712
   },
   {
    "id": "file:engine/kta-drive.js",
@@ -1592,7 +1669,7 @@
    "area": "engine",
    "path": "engine/kta-drive.js",
    "description": "KTA drive check: what one real drive says, and the one thing to do next.",
-   "lines": 983
+   "lines": 1013
   },
   {
    "id": "file:engine/kta-engine.js",
@@ -1601,7 +1678,7 @@
    "area": "engine",
    "path": "engine/kta-engine.js",
    "description": "KTA engine 1.0: the tuning math behind Civic FE Tune Assist.",
-   "lines": 2377
+   "lines": 2427
   },
   {
    "id": "file:engine/kta-picture.js",
@@ -1619,7 +1696,7 @@
    "area": "engine",
    "path": "engine/text/i18n-drive.js",
    "description": "Text for the Drive check page: the 1-2-3 loop, the ranked actions, the engineering graphs and",
-   "lines": 1080
+   "lines": 1082
   },
   {
    "id": "file:engine/text/i18n-map.js",
@@ -1645,7 +1722,7 @@
    "label": "index.json",
    "area": "data",
    "path": "knowledge/index.json",
-   "lines": 7666
+   "lines": 8746
   },
   {
    "id": "file:server/kta_server/__init__.py",
@@ -1753,7 +1830,7 @@
    "area": "server",
    "path": "server/kta_server/graph.py",
    "description": "The chat's graph: every turn, an upload or a typed message, runs through it.",
-   "lines": 571,
+   "lines": 575,
    "note": "The LangGraph chat graph (front agent -> tuner hand-off, Drive pipeline), not this knowledge graph."
   },
   {
@@ -1817,7 +1894,7 @@
    "area": "server",
    "path": "server/kta_server/profile.py",
    "description": "The Car profile: the owner's one car as the app knows it (CONTEXT.md).",
-   "lines": 249
+   "lines": 269
   },
   {
    "id": "file:server/kta_server/questions.py",
@@ -1826,7 +1903,7 @@
    "area": "server",
    "path": "server/kta_server/questions.py",
    "description": "Owner questions: answers in, Car history re-derived (ticket 07).",
-   "lines": 218
+   "lines": 223
   },
   {
    "id": "file:server/kta_server/readback.py",
@@ -1898,7 +1975,7 @@
    "area": "worker",
    "path": "server/kta_worker/worker.js",
    "description": "!/usr/bin/env node",
-   "lines": 808
+   "lines": 809
   },
   {
    "id": "file:server/tests/conftest.py",
@@ -1943,7 +2020,7 @@
    "area": "tests",
    "path": "server/tests/seam1/test_car_profile.py",
    "description": "Seam 1: Car profile, Install and the drive window (ticket 10).",
-   "lines": 359
+   "lines": 409
   },
   {
    "id": "file:server/tests/seam1/test_chat_agent.py",
@@ -2204,7 +2281,7 @@
    "area": "tests",
    "path": "test/drive.test.js",
    "description": "'use strict';",
-   "lines": 819
+   "lines": 944
   },
   {
    "id": "file:test/engine.test.js",
@@ -2213,7 +2290,7 @@
    "area": "tests",
    "path": "test/engine.test.js",
    "description": "'use strict';",
-   "lines": 374
+   "lines": 418
   },
   {
    "id": "file:test/thresholds.test.js",
@@ -2303,7 +2380,7 @@
    "area": "web",
    "path": "web/components/Cards.tsx",
    "description": "The generative-UI cards an assistant message can carry, in the order a reply",
-   "lines": 381
+   "lines": 394
   },
   {
    "id": "file:web/components/Chart.tsx",
@@ -2438,7 +2515,7 @@
    "area": "web",
    "path": "web/lib/types.ts",
    "description": "The types the server sends, written once so every card reads the same shape.",
-   "lines": 399
+   "lines": 401
   },
   {
    "id": "file:web/lib/uiTools.ts",
@@ -3881,7 +3958,7 @@
    "value": "{\"pedal_pct\": 85, \"hold_s\": 4, \"rpm_min\": 3500, \"pulls_min\": 2, \"rows_rpm\": [3500, 4000, 4500], \"cell_min_psi\": 15, \"target_gap_psi\": 0.5, \"undershoot_psi\": 1.5",
    "unit": "mixed (%, s, rpm, psi, score, AFR, deg)",
    "basis": "judgement",
-   "source": "ticket 16 (proof pull: pedal 85 % held 4 s above 3,500 rpm, 2 pulls, rows 3,500-4,500; the pass gates), ticket 13 (overshoot tightened to 1.5 and target + overshoot 24; ignition achieved vs the last proven Map version, drop over 1°; DIFP 90 %; Knock Control 0.56 kept, read settled), ticket 17 (the logged target must reach the table: within 0.5 psi), ticket 06 D1 (undershoot 1.5, AFR never leaner than 12.0, trims ±5 %)"
+   "source": "ticket 16 (proof pull: pedal 85 % held 4 s above 3,500 rpm, 2 pulls, rows 3,500-4,500; the pass gates), ticket 13 (overshoot tightened to 1.5 and target + overshoot 24; ignition achieved vs the last proven Map version, drop over 1°; DIFP 90 %; Knock Control 0.56 kept, read settled), ticket 17 (the logged target must reach the table: within 0.5 psi), ticket 06 D1 (undershoot 1.5, AFR never leaner than 12.0, trims ±5 %), ktuner-community-knowledge.md §6.5 (overshoot judged held 0.5 s: KTuner calls a 1-3 psi spike normal)"
   },
   {
    "id": "threshold:boost_step_max",
@@ -4494,6 +4571,31 @@
    "kind": "uses-term"
   },
   {
+   "from": "card:kc-boost-by-gear",
+   "to": "family:boost",
+   "kind": "about"
+  },
+  {
+   "from": "card:kc-boost-by-gear",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "sourced-from"
+  },
+  {
+   "from": "card:kc-boost-by-gear",
+   "to": "table:Boost_By_Gear_Limits",
+   "kind": "about"
+  },
+  {
+   "from": "card:kc-boost-codes",
+   "to": "family:boost",
+   "kind": "about"
+  },
+  {
+   "from": "card:kc-boost-codes",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "sourced-from"
+  },
+  {
    "from": "card:kc-boost-step",
    "to": "family:boost",
    "kind": "about"
@@ -4668,6 +4770,31 @@
    "kind": "sourced-from"
   },
   {
+   "from": "card:kc-final-boost-target",
+   "to": "family:boost",
+   "kind": "about"
+  },
+  {
+   "from": "card:kc-final-boost-target",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "sourced-from"
+  },
+  {
+   "from": "card:kc-final-boost-target",
+   "to": "table:Final_Boost_Target_H",
+   "kind": "about"
+  },
+  {
+   "from": "card:kc-final-boost-target",
+   "to": "table:Final_Boost_Target_L",
+   "kind": "about"
+  },
+  {
+   "from": "card:kc-flash-howto",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "sourced-from"
+  },
+  {
    "from": "card:kc-fuel-test",
    "to": "family:knock",
    "kind": "about"
@@ -4719,17 +4846,17 @@
   },
   {
    "from": "card:kc-high-rpm",
-   "to": "file:docs/research/owner-voices.md",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
    "kind": "sourced-from"
   },
   {
    "from": "card:kc-high-rpm",
-   "to": "term:Drive",
+   "to": "term:Car profile",
    "kind": "uses-term"
   },
   {
    "from": "card:kc-high-rpm",
-   "to": "term:Verdict",
+   "to": "term:Drive",
    "kind": "uses-term"
   },
   {
@@ -4749,7 +4876,12 @@
   },
   {
    "from": "card:kc-iat2-side",
-   "to": "file:docs/research/forum-afr-maf-research.md",
+   "to": "family:boost",
+   "kind": "about"
+  },
+  {
+   "from": "card:kc-iat2-side",
+   "to": "file:docs/research/fact-check.md",
    "kind": "sourced-from"
   },
   {
@@ -4788,6 +4920,11 @@
    "kind": "sourced-from"
   },
   {
+   "from": "card:kc-log-channels",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "sourced-from"
+  },
+  {
    "from": "card:kc-log-gate",
    "to": "file:docs/research/drive-check-tuner-analysis.md",
    "kind": "sourced-from"
@@ -4823,6 +4960,16 @@
    "kind": "uses",
    "number": "trim-ok",
    "note": "boost_step_gates.trim_max_pct = 5"
+  },
+  {
+   "from": "card:kc-maf-trim-direction",
+   "to": "family:airflow",
+   "kind": "about"
+  },
+  {
+   "from": "card:kc-maf-trim-direction",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "sourced-from"
   },
   {
    "from": "card:kc-maf-wot-calibration",
@@ -4870,6 +5017,16 @@
    "kind": "sourced-from"
   },
   {
+   "from": "card:kc-octane-booster",
+   "to": "family:knock",
+   "kind": "about"
+  },
+  {
+   "from": "card:kc-octane-booster",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "sourced-from"
+  },
+  {
    "from": "card:kc-oil",
    "to": "file:docs/research/fact-check.md",
    "kind": "sourced-from"
@@ -4886,12 +5043,17 @@
   },
   {
    "from": "card:kc-open-loop-wot",
+   "to": "family:boost",
+   "kind": "about"
+  },
+  {
+   "from": "card:kc-open-loop-wot",
    "to": "family:mixture",
    "kind": "about"
   },
   {
    "from": "card:kc-open-loop-wot",
-   "to": "file:docs/research/forum-afr-maf-research.md",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
    "kind": "sourced-from"
   },
   {
@@ -5318,46 +5480,6 @@
    "from": "card:kc-wot-lean-timing",
    "to": "file:docs/research/forum-afr-maf-research.md",
    "kind": "sourced-from"
-  },
-  {
-   "from": "card:kp-how-boost-by-gear-limits-work",
-   "to": "family:boost",
-   "kind": "about"
-  },
-  {
-   "from": "card:kp-how-boost-by-gear-limits-work",
-   "to": "file:docs/research/ktuner-help-pages.md",
-   "kind": "cites"
-  },
-  {
-   "from": "card:kp-how-boost-by-gear-limits-work",
-   "to": "table:Boost_By_Gear_Limits",
-   "kind": "about"
-  },
-  {
-   "from": "card:kp-how-the-final-boost-target-is-arbitrated",
-   "to": "family:boost",
-   "kind": "about"
-  },
-  {
-   "from": "card:kp-how-the-final-boost-target-is-arbitrated",
-   "to": "file:docs/research/ktuner-help-pages.md",
-   "kind": "cites"
-  },
-  {
-   "from": "card:kp-how-the-final-boost-target-is-arbitrated",
-   "to": "table:Final_Boost_Target_H",
-   "kind": "about"
-  },
-  {
-   "from": "card:kp-how-the-final-boost-target-is-arbitrated",
-   "to": "table:Final_Boost_Target_L",
-   "kind": "about"
-  },
-  {
-   "from": "card:kp-which-way-a-fuel-trim-points-when-correcting-the-airflow-cur",
-   "to": "family:airflow",
-   "kind": "about"
   },
   {
    "from": "claim:cvt300",
@@ -5956,6 +6078,11 @@
   },
   {
    "from": "file:docs/research/fact-check.md",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/fact-check.md",
    "to": "term:Drive",
    "kind": "uses-term"
   },
@@ -6066,6 +6193,11 @@
   },
   {
    "from": "file:docs/research/knowledge-graph-panel.md",
+   "to": "card:kc-final-boost-target",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/knowledge-graph-panel.md",
    "to": "card:kc-log-gate",
    "kind": "mentions"
   },
@@ -6102,11 +6234,6 @@
   {
    "from": "file:docs/research/knowledge-graph-panel.md",
    "to": "card:kc-tune-order",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:docs/research/knowledge-graph-panel.md",
-   "to": "card:kp-how-the-final-boost-target-is-arbitrated",
    "kind": "mentions"
   },
   {
@@ -6265,6 +6392,171 @@
    "kind": "uses-term"
   },
   {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-after-flash",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-boost-by-gear",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-boost-codes",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-boost-step",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-cvt",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-downpipe-catted-catless",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-expectations",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-final-boost-target",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-flash-howto",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-fuel-test",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-heat-soak",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-high-rpm",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-iat2-side",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-ignition-formula",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-log-channels",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-maf-trim-direction",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-map-switching",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-octane-booster",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-open-loop-wot",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-p0420",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-quick-adjustments",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-ranges",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-shakedown",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-table-boost",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-table-wot",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-timing-percent",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "card:kc-trim-cause",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "file:data/thresholds.json",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "file:docs/research/afr-tuning-research.md",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "file:docs/research/fact-check.md",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "file:engine/kta-engine.js",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "term:Boost step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:docs/research/ktuner-community-knowledge.md",
+   "to": "term:Car profile",
+   "kind": "uses-term"
+  },
+  {
    "from": "file:docs/research/ktuner-help-pages.md",
    "to": "card:kc-ignition-formula",
    "kind": "mentions"
@@ -6282,16 +6574,6 @@
   {
    "from": "file:docs/research/ktuner-help-pages.md",
    "to": "card:kc-table-ignition",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:docs/research/ktuner-help-pages.md",
-   "to": "card:kp-how-boost-by-gear-limits-work",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:docs/research/ktuner-help-pages.md",
-   "to": "card:kp-how-the-final-boost-target-is-arbitrated",
    "kind": "mentions"
   },
   {
@@ -6881,6 +7163,11 @@
   },
   {
    "from": "file:engine/kta-drive.js",
+   "to": "file:data/thresholds.json",
+   "kind": "reads"
+  },
+  {
+   "from": "file:engine/kta-drive.js",
    "to": "file:docs/research/owner-voices.md",
    "kind": "mentions"
   },
@@ -6903,6 +7190,11 @@
    "from": "file:engine/kta-drive.js",
    "to": "term:Hot restart",
    "kind": "uses-term"
+  },
+  {
+   "from": "file:engine/kta-drive.js",
+   "to": "threshold:boost_step_gates",
+   "kind": "uses"
   },
   {
    "from": "file:engine/kta-engine.js",
@@ -6932,6 +7224,11 @@
   {
    "from": "file:engine/kta-engine.js",
    "to": "file:docs/research/fact-check.md",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:engine/kta-engine.js",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
    "kind": "mentions"
   },
   {
@@ -7012,6 +7309,11 @@
   {
    "from": "file:engine/kta-engine.js",
    "to": "term:Boost step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:engine/kta-engine.js",
+   "to": "term:Car profile",
    "kind": "uses-term"
   },
   {
@@ -8131,6 +8433,11 @@
   },
   {
    "from": "file:server/kta_server/graph.py",
+   "to": "file:server/kta_server/profile.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/kta_server/graph.py",
    "to": "file:server/kta_server/readback.py",
    "kind": "imports"
   },
@@ -8478,6 +8785,11 @@
    "from": "file:server/kta_server/profile.py",
    "to": "term:KTuner basemap",
    "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/questions.py",
+   "to": "file:server/kta_server/profile.py",
+   "kind": "imports"
   },
   {
    "from": "file:server/kta_server/questions.py",
@@ -8993,6 +9305,11 @@
   },
   {
    "from": "file:server/kta_worker/worker.js",
+   "to": "term:Car profile",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_worker/worker.js",
    "to": "term:Flash plan",
    "kind": "uses-term"
   },
@@ -9235,6 +9552,11 @@
    "from": "file:server/tests/seam1/test_car_profile.py",
    "to": "file:server/tests/seam1/test_reply_words.py",
    "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_car_profile.py",
+   "to": "file:test/drive.test.js",
+   "kind": "mentions"
   },
   {
    "from": "file:server/tests/seam1/test_car_profile.py",
@@ -10793,6 +11115,11 @@
   },
   {
    "from": "file:test/drive.test.js",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:test/drive.test.js",
    "to": "file:docs/research/owner-voices.md",
    "kind": "mentions"
   },
@@ -10833,6 +11160,16 @@
   },
   {
    "from": "file:test/drive.test.js",
+   "to": "term:Car history",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:test/drive.test.js",
+   "to": "term:Car profile",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:test/drive.test.js",
    "to": "term:Cool drive",
    "kind": "uses-term"
   },
@@ -10865,6 +11202,11 @@
    "from": "file:test/engine.test.js",
    "to": "file:data/ktuner-maps-digitized.json",
    "kind": "reads"
+  },
+  {
+   "from": "file:test/engine.test.js",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "mentions"
   },
   {
    "from": "file:test/engine.test.js",

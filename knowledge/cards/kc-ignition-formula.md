@@ -16,6 +16,8 @@ numbers:
 - retard-example: 3.8 deg
 - retard-logged-example: 3.5 deg
 - final-example: 19.2 deg
-- final-logged-example: 19 deg
+- kc-floor: 0.49 score
+- kc-same-step-hi: 0.54 score
+- retard-at-floor: 5.0 °
 ---
-KTuner's help gives the rule: ignition table plus knock ignition limitation, minus knock retard, is the final timing, and the ECU uses the lesser of that and the table, so it never runs more than the table. Knock retard is Knock Control times the knock retard table. Their example: 21 plus 2 is 23 degrees; Knock Control 0.38 times a table value of 10 is 3.8 degrees of retard, so the final is 19.2. The log rounds both: retard shows as 3.5 and ignition as 19. So follow three gauges together, Actual Ign, Knock Control and Knock Retard, and never read meaning into a half-degree change. Intake-temperature corrections can also ride in the knock limit in the background.
+KTuner's help gives the rule: ignition table plus knock ignition limitation, minus knock retard, is the final timing, and the ECU uses the lesser of that and the table, so it never runs more than the table. Knock retard is Knock Control times the knock retard table. Their example: 21 plus 2 is 23 degrees; Knock Control 0.38 times a table value of 10 is 3.8 degrees of retard, so the final is 19.2. The log shows both in steps and cuts down rather than rounding: the example logs the retard as 3.5. On TunerView, ignition and retard both move in half-degree steps; the one-degree ignition step is for OBD loggers. Under boost every score from 0.49 to 0.54 logs the same 5 degrees of retard, so read Knock Control itself. Follow Actual Ign, Knock Control and Knock Retard together, and never read meaning into a half-degree change.

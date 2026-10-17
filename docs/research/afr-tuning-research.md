@@ -64,7 +64,7 @@ Order of work: **airflow first, targets second, ignition last.** Never correct a
 - If WOT is consistently rich or lean **by the same % as the part-throttle error**, it's scaling. If WOT only is off, check injector/DI pressure or the target table.
 
 ### Step C: Then adjust lambda targets (if at all)
-- Table: **Nominal Lambda for Component Protection** (KTuner name). This is the `WOT_Enrich_L/H` sheets.
+- Table: **WOT Enrichment** (KTuner name on the 1.5T; load axis mg per stroke). This is the `WOT_Enrich_L/H` sheets. *(Corrected 17 Oct 2026: "Nominal Lambda for Component Protection" is a Type R page.)*
 - Typical turbo gasoline WOT targets are about 0.78–0.85 λ (11.5–12.5 AFR). Stock 1.5T already commands 11.0 at the top load columns.
 - Leaning WOT for power trades knock/EGT margin. Change in small steps (≤ 0.2 AFR), and watch knock retard every pull.
 - Leave cruise and light load at 14.7 (stoich). Emissions and catalyst depend on closed loop.
@@ -83,7 +83,7 @@ Order of work: **airflow first, targets second, ignition last.** Never correct a
 | `MAF_Scaling_PRL_Race` | 1×103 | KTuner preset for PRL **Race** housing | Select only with Race housing |
 | `MAF_Scaling_27Won_Race` | 1×103 | Preset for 27WON 80 mm Race housing (about 1.5× factory) | Select only with that housing |
 | `AFM_Flow_Raw_Visible` | 1×31 | First 31 breakpoints visible on screen | Reference only |
-| `WOT_Enrich_L` / `_H` | 20 RPM × 10 load cols, AFR | Lambda/AFR **targets** (Nominal Lambda for Component Protection), low/high cam | **Yes. Targets only, after airflow is right** |
+| `WOT_Enrich_L` / `_H` | 20 RPM × 10 load cols, AFR | Lambda/AFR **targets** (WOT Enrichment), low/high cam | **Yes. Targets only, after airflow is right** |
 | `DI_Fuel_Pressure_Target_0pct/55pct` | 20×10 | Direct-injection rail pressure target | Not AFR. Leave stock unless injector-limited |
 | `Cylinder_Fill_Limitation_L/H` | 10×10 | Load (fill) ceiling | Not AFR. Load limiter |
 | `Ethanol_*` | | Ignition/boost adjustments for ethanol | Not fueling |
