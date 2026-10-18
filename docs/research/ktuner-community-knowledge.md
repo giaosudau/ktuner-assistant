@@ -117,7 +117,7 @@ The full list (≈ 120 picks with wording and links): `.scratch/ktuner-kb-resear
 
 ## 8. Gaps and what's not done
 
-- **YouTube:** still IP-blocked at the last probe (18 Oct 01:50); a waiter retries every 30 minutes until about 08:45. 68 videos not fetched, including the four official KTuner tutorials and Derek Robinson's 2022 Si walkthrough. Resume: `scratchpad/yt_grab_kb.py` (skips saved ids).
+- **YouTube:** stopped on 18 Oct at the owner's request, still IP-blocked at every probe. 68 videos were never fetched, including the four official KTuner tutorials and Derek Robinson's 2022 Si walkthrough; their ids are in `.scratch/ktuner-kb-research/sources.md`. Fetching about 50 transcripts in a row triggers YouTube's block, so a later run should space them hours apart.
 - **CivicX:** done (§9). 37 snippet-only claims remain with no fetched thread; they stay low-confidence.
 - **TikTok:** no transcripts by design (anti-bot challenge). **Facebook groups and Vietnamese sources (Otofun)** not reached; they remain the biggest gap for this market.
 - Not in any source: what exactly caps the target below 21 on a floored pull (only the test in §2 answers it), and KTuner's internal Knock Control model.
