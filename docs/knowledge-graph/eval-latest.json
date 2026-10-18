@@ -172,11 +172,11 @@
    "group": "Owner question",
    "decision": "play:boost",
    "kg_top": [
-    "kc-table-boost",
     "kc-boost-step",
+    "kc-table-boost",
     "kc-expectations",
     "kc-octane-booster",
-    "kc-dual-boost-targets"
+    "kc-e10"
    ],
    "want": [
     "kc-expectations"
@@ -732,9 +732,9 @@
    "group": "Superseded",
    "decision": "play:boost",
    "kg_top": [
+    "kc-boost-step",
     "kc-table-boost",
     "kc-expectations",
-    "kc-boost-step",
     "kc-dual-boost-targets",
     "kc-map-switching"
    ],
@@ -1086,8 +1086,8 @@
    "kg_top": [
     "kc-drive-brief",
     "kc-heat-soak",
-    "kc-timing-percent",
     "kc-boost-step",
+    "kc-timing-percent",
     "kc-log-gate"
    ],
    "want": [
@@ -1109,7 +1109,7 @@
     "kc-log-gate",
     "kc-heat-soak",
     "kc-fuel-test",
-    "kc-after-flash"
+    "kc-boost-step"
    ],
    "want": [
     "kc-drive-brief"
@@ -1130,7 +1130,7 @@
     "kc-log-gate",
     "kc-heat-soak",
     "kc-fuel-test",
-    "kc-after-flash"
+    "kc-boost-step"
    ],
    "want": [
     "kc-drive-brief"
@@ -1191,8 +1191,8 @@
    "kg_top": [
     "kc-drive-brief",
     "kc-heat-soak",
-    "kc-timing-percent",
     "kc-boost-step",
+    "kc-timing-percent",
     "kc-log-gate"
    ],
    "want": [

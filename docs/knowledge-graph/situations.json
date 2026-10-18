@@ -633,9 +633,9 @@
      "id": "kc-boost-step",
      "title": "More boost, one proven step at a time",
      "kind": "play",
-     "score": 34.2,
+     "score": 35.2,
      "why": [
-      "keywords 10.2",
+      "keywords 11.2",
       "the decision's reason",
       "about boost"
      ]
@@ -1969,9 +1969,9 @@
      "id": "kc-cvt",
      "title": "CVT care is heat management, not a torque number",
      "kind": "rule",
-     "score": 27.7,
+     "score": 26.5,
      "why": [
-      "keywords 19.7",
+      "keywords 18.5",
       "explains The CVT",
       "replaces kc-torque-250nm"
      ]
@@ -1989,18 +1989,18 @@
      "id": "kc-boost-by-gear",
      "title": "Boost By Gear Limits only limit, and yours are off",
      "kind": "ktuner-howto",
-     "score": 9.8,
+     "score": 9.2,
      "why": [
-      "keywords 9.8"
+      "keywords 9.2"
      ]
     },
     {
      "id": "kc-table-boost",
      "title": "The boost tables in KTuner",
      "kind": "ktuner-howto",
-     "score": 6.1,
+     "score": 5.9,
      "why": [
-      "keywords 6.1"
+      "keywords 5.9"
      ]
     },
     {
@@ -2212,23 +2212,23 @@
    ],
    "cards": [
     {
-     "id": "kc-table-boost",
-     "title": "The boost tables in KTuner",
-     "kind": "ktuner-howto",
-     "score": 28.5,
+     "id": "kc-boost-step",
+     "title": "More boost, one proven step at a time",
+     "kind": "play",
+     "score": 31.9,
      "why": [
-      "keywords 4.5",
+      "keywords 7.9",
       "the decision's reason",
       "about boost"
      ]
     },
     {
-     "id": "kc-boost-step",
-     "title": "More boost, one proven step at a time",
-     "kind": "play",
-     "score": 26.6,
+     "id": "kc-table-boost",
+     "title": "The boost tables in KTuner",
+     "kind": "ktuner-howto",
+     "score": 28.4,
      "why": [
-      "keywords 2.6",
+      "keywords 4.4",
       "the decision's reason",
       "about boost"
      ]
@@ -2237,9 +2237,9 @@
      "id": "kc-expectations",
      "title": "The turbo has no headroom left on this map",
      "kind": "fact",
-     "score": 25.0,
+     "score": 24.8,
      "why": [
-      "keywords 9.0",
+      "keywords 8.8",
       "the shop-round stage's method",
       "about boost",
       "explains Vietnam E10 RON95"
@@ -2255,14 +2255,13 @@
      ]
     },
     {
-     "id": "kc-dual-boost-targets",
-     "title": "How KTuner picks between the dual boost targets",
-     "kind": "ktuner-howto",
+     "id": "kc-e10",
+     "title": "E10 needs no extra fuel and no trim offset",
+     "kind": "fact",
      "score": 16.3,
      "why": [
-      "keywords 6.3",
-      "the shop-round stage's method",
-      "about boost"
+      "keywords 10.3",
+      "explains Vietnam E10 RON95"
      ]
     }
    ],
@@ -2371,8 +2370,8 @@
      "kind": "situation",
      "taken": true,
      "refs": [
-      "card:kc-table-boost",
       "card:kc-boost-step",
+      "card:kc-table-boost",
       "card:kc-expectations"
      ],
      "edge": "",
@@ -2397,8 +2396,8 @@
      "kind": "leaf",
      "taken": false,
      "refs": [
-      "card:kc-table-boost",
       "card:kc-boost-step",
+      "card:kc-table-boost",
       "card:kc-expectations"
      ],
      "edge": "no",
@@ -2544,9 +2543,9 @@
      "kind": "about"
     },
     {
-     "from": "card:kc-dual-boost-targets",
-     "to": "family:boost",
-     "kind": "about"
+     "from": "trait:fuel",
+     "to": "card:kc-e10",
+     "kind": "method"
     },
     {
      "from": "card:kc-expectations",
@@ -2597,7 +2596,7 @@
    "nodes": [
     "card:kc-boost-step",
     "card:kc-drive-brief",
-    "card:kc-dual-boost-targets",
+    "card:kc-e10",
     "card:kc-expectations",
     "card:kc-octane-booster",
     "card:kc-shakedown",
@@ -3067,9 +3066,9 @@
      "id": "kc-boost-step",
      "title": "More boost, one proven step at a time",
      "kind": "play",
-     "score": 39.7,
+     "score": 42.4,
      "why": [
-      "keywords 15.7",
+      "keywords 18.4",
       "the decision's reason",
       "about boost"
      ]
@@ -5322,9 +5321,9 @@
      "id": "kc-trim-cause",
      "title": "The trim pattern names one cause",
      "kind": "play",
-     "score": 11.6,
+     "score": 11.5,
      "why": [
-      "keywords 3.6",
+      "keywords 3.5",
       "the shop-round stage's method",
       "uses-term Flash"
      ]
@@ -5333,9 +5332,9 @@
      "id": "kc-map-switching",
      "title": "How KTuner on-the-fly map switching works",
      "kind": "ktuner-howto",
-     "score": 10.2,
+     "score": 10.0,
      "why": [
-      "keywords 8.2",
+      "keywords 8.0",
       "uses-term Map"
      ]
     }
@@ -7508,9 +7507,9 @@
      "id": "kc-tune-one-thing",
      "title": "How a careful tuner changes a map from logs",
      "kind": "rule",
-     "score": 30.3,
+     "score": 29.7,
      "why": [
-      "keywords 10.3",
+      "keywords 9.7",
       "the decision's reason"
      ]
     },
@@ -7518,9 +7517,9 @@
      "id": "kc-maf-data-rules",
      "title": "What a log needs before the airflow curve can be corrected",
      "kind": "rule",
-     "score": 26.3,
+     "score": 26.0,
      "why": [
-      "keywords 16.3",
+      "keywords 16.0",
       "the shop-round stage's method",
       "about airflow"
      ]
@@ -7972,9 +7971,9 @@
      "id": "kc-tune-one-thing",
      "title": "How a careful tuner changes a map from logs",
      "kind": "rule",
-     "score": 25.0,
+     "score": 24.9,
      "why": [
-      "keywords 5.0",
+      "keywords 4.9",
       "the decision's reason"
      ]
     },
@@ -7992,9 +7991,9 @@
      "id": "kc-tune-order",
      "title": "The order a tuner works in",
      "kind": "rule",
-     "score": 22.8,
+     "score": 22.7,
      "why": [
-      "keywords 2.8",
+      "keywords 2.7",
       "the decision's reason"
      ]
     }
@@ -9270,12 +9269,23 @@
    ],
    "cards": [
     {
-     "id": "kc-table-boost",
-     "title": "The boost tables in KTuner",
-     "kind": "ktuner-howto",
+     "id": "kc-boost-step",
+     "title": "More boost, one proven step at a time",
+     "kind": "play",
      "score": 26.7,
      "why": [
       "keywords 2.7",
+      "the decision's reason",
+      "about boost"
+     ]
+    },
+    {
+     "id": "kc-table-boost",
+     "title": "The boost tables in KTuner",
+     "kind": "ktuner-howto",
+     "score": 26.6,
+     "why": [
+      "keywords 2.6",
       "the decision's reason",
       "about boost"
      ]
@@ -9286,7 +9296,7 @@
      "kind": "fact",
      "score": 26.0,
      "why": [
-      "keywords 3.6",
+      "keywords 3.5",
       "the shop-round stage's method",
       "about boost",
       "explains Vietnam E10 RON95",
@@ -9294,23 +9304,12 @@
      ]
     },
     {
-     "id": "kc-boost-step",
-     "title": "More boost, one proven step at a time",
-     "kind": "play",
-     "score": 25.4,
-     "why": [
-      "keywords 1.4",
-      "the decision's reason",
-      "about boost"
-     ]
-    },
-    {
      "id": "kc-dual-boost-targets",
      "title": "How KTuner picks between the dual boost targets",
      "kind": "ktuner-howto",
-     "score": 12.9,
+     "score": 12.8,
      "why": [
-      "keywords 2.9",
+      "keywords 2.8",
       "the shop-round stage's method",
       "about boost"
      ]
@@ -9432,9 +9431,9 @@
      "kind": "situation",
      "taken": true,
      "refs": [
+      "card:kc-boost-step",
       "card:kc-table-boost",
-      "card:kc-expectations",
-      "card:kc-boost-step"
+      "card:kc-expectations"
      ],
      "edge": "",
      "method": false
@@ -9458,9 +9457,9 @@
      "kind": "leaf",
      "taken": false,
      "refs": [
+      "card:kc-boost-step",
       "card:kc-table-boost",
-      "card:kc-expectations",
-      "card:kc-boost-step"
+      "card:kc-expectations"
      ],
      "edge": "no",
      "method": false
@@ -9711,9 +9710,9 @@
      "id": "kc-cvt",
      "title": "CVT care is heat management, not a torque number",
      "kind": "rule",
-     "score": 22.4,
+     "score": 22.2,
      "why": [
-      "keywords 14.4",
+      "keywords 14.2",
       "explains The CVT",
       "replaces kc-torque-250nm"
      ]
@@ -9722,9 +9721,9 @@
      "id": "kc-power-sources",
      "title": "More air, more fire, more fuel? Where power comes from",
      "kind": "fact",
-     "score": 8.6,
+     "score": 8.7,
      "why": [
-      "keywords 8.6"
+      "keywords 8.7"
      ]
     },
     {
@@ -9740,18 +9739,18 @@
      "id": "kc-boost-by-gear",
      "title": "Boost By Gear Limits only limit, and yours are off",
      "kind": "ktuner-howto",
-     "score": 3.5,
+     "score": 3.4,
      "why": [
-      "keywords 3.5"
+      "keywords 3.4"
      ]
     },
     {
      "id": "kc-expectations",
      "title": "The turbo has no headroom left on this map",
      "kind": "fact",
-     "score": 2.5,
+     "score": 2.6,
      "why": [
-      "keywords 2.5"
+      "keywords 2.6"
      ]
     }
    ],
@@ -11405,9 +11404,9 @@
      "id": "kc-maf-wot-calibration",
      "title": "How tuners correct the full-throttle end of the airflow curve",
      "kind": "ktuner-howto",
-     "score": 22.3,
+     "score": 22.6,
      "why": [
-      "keywords 18.3",
+      "keywords 18.6",
       "about mixture"
      ]
     },
@@ -12585,36 +12584,36 @@
      "id": "kc-ignition-formula",
      "title": "How the ECU sets final ignition, with KTuner's own example",
      "kind": "ktuner-howto",
-     "score": 5.8,
+     "score": 5.9,
      "why": [
-      "keywords 5.8"
+      "keywords 5.9"
      ]
     },
     {
      "id": "kc-ranges",
      "title": "Knock Control ranges and what each level costs",
      "kind": "fact",
-     "score": 5.8,
+     "score": 5.9,
      "why": [
-      "keywords 5.8"
+      "keywords 5.9"
      ]
     },
     {
      "id": "kc-timing-percent",
      "title": "Should I add 2 or 5 percent timing?",
      "kind": "owner-question",
-     "score": 4.8,
+     "score": 5.0,
      "why": [
-      "keywords 4.8"
+      "keywords 5.0"
      ]
     },
     {
      "id": "kc-boost-by-gear",
      "title": "Boost By Gear Limits only limit, and yours are off",
      "kind": "ktuner-howto",
-     "score": 4.3,
+     "score": 4.2,
      "why": [
-      "keywords 4.3"
+      "keywords 4.2"
      ]
     }
    ],
@@ -13265,9 +13264,9 @@
      "id": "kc-boost-step",
      "title": "More boost, one proven step at a time",
      "kind": "play",
-     "score": 23.3,
+     "score": 22.9,
      "why": [
-      "keywords 7.3",
+      "keywords 6.9",
       "the shop-round stage's method",
       "about boost",
       "about Final_Boost_Target_H"
@@ -14023,22 +14022,22 @@
      ]
     },
     {
+     "id": "kc-boost-step",
+     "title": "More boost, one proven step at a time",
+     "kind": "play",
+     "score": 17.0,
+     "why": [
+      "keywords 15.0",
+      "uses-term Cool drive"
+     ]
+    },
+    {
      "id": "kc-timing-percent",
      "title": "Should I add 2 or 5 percent timing?",
      "kind": "owner-question",
      "score": 17.0,
      "why": [
       "keywords 17.0"
-     ]
-    },
-    {
-     "id": "kc-boost-step",
-     "title": "More boost, one proven step at a time",
-     "kind": "play",
-     "score": 16.3,
-     "why": [
-      "keywords 14.3",
-      "uses-term Cool drive"
      ]
     },
     {
@@ -14066,7 +14065,7 @@
      "refs": [
       "card:kc-drive-brief",
       "card:kc-heat-soak",
-      "card:kc-timing-percent"
+      "card:kc-boost-step"
      ],
      "edge": "",
      "method": false
@@ -14143,7 +14142,7 @@
      "refs": [
       "card:kc-drive-brief",
       "card:kc-heat-soak",
-      "card:kc-timing-percent"
+      "card:kc-boost-step"
      ],
      "edge": "no",
      "method": false
@@ -14167,7 +14166,7 @@
      "refs": [
       "card:kc-drive-brief",
       "card:kc-heat-soak",
-      "card:kc-timing-percent"
+      "card:kc-boost-step"
      ],
      "edge": "no",
      "method": false
@@ -14437,13 +14436,13 @@
      ]
     },
     {
-     "id": "kc-after-flash",
-     "title": "The after-flash pattern is reassurance, not an alarm",
-     "kind": "fact",
-     "score": 8.3,
+     "id": "kc-boost-step",
+     "title": "More boost, one proven step at a time",
+     "kind": "play",
+     "score": 8.5,
      "why": [
-      "keywords 6.3",
-      "uses-term Baseline"
+      "keywords 6.5",
+      "uses-term Cool drive"
      ]
     }
    ],
@@ -14689,8 +14688,8 @@
      "why": "uses the term Drive"
     },
     {
-     "from": "card:kc-after-flash",
-     "to": "term:Baseline",
+     "from": "card:kc-boost-step",
+     "to": "term:Cool drive",
      "kind": "uses-term"
     },
     {
@@ -14710,7 +14709,7 @@
     }
    ],
    "nodes": [
-    "card:kc-after-flash",
+    "card:kc-boost-step",
     "card:kc-drive-brief",
     "card:kc-fuel-test",
     "card:kc-heat-soak",
@@ -14837,13 +14836,13 @@
      ]
     },
     {
-     "id": "kc-after-flash",
-     "title": "The after-flash pattern is reassurance, not an alarm",
-     "kind": "fact",
-     "score": 8.3,
+     "id": "kc-boost-step",
+     "title": "More boost, one proven step at a time",
+     "kind": "play",
+     "score": 8.5,
      "why": [
-      "keywords 6.3",
-      "uses-term Baseline"
+      "keywords 6.5",
+      "uses-term Cool drive"
      ]
     }
    ],
@@ -15089,8 +15088,8 @@
      "why": "uses the term Drive"
     },
     {
-     "from": "card:kc-after-flash",
-     "to": "term:Baseline",
+     "from": "card:kc-boost-step",
+     "to": "term:Cool drive",
      "kind": "uses-term"
     },
     {
@@ -15110,7 +15109,7 @@
     }
    ],
    "nodes": [
-    "card:kc-after-flash",
+    "card:kc-boost-step",
     "card:kc-drive-brief",
     "card:kc-fuel-test",
     "card:kc-heat-soak",
@@ -16016,22 +16015,22 @@
      ]
     },
     {
+     "id": "kc-boost-step",
+     "title": "More boost, one proven step at a time",
+     "kind": "play",
+     "score": 17.0,
+     "why": [
+      "keywords 15.0",
+      "uses-term Cool drive"
+     ]
+    },
+    {
      "id": "kc-timing-percent",
      "title": "Should I add 2 or 5 percent timing?",
      "kind": "owner-question",
      "score": 17.0,
      "why": [
       "keywords 17.0"
-     ]
-    },
-    {
-     "id": "kc-boost-step",
-     "title": "More boost, one proven step at a time",
-     "kind": "play",
-     "score": 16.3,
-     "why": [
-      "keywords 14.3",
-      "uses-term Cool drive"
      ]
     },
     {
@@ -16059,7 +16058,7 @@
      "refs": [
       "card:kc-drive-brief",
       "card:kc-heat-soak",
-      "card:kc-timing-percent"
+      "card:kc-boost-step"
      ],
      "edge": "",
      "method": false
@@ -16136,7 +16135,7 @@
      "refs": [
       "card:kc-drive-brief",
       "card:kc-heat-soak",
-      "card:kc-timing-percent"
+      "card:kc-boost-step"
      ],
      "edge": "no",
      "method": false
@@ -16160,7 +16159,7 @@
      "refs": [
       "card:kc-drive-brief",
       "card:kc-heat-soak",
-      "card:kc-timing-percent"
+      "card:kc-boost-step"
      ],
      "edge": "no",
      "method": false
@@ -16400,9 +16399,9 @@
      "id": "kc-drive-brief",
      "title": "The Baseline drive brief, step by step",
      "kind": "play",
-     "score": 28.0,
+     "score": 27.2,
      "why": [
-      "keywords 20.0",
+      "keywords 19.2",
       "the shop-round stage's method",
       "uses-term Baseline"
      ]
@@ -16411,9 +16410,9 @@
      "id": "kc-boost-step",
      "title": "More boost, one proven step at a time",
      "kind": "play",
-     "score": 21.7,
+     "score": 22.0,
      "why": [
-      "keywords 19.7",
+      "keywords 20.0",
       "uses-term Cool drive"
      ]
     },
@@ -16421,9 +16420,9 @@
      "id": "kc-heat-soak",
      "title": "Heat soak, not the tune, costs this car performance",
      "kind": "fact",
-     "score": 20.0,
+     "score": 19.3,
      "why": [
-      "keywords 18.0",
+      "keywords 17.3",
       "uses-term Drive"
      ]
     },
@@ -16431,18 +16430,18 @@
      "id": "kc-timing-percent",
      "title": "Should I add 2 or 5 percent timing?",
      "kind": "owner-question",
-     "score": 18.3,
+     "score": 17.5,
      "why": [
-      "keywords 18.3"
+      "keywords 17.5"
      ]
     },
     {
      "id": "kc-ranges",
      "title": "Knock Control ranges and what each level costs",
      "kind": "fact",
-     "score": 16.6,
+     "score": 15.9,
      "why": [
-      "keywords 16.6"
+      "keywords 15.9"
      ]
     }
    ],
@@ -17228,9 +17227,9 @@
      "id": "kc-boost-step",
      "title": "More boost, one proven step at a time",
      "kind": "play",
-     "score": 11.8,
+     "score": 11.5,
      "why": [
-      "keywords 11.8"
+      "keywords 11.5"
      ]
     }
    ],
@@ -17592,9 +17591,9 @@
      "id": "kc-table-boost",
      "title": "The boost tables in KTuner",
      "kind": "ktuner-howto",
-     "score": 36.6,
+     "score": 36.5,
      "why": [
-      "keywords 12.6",
+      "keywords 12.5",
       "the decision's reason",
       "about boost"
      ]
@@ -17614,9 +17613,9 @@
      "id": "kc-boost-step",
      "title": "More boost, one proven step at a time",
      "kind": "play",
-     "score": 25.5,
+     "score": 26.3,
      "why": [
-      "keywords 9.5",
+      "keywords 10.3",
       "the shop-round stage's method",
       "about boost",
       "about Boost_Target_2_Normal_H"

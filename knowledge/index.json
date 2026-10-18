@@ -117,6 +117,11 @@
      "unit": "psi"
     },
     {
+     "name": "ktuner-safe-psi",
+     "value": 21.0,
+     "unit": "psi"
+    },
+    {
      "name": "pedal-floored",
      "value": 85.0,
      "unit": "%"
@@ -182,7 +187,7 @@
     "section": "§8"
    },
    "status": "current",
-   "body": "A Boost step adds 1 psi to Boost Target 2 Normal, Low and High cam, 3,500 to 4,500 rpm rows, never above the Final Boost Target peak, 23.4 here. Only the second tune gets it; a proven step is copied to the others. Offered when the latest Cool drive holds two floored pulls held 4 seconds above 3,500 rpm and a hot drive passes too. Floored is pedal 85 percent or more until a key-on reading sets it: on these cars floored reads 100 to 113, yours never above 94. Gates: target moved; under- and overshoot held half a second within 1.5 psi, total at most 24; timing within 1 degree of the last proven version; Knock Control settled, at most 0.56 below 5,200 rpm; mixture never leaner than 12.0; fuel pressure at least 90 percent of target. The first failure undoes it."
+   "body": "A Boost step adds 1 psi to Boost Target 2 Normal, Low and High cam, 3,500 to 4,500 rpm rows, capped at the Final Boost Target peak, 23.4. A step past 21 psi exceeds what KTuner calls the safe point for the CVT and factory clutch. Only Tune 2 gets it; once proven it is copied. Offered when the latest Cool drive holds two floored pulls held 4 seconds above 3,500 rpm plus a passing hot drive. Floored is pedal 85 percent or more until a key-on reading sets it (these cars read 100 to 113; yours never passed 94). Gates: target moved; under- and overshoot held half a second within 1.5 psi, total at most 24; timing within 1 degree of the proven map; Knock Control settled, at most 0.56 below 5,200 rpm; mixture never leaner than 12.0; fuel pressure at least 90 percent. Any failure undoes it."
   },
   {
    "id": "kc-cvt",
@@ -2137,6 +2142,7 @@
    "kc-oil"
   ],
   "21": [
+   "kc-boost-step",
    "kc-dual-boost-targets",
    "kc-expectations",
    "kc-ignition-formula",
@@ -2756,6 +2762,7 @@
    "kc-expectations"
   ],
   "any": [
+   "kc-boost-step",
    "kc-cvt",
    "kc-heat-soak",
    "kc-high-rpm",
@@ -3194,6 +3201,9 @@
   "called": [
    "kc-table-maf"
   ],
+  "calls": [
+   "kc-boost-step"
+  ],
   "calm": [
    "kc-after-flash",
    "kc-heat-soak",
@@ -3249,6 +3259,7 @@
    "kc-table-boost"
   ],
   "capped": [
+   "kc-boost-step",
    "kc-power-sources"
   ],
   "caps": [
@@ -3434,6 +3445,9 @@
   "closed": [
    "kc-e10",
    "kc-open-loop-wot"
+  ],
+  "clutch": [
+   "kc-boost-step"
   ],
   "coast": [
    "kc-maf-trim-direction"
@@ -3646,6 +3660,7 @@
   ],
   "cvt": [
    "kc-boost-by-gear",
+   "kc-boost-step",
    "kc-cvt",
    "kc-power-sources",
    "kc-quick-adjustments",
@@ -4049,6 +4064,9 @@
   "example": [
    "kc-ignition-formula"
   ],
+  "exceeds": [
+   "kc-boost-step"
+  ],
   "excluded": [
    "kc-high-rpm"
   ],
@@ -4097,6 +4115,7 @@
    "kc-p0420"
   ],
   "factory": [
+   "kc-boost-step",
    "kc-cvt",
    "kc-flash-howto",
    "kc-maf-housing",
@@ -4200,7 +4219,6 @@
   "first": [
    "kc-boost-by-gear",
    "kc-boost-codes",
-   "kc-boost-step",
    "kc-drive-brief",
    "kc-maf-data-rules",
    "kc-maf-housing",
@@ -4631,7 +4649,6 @@
    "kc-quick-adjustments"
   ],
   "here": [
-   "kc-boost-step",
    "kc-cvt",
    "kc-expectations",
    "kc-timing-percent",
@@ -5142,6 +5159,7 @@
   "ktuner": [
    "kc-after-flash",
    "kc-boost-by-gear",
+   "kc-boost-step",
    "kc-dual-boost-targets",
    "kc-e10",
    "kc-expectations",
@@ -5198,7 +5216,6 @@
    "kc-octane-booster"
   ],
   "last": [
-   "kc-boost-step",
    "kc-final-boost-target"
   ],
   "later": [
@@ -5531,6 +5548,7 @@
   "map": [
    "kc-boost-by-gear",
    "kc-boost-codes",
+   "kc-boost-step",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
    "kc-e10",
@@ -6105,6 +6123,7 @@
    "kc-wot-lean-timing"
   ],
   "once": [
+   "kc-boost-step",
    "kc-maf-data-rules",
    "kc-tune-one-thing"
   ],
@@ -6224,9 +6243,6 @@
   "other": [
    "kc-high-rpm",
    "kc-iat2-side"
-  ],
-  "others": [
-   "kc-boost-step"
   ],
   "otherwise": [
    "kc-dual-boost-targets"
@@ -6373,13 +6389,17 @@
    "kc-oil"
   ],
   "passed": [
+   "kc-boost-step",
    "kc-table-boost"
   ],
   "passes": [
-   "kc-boost-step",
    "kc-final-boost-target"
   ],
+  "passing": [
+   "kc-boost-step"
+  ],
   "past": [
+   "kc-boost-step",
    "kc-high-rpm",
    "kc-oil",
    "kc-wot-lean-timing"
@@ -6485,11 +6505,13 @@
    "kc-misfire-gauges"
   ],
   "plus": [
+   "kc-boost-step",
    "kc-ignition-formula",
    "kc-table-ignition",
    "kc-timing-percent"
   ],
   "point": [
+   "kc-boost-step",
    "kc-maf-data-rules",
    "kc-maf-trim-direction",
    "kc-maf-wot-calibration",
@@ -6749,6 +6771,7 @@
    "kc-ranges"
   ],
   "read": [
+   "kc-boost-step",
    "kc-drive-brief",
    "kc-fuel-test",
    "kc-heat-soak",
@@ -6772,7 +6795,6 @@
    "kc-rich-wot"
   ],
   "reads": [
-   "kc-boost-step",
    "kc-drive-brief",
    "kc-iat2-side",
    "kc-log-channels",
@@ -7068,6 +7090,7 @@
    "kc-wot-lean-timing"
   ],
   "safe": [
+   "kc-boost-step",
    "kc-rich-wot",
    "kc-table-wot"
   ],
@@ -8060,7 +8083,6 @@
    "kc-misfire-gauges"
   ],
   "too": [
-   "kc-boost-step",
    "kc-dual-boost-targets",
    "kc-maf-data-rules",
    "kc-maf-trim-direction",
@@ -8392,9 +8414,6 @@
   "verdicts": [
    "kc-high-rpm"
   ],
-  "version": [
-   "kc-boost-step"
-  ],
   "versions": [
    "kc-boost-by-gear"
   ],
@@ -8472,6 +8491,7 @@
   "what": [
    "kc-after-flash",
    "kc-boost-codes",
+   "kc-boost-step",
    "kc-cvt",
    "kc-downpipe",
    "kc-downpipe-catted-catless",
