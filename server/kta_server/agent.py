@@ -328,6 +328,7 @@ def seed_facts(drive: Mapping[str, Any], reply: Mapping[str, Any], limits: Mappi
     V.collect_numbers((drive.get("map") or {}).get("version"), facts)
     V.collect_numbers(reply.get("nextStep"), facts)
     V.collect_numbers(reply.get("flashPlan"), facts)
+    V.collect_numbers(reply.get("calibration"), facts)
     V.collect_numbers(limits, facts)
     V.collect_numbers([reply.get("say"), reply.get("window")], facts)
     return facts
@@ -735,6 +736,7 @@ async def _shop_tool(
             "checkpoints": reply.get("checkpoints"),
             "numbers": reply.get("numbers"),
             "cause": reply.get("cause"),
+            "calibration": reply.get("calibration"),
         }
         return await harness.step(config, "healthReport", "Read the health report and the log checkpoints", {}, _wrap(report))
     if name == "get_map_tour":

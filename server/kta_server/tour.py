@@ -105,8 +105,14 @@ def _levers_for(family: Mapping[str, Any], plan: Mapping[str, Any] | None) -> li
     return out
 
 
-def map_tour(plan: Mapping[str, Any] | None, tables: Mapping[str, Any] | None) -> dict[str, Any]:
-    """The high-level tour: one row per family with its status this round."""
+def map_tour(
+    plan: Mapping[str, Any] | None, tables: Mapping[str, Any] | None, calibration: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
+    """The high-level tour: one row per family with its status this round.
+
+    `calibration` is the Calibration result card (`copy.calibration_card`): unless the Ceiling read
+    reaches the table, the boost row is locked with its reason (calibration drive C10).
+    """
     rows = []
     plan_family = str((plan or {}).get("family") or "").lower()
     for fam in FAMILIES:
@@ -127,6 +133,8 @@ def map_tour(plan: Mapping[str, Any] | None, tables: Mapping[str, Any] | None) -
             not_needed = next((lv for lv in levers if lv.get("status") == "not-needed"), None)
             reason = str(not_needed.get("reason")) if not_needed else "Your logs ask nothing of it right now."
             unlocks = not_needed.get("unlocks") if not_needed else None
+        if fam["id"] == "boost" and status != "this-round" and calibration and calibration.get("status") != "reaches":
+            status, reason, unlocks = "locked", calibration["meaning"], calibration.get("unlocks")
         rows.append(
             {
                 "family": fam["id"],

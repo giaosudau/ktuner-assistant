@@ -53,12 +53,9 @@ async def loop_state(store: Any, worker: Any, settings: Any) -> dict[str, Any]:
         worker, store, car_state, W.windowed_state(car_state, win["ids"]), settings.now_ms()
     )
     active = store.map_version((history.get("activeMapVersion") or {}).get("n") or 1) or {}
-    tables = active.pop("tables", None)
+    active.pop("tables", None)
     # The Ceiling read (calibration drive C7, C9): unsettled, the next drive is the Calibration drive.
-    calibration = await worker.call(
-        "carCalibration", state=car_state, tags=store.drive_tags(), installs=installs,
-        **({"map": tables} if tables else {}),
-    )
+    calibration = await FL.ceiling_read(worker, store, car_state)
     state = {
         "carProfile": store.car_profile(),
         "profileSpec": P.profile_spec(worker.ktuner_basemap),

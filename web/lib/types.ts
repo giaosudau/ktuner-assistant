@@ -243,6 +243,16 @@ export type HealthReport = {
   rows: { system: string; id: string; label: string; value: string; word: string; tone: string }[];
 };
 
+/** The Calibration result (calibration drive C10): Pedal, Logger, Ceiling, What it means — each with its numbers. */
+export type CalibrationCard = {
+  status: string;
+  settled: boolean;
+  mapAction: "boost-step-gates" | "no-change";
+  meaning: string;
+  unlocks: string | null;
+  lines: { label: string; value: string; tone: string }[];
+};
+
 /** The whole map at a high level: one row per table family and its status this round. */
 export type MapTour = {
   headline: string;
@@ -298,6 +308,7 @@ export type ReplyCard = {
   /** The shop's report (tuning-shop D4-D6). */
   checkpoints?: Checkpoint[] | null;
   health?: HealthReport | null;
+  calibration?: CalibrationCard | null;
   tour?: MapTour | null;
   /** At most one picture, plus the map grid when the step is a Flash. */
   pictures?: Picture[] | null;

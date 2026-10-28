@@ -1352,7 +1352,7 @@
     var G = STEP_GATES, pulls = d.proofPulls || [];
     var unreadable = pullsUnreadable(d);
     if (unreadable) return { status: unreadable.status, text: unreadable.text };
-    if (!pulls.length) return { status: d.vsaPulls ? 'cut' : 'not-floored' };
+    if (!pulls.length) return { status: d.vsaPulls ? 'cut' : 'not-floored', floored: d.flooredPct };
     var held = pulls.filter(function (p) { return isNum(p.cmdHeld) && p.cmdHeld < CEIL.throttle_open_pct; });
     if (held.length) return { status: 'throttle', cmd: Math.min.apply(null, held.map(function (p) { return p.cmdHeld; })) };
     var shut = pulls.filter(function (p) { return isNum(p.under) && p.under > G.undershoot_psi && wastegateShut(p.ewgHeld); })[0];
@@ -1365,10 +1365,13 @@
       var at = tableCellAt(table, p.targetRpm);
       if (!at || !isNum(p.target)) return;
       var gap = at.cell - p.target;
-      if (!best || gap < best.gap) best = { gap: gap, target: p.target, cell: at.cell, rpm: at.rpm };
+      if (!best || gap < best.gap) best = { gap: gap, target: p.target, cell: at.cell, rpm: at.rpm, cmd: p.cmdHeld, ewg: p.ewgHeld };
     });
     if (!best) return { status: 'none' };
-    return { status: best.gap > G.target_gap_psi ? 'capped' : 'reaches', target: best.target, cell: best.cell, rpm: best.rpm };
+    return {
+      status: best.gap > G.target_gap_psi ? 'capped' : 'reaches',
+      target: best.target, cell: best.cell, rpm: best.rpm, cmd: best.cmd, ewg: best.ewg
+    };
   }
   /**
    * When the ceiling last moved (spec C8): a boost Flash other than a Boost step or

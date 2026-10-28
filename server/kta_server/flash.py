@@ -298,6 +298,14 @@ async def active_map(worker, store, car_state: Mapping[str, Any]) -> dict[str, A
     return {"map": version["tables"]} if version and version.get("tables") else {}
 
 
+async def ceiling_read(worker, store, car_state: Mapping[str, Any]) -> dict[str, Any]:
+    """The Ceiling read (calibration drive C7, C8) on the Map version on the car, with each Drive's slot and the Installs."""
+    return await worker.call(
+        "carCalibration", state=car_state, tags=store.drive_tags(), installs=store.list_installs(),
+        **(await active_map(worker, store, car_state)),
+    )
+
+
 def remember_step_fail(store, car_state: Mapping[str, Any], fail: Mapping[str, Any] | None) -> None:
     """Keep a Boost step's failed proof in the car state (once per failure).
 
@@ -363,6 +371,6 @@ async def checked_plan(worker, store, car_state, window_state, now: int) -> dict
 
 
 __all__ = [
-    "BLOCKED_WORDS", "active_map", "apply_change", "blocked_plan", "build_card", "change_from_plan", "change_id",
+    "BLOCKED_WORDS", "active_map", "apply_change", "ceiling_read", "blocked_plan", "build_card", "change_from_plan", "change_id",
     "check_both", "checked_plan", "checked_plan_with_change", "revert_line", "undo_card",
 ]

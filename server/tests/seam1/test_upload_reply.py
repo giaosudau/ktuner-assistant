@@ -102,13 +102,13 @@ def test_harness_steps_stream_as_a_collapsed_line_and_expand_to_inputs_and_outpu
     # One collapsed row, with the server's own count and seconds. Ticket 04 added
     # the two loop steps (settle what was asked, decide the Next step), ticket 07
     # the owner questions (what only the owner knows), the tuning shop the log
-    # checkpoints and heat reads — so the line now counts eleven, and they are
-    # steps the owner can expand like any other.
+    # checkpoints and heat reads, the Calibration drive its Ceiling read — so the
+    # line now counts twelve, and they are steps the owner can expand like any other.
     line = reply.harness_line()
-    assert line.startswith("Checked 11 things · ")
+    assert line.startswith("Checked 12 things · ")
     assert line.endswith(" s")
 
-    # Eleven steps, each with its inputs and its output.
+    # Twelve steps, each with its inputs and its output.
     steps = reply.harness_steps()
     assert [s["name"] for s in steps] == [
         "readLog",
@@ -119,6 +119,7 @@ def test_harness_steps_stream_as_a_collapsed_line_and_expand_to_inputs_and_outpu
         "logQuality",
         "heat",
         "flashPlan",
+        "ceilingRead",
         "settleOpenSteps",
         "nextStep",
         "ownerQuestions",
@@ -134,12 +135,12 @@ def test_harness_steps_stream_as_a_collapsed_line_and_expand_to_inputs_and_outpu
     # first Drive, so there was nothing to settle and nothing open — and it opens
     # the Baseline step, the lugging habit seen today beside it, and the two
     # channels to add in TunerView (ticket 04's named case).
-    assert steps[8]["output"]["settled"] == []
-    assert steps[8]["output"]["openSteps"] == []
-    assert [s["key"] for s in steps[9]["output"]["openSteps"]] == ["baseline", "habit", "channels"]
-    assert steps[9]["output"]["step"]["key"] == "baseline"
-    assert steps[9]["output"]["step"]["also"] == "habit"
-    assert steps[9]["output"]["step"]["settlesOn"]
+    assert steps[9]["output"]["settled"] == []
+    assert steps[9]["output"]["openSteps"] == []
+    assert [s["key"] for s in steps[10]["output"]["openSteps"]] == ["baseline", "habit", "channels"]
+    assert steps[10]["output"]["step"]["key"] == "baseline"
+    assert steps[10]["output"]["step"]["also"] == "habit"
+    assert steps[10]["output"]["step"]["settlesOn"]
 
     # The raw CSV never rides out on an event.
     streamed = json.dumps(reply.events)

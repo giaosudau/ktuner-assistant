@@ -304,6 +304,15 @@ async def _ingest_run(
         lambda: FL.checked_plan(worker, store, car_state, window_state, now),
     )
 
+    # 7. The Ceiling read (calibration drive C7): can a raised boost cell show on this map?
+    held = store.car_state(None) or {}
+    cal = None
+    if not drive["tooShort"]:
+        cal = await harness.step(
+            config, "ceilingRead", "Read whether more boost can show", {"through": drive_id},
+            lambda: FL.ceiling_read(worker, store, held),
+        )
+
     drives_read = [r["id"] for r in history["rows"]]
     reply = C.build_reply(
         drive, plan, limits, drives_read,
@@ -316,7 +325,13 @@ async def _ingest_run(
     if not drive["tooShort"]:
         reply["checkpoints"] = C.log_checkpoints(quality, heat, drive.get("summary"), limits, store.car_profile())
         reply["health"] = C.health_rows(overview)
-    reply["tour"] = TOUR.map_tour(plan, PIC._tables(store, plan))
+        # The Calibration result (calibration drive C10): while the ceiling is unsettled, or when this
+        # Drive is the one that settled it. The map tour's boost row quotes the same reason.
+        if not cal.get("settled") or cal.get("driveId") == drive_id:
+            reply["calibration"] = C.calibration_card(
+                cal, (held.get("drives") or {}).get(drive_id), store.car_profile(),
+                (quality or {}).get("samples_per_second"))
+    reply["tour"] = TOUR.map_tour(plan, PIC._tables(store, plan), reply.get("calibration"))
     # The premium-fuel test, once this Drive is tagged and two fuels are in the history.
     tags = store.drive_tags()
     if (tags.get(drive.get("id") or "") or {}).get("fuel") and len({t["fuel"] for t in tags.values() if t.get("fuel")}) >= 2:

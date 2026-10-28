@@ -1146,6 +1146,8 @@ test('Ceiling read: each result, first match wins, with the numbers it read', ()
   const capped = read({ proofPulls: pullWith({ target: 19.2 }) });
   assert.equal(capped.status, 'capped');
   assert.deepEqual([capped.target, capped.cell, capped.rpm], [19.2, 21, 4000]);
+  // The Ceiling line also shows the throttle and the wastegate on that pull (spec C10).
+  assert.deepEqual([capped.cmd, capped.ewg], [100, 3]);
   assert.equal(capped.mapAction, 'no-change');
   const reaches = read({});
   assert.equal(reaches.status, 'reaches');

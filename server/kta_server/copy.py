@@ -679,6 +679,77 @@ def num_words(value: float) -> str:
     return n(value, 0 if float(value).is_integer() else 1)
 
 
+#: What each Ceiling read means for the map (calibration drive C7, C10): the reason, and what unlocks it.
+CEILING_MEANS = {
+    "none": "No map change yet: drive the Calibration drive on a cool morning.",
+    "no-reading": "No map change yet: type the Pedal full reading in your car profile, then drive the Calibration drive.",
+    "pedal-wrong": "No map change yet: read the pedal again, parked, then drive the Calibration drive.",
+    "slow-log": "No map change yet: set TunerView's logging rate faster, then drive the Calibration drive again.",
+    "not-floored": "No map change yet: drive it again with the pedal all the way to the floor.",
+    "cut": "No map change yet: drive it again on the same road when it's dry, or on a different road.",
+    "throttle": "No map change: a protection is closing the throttle, so a raised boost cell would never show.",
+    "turbo": "No map change: this turbo has no more boost to give with the wastegate shut.",
+    "ramping": "No map change yet: hold each pull longer, where that's legal and safe.",
+    "capped": "No map change: the map caps the target before the table, so a raised cell would never show in the log.",
+    "reaches": "Boost step: the gates are next.",
+}
+CEILING_UNLOCKS = {
+    "capped": "A different basemap (a new Map version from a KTuner basemap or a vendor file), then a new Calibration drive.",
+}
+
+
+def calibration_card(
+    cal: Mapping[str, Any], summary: Mapping[str, Any] | None, profile: Mapping[str, Any] | None, rate: float | None
+) -> dict[str, Any]:
+    """The Calibration result card (calibration drive C10): Pedal, Logger, Ceiling, What it means.
+
+    Every number is the engine's: the Ceiling read `cal`, this Drive's summary (its pedal numbers) and
+    log rate, and the owner's Logger census. `meaning` and `unlocks` are what the map tour's boost row quotes.
+    """
+    s, profile, status = summary or {}, profile or {}, cal.get("status") or "none"
+    gates = load_thresholds()["boost_step_gates"]["value"]
+    throttle_open = load_thresholds()["ceiling_read"]["value"]["throttle_open_pct"]
+    full, floored = s.get("pedalFullPct"), s.get("flooredPct")
+    pedal = (f"Full reads {num_words(full)} %, floored from {num_words(floored)} %" if full is not None
+             else "Not set yet: type the Pedal full reading in your car profile")
+    offered = {True: "offered", False: "not offered", None: "not checked"}
+    logger = " · ".join([
+        f"{num_words(rate)} a second" if rate is not None else "rate unknown",
+        *(f"{label} {offered[profile.get(field)]}" for field, (_, label) in P.LOGGER_CHANNELS.items()),
+    ])
+    psi = lambda v: n(v, 1)  # noqa: E731
+    at_cell = (f"target {psi(cal.get('target'))} psi against the table's {psi(cal.get('cell'))} psi at "
+               f"{cal.get('rpm') or 0:,} rpm · TPS Command {n(cal.get('cmd'))} % · EWG {num_words(round(cal.get('ewg') or 0, 1))} %")
+    ceiling = {
+        "none": "Can't tell yet: no Cool drive read since the ceiling last moved.",
+        "not-floored": f"Can't tell: no pull held the pedal at {num_words(cal.get('floored') or 0)} % or more for "
+                       f"{num_words(gates['hold_s'])} s above {gates['rpm_min']:,} rpm.",
+        "cut": "Can't tell: every floored pull was cut short by VSA.",
+        "throttle": f"Throttle held back: TPS Command held at {n(cal.get('cmd'))} % with the pedal floored, under {throttle_open} %.",
+        "turbo": f"Turbo at its limit: {psi(cal.get('under'))} psi under target with the wastegate shut "
+                 f"(EWG {num_words(round(cal.get('ewg') or 0, 1))} %).",
+        "ramping": f"Still ramping: the target still rose {psi(cal.get('rise'))} psi in the pull's last second.",
+        "capped": "Capped below the table: " + at_cell,
+        "reaches": "Reaches the table: " + at_cell,
+    }.get(status) or f"Can't tell: the drive {cal.get('text') or 'could not be read'}."
+    meaning, unlocks = CEILING_MEANS.get(status, CEILING_MEANS["none"]), CEILING_UNLOCKS.get(status)
+    decisive = status in ("throttle", "turbo", "capped")
+    return {
+        "status": status,
+        "settled": bool(cal.get("settled")),
+        "mapAction": cal.get("mapAction") or "no-change",
+        "meaning": meaning,
+        "unlocks": unlocks,
+        "lines": [
+            {"label": "Pedal", "value": pedal, "tone": "good" if full is not None and status != "pedal-wrong" else "watch"},
+            {"label": "Logger", "value": logger, "tone": "watch" if rate is not None and rate < RATE_MIN_HZ else "good"},
+            {"label": "Ceiling", "value": ceiling, "tone": "good" if status == "reaches" else "watch" if decisive else "none"},
+            {"label": "What it means", "value": f"{meaning} {unlocks}" if unlocks else meaning,
+             "tone": "good" if status == "reaches" else "watch" if decisive else "none"},
+        ],
+    }
+
+
 def log_checkpoints(
     quality: Mapping[str, Any] | None,
     heat: Mapping[str, Any] | None,

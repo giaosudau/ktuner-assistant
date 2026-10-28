@@ -6,7 +6,7 @@
  * cards only lay it out. A family in the map tour can be opened as a question to the tuner.
  */
 import type { FuelTest } from "../lib/api";
-import type { Checkpoint, DriveBrief, FlashPlan, HealthReport, HousingOption, MapTour } from "../lib/types";
+import type { CalibrationCard, Checkpoint, DriveBrief, FlashPlan, HealthReport, HousingOption, MapTour } from "../lib/types";
 import { GaugeTableView } from "./Cards";
 import { Icon } from "./Icons";
 import { Pill } from "./Pill";
@@ -64,6 +64,32 @@ export function HealthCard({ report }: { report: HealthReport }) {
             ))}
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+// ------------------------------------------------------- the Calibration result
+const CEILING_WORD: Record<string, string> = { good: "Can show", watch: "Answered", none: "Can't tell yet" };
+
+export function CalibrationResultCard({ card }: { card: CalibrationCard }) {
+  const tone = card.lines[2]?.tone ?? "none";
+  return (
+    <section className="card" data-testid="calibration" data-status={card.status}>
+      <h3 className="card-h">
+        <Icon name="gauge" />
+        <span className="grow">Can more boost show?</span>
+        <Pill tone={tone} word={CEILING_WORD[tone] ?? CEILING_WORD.none} />
+      </h3>
+      <div className="health">
+        <div className="hgroup">
+          {card.lines.map((line) => (
+            <div className="hrow" key={line.label} data-line={line.label}>
+              <span className="hlabel">{line.label}</span>
+              <span className="hval">{line.value}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
