@@ -515,7 +515,8 @@ def test_every_new_line_uses_the_words_context_allows(loop: Loop):
 def test_state_carries_the_first_log_guide(loop: Loop):
     """Chat CA-08: before any Drive the chat can say how to log one, in the engine's own words."""
     guide = loop.get("/api/state").json()["logGuide"]
-    assert guide["title"] == "One Cool drive with 2 pulls"
+    # The first drive is the Calibration drive (calibration drive C6): the Baseline brief with more asks.
+    assert guide["title"] == "The Calibration drive"
     assert len(guide["recipe"]["steps"]) >= 3
     assert "AFR Command" in " ".join(guide["recipe"]["steps"])
     assert [row["gauge"] for row in guide["gauges"]["rows"]] == ["IAT2", "Knock Control", "O2 (AFR) at full throttle", "STFT B1 + LTFT B1"]

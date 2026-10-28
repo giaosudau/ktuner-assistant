@@ -542,13 +542,65 @@ def gauge_table(
 # Numbered, short and physical — no jargon the owner has to translate, and no KTuner
 # table name anywhere (only the Flash plan names those).
 # ---------------------------------------------------------------------------
-def log_guide(limits: Mapping[str, Any], profile: Mapping[str, Any] | None = None) -> dict[str, Any]:
+def log_guide(
+    limits: Mapping[str, Any], profile: Mapping[str, Any] | None = None, calibrate: bool = False
+) -> dict[str, Any]:
     """The drive brief a shop hands its customer (tuning-shop D4; kc-drive-brief, kc-log-gate).
 
     Sections in the order the owner drives them, every number from the engine's limits or the
     sourced cards, and the checkpoints the log will be read against (the same ones
-    `log_checkpoints` scores after the upload).
+    `log_checkpoints` scores after the upload). `calibrate`: the Calibration drive's brief
+    (calibration drive C6), the same drive with the parked asks first and the pulls floored on slot 2.
     """
+    guide = _baseline_guide(limits, profile)
+    return _calibration_guide(guide, profile) if calibrate else guide
+
+
+def _calibration_guide(guide: dict[str, Any], profile: Mapping[str, Any] | None) -> dict[str, Any]:
+    """The Baseline brief with C6's three changes: parked asks first, floored pulls on slot 2, two more checkpoints."""
+    profile = profile or {}
+    gates = load_thresholds()["boost_step_gates"]["value"]
+    full = profile.get(P.PEDAL_FULL)
+    parked = [
+        f"Your Pedal full reading is on file: {num_words(full)} %." if full is not None else
+        "Ignition on, engine off (press Start twice without the brake), TunerView's live screen open: press the pedal "
+        "to the floor and hold it, three times. Read TPS at each hold and type the highest in your car profile as the "
+        "Pedal full reading.",
+    ]
+    unchecked = [label for field, (_, label) in P.LOGGER_CHANNELS.items() if profile.get(field) is None]
+    if unchecked:
+        parked.append(f"In TunerView's gauge list, check whether it offers {join_names(unchecked)}, and say so in "
+                      "your car profile's Logger setup.")
+    if profile.get(P.LOGGER_RATE) is None:
+        parked.append("Open TunerView's logging rate menu and type its fastest logging rate in the Logger setup too.")
+    parked.append("If you can, attach a screenshot of KTuner's Quick Adjustments screen here, so I can see the map's settings.")
+    hold, rpm = num_words(gates["hold_s"]), f"{gates['rpm_min']:,}"
+    sections = [{"title": "Parked, the evening before", "steps": parked}]
+    for section in guide["sections"]:
+        if section["title"] == "The two pulls":
+            section = {**section, "steps": [
+                "Choose slot 2 (Tune 2) when you start the car, and turn ECO off.",
+                "Put the gearbox in S.",
+                f"From a steady 50 km/h, press the pedal to the floor, all the way, and hold it until 100 km/h: "
+                f"at least 5 seconds, above {rpm} rpm for {hold} s or more.",
+                *section["steps"][2:],
+                "No brake launch, and no pull with the CVT fluid at 90 °C or more.",
+            ]}
+        sections.append(section)
+    return {
+        **guide,
+        "title": "The Calibration drive",
+        "intro": (
+            "One drive answers whether more boost can show on your car: it reads whether the boost target reaches "
+            "your map's table with the pedal floored. It adds no power by itself, and it can come back \"capped\": "
+            "that is an answer too. About 25 minutes, done once."
+        ),
+        "sections": sections,
+        "checkpoints": [*guide["checkpoints"], f"2 floored pulls held {hold} s or more above {rpm} rpm", "On slot 2 (Tune 2)"],
+    }
+
+
+def _baseline_guide(limits: Mapping[str, Any], profile: Mapping[str, Any] | None) -> dict[str, Any]:
     cool = n(lim(limits, "CAR_RULES.coolIat", 42), 0)
     pull_iat = n(lim(limits, "DRIVE_LIMITS.pullIatGood", 48), 0)
     # The Logger census (calibration drive C4, C5): never ask for what TunerView can't log.

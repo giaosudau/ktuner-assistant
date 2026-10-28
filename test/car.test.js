@@ -1165,6 +1165,10 @@ test('Ceiling read: a decisive result holds over later can\'t-tell drives; a new
   assert.equal(ceiling([later]).status, 'not-floored');
   const capped = Object.assign({}, CAL, { id: 'capped', proofPulls: pullWith({ target: 19.2 }) });
   assert.equal(ceiling([CAL, capped]).status, 'capped');
+  // Settled is what ends the Calibrate stage (spec C9): decisive results only.
+  assert.equal(ceiling([CAL, later]).settled, true);
+  assert.equal(ceiling([later]).settled, false);
+  assert.equal(ceiling([]).settled, false);
 });
 
 test('Ceiling read resets after a boost Flash, a revert to the basemap or an airflow Install; a Boost step keeps it', () => {

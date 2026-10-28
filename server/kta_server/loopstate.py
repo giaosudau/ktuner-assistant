@@ -53,7 +53,12 @@ async def loop_state(store: Any, worker: Any, settings: Any) -> dict[str, Any]:
         worker, store, car_state, W.windowed_state(car_state, win["ids"]), settings.now_ms()
     )
     active = store.map_version((history.get("activeMapVersion") or {}).get("n") or 1) or {}
-    active.pop("tables", None)
+    tables = active.pop("tables", None)
+    # The Ceiling read (calibration drive C7, C9): unsettled, the next drive is the Calibration drive.
+    calibration = await worker.call(
+        "carCalibration", state=car_state, tags=store.drive_tags(), installs=installs,
+        **({"map": tables} if tables else {}),
+    )
     state = {
         "carProfile": store.car_profile(),
         "profileSpec": P.profile_spec(worker.ktuner_basemap),
@@ -73,7 +78,8 @@ async def loop_state(store: Any, worker: Any, settings: Any) -> dict[str, Any]:
         "drives": store.list_drives(),
         "flashPlan": plan,
         "hasLlm": settings.has_llm,
-        "logGuide": C.log_guide(worker.limits, store.car_profile()),
+        "calibration": calibration,
+        "logGuide": C.log_guide(worker.limits, store.car_profile(), calibrate=not calibration.get("settled")),
     }
     # The front desk (tuning-shop D20, D25): where the car is, the Recap, the stage's suggested replies.
     state["stage"] = D.stage_of(state)

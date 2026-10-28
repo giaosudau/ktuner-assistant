@@ -258,8 +258,13 @@ def part_change(text: str, profile: Mapping[str, Any]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Where the car is: the stage and the Recap
 # ---------------------------------------------------------------------------
+#: Open steps a Calibration drive never jumps ahead of (calibration drive C9): the Undo,
+#: unmetered air, a lean downpipe and dead gauges are safety reads.
+SAFETY_STEPS = ("undo", "install", "downpipe", "logger")
+
+
 def stage_of(loop: Mapping[str, Any]) -> str:
-    """`car`, `baseline`, `read`, `plan` or `verify` — the same rule as the chat's sidebar (`phaseOf`)."""
+    """`car`, `baseline`, `calibrate`, `read`, `plan` or `verify` — the sidebar reads it as `loop.stage`."""
     if not loop.get("carProfile"):
         return "car"
     if not loop.get("hasDrives"):
@@ -271,14 +276,19 @@ def stage_of(loop: Mapping[str, Any]) -> str:
         return "verify"
     if ((loop.get("flashPlan") or {}).get("kind")) in ("one-family", "undo"):
         return "plan"
-    if any(s.get("key") == "baseline" for s in loop.get("openSteps") or []):
+    steps = loop.get("openSteps") or []
+    if any(s.get("key") == "baseline" for s in steps):
         return "baseline"
+    stop = bool(rows) and str(rows[-1].get("verdict") or "").lower() == "stop"
+    if not stop and not any(s.get("key") in SAFETY_STEPS for s in steps) and not (loop.get("calibration") or {}).get("settled"):
+        return "calibrate"
     return "read"
 
 
 STAGE_WORDS = {
     "car": "We haven't met your car yet.",
     "baseline": "We're at the start: I need your first log, driven to the brief.",
+    "calibrate": "One drive answers whether more boost can show on your car.",
     "read": "Your last log is read; the next drive settles what's open.",
     "plan": "A map change is ready for you to flash.",
     "verify": "You flashed a change: the next drive proves it.",
@@ -308,6 +318,8 @@ def recap(loop: Mapping[str, Any]) -> dict[str, Any] | None:
     if last:
         lines.append({"label": "Last drive", "value": C.drive_stamp(last.get("id")) + (f" · {_verdict_word(last)}" if _verdict_word(last) else "")})
     lines.append({"label": "Drives in your car file", "value": str(len(rows))})
+    if stage == "calibrate":
+        lines.append({"label": "Next drive", "value": "The Calibration drive"})
     if step:
         lines.append({"label": "Waiting on", "value": str(step.get("title") or step.get("key") or "")})
     if waiting:
@@ -351,6 +363,12 @@ def stage_suggestions(loop: Mapping[str, Any]) -> list[dict[str, Any]]:
             chip("How should I log a drive?", "guide", icon="route"),
             chip("Attach my log", "attach", icon="paperclip"),
             chip("What can you do?", "send", "What can you do?", "help"),
+        ]
+    if stage == "calibrate":
+        return [
+            chip("How do I drive the Calibration drive?", "guide", icon="route"),
+            chip("Attach my log", "attach", icon="paperclip"),
+            chip("Why not more boost?", "send", "Why won't you raise my boost?", "help"),
         ]
     if stage == "plan":
         return [

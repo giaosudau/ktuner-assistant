@@ -570,6 +570,22 @@ var OPS = {
     return summarize("plan", plan);
   },
 
+  /**
+   * The Ceiling read (calibration drive C7, C8): can a raised boost cell show in
+   * the log on this map? Read against the active Map version's boost tables, with
+   * each Drive's map slot and the app's Install list.
+   */
+  carCalibration: function (args) {
+    var state = stateOf(args);
+    try {
+      return KTA.carCalibration(state, args.map || mapForVersion(state, args.mapVersion), {
+        tags: args.tags || {}, installs: Array.isArray(args.installs) ? args.installs : []
+      });
+    } catch (e) {
+      fail('engine-error', 'The Ceiling read could not be made: ' + (e && e.message));
+    }
+  },
+
   /** Record a Flash the owner says they wrote to the ECU. It becomes the next Map version. */
   recordFlash: function (args) {
     var state = stateOf(args);

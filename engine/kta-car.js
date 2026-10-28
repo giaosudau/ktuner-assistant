@@ -1388,7 +1388,7 @@
     return at;
   }
   /**
-   * The Ceiling read for the car as it is now: `{ status, driveId, mapAction, ... }`.
+   * The Ceiling read for the car as it is now: `{ status, driveId, mapAction, settled, ... }`.
    * status: none | no-reading | pedal-wrong | slow-log | not-floored | cut | throttle |
    * turbo | ramping | capped | reaches. Only "reaches" hands on to the Boost step gates;
    * every other result is no map change. opts: tags (slot per drive), installs.
@@ -1411,6 +1411,7 @@
       out = reads.filter(function (r) { return CEIL_DECISIVE[r.status]; }).pop() || reads.pop() || out;
     }
     out.mapAction = out.status === 'reaches' ? 'boost-step-gates' : 'no-change';
+    out.settled = !!CEIL_DECISIVE[out.status];
     return out;
   };
 
