@@ -1123,6 +1123,65 @@ test('Boost step: undershoot with the wastegate shut locks it for good; only an 
 // 04 — Open steps, settling them, and exactly one Next step
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Calibration drive C7, C8 (.scratch/calibration-drive/spec.md): the Ceiling read.
+// One result from the latest Cool drive read with a Pedal full reading, first match
+// wins; a decisive result holds until something moves the ceiling.
+// ---------------------------------------------------------------------------
+const CPULL = Object.assign({}, PULL, { cmdHeld: 100, targetRise: 0, ewgHeld: 3 });
+const CAL = Object.assign({}, COOL, { id: 'cal', proofPulls: [CPULL, CPULL], vsaPulls: 0, rateHz: 7.5 });
+const ceiling = (drives, extra, opts) => K.carCalibration(synth(drives, extra), MAP, Object.assign({}, opts));
+const pullWith = (p) => [Object.assign({}, CPULL, p), Object.assign({}, CPULL, p)];
+
+test('Ceiling read: each result, first match wins, with the numbers it read', () => {
+  const read = (cal) => ceiling([Object.assign({}, CAL, cal)]);
+  assert.equal(read({ pedalFullPct: null }).status, 'no-reading');
+  assert.equal(read({ pedalMax: 97 }).status, 'pedal-wrong');
+  assert.equal(read({ rateHz: 5 }).status, 'slow-log');
+  assert.equal(read({ proofPulls: [] }).status, 'not-floored');
+  assert.equal(read({ proofPulls: [], vsaPulls: 1 }).status, 'cut');
+  assert.equal(read({ proofPulls: pullWith({ cmdHeld: 90 }) }).status, 'throttle');
+  assert.equal(read({ proofPulls: pullWith({ under: 2, ewgHeld: 0.5 }) }).status, 'turbo');
+  assert.equal(read({ proofPulls: pullWith({ targetRise: 0.8 }) }).status, 'ramping');
+  const capped = read({ proofPulls: pullWith({ target: 19.2 }) });
+  assert.equal(capped.status, 'capped');
+  assert.deepEqual([capped.target, capped.cell, capped.rpm], [19.2, 21, 4000]);
+  assert.equal(capped.mapAction, 'no-change');
+  const reaches = read({});
+  assert.equal(reaches.status, 'reaches');
+  assert.equal(reaches.mapAction, 'boost-step-gates');
+  assert.equal(reaches.driveId, 'cal');
+  // First match wins: a throttle held back says why the target is low.
+  assert.equal(read({ proofPulls: pullWith({ cmdHeld: 90, target: 19.2 }) }).status, 'throttle');
+  // One settled pull is enough to read the target; the ramping one is left out.
+  assert.equal(read({ proofPulls: [Object.assign({}, CPULL, { targetRise: 0.8, target: 19 }), CPULL] }).status, 'reaches');
+  // Only a Cool drive reads the ceiling: heat lowers the target on its own.
+  assert.equal(ceiling([Object.assign({}, CAL, { cool: false, hot: true })]).status, 'none');
+});
+
+test('Ceiling read: a decisive result holds over later can\'t-tell drives; a newer decisive one wins', () => {
+  const later = Object.assign({}, CAL, { id: 'later', proofPulls: [] });
+  assert.equal(ceiling([CAL, later]).status, 'reaches');
+  assert.equal(ceiling([later]).status, 'not-floored');
+  const capped = Object.assign({}, CAL, { id: 'capped', proofPulls: pullWith({ target: 19.2 }) });
+  assert.equal(ceiling([CAL, capped]).status, 'capped');
+});
+
+test('Ceiling read resets after a boost Flash, a revert to the basemap or an airflow Install; a Boost step keeps it', () => {
+  const after = 150000; // between the drive (start 100000) and now
+  const flash = (f) => ({ flashes: [Object.assign({ id: 'f1', time: after, map: 'x', changed: 'boost' }, f)] });
+  assert.equal(ceiling([CAL], flash({})).status, 'none', 'a boost change by hand moves the ceiling');
+  assert.equal(ceiling([CAL], flash({ changeId: 'boostStep' })).status, 'reaches');
+  assert.equal(ceiling([CAL], flash({ changeId: 'boostPromote' })).status, 'reaches');
+  assert.equal(ceiling([CAL], flash({ changed: 'afm' })).status, 'reaches');
+  assert.equal(ceiling([CAL], { mapRestores: [{ n: 1, from: after, flashId: 'f1' }] }).status, 'none');
+  assert.equal(ceiling([CAL], { mapRestores: [{ n: 2, from: after, flashId: 'f1' }] }).status, 'reaches', 'undoing a step');
+  const fitted = (part, action) => ({ installs: [{ part: part, action: action || 'fitted', installed_at: after }] });
+  assert.equal(ceiling([CAL], null, fitted('intercooler')).status, 'none');
+  assert.equal(ceiling([CAL], null, fitted('intake', 'removed')).status, 'none');
+  assert.equal(ceiling([CAL], null, fitted('catback')).status, 'reaches');
+});
+
 const OWNER_NINE = [
   'aug22-0903', 'aug22-0950', 'aug23-1959', 'aug23-2038', 'aug30-1509',
   'aug30-1529', 'aug30-1601', 'sep01-0813', 'sep05-0756'

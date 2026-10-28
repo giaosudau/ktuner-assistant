@@ -111,7 +111,8 @@ def register_flash_routes(app: FastAPI, store, worker, settings) -> None:
             )
         changed = plan.get("flashChanged") or "other"
         note = ((plan.get("evidence") or [{}])[0].get("text")) or ""
-        flash = {"time": now, "map": plan["saveAs"], "changed": changed, "note": note}
+        # The plan's changeId rides on the Flash: the Ceiling read tells a Boost step from a boost change by hand.
+        flash = {"time": now, "map": plan["saveAs"], "changed": changed, "note": note, "changeId": card.get("changeId")}
         recorded = await worker.call("recordFlash", state=car_state, flash=flash, now=now)
         number = recorded["version"]["n"]
         store.ensure_map_version(

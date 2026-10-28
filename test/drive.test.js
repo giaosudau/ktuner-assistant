@@ -965,6 +965,32 @@ test('a floored pull where VSA closes the throttle is marked and never a proof p
   assert.equal(K.checkDrive(eased).ins.floored[0].vsa, false);
 });
 
+// Calibration drive C7: the ceiling read needs, per floored pull, the throttle command
+// held above 3,500 rpm (a protection closing the throttle) and how far the logged
+// target still rose over the held part's last second (still ramping).
+test('Calibration C7: a floored pull carries TPS Command held and the target still rising', () => {
+  const C = require('../engine/kta-car.js');
+  const meta = { fileName: 'TunerView_20260822_090322.csv', now: 0 };
+  // Target ramps 19 → 21 over the first 2 s, then holds: settled, throttle wide open.
+  const flat = proofPull((l, i, dt) => { l.tpsCmd[i] = 100; l.boostTarget[i] = Math.min(19 + dt, 21); });
+  const f = K.checkDrive(flat).ins.floored[0];
+  assert.equal(f.cmdHeld, 100);
+  assert.equal(f.targetRise, 0);
+  // Target still climbing 1 psi a second at the end of the pull.
+  assert.ok(Math.abs(K.checkDrive(proofPull((l, i, dt) => { l.boostTarget[i] = 14 + dt; })).ins.floored[0].targetRise - 1) <= 0.15);
+  // TPS Command held at 90 with the foot floored: no drop, so not VSA, but held back.
+  const held = K.checkDrive(proofPull((l, i) => { l.tpsCmd[i] = 90; })).ins.floored[0];
+  assert.equal(held.cmdHeld, 90);
+  assert.equal(held.vsa, false);
+  // The Car summary keeps both on the proof pull, and counts VSA-cut pulls.
+  const sum = C.carIngest(C.carEmpty(), flat, meta).state.drives['20260822-090322'];
+  assert.equal(sum.proofPulls[0].cmdHeld, 100);
+  assert.equal(sum.proofPulls[0].targetRise, 0);
+  assert.equal(sum.vsaPulls, 0);
+  const vsa = proofPull((l, i, dt) => { l.tpsCmd[i] = dt >= 3 && dt < 4 ? 70 : 100; });
+  assert.equal(C.carIngest(C.carEmpty(), vsa, meta).state.drives['20260822-090322'].vsaPulls, 1);
+});
+
 test('a one-row boost target jump is a glitch: removed and counted; a step that holds is kept', () => {
   const p = K.parseCSV(csv('aug22-0903'));
   const col = p.headers.indexOf('Turbo Pressure Target (PSI)');

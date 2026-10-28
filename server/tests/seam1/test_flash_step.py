@@ -109,6 +109,8 @@ def test_i_flashed_it_makes_map_version_2_with_exactly_those_cells(proposing: Lo
 
     v2 = proposing.store.map_version(2)
     assert v2["name"] == plan["saveAs"] and v2["parent_id"] == 1 and v2["kind"] == "flash"
+    # The Flash keeps the plan's changeId (calibration drive C8: a Boost step never resets the Ceiling read).
+    assert proposing.store.car_state(None)["flashes"][-1]["changeId"] == plan["ktunerCard"]["changeId"]
     base = basemap_tables()
     moved = {
         (t, r, c)

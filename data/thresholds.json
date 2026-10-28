@@ -55,6 +55,13 @@
     "source": "fact-check.md §6 (the map file: WOT_Enrich top load columns ask 11.0, λ 0.75, at full load)",
     "note": "WOT targets stay inside 11.0–12.0 AFR on the gasoline scale."
   },
+  "ceiling_read": {
+    "value": { "throttle_open_pct": 98, "ramp_flat_psi": 0.3, "ramp_window_s": 1 },
+    "unit": "mixed (%, psi, s)",
+    "basis": "judgement",
+    "source": "calibration-drive spec C7 (throttle open: our logs reach TPS Command 99-100, one logging step under 99; still ramping: the target rose more than 0.3 psi over the held part's last second); ktuner-community-knowledge.md §2 (the 19.2 psi question and how to read a floored pull)",
+    "note": "The Ceiling read on a Calibration drive's floored pulls: TPS Command held under throttle_open_pct is a protection closing the throttle; a pull whose target still rose more than ramp_flat_psi over its last ramp_window_s hasn't settled. Target vs table uses boost_step_gates.target_gap_psi."
+  },
   "boost_pairs": {
     "value": {
       "members": ["Boost_Target_1_Normal_L", "Boost_Target_1_Normal_H", "Boost_Target_2_Normal_L", "Boost_Target_2_Normal_H", "Boost_Target_3_Normal_L", "Boost_Target_3_Normal_H"],

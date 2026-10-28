@@ -285,7 +285,8 @@
     // A pull VSA cut short (the throttle command fell while the foot held) proves nothing.
     return (floored || []).filter(function (f) { return f.holdAbove3500S >= STEP_GATES.hold_s && !f.vsa; }).map(function (f) {
       return { t0: f.t0, holdS: f.holdAbove3500S, target: f.target, targetRpm: f.targetRpm, under: f.under, over: f.over,
-        afrLeanest: f.afrLeanest, fpPct: f.fpPct, ign: f.ign, ewg: f.ewg, ewgHeld: f.ewgHeld };
+        afrLeanest: f.afrLeanest, fpPct: f.fpPct, ign: f.ign, ewg: f.ewg, ewgHeld: f.ewgHeld,
+        cmdHeld: f.cmdHeld, targetRise: f.targetRise };
     });
   }
 
@@ -350,6 +351,8 @@
       // The Boost step proof pulls (ticket 16): foot down held 4 s above 3,500 rpm,
       // with the gate numbers read there, and the ignition achieved on them.
       proofPulls: proofPullsOf(I.floored),
+      // Floored pulls VSA cut short (the Ceiling read's "cut", calibration drive C7).
+      vsaPulls: (I.floored || []).filter(function (f) { return f.vsa; }).length,
       proofIgn: medianOf(proofPullsOf(I.floored).map(function (p) { return p.ign; }).filter(isNum)),
       shakedown: 'none', // this drive's role: none | pending | passed
       updatedAt: nowOf(meta)
@@ -598,6 +601,7 @@
       note: flash.note ? String(flash.note) : '',
       updatedAt: nowOf(meta)
     };
+    if (flash.changeId) rec.changeId = String(flash.changeId);
     s.flashes.push(rec);
     sortFlashes(s);
     // A Flash the owner confirms is the next Map version (CONTEXT.md). Its tables
@@ -1279,27 +1283,40 @@
     };
   }
   /** What fails on a Cool drive's proof pulls; `table` is the slot's Boost Target Normal H { rpm, values }. */
+  /**
+   * Why a drive's floored pulls can't be read at all, `{ status, text }`, or null.
+   * Calibration drive C2, C3: "floored" means something only against the owner's
+   * Pedal full reading, and a logged pedal above it says the reading is wrong.
+   * C5: overshoot is judged held 0.5 s, which needs 3 rows.
+   */
+  function pullsUnreadable(d) {
+    var G = STEP_GATES;
+    if (!isNum(d.pedalFullPct)) return { status: 'no-reading', text: 'was read without a Pedal full reading: say what TPS reads with the pedal floored' };
+    if (isNum(d.pedalMax) && d.pedalMax > d.pedalFullPct + G.pedal_guard_pct) {
+      return { status: 'pedal-wrong', text: 'logged the pedal at ' + d.pedalMax + ' %, above your Pedal full reading of ' + d.pedalFullPct + ' %: read it again' };
+    }
+    if (isNum(d.rateHz) && d.rateHz < G.rate_min_hz) {
+      return { status: 'slow-log', text: 'was logged ' + d.rateHz + ' times a second, under ' + G.rate_min_hz + ": a 0.5 s overshoot can't be read" };
+    }
+    return null;
+  }
+  /** The table cell a pull's target is read against: the row nearest where it peaked, that row's highest value. */
+  function tableCellAt(table, rpm) {
+    var r = -1, best = Infinity;
+    if (table && isNum(rpm)) table.rpm.forEach(function (a, k) { if (Math.abs(a - rpm) < best) { best = Math.abs(a - rpm); r = k; } });
+    return r >= 0 ? { rpm: table.rpm[r], cell: tableMax([table.values[r]]) } : null;
+  }
   function proofFails(d, table) {
     var G = STEP_GATES, pulls = d.proofPulls || [];
-    // Calibration drive C2, C3: "floored" means something only against the owner's
-    // Pedal full reading, and a logged pedal above it says the reading is wrong.
-    if (!isNum(d.pedalFullPct)) return ['was read without a Pedal full reading: say what TPS reads with the pedal floored'];
-    if (isNum(d.pedalMax) && d.pedalMax > d.pedalFullPct + G.pedal_guard_pct) {
-      return ['logged the pedal at ' + d.pedalMax + ' %, above your Pedal full reading of ' + d.pedalFullPct + ' %: read it again'];
-    }
-    // Calibration drive C5: overshoot is judged held 0.5 s, which needs 3 rows.
-    if (isNum(d.rateHz) && d.rateHz < G.rate_min_hz) {
-      return ['was logged ' + d.rateHz + ' times a second, under ' + G.rate_min_hz + ": a 0.5 s overshoot can't be read"];
-    }
+    var unreadable = pullsUnreadable(d);
+    if (unreadable) return [unreadable.text];
     if (pulls.length < G.pulls_min) {
       return ['has ' + pulls.length + ' floored pull' + (pulls.length === 1 ? '' : 's') + ', it needs ' + G.pulls_min +
         ' (pedal ' + d.flooredPct + ' % or more held ' + G.hold_s + ' s above ' + KTA.fmt.num(G.rpm_min, 0) + ' rpm)'];
     }
     var gap = -Infinity, tgt = NaN, cellAt = NaN, und = -Infinity, undEwg = null, ovr = -Infinity, tot = -Infinity, afr = -Infinity, fp = Infinity;
     pulls.forEach(function (p) {
-      var r = -1, best = Infinity;
-      if (table && isNum(p.targetRpm)) table.rpm.forEach(function (a, k) { if (Math.abs(a - p.targetRpm) < best) { best = Math.abs(a - p.targetRpm); r = k; } });
-      var cell = r >= 0 ? tableMax([table.values[r]]) : NaN;
+      var at = tableCellAt(table, p.targetRpm), cell = at ? at.cell : NaN;
       var g = isNum(p.target) && isNum(cell) ? cell - p.target : Infinity;
       if (g > gap) { gap = g; tgt = p.target; cellAt = cell; }
       var u = isNum(p.under) ? p.under : Infinity;
@@ -1324,6 +1341,78 @@
     if (!(isNum(d.trimWorst) && Math.abs(d.trimWorst) <= G.trim_max_pct)) out.push('had trims at ' + (isNum(d.trimWorst) ? sg1(d.trimWorst) : 'not read') + ' %');
     return out;
   }
+
+  // ---- The Ceiling read (calibration drive C7, C8) ------------------------------
+  // Can a raised boost cell show in the log? Read from the latest Cool drive with
+  // a Pedal full reading; a decisive result holds until something moves the ceiling.
+  var CEIL = KTA.THRESHOLDS && KTA.THRESHOLDS.ceiling_read ? KTA.THRESHOLDS.ceiling_read.value : null;
+  var CEIL_DECISIVE = { throttle: 1, turbo: 1, capped: 1, reaches: 1 };
+  /** One drive's result, first match wins (spec C7). */
+  function ceilingOf(d, table) {
+    var G = STEP_GATES, pulls = d.proofPulls || [];
+    var unreadable = pullsUnreadable(d);
+    if (unreadable) return { status: unreadable.status, text: unreadable.text };
+    if (!pulls.length) return { status: d.vsaPulls ? 'cut' : 'not-floored' };
+    var held = pulls.filter(function (p) { return isNum(p.cmdHeld) && p.cmdHeld < CEIL.throttle_open_pct; });
+    if (held.length) return { status: 'throttle', cmd: Math.min.apply(null, held.map(function (p) { return p.cmdHeld; })) };
+    var shut = pulls.filter(function (p) { return isNum(p.under) && p.under > G.undershoot_psi && wastegateShut(p.ewgHeld); })[0];
+    if (shut) return { status: 'turbo', under: shut.under, ewg: shut.ewgHeld };
+    // A pull whose target still rose over its last second hasn't shown where it settles.
+    var settled = pulls.filter(function (p) { return !(p.targetRise > CEIL.ramp_flat_psi); });
+    if (!settled.length) return { status: 'ramping', rise: Math.max.apply(null, pulls.map(function (p) { return p.targetRise; })) };
+    var best = null;
+    settled.forEach(function (p) {
+      var at = tableCellAt(table, p.targetRpm);
+      if (!at || !isNum(p.target)) return;
+      var gap = at.cell - p.target;
+      if (!best || gap < best.gap) best = { gap: gap, target: p.target, cell: at.cell, rpm: at.rpm };
+    });
+    if (!best) return { status: 'none' };
+    return { status: best.gap > G.target_gap_psi ? 'capped' : 'reaches', target: best.target, cell: best.cell, rpm: best.rpm };
+  }
+  /**
+   * When the ceiling last moved (spec C8): a boost Flash other than a Boost step or
+   * its promote, a revert to Map version 1 (the KTuner basemap), or an intake,
+   * intercooler or turbo fitted or removed. A restore is judged as a restore only.
+   */
+  function ceilingResetAt(s, installs) {
+    var at = -Infinity, restores = s.mapRestores || [];
+    var restoreIds = restores.map(function (r) { return r.flashId; });
+    s.flashes.forEach(function (f) {
+      if (f.changed === 'boost' && f.changeId !== 'boostStep' && f.changeId !== 'boostPromote' && restoreIds.indexOf(f.id) < 0) at = Math.max(at, f.time);
+    });
+    restores.forEach(function (r) { if (r.n === 1) at = Math.max(at, r.from); });
+    installs.forEach(function (i) {
+      if (i && isNum(i.installed_at) && AIRFLOW_PART.test(String(i.part || ''))) at = Math.max(at, i.installed_at);
+    });
+    return at;
+  }
+  /**
+   * The Ceiling read for the car as it is now: `{ status, driveId, mapAction, ... }`.
+   * status: none | no-reading | pedal-wrong | slow-log | not-floored | cut | throttle |
+   * turbo | ramping | capped | reaches. Only "reaches" hands on to the Boost step gates;
+   * every other result is no map change. opts: tags (slot per drive), installs.
+   */
+  KTA.carCalibration = function (state, map, opts) {
+    var s = normalize(state);
+    opts = opts || {};
+    var tags = opts.tags || {}, installs = Array.isArray(opts.installs) ? opts.installs : [];
+    var out = { status: 'none', driveId: null };
+    if (STEP_GATES && CEIL) {
+      var T = planTables(map);
+      var tableOf = function (slot) {
+        var id = 'Boost_Target_' + slot + '_Normal_H', v = tableVals(T, id), rpm = tableRpm(T, id);
+        return v && rpm ? { rpm: rpm, values: v } : null;
+      };
+      var resetAt = ceilingResetAt(s, installs);
+      var reads = planRows(s).filter(function (d) { return d.cool && d.start > resetAt; }).map(function (d) {
+        return Object.assign({ driveId: d.id }, ceilingOf(d, tableOf((tags[d.id] && tags[d.id].slot) || 1)));
+      }).filter(function (r) { return r.status !== 'none'; });
+      out = reads.filter(function (r) { return CEIL_DECISIVE[r.status]; }).pop() || reads.pop() || out;
+    }
+    out.mapAction = out.status === 'reaches' ? 'boost-step-gates' : 'no-change';
+    return out;
+  };
 
   function issueCause(d, baseline) {
     if (isNum(d.trimWorst) && Math.abs(d.trimWorst) > TRIM_OK) return 'trims';

@@ -19,6 +19,7 @@
   var GAS = KTA.GAS_SCALE;
   // How long an overshoot must hold to count on a Boost step proof pull (data/thresholds.json).
   var STEP_HOLD_S = KTA.THRESHOLDS && KTA.THRESHOLDS.boost_step_gates ? KTA.THRESHOLDS.boost_step_gates.value.overshoot_hold_s : NaN;
+  var CEIL_WINDOW_S = KTA.THRESHOLDS && KTA.THRESHOLDS.ceiling_read ? KTA.THRESHOLDS.ceiling_read.value.ramp_window_s : NaN;
 
   var DL = KTA.DRIVE_LIMITS = {
     warmEct: 70,                     // deg C: below this the ECU runs warm-up corrections
@@ -354,6 +355,15 @@
             else if (log.tpsCmd[pk] - log.tpsCmd[vi] >= DL.vsa.cmdDrop && foot[vi] >= foot[pk] - DL.vsa.footHold) vsa = true;
           }
         }
+        // The Ceiling read (calibration drive C7): how far the target still rose over the
+        // held part's last second, from the last held row back to the row a second before.
+        var lastUp = -1, rise = null;
+        for (var ui = r.i0; ui <= r.i1; ui++) if (up[ui]) lastUp = ui;
+        if (lastUp >= 0 && has.boostTarget && isNum(log.boostTarget[lastUp])) {
+          var k0 = lastUp;
+          while (k0 > r.i0 && up[k0 - 1] && log.t[lastUp] - log.t[k0 - 1] <= CEIL_WINDOW_S) k0--;
+          if (isNum(log.boostTarget[k0])) rise = r1(log.boostTarget[lastUp] - log.boostTarget[k0]);
+        }
         var gap = new Float64Array(n), above = new Float64Array(n), fpr = new Float64Array(n), tMax = -Infinity, tRpm = NaN;
         for (var j = 0; j < n; j++) {
           gap[j] = up[j] && has.boost && has.boostTarget ? log.boostTarget[j] - log.boost[j] : NaN;
@@ -372,7 +382,9 @@
           under: r1(q(gap, 0.5, up)), over: r1(heldMax(log, above, up, STEP_HOLD_S)),
           // The wastegate where the undershoot is read: shut there means the turbo's limit or a leak (ticket 16).
           ewgHeld: has.wgPos ? r1(q(log.wgPos, 0.5, up)) : null,
-          afrLeanest: r2(q(log.lam, 1, up) * GAS), fpPct: r0(q(fpr, 0.05, up)), ign: r1(q(log.ign, 0.5, up))
+          afrLeanest: r2(q(log.lam, 1, up) * GAS), fpPct: r0(q(fpr, 0.05, up)), ign: r1(q(log.ign, 0.5, up)),
+          // The throttle command held above 3,500 rpm: under ceiling_read.throttle_open_pct a protection is closing it.
+          cmdHeld: has.tpsCmd ? r1(q(log.tpsCmd, 0.5, up)) : null, targetRise: rise
         });
       });
     }
