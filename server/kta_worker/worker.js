@@ -441,7 +441,9 @@ var OPS = {
       // and the owner's Pedal full reading (calibration drive C1).
       out = KTA.carIngest(state, p.log, { fileName: fileName, now: now }, {
         eliminateArtificialKcRise: args.eliminateArtificialKcRise === true,
-        pedalFullPct: isNum(args.pedalFullPct) ? args.pedalFullPct : null
+        pedalFullPct: isNum(args.pedalFullPct) ? args.pedalFullPct : null,
+        // The channels the owner says TunerView doesn't offer on this car (calibration drive C5).
+        notOffered: Array.isArray(args.notOffered) ? args.notOffered.filter(function (k) { return k === 'afrCmd' || k === 'mafHz'; }) : []
       });
     } catch (e) {
       fail('engine-error', 'The engine could not read this drive: ' + (e && e.message));

@@ -998,6 +998,9 @@ test('Boost step gates: each failure locks it and names the gate', () => {
   assert.match(reason({ pedalFullPct: null, flooredPct: null }), /was read without a Pedal full reading/);
   assert.match(reason({ pedalMax: 97 }), /logged the pedal at 97 %, above your Pedal full reading of 94 %: read it again/);
   assert.equal(leverOf(plan({ pedalMax: 96 })).status, 'planned', 'within 2 points of the reading is the same floor');
+  // Calibration drive C5: under 6 rows a second, a 0.5 s overshoot is under 3 rows.
+  assert.match(reason({ rateHz: 5 }), /was logged 5 times a second, under 6: a 0\.5 s overshoot can't be read/);
+  assert.equal(leverOf(plan({ rateHz: 7.5 })).status, 'planned', "this car's TunerView rate is enough");
   assert.match(reason({}, { kcPeakJudged: 0.6 }), /latest hot drive \(.*\) reached Knock Control 0\.60 judged/);
   assert.match(reason({}, {}, { openSteps: [{ key: 'channels', status: 'open' }] }), /the open step "Log AFR Command and MAF Hz" comes first/);
   assert.match(reason({ overshoot: 3, overshootRpm: 3964 }), /B2 overshoot trim comes first/);
@@ -1342,6 +1345,13 @@ test('the Open steps read as the loop\'s own vocabulary: keys, statuses and reas
   for (const step of open) assert.match(step.title, /^(Undo|Baseline|Habit test|Log AFR|Fix the logger)/);
   // A hand-made step key is dropped rather than guessed at.
   assert.deepEqual(K.carOpenSteps([{ key: 'invented', status: 'open' }]), []);
+});
+
+test('Calibration C5: the owner says TunerView offers neither channel, so no step asks for them', () => {
+  const r = K.carIngest(K.carEmpty(), logOf('aug22-0903'), { fileName: NAME['aug22-0903'], now: NOW }, { notOffered: ['afrCmd', 'mafHz'] });
+  const settled = K.carSettle(r.state, r.report.identity, []);
+  const open = K.carNextStep(r.state, r.report.identity, settled.openSteps).openSteps;
+  assert.deepEqual(open.map((x) => x.key), ['baseline']);
 });
 
 // ---------------------------------------------------------------------------

@@ -752,7 +752,10 @@
     // The owner's Pedal full reading (calibration drive C2): floored from 90 % of it.
     var pedalFull = opts && isNum(opts.pedalFullPct) ? opts.pedalFullPct : null;
     var flooredPct = pedalFull != null && STEP_GATES ? Math.round(pedalFull * STEP_GATES.pedal_floored_ratio * 10) / 10 : null;
-    var rep = KTA.checkDrive(log, { history: (opts && opts.history) || [], eliminateArtificialKcRise: !!(opts && opts.eliminateArtificialKcRise), flooredPct: flooredPct });
+    // The channels the owner says TunerView doesn't offer on this car (calibration drive C5).
+    var notOffered = (opts && opts.notOffered) || [];
+    var rep = KTA.checkDrive(log, { history: (opts && opts.history) || [], eliminateArtificialKcRise: !!(opts && opts.eliminateArtificialKcRise),
+      flooredPct: flooredPct, notOffered: notOffered });
     var ident = KTA.carIdentity(log, meta);
     var moving = rep.ins.meta.movingSeconds;
     var tooShort = !(moving >= MIN_MOVING);
@@ -780,6 +783,8 @@
     summary.pedalFullPct = pedalFull;
     summary.flooredPct = flooredPct;
     summary.pedalMax = rep.ins.pedalMax;
+    summary.missing = summary.missing.filter(function (k) { return notOffered.indexOf(k) < 0; });
+    summary.rateHz = rep.ins.meta.rateHz;
     var replaced = !!s.drives[summary.id];
 
     // Hot restart: within 30 min of the previous drive's end with the intake
@@ -1281,6 +1286,10 @@
     if (!isNum(d.pedalFullPct)) return ['was read without a Pedal full reading: say what TPS reads with the pedal floored'];
     if (isNum(d.pedalMax) && d.pedalMax > d.pedalFullPct + G.pedal_guard_pct) {
       return ['logged the pedal at ' + d.pedalMax + ' %, above your Pedal full reading of ' + d.pedalFullPct + ' %: read it again'];
+    }
+    // Calibration drive C5: overshoot is judged held 0.5 s, which needs 3 rows.
+    if (isNum(d.rateHz) && d.rateHz < G.rate_min_hz) {
+      return ['was logged ' + d.rateHz + ' times a second, under ' + G.rate_min_hz + ": a 0.5 s overshoot can't be read"];
     }
     if (pulls.length < G.pulls_min) {
       return ['has ' + pulls.length + ' floored pull' + (pulls.length === 1 ? '' : 's') + ', it needs ' + G.pulls_min +

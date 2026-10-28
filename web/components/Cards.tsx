@@ -266,7 +266,18 @@ export function NextStepCard({
 }
 
 // ------------------------------------------------------------ the Car profile
-const FIELDS: { key: keyof Omit<CarProfile, "parts" | "eliminate_artificial_kc_rise" | "pedal_full_pct" | "pedal_full_at">; label: string }[] = [
+const LOGGER_CHANNELS: { key: "logger_afr_command" | "logger_maf_hz"; label: string }[] = [
+  { key: "logger_afr_command", label: "AFR Command" },
+  { key: "logger_maf_hz", label: "MAF Hz" },
+];
+
+const FIELDS: {
+  key: keyof Omit<
+    CarProfile,
+    "parts" | "eliminate_artificial_kc_rise" | "pedal_full_pct" | "pedal_full_at" | "logger_afr_command" | "logger_maf_hz" | "logger_max_rate_hz"
+  >;
+  label: string;
+}[] = [
   { key: "model", label: "Model" },
   { key: "engine", label: "Engine" },
   { key: "transmission", label: "Gearbox" },
@@ -394,6 +405,42 @@ export function ProfileCard({
           Parked, ignition on, engine off: press the pedal to the floor and read TPS in TunerView. A pull counts as floored from 90 % of it.
         </span>
       </label>
+      <div className="field" style={{ marginTop: 12 }}>
+        <span>What TunerView can log on this car</span>
+        <div className="pf-grid">
+          {LOGGER_CHANNELS.map(({ key, label }) => (
+            <label className="field" key={key}>
+              <span>{label}</span>
+              <select
+                value={fields[key] === true ? "yes" : fields[key] === false ? "no" : ""}
+                data-testid={`setup-field-${key}`}
+                onChange={(event) =>
+                  setFields((f) => ({ ...f, [key]: event.target.value === "yes" ? true : event.target.value === "no" ? false : null }))
+                }
+              >
+                <option value="">Not checked</option>
+                <option value="yes">Offered</option>
+                <option value="no">Not offered</option>
+              </select>
+            </label>
+          ))}
+          <label className="field">
+            <span>Fastest logging rate (a second)</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min={1}
+              max={50}
+              step="any"
+              placeholder="Not checked"
+              value={fields.logger_max_rate_hz ?? ""}
+              data-testid="setup-field-logger_max_rate_hz"
+              onChange={(event) => setFields((f) => ({ ...f, logger_max_rate_hz: event.target.value === "" ? null : Number(event.target.value) }))}
+            />
+          </label>
+        </div>
+        <span className="meta">From TunerView&rsquo;s gauge list and rate menu. A gauge it doesn&rsquo;t offer is never asked for.</span>
+      </div>
       {draft.missing.length ? (
         <p className="small" style={{ marginTop: 12 }} data-testid="setup-missing">
           Still to say: {draft.missing.join(", ")}.

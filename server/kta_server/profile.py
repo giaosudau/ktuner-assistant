@@ -56,6 +56,16 @@ PEDAL_FULL_AT = "pedal_full_at"
 #: ponytail: a sanity range (this car logs 94, KTuner staff say 100-113); widen if a real car reads outside it.
 PEDAL_FULL_RANGE = (60, 130)
 
+#: The Logger census (calibration drive C4): whether TunerView offers each channel on
+#: this car (True / False; absent = not checked), as the owner says, keyed to the
+#: engine's channel name, and the fastest logging rate its menu offers.
+LOGGER_CHANNELS: dict[str, tuple[str, str]] = {
+    "logger_afr_command": ("afrCmd", "AFR Command"),
+    "logger_maf_hz": ("mafHz", "MAF Hz"),
+}
+LOGGER_RATE = "logger_max_rate_hz"
+LOGGER_RATE_RANGE = (1, 50)
+
 #: Fields the owner must not leave empty on confirm.
 REQUIRED: tuple[str, ...] = ("model", "basemap")
 
@@ -235,6 +245,18 @@ def validate_fields(fields: Any, basemap_default: str) -> dict[str, Any]:
                 f"A Pedal full reading is the TPS number TunerView shows with the pedal floored, from {lo} to {hi} %."
             )
         cleaned[PEDAL_FULL] = pedal
+    for field, (_, label) in LOGGER_CHANNELS.items():
+        offered = fields.get(field)
+        if offered not in (None, ""):
+            if offered not in (True, False):
+                raise ValueError(f'Whether TunerView offers "{label}" is true or false.')
+            cleaned[field] = offered
+    rate = fields.get(LOGGER_RATE)
+    if rate not in (None, ""):
+        lo, hi = LOGGER_RATE_RANGE
+        if isinstance(rate, bool) or not isinstance(rate, (int, float)) or not lo <= rate <= hi:
+            raise ValueError(f"TunerView's fastest logging rate is the samples a second its menu tops out at, from {lo} to {hi}.")
+        cleaned[LOGGER_RATE] = rate
     missing = [name for name in REQUIRED if not cleaned[name]]
     if missing:
         raise ValueError("A Car profile needs " + " and ".join(missing) + ".")
@@ -251,6 +273,7 @@ def engine_opts(profile: dict[str, Any] | None) -> dict[str, Any]:
     return {
         "eliminateArtificialKcRise": profile.get(KC_RISE_FLAG) is True,
         "pedalFullPct": profile.get(PEDAL_FULL),
+        "notOffered": [key for field, (key, _) in LOGGER_CHANNELS.items() if profile.get(field) is False],
     }
 
 
@@ -284,6 +307,9 @@ def installs_for_part_change(
 __all__ = [
     "DOWNPIPE_TYPES",
     "KC_RISE_FLAG",
+    "LOGGER_CHANNELS",
+    "LOGGER_RATE",
+    "LOGGER_RATE_RANGE",
     "PEDAL_FULL",
     "PEDAL_FULL_AT",
     "PEDAL_FULL_RANGE",

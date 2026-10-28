@@ -909,6 +909,23 @@ test('Calibration C2: a floored pull starts where the Pedal full reading puts it
   assert.equal(none.flooredPct, null);
 });
 
+// Calibration drive C5: a channel the owner says TunerView doesn't offer on this car
+// is never "missing", so no checkpoint fails on it and no step asks for it.
+test('Calibration C5: channels TunerView does not offer are not missing', () => {
+  const log = drive('sep05-0756').log;
+  assert.deepEqual(K.checkDrive(log).ins.quality.missing, ['afrCmd', 'mafHz']);
+  const q = K.checkDrive(log, { notOffered: ['mafHz'] }).ins.quality;
+  assert.deepEqual(q.missing, ['afrCmd']);
+  assert.deepEqual(q.notOffered, ['mafHz']);
+  // The Car summary the Open steps read drops them too, and keeps the logging rate.
+  const C = require('../engine/kta-car.js');
+  const meta = { fileName: 'TunerView_20260905_075634.csv', now: 0 };
+  const sum = (opts) => C.carIngest(C.carEmpty(), log, meta, opts).state.drives['20260905-075634'];
+  assert.deepEqual(sum().missing.filter((k) => k === 'afrCmd' || k === 'mafHz').sort(), ['afrCmd', 'mafHz']);
+  assert.deepEqual(sum({ notOffered: ['afrCmd', 'mafHz'] }).missing.filter((k) => k === 'afrCmd' || k === 'mafHz'), []);
+  assert.equal(sum().rateHz, 7.5);
+});
+
 // §6.5: a Boost step reads overshoot held 0.5 s or more (KTuner calls a 1–3 psi spike
 // normal), and a target that jumps for one row and comes straight back is a logger
 // glitch (one row on 30 Aug logs a 51.7 psi target), not the target the table asked for.

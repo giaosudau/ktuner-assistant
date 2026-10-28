@@ -314,7 +314,7 @@ async def _ingest_run(
     # The shop's report (tuning-shop D4-D6): did the log meet the brief, the health checks, and the
     # whole map at a high level. All engine facts and the map the app holds; nothing decided here.
     if not drive["tooShort"]:
-        reply["checkpoints"] = C.log_checkpoints(quality, heat, drive.get("summary"), limits)
+        reply["checkpoints"] = C.log_checkpoints(quality, heat, drive.get("summary"), limits, store.car_profile())
         reply["health"] = C.health_rows(overview)
     reply["tour"] = TOUR.map_tour(plan, PIC._tables(store, plan))
     # The premium-fuel test, once this Drive is tagged and two fuels are in the history.

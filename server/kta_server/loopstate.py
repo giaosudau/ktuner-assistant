@@ -73,7 +73,7 @@ async def loop_state(store: Any, worker: Any, settings: Any) -> dict[str, Any]:
         "drives": store.list_drives(),
         "flashPlan": plan,
         "hasLlm": settings.has_llm,
-        "logGuide": C.log_guide(worker.limits),
+        "logGuide": C.log_guide(worker.limits, store.car_profile()),
     }
     # The front desk (tuning-shop D20, D25): where the car is, the Recap, the stage's suggested replies.
     state["stage"] = D.stage_of(state)

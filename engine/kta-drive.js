@@ -136,6 +136,8 @@
     var I = { meta: {}, lug: null, kc: null, heat: {}, mix: null, boost: null, trims: null, accel: null, grid: null, quality: {} };
 
     // ---- meta and data quality
+    var notOffered = opts.notOffered || [];
+    function absent(k) { return k === 'afrCmd' ? !has.lamCmd : !(has.mafHz || has.mafGs); }
     I.meta = {
       duration: r0(log.duration), movingSeconds: r0(movingS), rateHz: r1(1 / dt), rows: n, source: log.source || 'other',
       townSeconds: has.vss ? r0(secs(log, mask(n, function (i) { return warm[i] && log.vss[i] >= 15 && log.vss[i] <= 60; }))) : null,
@@ -145,7 +147,10 @@
       glitches: log.glitches || {}, glitchTotal: log.glitchTotal || 0, fuelCutSamples: (log.capped && log.capped.afr) || 0,
       hasAfrCmd: !!has.lamCmd, hasAfm: !!(has.mafHz || has.mafGs), hasKnockControl: !!has.kControl, hasLoad: !!load,
       knockScheduled: !!an.knockScheduled,
-      missing: ['afrCmd', 'mafHz'].filter(function (k) { return k === 'afrCmd' ? !has.lamCmd : !(has.mafHz || has.mafGs); }),
+      // A channel the owner says TunerView doesn't offer on this car (calibration drive C5)
+      // is never missing: nothing asks for it, and the checkpoint reads "can't say".
+      missing: ['afrCmd', 'mafHz'].filter(function (k) { return absent(k) && notOffered.indexOf(k) < 0; }),
+      notOffered: ['afrCmd', 'mafHz'].filter(function (k) { return absent(k) && notOffered.indexOf(k) >= 0; }),
       flat: (an.flatChannels || []).slice(),
       cantTell: an.cantTell || null, movingSeconds: isNum(an.movingSeconds) ? an.movingSeconds : null
     };

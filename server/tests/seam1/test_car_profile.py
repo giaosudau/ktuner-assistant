@@ -15,6 +15,7 @@ from conftest import Loop, owner_csv
 from test_reply_words import BANNED
 
 from kta_server import copy as C
+from kta_server import profile as P
 from kta_server import window as W
 
 #: The owner's car in their own words, the way the first-open chat asks for it.
@@ -135,6 +136,82 @@ def test_the_pedal_full_reading_reaches_the_drive_check(tmp_path):
         assert (drive["pedalFullPct"], drive["flooredPct"]) == (94, 84.6)
     finally:
         loop.close()
+
+
+# -- the Logger census rides on the profile (calibration drive C4, C5)
+#: This owner's TunerView, as the research reads it: 7.5 a second, no AFR Command, no MAF Hz.
+CENSUS = {"logger_afr_command": False, "logger_maf_hz": False, "logger_max_rate_hz": 7.5}
+
+
+def by_id(rows: list[dict]) -> dict[str, dict]:
+    return {row["id"]: row for row in rows}
+
+
+def test_the_logger_census_is_saved_and_checked(loop: Loop):
+    fields = draft(loop)["fields"]
+    assert not {k for k in confirm(loop, fields)["profile"] if k.startswith("logger_")}, "not checked yet"
+    saved = confirm(loop, {**fields, **CENSUS, "logger_afr_command": True})["profile"]
+    assert (saved["logger_afr_command"], saved["logger_maf_hz"], saved["logger_max_rate_hz"]) == (True, False, 7.5)
+    assert P.engine_opts(saved)["notOffered"] == ["mafHz"]
+    assert P.engine_opts(None)["notOffered"] == []
+
+    for key, bad, words in (
+        ("logger_maf_hz", "yes", "MAF Hz"),
+        ("logger_max_rate_hz", 0, "fastest logging rate"),
+        ("logger_max_rate_hz", 100, "fastest logging rate"),
+        ("logger_max_rate_hz", "fast", "fastest logging rate"),
+    ):
+        response = post(loop, "/api/profile", {"fields": {**fields, key: bad}})
+        assert response.status_code == 400, (key, bad)
+        assert words in response.json()["detail"]
+
+
+def test_checkpoints_follow_the_logger_census():
+    # The engine moved both channels to notOffered (CENSUS); this car logs 7.5 a second.
+    quality = {"quality": {"missing": [], "notOffered": ["afrCmd", "mafHz"], "flat": [], "movingSeconds": 900},
+               "samples_per_second": 7.5}
+    rows = by_id(C.log_checkpoints(quality, {}, {}, {}, CENSUS))
+    assert rows["channels"]["met"] is None
+    assert rows["channels"]["value"] == "can't say: TunerView doesn't offer AFR Command and MAF Hz on this car"
+    assert (rows["rate"]["label"], rows["rate"]["met"]) == ("Logged 7.5 times a second or faster", True)
+    # Not stated: the 10 a second bar, which 7.5 misses.
+    assert by_id(C.log_checkpoints(quality, {}, {}, {}, None))["rate"]["met"] is False
+    # Stated under 6: the bar stops at 6.
+    slow = {**quality, "samples_per_second": 5.0}
+    rows = by_id(C.log_checkpoints(slow, {}, {}, {}, {**CENSUS, "logger_max_rate_hz": 5}))
+    assert (rows["rate"]["label"], rows["rate"]["met"]) == ("Logged 6 times a second or faster", False)
+    # Stated over 10: the bar stays at 10.
+    assert by_id(C.log_checkpoints(quality, {}, {}, {}, {"logger_max_rate_hz": 20}))["rate"]["label"] == "Logged 10 times a second or faster"
+
+
+def test_the_drive_brief_follows_the_logger_census():
+    guide = C.log_guide({}, CENSUS)
+    text = " ".join(step for section in guide["sections"] for step in section["steps"]) + " ".join(guide["recipe"]["steps"])
+    assert "AFR Command" not in text and "MAF Hz" not in text, "never ask for what TunerView can't log"
+    assert "7.5 samples a second" in text
+    assert "Logged 7.5 times a second or faster" in guide["checkpoints"]
+    assert not any("AFR Command" in c for c in guide["checkpoints"])
+    # Not checked yet: asked for, if the app offers them.
+    assert "AFR Command and MAF Hz if your app offers them" in " ".join(C.log_guide({})["sections"][0]["steps"])
+
+
+def test_a_census_drive_has_no_channels_step_and_no_failed_checkpoint(tmp_path):
+    """Profile → worker → engine: the channels TunerView can't give never fail or ask."""
+    steps, checkpoints = {}, {}
+    for told in (False, True):
+        loop = Loop(tmp_path / str(told)).start()
+        try:
+            confirm(loop, {**draft(loop)["fields"], **(CENSUS if told else {})})
+            # The owner's first drive: on its own it opens the Baseline and the channels step.
+            reply = loop.send(loop.upload(owner_csv("aug22-0903"), "TunerView_20260822_090322.csv"))
+            assert not reply.errors(), reply.errors()
+            checkpoints[told] = by_id(reply.card["checkpoints"])
+            steps[told] = {s["key"] for s in loop.get("/api/state").json()["openSteps"]}
+        finally:
+            loop.close()
+    assert checkpoints[False]["channels"]["met"] is False and checkpoints[False]["rate"]["met"] is False
+    assert checkpoints[True]["channels"]["met"] is None and checkpoints[True]["rate"]["met"] is True
+    assert "channels" in steps[False] and "channels" not in steps[True], steps
 
 
 # -- the card fills from the owner's words, and saves nothing before confirm

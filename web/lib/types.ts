@@ -361,6 +361,11 @@ export type CarProfileFields = {
   pedal_full_pct?: number | null;
   /** When the Pedal full reading was said (epoch ms), set by the server. */
   pedal_full_at?: number;
+  /** Whether TunerView offers each channel on this car (calibration drive C4). Absent = not checked. */
+  logger_afr_command?: boolean | null;
+  logger_maf_hz?: boolean | null;
+  /** The fastest logging rate TunerView's menu offers, samples a second. */
+  logger_max_rate_hz?: number | null;
 };
 
 export type CarProfile = CarProfileFields;

@@ -39,6 +39,8 @@ import subprocess
 from typing import Any, Mapping
 
 from .config import REPO_ROOT
+from . import profile as P
+from .mapcheck import load_thresholds
 from .profile import part_display
 
 def _engine_words() -> dict[str, Any]:
@@ -540,7 +542,7 @@ def gauge_table(
 # Numbered, short and physical — no jargon the owner has to translate, and no KTuner
 # table name anywhere (only the Flash plan names those).
 # ---------------------------------------------------------------------------
-def log_guide(limits: Mapping[str, Any]) -> dict[str, Any]:
+def log_guide(limits: Mapping[str, Any], profile: Mapping[str, Any] | None = None) -> dict[str, Any]:
     """The drive brief a shop hands its customer (tuning-shop D4; kc-drive-brief, kc-log-gate).
 
     Sections in the order the owner drives them, every number from the engine's limits or the
@@ -549,10 +551,15 @@ def log_guide(limits: Mapping[str, Any]) -> dict[str, Any]:
     """
     cool = n(lim(limits, "CAR_RULES.coolIat", 42), 0)
     pull_iat = n(lim(limits, "DRIVE_LIMITS.pullIatGood", 48), 0)
+    # The Logger census (calibration drive C4, C5): never ask for what TunerView can't log.
+    rate = num_words(rate_bar(profile))
+    asked = [label for _, label in P.LOGGER_CHANNELS.values() if label not in not_offered_names(profile)]
+    gauges = "Turn on every gauge in the table below" + (
+        f", plus {join_names(asked)} if your app offers them." if asked else ".")
     sections = [
         {"title": "Before you drive, in TunerView", "steps": [
-            "Turn on every gauge in the table below, plus AFR Command and MAF Hz if your app offers them.",
-            f"Set the logging rate as fast as it goes: {BRIEF_RATE_HZ} samples a second or more.",
+            gauges,
+            f"Set the logging rate as fast as it goes: {rate} samples a second or more.",
             "Mount the phone where you won't touch it, and start the log before you set off.",
         ]},
         {"title": "When and where", "steps": [
@@ -574,10 +581,10 @@ def log_guide(limits: Mapping[str, Any]) -> dict[str, Any]:
         ]},
     ]
     checkpoints = [
-        f"Logged {BRIEF_RATE_HZ} times a second or faster",
+        f"Logged {rate} times a second or faster",
         f"{BRIEF_MOVING_S // 60} minutes or more of moving",
         "Every gauge moving",
-        "AFR Command and MAF Hz in the log",
+        *([f"{join_names(asked)} in the log"] if asked else []),
         f"Engine warm (coolant {BRIEF_WARM_ECT} °C or more)",
         f"Cool intake while moving (under {cool} °C)",
         "2 full-throttle pulls",
@@ -591,7 +598,7 @@ def log_guide(limits: Mapping[str, Any]) -> dict[str, Any]:
         ),
         "sections": sections,
         "checkpoints": checkpoints,
-        "recipe": drive_recipe("baseline", limits, channels_open=True),
+        "recipe": drive_recipe("baseline", limits, channels_open=bool(asked)),
         "gauges": gauge_table(["iat", "kc", "afr", "trims"], limits),
     }
 
@@ -600,6 +607,24 @@ def log_guide(limits: Mapping[str, Any]) -> dict[str, Any]:
 BRIEF_RATE_HZ = 10
 BRIEF_MOVING_S = 600
 BRIEF_WARM_ECT = 80
+#: The slowest log a Boost step proof can read (thresholds.json boost_step_gates.rate_min_hz).
+RATE_MIN_HZ = load_thresholds()["boost_step_gates"]["value"]["rate_min_hz"]
+
+
+def rate_bar(profile: Mapping[str, Any] | None) -> float:
+    """The logging-rate bar (calibration drive C5): TunerView's stated fastest rate, from 6 to 10 a second."""
+    stated = (profile or {}).get(P.LOGGER_RATE)
+    return BRIEF_RATE_HZ if stated is None else max(RATE_MIN_HZ, min(BRIEF_RATE_HZ, stated))
+
+
+def not_offered_names(profile: Mapping[str, Any] | None) -> list[str]:
+    """The channels the owner says TunerView doesn't offer on this car, by name."""
+    return [label for field, (_, label) in P.LOGGER_CHANNELS.items() if (profile or {}).get(field) is False]
+
+
+def num_words(value: float) -> str:
+    """7.5 or 10: a rate as the owner reads it."""
+    return n(value, 0 if float(value).is_integer() else 1)
 
 
 def log_checkpoints(
@@ -607,6 +632,7 @@ def log_checkpoints(
     heat: Mapping[str, Any] | None,
     summary: Mapping[str, Any] | None,
     limits: Mapping[str, Any],
+    profile: Mapping[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Did this log meet the drive brief? One row per checkpoint: label, what the log shows, met or not.
 
@@ -619,6 +645,9 @@ def log_checkpoints(
     rate = (quality or {}).get("samples_per_second")
     moving = q.get("movingSeconds")
     missing = [channel_name(k) for k in q.get("missing") or []]
+    # Calibration drive C5: what TunerView doesn't offer on this car can't be asked for.
+    not_offered = [channel_name(k) for k in q.get("notOffered") or []]
+    bar = rate_bar(profile)
     flat = [channel_name(k) for k in q.get("flat") or []]
     cool_iat = lim(limits, "CAR_RULES.coolIat", 42)
     pull_iat_max = lim(limits, "DRIVE_LIMITS.pullIatGood", 48)
@@ -629,13 +658,16 @@ def log_checkpoints(
         return {"id": cid, "label": label, "value": value, "met": met}
 
     return [
-        row("rate", f"Logged {BRIEF_RATE_HZ} times a second or faster",
-            f"{n(rate, 1)} a second" if rate is not None else "unknown", None if rate is None else rate >= BRIEF_RATE_HZ),
+        row("rate", f"Logged {num_words(bar)} times a second or faster",
+            f"{n(rate, 1)} a second" if rate is not None else "unknown", None if rate is None else rate >= bar),
         row("moving", f"{BRIEF_MOVING_S // 60} minutes or more of moving",
             f"{n(moving / 60 if moving is not None else None, 0)} min", None if moving is None else moving >= BRIEF_MOVING_S),
         row("gauges", "Every gauge moving", "all moving" if not flat else "stuck: " + join_names(flat), not flat),
         row("channels", "AFR Command and MAF Hz in the log",
-            "both logged" if not missing else "missing: " + join_names(missing), not missing),
+            "missing: " + join_names(missing) if missing
+            else f"can't say: TunerView doesn't offer {join_names(not_offered)} on this car" if not_offered
+            else "both logged",
+            False if missing else None if not_offered else True),
         row("warm", f"Engine warm (coolant {BRIEF_WARM_ECT} °C or more)",
             f"{n(ect)} °C peak" if ect is not None else "not logged", None if ect is None else ect >= BRIEF_WARM_ECT),
         row("cool", f"Cool intake while moving (under {n(cool_iat)} °C)",
