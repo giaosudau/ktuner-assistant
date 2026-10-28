@@ -749,7 +749,10 @@
   KTA.carIngest = function (state, log, meta, opts) {
     var s = clone(state);
     meta = meta || {};
-    var rep = KTA.checkDrive(log, { history: (opts && opts.history) || [], eliminateArtificialKcRise: !!(opts && opts.eliminateArtificialKcRise) });
+    // The owner's Pedal full reading (calibration drive C2): floored from 90 % of it.
+    var pedalFull = opts && isNum(opts.pedalFullPct) ? opts.pedalFullPct : null;
+    var flooredPct = pedalFull != null && STEP_GATES ? Math.round(pedalFull * STEP_GATES.pedal_floored_ratio * 10) / 10 : null;
+    var rep = KTA.checkDrive(log, { history: (opts && opts.history) || [], eliminateArtificialKcRise: !!(opts && opts.eliminateArtificialKcRise), flooredPct: flooredPct });
     var ident = KTA.carIdentity(log, meta);
     var moving = rep.ins.meta.movingSeconds;
     var tooShort = !(moving >= MIN_MOVING);
@@ -774,6 +777,9 @@
     }
     var verdict = rep.an.verdict;
     var summary = summarize(log, rep, ident, meta, verdict);
+    summary.pedalFullPct = pedalFull;
+    summary.flooredPct = flooredPct;
+    summary.pedalMax = rep.ins.pedalMax;
     var replaced = !!s.drives[summary.id];
 
     // Hot restart: within 30 min of the previous drive's end with the intake
@@ -1270,9 +1276,15 @@
   /** What fails on a Cool drive's proof pulls; `table` is the slot's Boost Target Normal H { rpm, values }. */
   function proofFails(d, table) {
     var G = STEP_GATES, pulls = d.proofPulls || [];
+    // Calibration drive C2, C3: "floored" means something only against the owner's
+    // Pedal full reading, and a logged pedal above it says the reading is wrong.
+    if (!isNum(d.pedalFullPct)) return ['was read without a Pedal full reading: say what TPS reads with the pedal floored'];
+    if (isNum(d.pedalMax) && d.pedalMax > d.pedalFullPct + G.pedal_guard_pct) {
+      return ['logged the pedal at ' + d.pedalMax + ' %, above your Pedal full reading of ' + d.pedalFullPct + ' %: read it again'];
+    }
     if (pulls.length < G.pulls_min) {
       return ['has ' + pulls.length + ' floored pull' + (pulls.length === 1 ? '' : 's') + ', it needs ' + G.pulls_min +
-        ' (pedal ' + G.pedal_pct + ' % or more held ' + G.hold_s + ' s above ' + KTA.fmt.num(G.rpm_min, 0) + ' rpm)'];
+        ' (pedal ' + d.flooredPct + ' % or more held ' + G.hold_s + ' s above ' + KTA.fmt.num(G.rpm_min, 0) + ' rpm)'];
     }
     var gap = -Infinity, tgt = NaN, cellAt = NaN, und = -Infinity, undEwg = null, ovr = -Infinity, tot = -Infinity, afr = -Infinity, fp = Infinity;
     pulls.forEach(function (p) {

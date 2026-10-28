@@ -868,6 +868,47 @@ test('Boost step proof pull: time held above 3,500 rpm and the gate numbers ther
   assert.equal(sum.proofIgn, 8);
 });
 
+// Calibration drive C2 (.scratch/calibration-drive/spec.md): floored is 90 % of the
+// owner's Pedal full reading, which the Car module turns into `flooredPct`.
+// Without a reading the fixed 85 % stays, for the spool signal only.
+test('Calibration C2: a floored pull starts where the Pedal full reading puts it', () => {
+  const log = cloneLog(drive('aug22-0903').log, (l) => {
+    let i0 = 0;
+    while (l.t[i0] < 20) i0++;
+    for (let k = -5; l.t[i0 + k] <= l.t[i0] + 8; k++) {
+      const i = i0 + k, dt = l.t[i] - l.t[i0], on = k >= 0 && dt <= 7;
+      l.tps[i] = on ? 88 : 20;
+      l.rpm[i] = on ? Math.min(3000 + 500 * dt, 5000) : 2000;
+      l.boostTarget[i] = on ? 21 : 5;
+      l.boost[i] = on ? 20.5 : 5;
+    }
+  });
+  // 94 full (this car's highest logged TPS) → floored from 84.6: the 88 % pull counts.
+  assert.equal(K.checkDrive(log, { flooredPct: 84.6 }).ins.floored.length, 1);
+  // 113 full (the top of KTuner's 100-113 %) → floored from 101.7: 88 % is part-pedal.
+  assert.deepEqual(K.checkDrive(log, { flooredPct: 101.7 }).ins.floored, []);
+  // No reading: the fixed 85 %.
+  assert.equal(K.checkDrive(log).ins.floored.length, 1);
+  // The foot's highest reading anywhere in the drive, for the Pedal full guard (C3):
+  // this real drive's own 94 elsewhere, above the written-in 88 % pull.
+  const top = Math.max(...Array.from(log.tps).filter(Number.isFinite));
+  assert.equal(top, 94);
+  assert.equal(K.checkDrive(log).ins.pedalMax, top);
+  // The Car module reads the owner's reading and keeps it on the Drive summary.
+  const C = require('../engine/kta-car.js');
+  const meta = { fileName: 'TunerView_20260822_090322.csv', now: 0 };
+  const sum = (opts) => C.carIngest(C.carEmpty(), log, meta, opts).state.drives['20260822-090322'];
+  const read = sum({ pedalFullPct: 113 });
+  assert.equal(read.pedalFullPct, 113);
+  assert.equal(read.flooredPct, 101.7);
+  assert.equal(read.pedalMax, 94);
+  assert.equal(read.proofPulls.length, 0);
+  assert.equal(sum({ pedalFullPct: 94 }).proofPulls.length, 1);
+  const none = sum();
+  assert.equal(none.pedalFullPct, null);
+  assert.equal(none.flooredPct, null);
+});
+
 // §6.5: a Boost step reads overshoot held 0.5 s or more (KTuner calls a 1–3 psi spike
 // normal), and a target that jumps for one row and comes straight back is a logger
 // glitch (one row on 30 Aug logs a 51.7 psi target), not the target the table asked for.

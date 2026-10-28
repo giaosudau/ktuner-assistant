@@ -319,6 +319,7 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         now = settings.now_ms()
+        cleaned = P.stamp_pedal_full(store.car_profile(), cleaned, now)
         created = []
         for change in P.installs_for_part_change(store.car_profile(), cleaned):
             created.append(

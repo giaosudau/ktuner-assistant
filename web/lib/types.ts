@@ -357,6 +357,10 @@ export type CarProfileFields = {
   parts: string[];
   /** KTuner's "Eliminate Artificial Knock Control Rise" box on the map. Absent = unticked. */
   eliminate_artificial_kc_rise?: boolean;
+  /** What TunerView's TPS reads with the pedal floored (calibration drive C1). Absent = not read yet. */
+  pedal_full_pct?: number | null;
+  /** When the Pedal full reading was said (epoch ms), set by the server. */
+  pedal_full_at?: number;
 };
 
 export type CarProfile = CarProfileFields;

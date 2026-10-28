@@ -101,6 +101,42 @@ def test_a_ticked_artificial_rise_box_reaches_the_drive_check(tmp_path):
     assert kept[True] >= 0.69 > kept[False], kept
 
 
+# -- the Pedal full reading rides on the profile (calibration drive C1)
+def test_the_pedal_full_reading_is_saved_with_its_date_and_checked(loop: Loop):
+    fields = draft(loop)["fields"]
+    saved = confirm(loop, fields)["profile"]
+    assert "pedal_full_pct" not in saved and "pedal_full_at" not in saved, "not said yet"
+
+    saved = confirm(loop, {**fields, "pedal_full_pct": 94})["profile"]
+    assert saved["pedal_full_pct"] == 94
+    assert isinstance(saved["pedal_full_at"], int)
+    # Saved again unchanged (the editor sends the date back or not), the date stays.
+    again = confirm(loop, {**fields, "pedal_full_pct": 94, "pedal_full_at": 1})["profile"]
+    assert again["pedal_full_at"] == saved["pedal_full_at"]
+    assert loop.get("/api/state").json()["carProfile"]["pedal_full_pct"] == 94
+
+    for bad in ("lots", 40, 150, True):
+        response = post(loop, "/api/profile", {"fields": {**fields, "pedal_full_pct": bad}})
+        assert response.status_code == 400, bad
+        assert "Pedal full reading" in response.json()["detail"]
+    # Cleared: not said again.
+    cleared = confirm(loop, {**fields, "pedal_full_pct": None})["profile"]
+    assert "pedal_full_pct" not in cleared and "pedal_full_at" not in cleared
+
+
+def test_the_pedal_full_reading_reaches_the_drive_check(tmp_path):
+    """Profile → server → worker → KTA.carIngest: the Drive is read against the reading."""
+    loop = Loop(tmp_path).start()
+    try:
+        confirm(loop, {**draft(loop)["fields"], "pedal_full_pct": 94})
+        reply = loop.send(loop.upload(owner_csv("aug22-0903"), "TunerView_20260822_090322.csv"))
+        assert not reply.errors(), reply.errors()
+        drive = loop.store.car_state(None)["drives"]["20260822-090322"]
+        assert (drive["pedalFullPct"], drive["flooredPct"]) == (94, 84.6)
+    finally:
+        loop.close()
+
+
 # -- the card fills from the owner's words, and saves nothing before confirm
 def test_describing_the_car_fills_the_card_and_saves_nothing(loop: Loop):
     card = draft(loop)

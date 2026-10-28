@@ -437,8 +437,12 @@ var OPS = {
     var p = parsed(need(args, 'csv', 'string'), fileName);
     var out;
     try {
-      // The Car profile's copy of KTuner's "Eliminate Artificial Knock Control Rise" box.
-      out = KTA.carIngest(state, p.log, { fileName: fileName, now: now }, { eliminateArtificialKcRise: args.eliminateArtificialKcRise === true });
+      // The Car profile's copy of KTuner's "Eliminate Artificial Knock Control Rise" box,
+      // and the owner's Pedal full reading (calibration drive C1).
+      out = KTA.carIngest(state, p.log, { fileName: fileName, now: now }, {
+        eliminateArtificialKcRise: args.eliminateArtificialKcRise === true,
+        pedalFullPct: isNum(args.pedalFullPct) ? args.pedalFullPct : null
+      });
     } catch (e) {
       fail('engine-error', 'The engine could not read this drive: ' + (e && e.message));
     }

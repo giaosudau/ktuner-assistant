@@ -320,10 +320,17 @@
     // held 2 s, from 3,500 rpm or under. spoolRpm: rpm where boost first reaches 15 psi. lagS: the
     // foot crossing 85 % to boost at 90 % of a target of 12 psi or more (a lower target is still
     // ramping in, and boost meets it at once). ewg: EWG Position at that moment.
+    // Floored starts at 90 % of the owner's Pedal full reading when the Car module
+    // passes one (`opts.flooredPct`, calibration drive C2), else the fixed 85 %.
+    // pedalMax is the foot's highest reading, for the Pedal full guard (C3).
     I.floored = [];
+    var footTop = -Infinity;
+    if (foot) for (var fi = 0; fi < n; fi++) if (isNum(foot[fi]) && foot[fi] > footTop) footTop = foot[fi];
+    I.pedalMax = isFinite(footTop) ? r1(footTop) : null;
+    var flooredAt = isNum(opts.flooredPct) ? opts.flooredPct : DL.fullPedal;
     if (foot && has.rpm) {
       var FL = DL.floored;
-      runs(log, mask(n, function (i) { return foot[i] >= DL.fullPedal; }), dt * 1.5, FL.holdS).forEach(function (r) {
+      runs(log, mask(n, function (i) { return foot[i] >= flooredAt; }), dt * 1.5, FL.holdS).forEach(function (r) {
         if (!(log.rpm[r.i0] <= FL.rpmMax)) return;
         var spool = NaN, lagI = -1;
         for (var i = r.i0; i <= r.i1 && has.boost; i++) {

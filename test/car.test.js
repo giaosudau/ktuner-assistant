@@ -939,7 +939,8 @@ const TUNE2 = ['Boost_Target_2_Normal_L', 'Boost_Target_2_Normal_H'];
 const TUNE13 = ['Boost_Target_1_Normal_L', 'Boost_Target_1_Normal_H', 'Boost_Target_3_Normal_L', 'Boost_Target_3_Normal_H'];
 const PULL = { t0: 100, holdS: 5, target: 21, targetRpm: 4000, under: 0.5, over: 0.5, afrLeanest: 10.8, fpPct: 97, ign: 8, ewg: 3 };
 const HOT = { id: 'hot', cool: false, hot: true, iatMoving: 50, kcStart: 0.49, kcPeakJudged: 0.52 };
-const COOL = { id: 'cool', cool: true, hot: false, kcStart: 0.49, kcPeakJudged: 0.5, proofPulls: [PULL, PULL], proofIgn: 8 };
+const COOL = { id: 'cool', cool: true, hot: false, kcStart: 0.49, kcPeakJudged: 0.5, proofPulls: [PULL, PULL], proofIgn: 8,
+  pedalFullPct: 94, flooredPct: 84.6, pedalMax: 94 };
 const changeOf = (p) => {
   const tables = {};
   for (const c of p.cells) (tables[c.table] = tables[c.table] || []).push({ row: c.rpmRow, col: c.col - 1, before: c.before, after: c.after });
@@ -954,7 +955,7 @@ test('Boost step on today\'s nine drives: locked, the hot drive\'s Knock Control
   const l = leverOf(p);
   assert.equal(l.status, 'locked');
   assert.equal(l.title, 'Boost step +1 psi (Tune 2)');
-  assert.equal(l.reason, 'Locked: the latest Cool drive (5 Sep 07:56) has 0 floored pulls, it needs 2 (pedal 85 % or more held 4 s above 3,500 rpm); ' +
+  assert.equal(l.reason, 'Locked: the latest Cool drive (5 Sep 07:56) was read without a Pedal full reading: say what TPS reads with the pedal floored; ' +
     'the latest hot drive (30 Aug 16:01) reached Knock Control 0.65 judged, over 0.56.');
   assert.match(l.unlocks, /^A Cool drive with 2 floored pulls that pass every gate/);
   assert.deepEqual(l.wouldTouch, TUNE2);
@@ -992,7 +993,11 @@ test('Boost step gates: each failure locks it and names the gate', () => {
   assert.match(reason({ kcPeakJudged: 0.6 }), /latest Cool drive.*Knock Control 0\.60 judged, over 0\.56/);
   assert.match(reason({ kcStart: 0.6 }), /started Knock Control at 0\.60, not settled/);
   assert.match(reason({ trimWorst: -6 }), /trims at −6\.0 %/);
-  assert.match(reason({ proofPulls: [PULL] }), /has 1 floored pull, it needs 2/);
+  assert.match(reason({ proofPulls: [PULL] }), /has 1 floored pull, it needs 2 \(pedal 84\.6 % or more held 4 s above 3,500 rpm\)/);
+  // Calibration drive C2, C3: no Pedal full reading, or a logged pedal above it, and no pull is proof.
+  assert.match(reason({ pedalFullPct: null, flooredPct: null }), /was read without a Pedal full reading/);
+  assert.match(reason({ pedalMax: 97 }), /logged the pedal at 97 %, above your Pedal full reading of 94 %: read it again/);
+  assert.equal(leverOf(plan({ pedalMax: 96 })).status, 'planned', 'within 2 points of the reading is the same floor');
   assert.match(reason({}, { kcPeakJudged: 0.6 }), /latest hot drive \(.*\) reached Knock Control 0\.60 judged/);
   assert.match(reason({}, {}, { openSteps: [{ key: 'channels', status: 'open' }] }), /the open step "Log AFR Command and MAF Hz" comes first/);
   assert.match(reason({ overshoot: 3, overshootRpm: 3964 }), /B2 overshoot trim comes first/);

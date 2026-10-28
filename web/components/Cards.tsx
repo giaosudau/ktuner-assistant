@@ -266,7 +266,7 @@ export function NextStepCard({
 }
 
 // ------------------------------------------------------------ the Car profile
-const FIELDS: { key: keyof Omit<CarProfile, "parts" | "eliminate_artificial_kc_rise">; label: string }[] = [
+const FIELDS: { key: keyof Omit<CarProfile, "parts" | "eliminate_artificial_kc_rise" | "pedal_full_pct" | "pedal_full_at">; label: string }[] = [
   { key: "model", label: "Model" },
   { key: "engine", label: "Engine" },
   { key: "transmission", label: "Gearbox" },
@@ -375,6 +375,23 @@ export function ProfileCard({
           &ldquo;Eliminate Artificial Knock Control Rise&rdquo; is ticked on my map
           <br />
           <span className="meta">Unticked, the ECU raises Knock Control above 5,200 rpm on purpose, so I don&rsquo;t count those rises.</span>
+        </span>
+      </label>
+      <label className="field" style={{ marginTop: 12 }}>
+        <span>Pedal full reading (TPS %)</span>
+        <input
+          type="number"
+          inputMode="decimal"
+          min={60}
+          max={130}
+          step="any"
+          placeholder="Not read yet"
+          value={fields.pedal_full_pct ?? ""}
+          data-testid="setup-field-pedal_full_pct"
+          onChange={(event) => setFields((f) => ({ ...f, pedal_full_pct: event.target.value === "" ? null : Number(event.target.value) }))}
+        />
+        <span className="meta">
+          Parked, ignition on, engine off: press the pedal to the floor and read TPS in TunerView. A pull counts as floored from 90 % of it.
         </span>
       </label>
       {draft.missing.length ? (

@@ -48,6 +48,14 @@ DOWNPIPE_TYPES: tuple[str, ...] = ("catted-200", "catted-400", "catless", "unkno
 #: the engine skips Knock Control rises above 5,200 rpm; ticked, every rise counts.
 KC_RISE_FLAG = "eliminate_artificial_kc_rise"
 
+#: The Pedal full reading (calibration drive C1): what TunerView's TPS gauge shows
+#: with the pedal on the floor, as the owner reads it, and when it was said. A pull
+#: is floored from 90 % of it. Absent means not said yet: no pull is Boost step proof.
+PEDAL_FULL = "pedal_full_pct"
+PEDAL_FULL_AT = "pedal_full_at"
+#: ponytail: a sanity range (this car logs 94, KTuner staff say 100-113); widen if a real car reads outside it.
+PEDAL_FULL_RANGE = (60, 130)
+
 #: Fields the owner must not leave empty on confirm.
 REQUIRED: tuple[str, ...] = ("model", "basemap")
 
@@ -219,6 +227,14 @@ def validate_fields(fields: Any, basemap_default: str) -> dict[str, Any]:
     if flag not in (None, True, False):
         raise ValueError('"Eliminate Artificial Knock Control Rise" is ticked or not: true or false.')
     cleaned[KC_RISE_FLAG] = flag is True
+    pedal = fields.get(PEDAL_FULL)
+    if pedal not in (None, ""):
+        lo, hi = PEDAL_FULL_RANGE
+        if isinstance(pedal, bool) or not isinstance(pedal, (int, float)) or not lo <= pedal <= hi:
+            raise ValueError(
+                f"A Pedal full reading is the TPS number TunerView shows with the pedal floored, from {lo} to {hi} %."
+            )
+        cleaned[PEDAL_FULL] = pedal
     missing = [name for name in REQUIRED if not cleaned[name]]
     if missing:
         raise ValueError("A Car profile needs " + " and ".join(missing) + ".")
@@ -231,7 +247,20 @@ def engine_opts(profile: dict[str, Any] | None) -> dict[str, Any]:
     No profile yet, or one saved before the box was on the card, reads as
     unticked: the map's default.
     """
-    return {"eliminateArtificialKcRise": (profile or {}).get(KC_RISE_FLAG) is True}
+    profile = profile or {}
+    return {
+        "eliminateArtificialKcRise": profile.get(KC_RISE_FLAG) is True,
+        "pedalFullPct": profile.get(PEDAL_FULL),
+    }
+
+
+def stamp_pedal_full(before: dict[str, Any] | None, cleaned: dict[str, Any], now_ms: int) -> dict[str, Any]:
+    """The confirmed card with the Pedal full reading's date: kept while the reading is unchanged."""
+    if PEDAL_FULL not in cleaned:
+        return cleaned
+    before = before or {}
+    same = before.get(PEDAL_FULL) == cleaned[PEDAL_FULL] and isinstance(before.get(PEDAL_FULL_AT), int)
+    return {**cleaned, PEDAL_FULL_AT: before[PEDAL_FULL_AT] if same else now_ms}
 
 
 def installs_for_part_change(
@@ -255,6 +284,9 @@ def installs_for_part_change(
 __all__ = [
     "DOWNPIPE_TYPES",
     "KC_RISE_FLAG",
+    "PEDAL_FULL",
+    "PEDAL_FULL_AT",
+    "PEDAL_FULL_RANGE",
     "FIELDS",
     "PARTS",
     "REQUIRED",
@@ -262,6 +294,7 @@ __all__ = [
     "draft_from_text",
     "engine_opts",
     "installs_for_part_change",
+    "stamp_pedal_full",
     "part_display",
     "profile_spec",
     "validate_fields",
