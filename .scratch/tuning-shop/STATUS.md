@@ -34,7 +34,7 @@ Eval: `eval.md`. Every row is committed as its own commit (author giaosudau).
 | TS-26 | D18 Chats stored in SQLite and listed, conversation in the LangGraph checkpointer (bug F6) | done | `test_chats_are_saved_listed_renamed_and_deleted_without_touching_drives`, `test_the_conversation_survives_a_restart_in_sqlite`; browser reload + new chat |
 | TS-27 | D25 Suggested replies on every turn, model-written and checked (bug F5) | done | `test_checked_chips_drop_unknown_actions_numbers_and_requests_for_more`; browser |
 | TS-28 | D17 Car file as one record (Logger setup, goal) | todo | the Recap and the one editor already show it in the chat |
-| TS-29 | D26 Logger setup + D27 goal at intake | todo | brief names the owner's missing gauges; goal stored and reorders options only |
+| TS-29 | D26 Logger setup + D27 goal at intake (D26 moves to `.scratch/calibration-drive/` CD-03) | todo | brief names the owner's missing gauges; goal stored and reorders options only |
 | TS-30 | D28 phase 1 Open-loop check + full-throttle error vs AFR Command | todo | engine test on a log with STFT flat under boost; Health report row |
 | TS-31 | `kta-knowledge approve`: the reviewer step D8 names | todo | a proposal becomes a card only with a source doc + section |
 | TS-32 | D29 Capabilities as data + `show_capabilities` card | done | `test_what_can_you_do_says_what_it_cant`; prompts of both agents |

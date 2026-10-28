@@ -1,0 +1,18 @@
+# Calibration drive — tracker
+
+Why and what: `spec.md`. Vocabulary: `CONTEXT.md`. A ticket is done when its proof line passes;
+engine work keeps `npm test` green, server work keeps `cd server && uv run pytest` green, chat work
+is checked in a real browser at 390 and 1280 px.
+
+| # | Ticket | Spec | Blocked by | Files | Proof | Status |
+|---|---|---|---|---|---|---|
+| CD-01 | Pedal full reading in the Car profile, through `engine_opts` | C1 | — | `server/kta_server/profile.py`, car editor in `web/components/Cards.tsx` | saved with its date; `engine_opts` carries `pedalFullPct`; no reading → absent | todo |
+| CD-02 | Floored = 90 % of the pedal full reading; one number; proof needs a reading; pedal guard | C2, C3 | 01 | `engine/kta-drive.js` (`fullPedal`), `engine/kta-car.js` (`proofPullsOf`, `proofFails`), `data/thresholds.json`, `server/kta_server/mapcheck.py` | engine tests: 94 full accepts a held 85 pull; 113 full rejects it; no reading → "the pedal full reading is not set yet"; TPS 97 with 94 stated → guard; the 9 real drives settle no proof | todo |
+| CD-03 | Logger census and checkpoints that follow it (absorbs tuning-shop TS-29's D26 half) | C4, C5 | — | `server/kta_server/profile.py`, `server/kta_server/copy.py` (`log_checkpoints`), `server/kta_server/db.py` | not offered → `met: None` with the reason; stated 7.5/s → rate met on 7.5/s logs; 5/s → not met | todo |
+| CD-04 | Ceiling read in the engine, one result per drive, and its reset rules | C7, C8 | 02 | `engine/kta-car.js` (new `carCalibration`), engine tests | one synthetic log per C7 row, first match wins; a boost Flash, a basemap revert and an intercooler Install each reset it; a Boost step doesn't | todo |
+| CD-05 | Stage `calibrate`, the Calibration brief, the Next step | C6, C9 | 03, 04 | `server/kta_server/desk.py` (`stage_of`, `STAGE_WORDS`), `server/kta_server/copy.py` (brief variant), `server/kta_server/loopstate.py`, `web/` sidebar `phaseOf` | Stop or safety step open → not `calibrate`; new owner's first brief is the Calibration brief; Recap names it; front agent's `show_drive_brief` shows it | todo |
+| CD-06 | Calibration result card and the map tour's boost reason | C10 | 04, 05 | `web/components/ShopCards.tsx`, `server/kta_server/tour.py`, `server/kta_server/verify.py` (numbers grounded) | browser: each C7 result renders its four lines; the map tour's boost row quotes the same reason | todo |
+| CD-07 | Knowledge: `kc-boost-step` (floored definition), `kc-drive-brief` (Calibration variant), `kc-map-switching` (tach shows 2,000 rpm for Tune 2 while choosing, research §5), owner queries in the eval | all | 04 | `knowledge/cards/`, `knowledge/index.json`, `.scratch/tuning-shop/owner-queries.md`, `docs/knowledge-graph/scenarios.json` | "why does my boost stop at 19.2?" and "can I get more boost?" → the Calibration drive, cited; `test_knowledge.py` green | todo |
+| CD-08 | The owner's real Calibration drive | all | 05, 06 | — | uploaded, ceiling read recorded here with its numbers; the `Boost_Target_2_Normal` column header screenshot filed in `data/` notes; owner checks 1–2 in `spec.md` answered | todo |
+
+CD-01 and CD-03 can run in parallel (different fields of the same file: one writer at a time).

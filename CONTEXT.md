@@ -165,6 +165,18 @@ _Avoid_: iteration, cycle, session
 The drive the shop asks for, written as a customer brief: where and when, warm-up, the cruise for trims, the pulls (gear mode, from what speed, how far, the break between), how long, which gauges and how fast to log, and the checkpoints the log will be read against.
 _Avoid_: recipe (that's one step's list), instructions, procedure
 
+**Calibration drive**:
+The one drive, done once per car (Round 0), that settles what the logs alone can't: the Pedal full reading, what TunerView can log on this car, and the Ceiling read from two floored pulls on slot 2. It writes no cell.
+_Avoid_: test drive, dyno run, setup drive
+
+**Pedal full reading**:
+What TunerView's TPS gauge shows with the pedal on the floor, stated by the owner; a pull is floored at 90 % of it.
+_Avoid_: max throttle, WOT value
+
+**Ceiling read**:
+The Calibration drive's answer to whether a raised boost cell can show in the log: reaches the table, capped below it, throttle held back, turbo at its limit, or can't tell.
+_Avoid_: boost limit test, max boost
+
 **Log checkpoints**:
 After an upload, whether the log met the Drive brief, one line each: logging rate, moving time, every gauge moving, AFR Command and MAF Hz logged, engine warm, cool intake, two pulls, pull-start intake. Met, not met, or can't say.
 _Avoid_: log quality score, gate (inside replies)
