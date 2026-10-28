@@ -48,6 +48,9 @@ class CardError(ValueError):
 _NUMBER_LINE = re.compile(r"^-\s*([A-Za-z0-9_.-]+)\s*:\s*([-+]?[0-9]*\.?[0-9]+)\s+(.+?)\s*$")
 _KEY_LINE = re.compile(r"^([A-Za-z-]+)\s*:\s*(.*?)\s*$")
 _TOKEN = re.compile(r"[^\W_]+", re.UNICODE)
+#: Question words that say nothing about a topic. Search counts substrings, so
+#: "i" or "can" would otherwise score every card that spells "ignition" or "scan".
+_STOP = frozenset("a an and are can do does for get how i if is it me my of on or the to what why will won t s".split())
 
 
 def parse_card(path: Path) -> dict[str, Any]:
@@ -244,7 +247,7 @@ def search(
     if topics:
         wanted = {t.strip().lower() for t in topics if t.strip()}
         pool = [c for c in pool if wanted & set(c.get("topics") or [])]
-    tokens = [t.lower() for t in _TOKEN.findall(query or "")]
+    tokens = [t for t in (w.lower() for w in _TOKEN.findall(query or "")) if t not in _STOP]
     if not tokens:
         return pool[:MAX_HITS]
     scored: list[tuple[int, dict[str, Any]]] = []

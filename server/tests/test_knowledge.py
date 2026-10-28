@@ -226,6 +226,7 @@ COVERAGE = {
     "P0420 and đăng kiểm": "kc-p0420",
     "CVT care": "kc-cvt",
     "expectation lines (no headroom)": "kc-expectations",
+    "the 19.2 psi question (Calibration drive)": "kc-calibration-drive",
 }
 
 
@@ -256,6 +257,27 @@ def test_search_returns_at_most_five_keyword_first():
     assert K.search("P0420 inspection")[0]["id"] == "kc-p0420"
     assert K.search("heat soak intake hot")[0]["id"] == "kc-heat-soak"
     assert K.search("MAF housing intake")[0]["id"] == "kc-maf-housing"
+
+
+def test_boost_questions_lead_to_the_calibration_drive():
+    """Calibration drive CD-07: the owner's own boost questions find the drive that answers them."""
+    for query in ["why does my boost stop at 19.2?", "Why won't my boost reach 21 psi?"]:
+        assert K.search(query)[0]["id"] == "kc-calibration-drive", query
+    # "More" is also a power question (kc-power-sources); the agent reads all five hits.
+    more = [c["id"] for c in K.search("Can I get more boost?")]
+    assert "kc-calibration-drive" in more[:2] and "kc-boost-step" in more, more
+
+
+def test_boost_cards_say_what_floored_means_now():
+    """C2: floored is 90 % of the owner's Pedal full reading, not a fixed 85 %; the slot is checked on the tach."""
+    by_id = {c["id"]: c for c in K.load_cards()}
+    step = by_id["kc-boost-step"]
+    assert "Pedal full reading" in step["body"] and "85" not in step["body"]
+    assert {"name": "floored-share", "value": 90.0, "unit": "%"} in step["numbers"]
+    assert "Calibration drive" in by_id["kc-drive-brief"]["body"]
+    assert {"name": "tach-tune-two", "value": 2000.0, "unit": "rpm"} in by_id["kc-map-switching"]["numbers"]
+    # The old explanation of 19.2 (dampening and ramp rate hold it) was a part-pedal reading.
+    assert "dampening and the Boost Target Ramp Rate hold it" not in by_id["kc-table-boost"]["body"]
 
 
 def test_search_filters_by_topic_and_kind():

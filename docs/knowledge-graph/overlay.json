@@ -26,7 +26,6 @@
   },
   "quantities": {
     "step-psi": ["boost_step_max"],
-    "pedal-floored": ["boost_step_gates.pedal_pct"],
     "hold-s": ["boost_step_gates.hold_s"],
     "under-over-max": ["boost_step_gates.undershoot_psi", "boost_step_gates.overshoot_psi"],
     "total-max": ["boost_step_gates.total_psi"],

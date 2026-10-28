@@ -166,11 +166,11 @@ The drive the shop asks for, written as a customer brief: where and when, warm-u
 _Avoid_: recipe (that's one step's list), instructions, procedure
 
 **Calibration drive**:
-The one drive, done once per car (Round 0), that settles what the logs alone can't: the Pedal full reading, what TunerView can log on this car, and the Ceiling read from two floored pulls on slot 2. It writes no cell.
+The one drive, done once per car before the first Round, that settles what the logs alone can't: the Pedal full reading, what TunerView can log on this car, and the Ceiling read from floored pulls on the trial slot. It writes no cell. The brief and its numbers: `kc-calibration-drive`.
 _Avoid_: test drive, dyno run, setup drive
 
 **Pedal full reading**:
-What TunerView's TPS gauge shows with the pedal on the floor, stated by the owner; a pull is floored at 90 % of it.
+What TunerView's TPS gauge shows with the pedal on the floor, stated by the owner; a pull counts as floored from a set share of it (`kc-boost-step`).
 _Avoid_: max throttle, WOT value
 
 **Ceiling read**:

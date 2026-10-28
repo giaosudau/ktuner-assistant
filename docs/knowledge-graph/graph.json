@@ -5,7 +5,7 @@
   "nodes": {
    "adr": 8,
    "area": 9,
-   "card": 53,
+   "card": 54,
    "channel": 32,
    "claim": 11,
    "data": 14,
@@ -17,39 +17,39 @@
    "source": 18,
    "stage": 13,
    "table": 39,
-   "term": 46,
-   "test": 37,
-   "threshold": 12,
+   "term": 49,
+   "test": 39,
+   "threshold": 13,
    "trait": 5
   },
   "edges": {
-   "about": 80,
+   "about": 81,
    "affects": 11,
    "bounds": 59,
-   "calls": 49,
+   "calls": 50,
    "changes": 14,
    "checks": 1,
-   "cites": 17,
-   "defines": 51,
-   "explained-by": 19,
+   "cites": 20,
+   "defines": 52,
+   "explained-by": 21,
    "gated-by": 14,
    "implemented-by": 21,
-   "imports": 185,
+   "imports": 192,
    "in-family": 39,
    "loads": 3,
-   "mentions": 321,
+   "mentions": 328,
    "method": 56,
    "next": 17,
-   "reads": 56,
+   "reads": 57,
    "reads-channel": 39,
    "runs": 1,
    "serves": 20,
-   "sourced-from": 99,
+   "sourced-from": 100,
    "superseded-by": 7,
-   "tests": 55,
+   "tests": 60,
    "touches": 172,
-   "uses": 48,
-   "uses-term": 591,
+   "uses": 55,
+   "uses-term": 662,
    "works-on": 5,
    "wraps": 1
   }
@@ -240,8 +240,22 @@
    "card_kind": "play",
    "topics": "boost, step, proof, datalog, turbo",
    "applies_when": "The owner asks for more boost, or asks how a boost raise would be proven.",
-   "body": "A Boost step adds 1 psi to Boost Target 2 Normal, Low and High cam, 3,500 to 4,500 rpm rows, capped at the Final Boost Target peak, 23.4. A step past 21 psi exceeds what KTuner calls the safe point for the CVT and factory clutch. Only Tune 2 gets it; once proven it is copied. Offered when the latest Cool drive holds two floored pulls held 4 seconds above 3,500 rpm plus a passing hot drive. Floored is pedal 85 percent or more until a key-on reading sets it (these cars read 100 to 113; yours never passed 94). Gates: target moved; under- and overshoot held half a second within 1.5 psi, total at most 24; timing within 1 degree of the proven map; Knock Control settled, at most 0.56 below 5,200 rpm; mixture never leaner than 12.0; fuel pressure at least 90 percent. Any failure undoes it.",
-   "source": "docs/research/downpipe-power-research.md §8"
+   "body": "A Boost step adds 1 psi to Boost Target 2 Normal, Low and High cam, 3,500 to 4,500 rpm rows, capped at the Final Boost Target peak, 23.4. Past 21 psi exceeds what KTuner calls the safe point for the CVT and factory clutch. Tune 2 only, copied once proven. It waits for the Calibration drive: a step can show only when the target reaches the table. Then it needs two floored pulls held 4 seconds above 3,500 rpm on the latest Cool drive, and a passing hot drive. Floored is 90 percent of your Pedal full reading; until it is set, no pull counts. Gates: target moved; under- and overshoot within 1.5 psi, total at most 24; timing within 1 degree of the proven map; Knock Control settled, at most 0.56 below 5,200 rpm; mixture never leaner than 12.0; fuel pressure at least 90 percent. Any failure undoes it.",
+   "source": "docs/research/downpipe-power-research.md §8; ktuner-community-knowledge.md §3; .scratch/calibration-drive/spec.md C2, C7"
+  },
+  {
+   "id": "card:kc-calibration-drive",
+   "kind": "card",
+   "label": "kc-calibration-drive",
+   "area": "knowledge",
+   "path": "knowledge/cards/kc-calibration-drive.md",
+   "description": "Can more boost show? Why boost stops at 19.2 psi, and the Calibration drive",
+   "status": "current",
+   "card_kind": "play",
+   "topics": "boost, more, ceiling, calibration, pedal, floored, psi, target",
+   "applies_when": "The owner asks why boost stops at 19.2 psi or below 21, asks for more boost, or the ceiling read is not settled yet.",
+   "body": "Your logged boost target never passed 19.2 psi on a map whose Normal table reaches 21 from 4,000 rpm. That is a part-pedal reading, not a ceiling: the target follows the pedal, and TPS never logged past 94 while a floored pedal reads 100 to 113 on these cars. The Calibration drive answers it once. Parked the evening before, key on, engine off: floor the pedal three times and type the highest TPS, your Pedal full reading, and say what TunerView can log. On a cool morning, Tune 2, ECO off: two pulls with the pedal all the way down, held 5 seconds or more, above 3,500 rpm for 4 seconds. The app reads the target against the table, TPS Command and the wastegate. Capped below the table: no map change. Reaching it: the Boost step gates decide. The drive adds no power itself.",
+   "source": "docs/research/ktuner-community-knowledge.md §2; .scratch/calibration-drive/spec.md C1, C2, C6, C7"
   },
   {
    "id": "card:kc-cvt",
@@ -296,8 +310,8 @@
    "card_kind": "play",
    "topics": "logging, baseline, drive, pulls, tunerview",
    "applies_when": "Before the first log, after a Flash or Install, or whenever the owner asks how to log a drive the app can read.",
-   "body": "Log it like a shop asks. Before you drive: in TunerView turn on every gauge the app reads (AFR Command and MAF Hz included) and set the fastest rate it offers, 10 Hz or more. Go before 8 am or after an hour parked in shade, so the intake is under 42 °C. Drive 10 minutes normally until coolant is above 80 °C. Cruise steady at several speeds for trims. Then, on a straight, empty, legal road, in S: from a 50 km/h roll press the pedal fully and hold it to 100 km/h, then lift. Cruise a minute to cool and do the second pull, starting with intake under 48 °C. Keep at least 10 minutes of moving time in the log, then export the CSV.",
-   "source": "docs/research/drive-check-tuner-analysis.md §4 Gate 0 and #5; afr-tuning-research.md §2 Step A"
+   "body": "Until the boost ceiling is read, log the Calibration drive instead: this brief, a parked pedal reading, floored pulls on Tune 2. Before you drive: in TunerView turn on every gauge the app reads (AFR Command and MAF Hz included) and set the fastest rate it offers, 10 Hz or more. Go before 8 am or after an hour parked in shade, so the intake is under 42 °C. Drive 10 minutes normally until coolant is above 80 °C. Cruise steady at several speeds for trims. Then, on a straight, empty, legal road, in S: from a 50 km/h roll press the pedal fully and hold it to 100 km/h, then lift. Cruise a minute to cool and do the second pull, starting with intake under 48 °C. Keep at least 10 minutes of moving time in the log, then export the CSV.",
+   "source": "docs/research/drive-check-tuner-analysis.md §4 Gate 0 and #5; afr-tuning-research.md §2 Step A; .scratch/calibration-drive/spec.md C6"
   },
   {
    "id": "card:kc-dual-boost-targets",
@@ -350,7 +364,7 @@
    "description": "The turbo has no headroom left on this map",
    "status": "current",
    "card_kind": "fact",
-   "topics": "boost, turbo, power, downpipe",
+   "topics": "boost, psi, turbo, power, downpipe",
    "applies_when": "The owner asks for more boost or more power, or a reply explains a flat pull.",
    "body": "The Starter 21 map asks 18 psi in ECO and 21 psi in Normal and Sport, and the file tops out at 23.4 psi of final target. These logs were measured with a downpipe and front pipe already fitted: at the highest boost logged, up to 19.9 psi, the wastegate sits about 2.5 percent open, against 8.0 percent at idle and cruise and 65.5 percent at its most open. Nearly all exhaust already drives the turbine, so more boost mostly means more heat, not more power. KTuner claims the map adds up to 58 lb-ft, or 79 Nm, over a stock car rated 240 Nm and 176 hp. Gains from here come from cooler air and good habits, and more boost only from a step proven on your logs. Most drives end with no map change, and that is an answer, not a gap.",
    "source": "docs/research/fact-check.md §4; downpipe-power-research.md §2 and §8"
@@ -576,8 +590,8 @@
    "card_kind": "ktuner-howto",
    "topics": "slot, tune, switching, boost, ktuner",
    "applies_when": "The owner asks about map slots, Tune 1, 2 or 3, or switching maps while driving.",
-   "body": "On The Fly Map Switching holds three tunes in one map. They differ only in boost targets and Turbo Responsiveness; ignition, fuel, knock and the throttle setting are shared by all three, so a tune cannot carry a fuel's timing. Switch with a long press of the cruise Cancel button; switching while moving is supported. With the KTuner device unplugged the car starts in Tune 1, so Tune 1 holds the proven map and a trial goes in Tune 2. As digitized, the three tunes on this map hold the same boost targets, so switching changes nothing yet. No log channel records the tune: tag each log with its map slot and switch only between logs.",
-   "source": "docs/research/downpipe-power-research.md §6"
+   "body": "On The Fly Map Switching holds three tunes in one map. They differ only in boost targets and Turbo Responsiveness; ignition, fuel, knock and the throttle setting are shared by all three, so a tune cannot carry a fuel's timing. Switch with a long press of the cruise Cancel button; switching while moving works, cruise fully off. While choosing, the tach shows 1,000, 2,000 or 3,000 rpm for Tune 1, 2 or 3: see 2,000 before a Calibration or Boost step drive. With the KTuner device unplugged the car starts in Tune 1 (plugged in, it keeps the last), so Tune 1 holds the proven map and a trial goes in Tune 2. As digitized, the three tunes on this map hold the same boost targets, so switching changes nothing yet. No log channel records the tune: tag each log with its slot, switch only between logs.",
+   "source": "docs/research/downpipe-power-research.md §6; ktuner-community-knowledge.md §5"
   },
   {
    "id": "card:kc-misfire-gauges",
@@ -758,8 +772,8 @@
    "card_kind": "ktuner-howto",
    "topics": "boost, turbo, tables, ktuner, map",
    "applies_when": "The owner asks what a boost table does, wants more boost, or a boost change is in the plan.",
-   "body": "Each of the three tunes has its own Boost Target tables, Normal and ECO, each Low and High cam: rpm by load tables of the boost the ECU aims for. On this map Normal plateaus at 21 psi from 4,000 rpm, ECO keeps factory-like boost, and as digitized the three tunes hold the same values. Final Boost Target is the target after the ECU arbitrates, topping out near 23.4. Boost By Gear Limits is flat, so no gear limit is active. The logged target has never passed 19.2 psi: the factory throttle dampening and the Boost Target Ramp Rate hold it, so it follows the pedal and climbs over seconds. Cylinder Fill Limitation is a knock safeguard; the everyday cap is the factory torque limiter, which KTuner does not expose. Low-rpm torque is what hurts the CVT, so good maps keep boost down there. Change the paired tables together.",
-   "source": "docs/research/e10-ignition-boost-simple-tune.md §3; downpipe-power-research.md §1 and §6"
+   "body": "Each of the three tunes has its own Boost Target tables, Normal and ECO, each Low and High cam: rpm by load tables of the boost the ECU aims for. On this map Normal plateaus at 21 psi from 4,000 rpm, ECO keeps factory-like boost, and as digitized the three tunes hold the same values. Final Boost Target is the target after the ECU arbitrates, topping out near 23.4. Boost By Gear Limits is flat, so no gear limit is active. The logged target follows the pedal and climbs over seconds; it never passed 19.2 psi, but no pull had the pedal floored (the Calibration drive). Cylinder Fill Limitation is a knock safeguard; the everyday cap is the factory torque limiter, which KTuner does not expose. Low-rpm torque is what hurts the CVT, so good maps keep boost down there. Change the paired tables together.",
+   "source": "docs/research/e10-ignition-boost-simple-tune.md §3; downpipe-power-research.md §1 and §6; ktuner-community-knowledge.md §2"
   },
   {
    "id": "card:kc-table-ignition",
@@ -1378,7 +1392,7 @@
    "area": "docs",
    "path": "CONTEXT.md",
    "description": "Civic FE Tune Assist",
-   "lines": 199
+   "lines": 211
   },
   {
    "id": "file:DESIGN.md",
@@ -1507,7 +1521,7 @@
    "label": "thresholds.json",
    "area": "data",
    "path": "data/thresholds.json",
-   "lines": 112
+   "lines": 119
   },
   {
    "id": "file:docs/research/afr-tuning-research.md",
@@ -1660,7 +1674,7 @@
    "area": "engine",
    "path": "engine/kta-car.js",
    "description": "KTA car module: one owner's Car history, Flashes, Shakedown drive,",
-   "lines": 2712
+   "lines": 2826
   },
   {
    "id": "file:engine/kta-drive.js",
@@ -1669,7 +1683,7 @@
    "area": "engine",
    "path": "engine/kta-drive.js",
    "description": "KTA drive check: what one real drive says, and the one thing to do next.",
-   "lines": 1013
+   "lines": 1037
   },
   {
    "id": "file:engine/kta-engine.js",
@@ -1722,7 +1736,7 @@
    "label": "index.json",
    "area": "data",
    "path": "knowledge/index.json",
-   "lines": 8766
+   "lines": 8990
   },
   {
    "id": "file:server/kta_server/__init__.py",
@@ -1740,7 +1754,7 @@
    "area": "server",
    "path": "server/kta_server/agent.py",
    "description": "The LLM agent: an explainer with read-only engine tools (ticket 08).",
-   "lines": 807
+   "lines": 809
   },
   {
    "id": "file:server/kta_server/app.py",
@@ -1749,7 +1763,7 @@
    "area": "server",
    "path": "server/kta_server/app.py",
    "description": "The FastAPI app: the owner's own upload button, the AG-UI agent, and the state.",
-   "lines": 531
+   "lines": 532
   },
   {
    "id": "file:server/kta_server/ask.py",
@@ -1785,7 +1799,7 @@
    "area": "server",
    "path": "server/kta_server/copy.py",
    "description": "The built-in reply: every word the owner reads until the model takes over.",
-   "lines": 1090
+   "lines": 1245
   },
   {
    "id": "file:server/kta_server/db.py",
@@ -1803,7 +1817,7 @@
    "area": "server",
    "path": "server/kta_server/desk.py",
    "description": "The front desk (tuning-shop D19–D25): what the shop says before any tuning.",
-   "lines": 503
+   "lines": 521
   },
   {
    "id": "file:server/kta_server/flash.py",
@@ -1812,7 +1826,7 @@
    "area": "server",
    "path": "server/kta_server/flash.py",
    "description": "The Flash step: a proposed change, checked twice, drawn as the KTuner card.",
-   "lines": 369
+   "lines": 377
   },
   {
    "id": "file:server/kta_server/flash_routes.py",
@@ -1821,7 +1835,7 @@
    "area": "server",
    "path": "server/kta_server/flash_routes.py",
    "description": "The Flash step's routes: \"I flashed it\", \"Not now\", Undo / Revert, the History file.",
-   "lines": 222
+   "lines": 223
   },
   {
    "id": "file:server/kta_server/graph.py",
@@ -1830,7 +1844,7 @@
    "area": "server",
    "path": "server/kta_server/graph.py",
    "description": "The chat's graph: every turn, an upload or a typed message, runs through it.",
-   "lines": 575,
+   "lines": 590,
    "note": "The LangGraph chat graph (front agent -> tuner hand-off, Drive pipeline), not this knowledge graph."
   },
   {
@@ -1849,7 +1863,7 @@
    "area": "server",
    "path": "server/kta_server/knowledge.py",
    "description": "Knowledge cards (ticket 09): small typed cards the agent retrieves and cites.",
-   "lines": 329
+   "lines": 332
   },
   {
    "id": "file:server/kta_server/loopstate.py",
@@ -1858,7 +1872,7 @@
    "area": "server",
    "path": "server/kta_server/loopstate.py",
    "description": "The loop as the chat mirrors it: the Car file, where the car is, and what the shop offers next.",
-   "lines": 87
+   "lines": 90
   },
   {
    "id": "file:server/kta_server/mapcheck.py",
@@ -1894,7 +1908,7 @@
    "area": "server",
    "path": "server/kta_server/profile.py",
    "description": "The Car profile: the owner's one car as the app knows it (CONTEXT.md).",
-   "lines": 269
+   "lines": 328
   },
   {
    "id": "file:server/kta_server/questions.py",
@@ -1939,7 +1953,7 @@
    "area": "server",
    "path": "server/kta_server/tour.py",
    "description": "The map tour (tuning-shop D3, D6): every KTuner table family, what it does, and where it stands.",
-   "lines": 176
+   "lines": 184
   },
   {
    "id": "file:server/kta_server/verify.py",
@@ -1975,7 +1989,7 @@
    "area": "worker",
    "path": "server/kta_worker/worker.js",
    "description": "!/usr/bin/env node",
-   "lines": 809
+   "lines": 831
   },
   {
    "id": "file:server/tests/conftest.py",
@@ -2014,13 +2028,31 @@
    "lines": 209
   },
   {
+   "id": "file:server/tests/seam1/test_calibration_card.py",
+   "kind": "test",
+   "label": "test_calibration_card.py",
+   "area": "tests",
+   "path": "server/tests/seam1/test_calibration_card.py",
+   "description": "Seam 1: the Calibration result card and the map tour's boost reason (calibration drive C10).",
+   "lines": 102
+  },
+  {
+   "id": "file:server/tests/seam1/test_calibration_stage.py",
+   "kind": "test",
+   "label": "test_calibration_stage.py",
+   "area": "tests",
+   "path": "server/tests/seam1/test_calibration_stage.py",
+   "description": "Seam 1: the Calibrate stage, the Calibration brief and the Next step (calibration drive C6, C9).",
+   "lines": 119
+  },
+  {
    "id": "file:server/tests/seam1/test_car_profile.py",
    "kind": "test",
    "label": "test_car_profile.py",
    "area": "tests",
    "path": "server/tests/seam1/test_car_profile.py",
    "description": "Seam 1: Car profile, Install and the drive window (ticket 10).",
-   "lines": 409
+   "lines": 523
   },
   {
    "id": "file:server/tests/seam1/test_chat_agent.py",
@@ -2056,7 +2088,7 @@
    "area": "tests",
    "path": "server/tests/seam1/test_flash_step.py",
    "description": "Ticket 13 (seam 1): the Flash step — KTuner card, Map versions, the History file.",
-   "lines": 377
+   "lines": 379
   },
   {
    "id": "file:server/tests/seam1/test_front_door.py",
@@ -2164,7 +2196,7 @@
    "area": "tests",
    "path": "server/tests/seam1/test_upload_reply.py",
    "description": "Seam 1: what the owner gets for one uploaded Drive (ticket 01).",
-   "lines": 323
+   "lines": 324
   },
   {
    "id": "file:server/tests/seam1/test_worker_summaries.py",
@@ -2209,7 +2241,7 @@
    "area": "tests",
    "path": "server/tests/test_knowledge.py",
    "description": "Knowledge cards and citations (ticket 09): the build-time gate.",
-   "lines": 315
+   "lines": 337
   },
   {
    "id": "file:server/tests/test_scorecard.py",
@@ -2272,7 +2304,7 @@
    "area": "tests",
    "path": "test/car.test.js",
    "description": "'use strict';",
-   "lines": 1884
+   "lines": 1964
   },
   {
    "id": "file:test/drive.test.js",
@@ -2281,7 +2313,7 @@
    "area": "tests",
    "path": "test/drive.test.js",
    "description": "'use strict';",
-   "lines": 944
+   "lines": 1028
   },
   {
    "id": "file:test/engine.test.js",
@@ -2380,7 +2412,7 @@
    "area": "web",
    "path": "web/components/Cards.tsx",
    "description": "The generative-UI cards an assistant message can carry, in the order a reply",
-   "lines": 394
+   "lines": 458
   },
   {
    "id": "file:web/components/Chart.tsx",
@@ -2443,7 +2475,7 @@
    "area": "web",
    "path": "web/components/Messages.tsx",
    "description": "One message in the thread. The owner's are bubbles on the right; the",
-   "lines": 546
+   "lines": 547
   },
   {
    "id": "file:web/components/Pill.tsx",
@@ -2461,7 +2493,7 @@
    "area": "web",
    "path": "web/components/ShopCards.tsx",
    "description": "The tuning shop's cards (tuning-shop D4-D6): did your log meet the brief, the health report,",
-   "lines": 241
+   "lines": 267
   },
   {
    "id": "file:web/components/Sidebar.tsx",
@@ -2470,7 +2502,7 @@
    "area": "web",
    "path": "web/components/Sidebar.tsx",
    "description": "The sidebar mirrors the loop, it never runs it: the car, where the owner is in",
-   "lines": 282
+   "lines": 275
   },
   {
    "id": "file:web/components/TableViewer.tsx",
@@ -2515,7 +2547,7 @@
    "area": "web",
    "path": "web/lib/types.ts",
    "description": "The types the server sends, written once so every card reads the same shape.",
-   "lines": 401
+   "lines": 421
   },
   {
    "id": "file:web/lib/uiTools.ts",
@@ -3521,6 +3553,15 @@
    "description": "A Flash plan that raises the Normal boost targets by 1 psi at 3,000 rpm and above, offered only after the logs pass every safety gate and kept only when the next Cool drive and a hot drive prove the turbo reaches the new target without knock or lean; the first failed gate undoes it."
   },
   {
+   "id": "term:Calibration drive",
+   "kind": "term",
+   "label": "Calibration drive",
+   "area": "docs",
+   "path": "CONTEXT.md",
+   "section": "The shop",
+   "description": "The one drive, done once per car before the first Round, that settles what the logs alone can't: the Pedal full reading, what TunerView can log on this car, and the Ceiling read from floored pulls on the trial slot. It writes no cell. The brief and its numbers: `kc-calibration-drive`."
+  },
+  {
    "id": "term:Capabilities",
    "kind": "term",
    "label": "Capabilities",
@@ -3555,6 +3596,15 @@
    "path": "CONTEXT.md",
    "section": "The car",
    "description": "The owner's one car as the app knows it: model, transmission, fuel, climate, the parts fitted, and the KTuner basemap it started from."
+  },
+  {
+   "id": "term:Ceiling read",
+   "kind": "term",
+   "label": "Ceiling read",
+   "area": "docs",
+   "path": "CONTEXT.md",
+   "section": "The shop",
+   "description": "The Calibration drive's answer to whether a raised boost cell can show in the log: reaches the table, capped below it, throttle held back, turbo at its limit, or can't tell."
   },
   {
    "id": "term:Chat",
@@ -3809,6 +3859,15 @@
    "description": "A Next step still waiting for the Drive that proves or disproves it."
   },
   {
+   "id": "term:Pedal full reading",
+   "kind": "term",
+   "label": "Pedal full reading",
+   "area": "docs",
+   "path": "CONTEXT.md",
+   "section": "The shop",
+   "description": "What TunerView's TPS gauge shows with the pedal on the floor, stated by the owner; a pull counts as floored from a set share of it (`kc-boost-step`)."
+  },
+  {
    "id": "term:Premium-fuel test",
    "kind": "term",
    "label": "Premium-fuel test",
@@ -3955,10 +4014,10 @@
    "label": "boost_step_gates",
    "area": "tuning",
    "description": "A Boost step is offered, and kept, only when every gate passes on the latest Cool drive's proof pulls and the latest hot drive's Knock Control. No Honda tuner publishes these numbers: they are our judgement on the shared tuner method (ticket 13).",
-   "value": "{\"pedal_pct\": 85, \"hold_s\": 4, \"rpm_min\": 3500, \"pulls_min\": 2, \"rows_rpm\": [3500, 4000, 4500], \"cell_min_psi\": 15, \"target_gap_psi\": 0.5, \"undershoot_psi\": 1.5",
+   "value": "{\"pedal_floored_ratio\": 0.9, \"pedal_guard_pct\": 2, \"rate_min_hz\": 6, \"hold_s\": 4, \"rpm_min\": 3500, \"pulls_min\": 2, \"rows_rpm\": [3500, 4000, 4500], \"cell_min_psi",
    "unit": "mixed (%, s, rpm, psi, score, AFR, deg)",
    "basis": "judgement",
-   "source": "ticket 16 (proof pull: pedal 85 % held 4 s above 3,500 rpm, 2 pulls, rows 3,500-4,500; the pass gates), ticket 13 (overshoot tightened to 1.5 and target + overshoot 24; ignition achieved vs the last proven Map version, drop over 1°; DIFP 90 %; Knock Control 0.56 kept, read settled), ticket 17 (the logged target must reach the table: within 0.5 psi), ticket 06 D1 (undershoot 1.5, AFR never leaner than 12.0, trims ±5 %), ktuner-community-knowledge.md §6.5 (overshoot judged held 0.5 s: KTuner calls a 1-3 psi spike normal)"
+   "source": "calibration-drive spec C2-C3 (floored = 90 % of the owner's Pedal full reading, research §3 'within about 10 % of the key-on full reading'; a logged pedal more than 2 points above the reading voids the proof; C5: under 6 rows a second the 0.5 s overshoot hold is under 3 rows), ticket 16 (proof pull: held 4 s above 3,500 rpm, 2 pulls, rows 3,500-4,500; the pass gates), ticket 13 (overshoot tightened to 1.5 and target + overshoot 24; ignition achieved vs the last proven Map version, drop over 1°; DIFP 90 %; Knock Control 0.56 kept, read settled), ticket 17 (the logged target must reach the table: within 0.5 psi), ticket 06 D1 (undershoot 1.5, AFR never leaner than 12.0, trims ±5 %), ktuner-community-knowledge.md §6.5 (overshoot judged held 0.5 s: KTuner calls a 1-3 psi spike normal)"
   },
   {
    "id": "threshold:boost_step_max",
@@ -3970,6 +4029,17 @@
    "unit": "psi",
    "basis": "judgement",
    "source": "fact-check.md §4 (wastegate 2.5 % median at 15 psi and up: the turbo is near its limit, so boost moves in small steps)"
+  },
+  {
+   "id": "threshold:ceiling_read",
+   "kind": "threshold",
+   "label": "ceiling_read",
+   "area": "tuning",
+   "description": "The Ceiling read on a Calibration drive's floored pulls: TPS Command held under throttle_open_pct is a protection closing the throttle; a pull whose target still rose more than ramp_flat_psi over its last ramp_window_s hasn't settled. Target vs table uses boost_step_gates.target_gap_psi.",
+   "value": "{\"throttle_open_pct\": 98, \"ramp_flat_psi\": 0.3, \"ramp_window_s\": 1}",
+   "unit": "mixed (%, psi, s)",
+   "basis": "judgement",
+   "source": "calibration-drive spec C7 (throttle open: our logs reach TPS Command 99-100, one logging step under 99; still ramping: the target rose more than 0.3 psi over the held part's last second); ktuner-community-knowledge.md §2 (the 19.2 psi question and how to read a floored pull)"
   },
   {
    "id": "threshold:editable_tables",
@@ -4607,6 +4677,11 @@
   },
   {
    "from": "card:kc-boost-step",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "cites"
+  },
+  {
+   "from": "card:kc-boost-step",
    "to": "table:Boost_Target_2_Normal_H",
    "kind": "about"
   },
@@ -4632,15 +4707,25 @@
   },
   {
    "from": "card:kc-boost-step",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "card:kc-boost-step",
    "to": "term:Cool drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "card:kc-boost-step",
+   "to": "term:Pedal full reading",
    "kind": "uses-term"
   },
   {
    "from": "card:kc-boost-step",
    "to": "threshold:boost_step_gates",
    "kind": "uses",
-   "number": "pedal-floored",
-   "note": "boost_step_gates.pedal_pct = 85"
+   "number": "hold-s",
+   "note": "boost_step_gates.hold_s = 4"
   },
   {
    "from": "card:kc-boost-step",
@@ -4648,6 +4733,43 @@
    "kind": "uses",
    "number": "step-psi",
    "note": "boost_step_max = 1"
+  },
+  {
+   "from": "card:kc-calibration-drive",
+   "to": "family:boost",
+   "kind": "about"
+  },
+  {
+   "from": "card:kc-calibration-drive",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "sourced-from"
+  },
+  {
+   "from": "card:kc-calibration-drive",
+   "to": "term:Boost step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "card:kc-calibration-drive",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "card:kc-calibration-drive",
+   "to": "term:Ceiling read",
+   "kind": "uses-term"
+  },
+  {
+   "from": "card:kc-calibration-drive",
+   "to": "term:Pedal full reading",
+   "kind": "uses-term"
+  },
+  {
+   "from": "card:kc-calibration-drive",
+   "to": "threshold:boost_step_gates",
+   "kind": "uses",
+   "number": "hold-s",
+   "note": "boost_step_gates.hold_s = 4"
   },
   {
    "from": "card:kc-cvt",
@@ -4687,6 +4809,11 @@
   {
    "from": "card:kc-drive-brief",
    "to": "term:Baseline",
+   "kind": "uses-term"
+  },
+  {
+   "from": "card:kc-drive-brief",
+   "to": "term:Calibration drive",
    "kind": "uses-term"
   },
   {
@@ -4998,12 +5125,17 @@
   },
   {
    "from": "card:kc-map-switching",
-   "to": "term:Map",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "cites"
+  },
+  {
+   "from": "card:kc-map-switching",
+   "to": "term:Boost step",
    "kind": "uses-term"
   },
   {
    "from": "card:kc-map-switching",
-   "to": "term:Map slot",
+   "to": "term:Map",
    "kind": "uses-term"
   },
   {
@@ -5105,13 +5237,6 @@
    "from": "card:kc-quick-adjustments",
    "to": "file:docs/research/downpipe-power-research.md",
    "kind": "sourced-from"
-  },
-  {
-   "from": "card:kc-quick-adjustments",
-   "to": "threshold:boost_step_gates",
-   "kind": "uses",
-   "number": "pedal-floored",
-   "note": "boost_step_gates.pedal_pct = 85"
   },
   {
    "from": "card:kc-ranges",
@@ -5229,6 +5354,11 @@
   },
   {
    "from": "card:kc-table-boost",
+   "to": "file:docs/research/ktuner-community-knowledge.md",
+   "kind": "cites"
+  },
+  {
+   "from": "card:kc-table-boost",
    "to": "table:Boost_By_Gear_Limits",
    "kind": "about"
   },
@@ -5251,6 +5381,11 @@
    "from": "card:kc-table-boost",
    "to": "table:Final_Boost_Target_L",
    "kind": "about"
+  },
+  {
+   "from": "card:kc-table-boost",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
   },
   {
    "from": "card:kc-table-ignition",
@@ -5592,6 +5727,16 @@
    "kind": "explained-by"
   },
   {
+   "from": "file:CONTEXT.md",
+   "to": "card:kc-boost-step",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:CONTEXT.md",
+   "to": "card:kc-calibration-drive",
+   "kind": "mentions"
+  },
+  {
    "from": "file:PRODUCT.md",
    "to": "adr:0002",
    "kind": "mentions"
@@ -5864,6 +6009,11 @@
   {
    "from": "file:data/thresholds.json",
    "to": "threshold:boost_step_max",
+   "kind": "defines"
+  },
+  {
+   "from": "file:data/thresholds.json",
+   "to": "threshold:ceiling_read",
    "kind": "defines"
   },
   {
@@ -7098,7 +7248,17 @@
   },
   {
    "from": "file:engine/kta-car.js",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:engine/kta-car.js",
    "to": "term:Car history",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:engine/kta-car.js",
+   "to": "term:Ceiling read",
    "kind": "uses-term"
   },
   {
@@ -7158,6 +7318,11 @@
   },
   {
    "from": "file:engine/kta-car.js",
+   "to": "term:Pedal full reading",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:engine/kta-car.js",
    "to": "term:Premium-fuel test",
    "kind": "uses-term"
   },
@@ -7192,6 +7357,11 @@
    "kind": "uses"
   },
   {
+   "from": "file:engine/kta-car.js",
+   "to": "threshold:ceiling_read",
+   "kind": "uses"
+  },
+  {
    "from": "file:engine/kta-drive.js",
    "to": "file:data/thresholds.json",
    "kind": "reads"
@@ -7213,6 +7383,16 @@
   },
   {
    "from": "file:engine/kta-drive.js",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:engine/kta-drive.js",
+   "to": "term:Ceiling read",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:engine/kta-drive.js",
    "to": "term:Cool drive",
    "kind": "uses-term"
   },
@@ -7223,7 +7403,17 @@
   },
   {
    "from": "file:engine/kta-drive.js",
+   "to": "term:Pedal full reading",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:engine/kta-drive.js",
    "to": "threshold:boost_step_gates",
+   "kind": "uses"
+  },
+  {
+   "from": "file:engine/kta-drive.js",
+   "to": "threshold:ceiling_read",
    "kind": "uses"
   },
   {
@@ -8048,6 +8238,11 @@
   },
   {
    "from": "file:server/kta_server/copy.py",
+   "to": "file:data/thresholds.json",
+   "kind": "reads"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
    "to": "file:docs/research/drive-check-tuner-analysis.md",
    "kind": "mentions"
   },
@@ -8073,6 +8268,11 @@
   },
   {
    "from": "file:server/kta_server/copy.py",
+   "to": "file:server/kta_server/mapcheck.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
    "to": "file:server/kta_server/profile.py",
    "kind": "imports"
   },
@@ -8083,7 +8283,27 @@
   },
   {
    "from": "file:server/kta_server/copy.py",
+   "to": "term:Boost step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
    "to": "term:Car history",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
+   "to": "term:Car profile",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
+   "to": "term:Ceiling read",
    "kind": "uses-term"
   },
   {
@@ -8108,6 +8328,16 @@
   },
   {
    "from": "file:server/kta_server/copy.py",
+   "to": "term:Logger setup",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
+   "to": "term:Map tour",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
    "to": "term:Map version",
    "kind": "uses-term"
   },
@@ -8119,6 +8349,11 @@
   {
    "from": "file:server/kta_server/copy.py",
    "to": "term:Open step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
+   "to": "term:Pedal full reading",
    "kind": "uses-term"
   },
   {
@@ -8140,6 +8375,16 @@
    "from": "file:server/kta_server/copy.py",
    "to": "term:Wasted drive",
    "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
+   "to": "threshold:boost_step_gates",
+   "kind": "uses"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
+   "to": "threshold:ceiling_read",
+   "kind": "uses"
   },
   {
    "from": "file:server/kta_server/db.py",
@@ -8233,6 +8478,11 @@
   },
   {
    "from": "file:server/kta_server/desk.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/desk.py",
    "to": "term:Car file",
    "kind": "uses-term"
   },
@@ -8323,6 +8573,16 @@
   },
   {
    "from": "file:server/kta_server/flash.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/flash.py",
+   "to": "term:Ceiling read",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/flash.py",
    "to": "term:Flash plan",
    "kind": "uses-term"
   },
@@ -8345,6 +8605,11 @@
    "from": "file:server/kta_server/flash.py",
    "to": "term:Shakedown drive",
    "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/flash.py",
+   "to": "threshold:ceiling_read",
+   "kind": "uses"
   },
   {
    "from": "file:server/kta_server/flash_routes.py",
@@ -8398,7 +8663,17 @@
   },
   {
    "from": "file:server/kta_server/flash_routes.py",
+   "to": "term:Boost step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/flash_routes.py",
    "to": "term:Car history",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/flash_routes.py",
+   "to": "term:Ceiling read",
    "kind": "uses-term"
   },
   {
@@ -8493,7 +8768,17 @@
   },
   {
    "from": "file:server/kta_server/graph.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/graph.py",
    "to": "term:Car history",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/graph.py",
+   "to": "term:Ceiling read",
    "kind": "uses-term"
   },
   {
@@ -8528,6 +8813,11 @@
   },
   {
    "from": "file:server/kta_server/graph.py",
+   "to": "term:Map tour",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/graph.py",
    "to": "term:Map version",
    "kind": "uses-term"
   },
@@ -8550,6 +8840,11 @@
    "from": "file:server/kta_server/graph.py",
    "to": "term:Too-short drive",
    "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/graph.py",
+   "to": "threshold:ceiling_read",
+   "kind": "uses"
   },
   {
    "from": "file:server/kta_server/harness.py",
@@ -8613,7 +8908,17 @@
   },
   {
    "from": "file:server/kta_server/loopstate.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/loopstate.py",
    "to": "term:Car file",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/loopstate.py",
+   "to": "term:Ceiling read",
    "kind": "uses-term"
   },
   {
@@ -8635,6 +8940,11 @@
    "from": "file:server/kta_server/loopstate.py",
    "to": "term:Suggested replies",
    "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/loopstate.py",
+   "to": "threshold:ceiling_read",
+   "kind": "uses"
   },
   {
    "from": "file:server/kta_server/mapcheck.py",
@@ -8808,12 +9118,27 @@
   },
   {
    "from": "file:server/kta_server/profile.py",
+   "to": "term:Boost step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/profile.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/profile.py",
    "to": "term:Car profile",
    "kind": "uses-term"
   },
   {
    "from": "file:server/kta_server/profile.py",
    "to": "term:KTuner basemap",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/profile.py",
+   "to": "term:Pedal full reading",
    "kind": "uses-term"
   },
   {
@@ -9158,6 +9483,16 @@
   },
   {
    "from": "file:server/kta_server/tour.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/tour.py",
+   "to": "term:Ceiling read",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/tour.py",
    "to": "term:Flash plan",
    "kind": "uses-term"
   },
@@ -9330,12 +9665,22 @@
   },
   {
    "from": "file:server/kta_worker/worker.js",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_worker/worker.js",
    "to": "term:Car history",
    "kind": "uses-term"
   },
   {
    "from": "file:server/kta_worker/worker.js",
    "to": "term:Car profile",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_worker/worker.js",
+   "to": "term:Ceiling read",
    "kind": "uses-term"
   },
   {
@@ -9360,6 +9705,11 @@
   },
   {
    "from": "file:server/kta_worker/worker.js",
+   "to": "term:Map slot",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_worker/worker.js",
    "to": "term:Map version",
    "kind": "uses-term"
   },
@@ -9371,6 +9721,11 @@
   {
    "from": "file:server/kta_worker/worker.js",
    "to": "term:Open step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_worker/worker.js",
+   "to": "term:Pedal full reading",
    "kind": "uses-term"
   },
   {
@@ -9544,6 +9899,116 @@
    "kind": "uses-term"
   },
   {
+   "from": "file:server/tests/seam1/test_calibration_card.py",
+   "to": "file:server/kta_server/agent.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_card.py",
+   "to": "file:server/kta_server/copy.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_card.py",
+   "to": "file:server/kta_server/tour.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_card.py",
+   "to": "file:server/tests/conftest.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_card.py",
+   "to": "file:server/tests/seam1/conftest.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_card.py",
+   "to": "file:server/tests/seam1/test_car_profile.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_card.py",
+   "to": "term:Boost step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_card.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_card.py",
+   "to": "term:Health report",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_card.py",
+   "to": "term:Map tour",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_card.py",
+   "to": "term:Pedal full reading",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "file:server/kta_server/copy.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "file:server/kta_server/desk.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "file:server/tests/conftest.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "file:server/tests/seam1/conftest.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "file:server/tests/seam1/test_car_profile.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "route:/api/state",
+   "kind": "calls"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "term:Ceiling read",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "term:Cool drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "term:Next step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "term:Pedal full reading",
+   "kind": "uses-term"
+  },
+  {
    "from": "file:server/tests/seam1/test_car_profile.py",
    "to": "file:CONTEXT.md",
    "kind": "mentions"
@@ -9615,6 +10080,11 @@
   },
   {
    "from": "file:server/tests/seam1/test_car_profile.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_car_profile.py",
    "to": "term:Car history",
    "kind": "uses-term"
   },
@@ -9625,17 +10095,17 @@
   },
   {
    "from": "file:server/tests/seam1/test_car_profile.py",
-   "to": "term:Cool drive",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_car_profile.py",
    "to": "term:Flash plan",
    "kind": "uses-term"
   },
   {
    "from": "file:server/tests/seam1/test_car_profile.py",
    "to": "term:Next step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_car_profile.py",
+   "to": "term:Pedal full reading",
    "kind": "uses-term"
   },
   {
@@ -9875,7 +10345,17 @@
   },
   {
    "from": "file:server/tests/seam1/test_flash_step.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_flash_step.py",
    "to": "term:Car history",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_flash_step.py",
+   "to": "term:Ceiling read",
    "kind": "uses-term"
   },
   {
@@ -10395,7 +10875,17 @@
   },
   {
    "from": "file:server/tests/seam1/test_upload_reply.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_upload_reply.py",
    "to": "term:Car history",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_upload_reply.py",
+   "to": "term:Ceiling read",
    "kind": "uses-term"
   },
   {
@@ -10630,7 +11120,22 @@
   },
   {
    "from": "file:server/tests/test_knowledge.py",
+   "to": "card:kc-boost-step",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:server/tests/test_knowledge.py",
+   "to": "card:kc-calibration-drive",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:server/tests/test_knowledge.py",
    "to": "card:kc-cvt",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:server/tests/test_knowledge.py",
+   "to": "card:kc-drive-brief",
    "kind": "mentions"
   },
   {
@@ -10655,7 +11160,17 @@
   },
   {
    "from": "file:server/tests/test_knowledge.py",
+   "to": "card:kc-map-switching",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:server/tests/test_knowledge.py",
    "to": "card:kc-p0420",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:server/tests/test_knowledge.py",
+   "to": "card:kc-power-sources",
    "kind": "mentions"
   },
   {
@@ -10710,7 +11225,17 @@
   },
   {
    "from": "file:server/tests/test_knowledge.py",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/test_knowledge.py",
    "to": "term:Fuel-quality score (Knock Control)",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/test_knowledge.py",
+   "to": "term:Pedal full reading",
    "kind": "uses-term"
   },
   {
@@ -11010,7 +11535,17 @@
   },
   {
    "from": "file:test/car.test.js",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:test/car.test.js",
    "to": "term:Car history",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:test/car.test.js",
+   "to": "term:Ceiling read",
    "kind": "uses-term"
   },
   {
@@ -11061,6 +11596,11 @@
   {
    "from": "file:test/car.test.js",
    "to": "term:Open step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:test/car.test.js",
+   "to": "term:Pedal full reading",
    "kind": "uses-term"
   },
   {
@@ -11190,12 +11730,22 @@
   },
   {
    "from": "file:test/drive.test.js",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:test/drive.test.js",
    "to": "term:Car history",
    "kind": "uses-term"
   },
   {
    "from": "file:test/drive.test.js",
    "to": "term:Car profile",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:test/drive.test.js",
+   "to": "term:Ceiling read",
    "kind": "uses-term"
   },
   {
@@ -11211,6 +11761,11 @@
   {
    "from": "file:test/drive.test.js",
    "to": "term:Hot restart",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:test/drive.test.js",
+   "to": "term:Pedal full reading",
    "kind": "uses-term"
   },
   {
@@ -11836,6 +12391,11 @@
    "kind": "uses-term"
   },
   {
+   "from": "file:web/components/Cards.tsx",
+   "to": "term:Pedal full reading",
+   "kind": "uses-term"
+  },
+  {
    "from": "file:web/components/Chart.tsx",
    "to": "file:web/components/Icons.tsx",
    "kind": "imports"
@@ -12029,6 +12589,11 @@
    "from": "file:web/components/Sidebar.tsx",
    "to": "file:web/lib/api.ts",
    "kind": "imports"
+  },
+  {
+   "from": "file:web/components/Sidebar.tsx",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
   },
   {
    "from": "file:web/components/Sidebar.tsx",
@@ -12227,6 +12792,11 @@
   },
   {
    "from": "file:web/lib/types.ts",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:web/lib/types.ts",
    "to": "term:Car profile",
    "kind": "uses-term"
   },
@@ -12258,6 +12828,11 @@
   {
    "from": "file:web/lib/types.ts",
    "to": "term:Open step",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:web/lib/types.ts",
+   "to": "term:Pedal full reading",
    "kind": "uses-term"
   },
   {
@@ -12523,6 +13098,16 @@
    "to": "table:WOT_Enrich_H",
    "kind": "checks",
    "note": "Check only: full-load mixture stays on target"
+  },
+  {
+   "from": "mod:map24",
+   "to": "card:kc-calibration-drive",
+   "kind": "explained-by"
+  },
+  {
+   "from": "mod:map24",
+   "to": "card:kc-expectations",
+   "kind": "explained-by"
   },
   {
    "from": "mod:map24",
@@ -13634,6 +14219,21 @@
    "kind": "uses-term"
   },
   {
+   "from": "term:Calibration drive",
+   "to": "term:Ceiling read",
+   "kind": "uses-term"
+  },
+  {
+   "from": "term:Calibration drive",
+   "to": "term:Pedal full reading",
+   "kind": "uses-term"
+  },
+  {
+   "from": "term:Calibration drive",
+   "to": "term:Round",
+   "kind": "uses-term"
+  },
+  {
    "from": "term:Car file",
    "to": "term:Car history",
    "kind": "uses-term"
@@ -13661,6 +14261,11 @@
   {
    "from": "term:Car profile",
    "to": "term:KTuner basemap",
+   "kind": "uses-term"
+  },
+  {
+   "from": "term:Ceiling read",
+   "to": "term:Calibration drive",
    "kind": "uses-term"
   },
   {

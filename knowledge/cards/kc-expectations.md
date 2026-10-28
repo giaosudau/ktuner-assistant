@@ -2,7 +2,7 @@
 id: kc-expectations
 title: The turbo has no headroom left on this map
 kind: fact
-topics: boost, turbo, power, downpipe
+topics: boost, psi, turbo, power, downpipe
 applies-when: The owner asks for more boost or more power, or a reply explains a flat pull.
 status: current
 source-doc: docs/research/fact-check.md

@@ -100,6 +100,27 @@
    }
   },
   {
+   "id": "boost-19-2",
+   "group": "Owner question",
+   "question": "Why does my boost stop at 19.2 psi when the map says 21?",
+   "expect": {
+    "cards": [
+     "kc-calibration-drive"
+    ]
+   }
+  },
+  {
+   "id": "more-boost-plain",
+   "group": "Owner question",
+   "question": "Can I get more boost?",
+   "expect": {
+    "cards": [
+     "kc-calibration-drive",
+     "kc-boost-step"
+    ]
+   }
+  },
+  {
    "id": "more-timing",
    "group": "Owner question",
    "question": "Should I add 2 or 5 percent timing?",

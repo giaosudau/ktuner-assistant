@@ -37,6 +37,8 @@ Stages: **car** (no Car profile) · **baseline** (profile, no drives) · **retur
 | B9 | "My logs read rich, lower than 10.5. Should I decrease the values?" | Only via the plan, ≤ 2 % per round, against AFR Command; on this car rich is the safe side | `kc-rich-wot`, `kc-maf-wot-calibration` |
 | B10 | "Reduce last value by ~10%, interpolate 3V to 5V" (as a suggestion from the owner) | Refuses the blind cut, explains why, offers the measured route | `kc-maf-wot-calibration` |
 | B11 | "What is the difference between current and Basic?" (a KTuner screen) | Asks for the screenshot or names the KTuner view if a card holds it; otherwise proposes | proposal |
+| B12 | "Why does my boost stop at 19.2 psi when the map says 21?" (this owner, 28 Oct) | Says 19.2 is a part-pedal reading, not a ceiling (TPS never passed 94), and offers the Calibration drive; no map change until it is read | `kc-calibration-drive`, `kc-table-boost` |
+| B13 | "Can I get more boost?" (this owner) | The Calibration drive first; then the Boost step gates; the expectation line (one psi is a few whp at most) | `kc-calibration-drive`, `kc-boost-step`, `kc-expectations` |
 
 ## C. Follow-ups the chips must offer (D25), by what the reply said
 
