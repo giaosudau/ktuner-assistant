@@ -579,7 +579,7 @@ def _calibration_guide(guide: dict[str, Any], profile: Mapping[str, Any] | None)
     for section in guide["sections"]:
         if section["title"] == "The two pulls":
             section = {**section, "steps": [
-                "Choose slot 2 (Tune 2) when you start the car, and turn ECO off.",
+                "Choose slot 2 (Tune 2) when you start the car: while you choose, the tach shows 2,000 rpm for it. Turn ECO off.",
                 "Put the gearbox in S.",
                 f"From a steady 50 km/h, press the pedal to the floor, all the way, and hold it until 100 km/h: "
                 f"at least 5 seconds, above {rpm} rpm for {hold} s or more.",

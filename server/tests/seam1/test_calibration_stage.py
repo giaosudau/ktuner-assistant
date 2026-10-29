@@ -65,6 +65,8 @@ def test_the_calibration_brief_asks_first_for_the_pedal_and_the_logger():
     pulls = next(s for s in guide["sections"] if s["title"] == "The two pulls")
     assert "all the way" in " ".join(pulls["steps"]) and "slot 2 (Tune 2)" in " ".join(pulls["steps"])
     assert "ECO off" in " ".join(pulls["steps"]) and "at least 5 seconds" in " ".join(pulls["steps"])
+    # 0 Wasted drives from a slot mistake: the tach confirms the slot while choosing (kc-map-switching).
+    assert "the tach shows 2,000 rpm" in " ".join(pulls["steps"])
     assert "2 floored pulls held 4 s or more above 3,500 rpm" in guide["checkpoints"]
     assert "On slot 2 (Tune 2)" in guide["checkpoints"]
     # The safety lines stay.
