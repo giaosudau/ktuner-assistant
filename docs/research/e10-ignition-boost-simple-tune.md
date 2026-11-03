@@ -79,7 +79,7 @@ All web pages were fetched with local crawl4ai. civicx / civicxi forum / honda-t
 | `WOT_Exhaust_VTC_Low_Cam` | 1 × 20 | Exhaust cam phase at WOT (5° → 38° peak at 1500 rpm → 18° from 4000 rpm). |
 
 ### Reading the values
-- `Boost_Target_1_Normal` plateaus at **21** from 4000 rpm. `Final_Boost_Target` reaches **23.4**.
+- `Boost_Target_1_Normal` plateaus at **21** from 3500 rpm (corrected 3 Nov 2026 from the digitized table: the 3500 row reaches 21.0). `Final_Boost_Target` reaches **23.4**.
 - That's higher than KTuner's Stage 0/1 levels (16.5 / 18 psi), so **this file looks like a 21 psi (Starter 21 / Stage 2-class) map or units other than psi**. Verify which basemap was digitized.
 - If it is the 21 psi map, it is too aggressive for VN E10 RON95 plus CVT plus hot IAT.
 
