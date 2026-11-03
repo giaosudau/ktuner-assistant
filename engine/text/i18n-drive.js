@@ -56,6 +56,7 @@
     safeTitle: 'Is it safe?',
     safe: {
       good: 'Yes. Every check passed on this drive.',
+      goodUnread: function (n) { return 'Nothing wrong seen, but ' + n + ' check' + (n === 1 ? '' : 's') + ' couldn\'t be read on this log.'; },
       watch: 'Yes, with things to watch. Nothing here is damaging the engine; the list below fixes them in order.',
       stop: 'Not yet. Fix the Stop before any more hard pulls.',
       nodata: 'Not enough in this log to say. Log a longer drive with the engine warm.'
@@ -475,6 +476,7 @@
     safeTitle: 'Có an toàn không?',
     safe: {
       good: 'Có. Mọi mục kiểm tra đều đạt trong chuyến này.',
+      goodUnread: function (n) { return 'Không thấy gì sai, nhưng ' + n + ' mục kiểm tra không đọc được trong log này.'; },
       watch: 'Có, nhưng cần theo dõi vài thứ. Không có gì đang làm hại máy; danh sách dưới đây xử lý chúng theo thứ tự.',
       stop: 'Chưa. Sửa mục Dừng trước khi kéo ga mạnh tiếp.',
       nodata: 'Log này chưa đủ để kết luận. Hãy log một chuyến dài hơn khi máy đã nóng.'

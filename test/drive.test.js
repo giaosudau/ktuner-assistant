@@ -1025,3 +1025,25 @@ test('Boost step proof pull: the wastegate held above 3,500 rpm', () => {
   const sum = C.carIngest(C.carEmpty(), log, { fileName: 'TunerView_20260822_090322.csv', now: 0 }).state.drives['20260822-090322'];
   assert.equal(sum.proofPulls[0].ewgHeld, 0.5);
 });
+
+// The Knock Control trace is drawn on a fixed scale with the kc-ranges lines, so a
+// +0.05 drift never looks like a cliff; a boost trace gets neither.
+test('the Fuel-quality score trace carries a fixed scale and the kc-ranges marks; a boost trace does not', () => {
+  const PIC = require('../engine/kta-picture.js');
+  const kc = PIC.trace(hot().report, hot().log, 0);
+  assert.equal(kc.series[0].name, 'Fuel-quality score');
+  const peak = Math.max(...kc.series[0].points.map((p) => p[1]));
+  assert.deepEqual(kc.yRange, [0.45, Math.round(Math.max(0.70, peak + 0.05) * 100) / 100]);
+  assert.deepEqual(kc.marks, [
+    { at: 0.49, label: 'Floor 0.49', tone: 'good' },
+    { at: 0.56, label: 'Watch 0.56', tone: 'watch' },
+    { at: 0.62, label: 'No hard driving 0.62', tone: 'watch' }
+  ]);
+  const card = require('fs').readFileSync(__dirname + '/../knowledge/cards/kc-ranges.md', 'utf8');
+  const num = (k) => Number(card.match(new RegExp('- ' + k + ': ([0-9.]+)'))[1]);
+  assert.deepEqual(kc.marks.map((m) => m.at), [num('kc-floor'), num('kc-watch'), num('kc-nohard')], 'marks match the kc-ranges card');
+  const boost = PIC.trace(pulls().report, pulls().log, 0);
+  assert.equal(boost.series[0].name, 'Boost');
+  assert.equal(boost.marks, undefined);
+  assert.equal(boost.yRange, undefined);
+});

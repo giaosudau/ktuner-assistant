@@ -14,6 +14,8 @@
  * each one (`server/kta_server/verify.py` checks it).
  */
 
+var SCORE = require('./kta-engine.js').LIMITS.score; // the kc-ranges cut points the verdicts use
+
 function isNum(v) { return typeof v === 'number' && isFinite(v); }
 function r(v, d) { var k = Math.pow(10, d); return Math.round(v * k) / k; }
 
@@ -53,10 +55,21 @@ function trace(report, log, index) {
   if (pts.length < 3) return { kind: 'cant-tell', why: 'The log holds too little around that moment to draw it.' };
   var series = [{ name: pull ? 'Boost' : 'Fuel-quality score', points: pts }];
   if (tgt.length) series.push({ name: 'Boost target', points: tgt });
-  return {
+  var out = {
     kind: 'trace', title: m.label, unit: pull ? 'psi' : '', series: series,
     moment: { at: 0, label: m.label }, numbers: m.numbers, momentIndex: moms.indexOf(m), moments: moms.length
   };
+  // The score on a fixed scale with its kc-ranges lines, so a +0.05 drift never reads as a cliff.
+  if (!pull) {
+    var peak = Math.max.apply(null, pts.map(function (p) { return p[1]; }));
+    out.yRange = [0.45, r(Math.max(0.70, peak + 0.05), 2)];
+    out.marks = [
+      { at: SCORE.baseline, label: 'Floor ' + SCORE.baseline.toFixed(2), tone: 'good' },
+      { at: SCORE.watch, label: 'Watch ' + SCORE.watch.toFixed(2), tone: 'watch' },
+      { at: SCORE.noHard, label: 'No hard driving ' + SCORE.noHard.toFixed(2), tone: 'watch' }
+    ];
+  }
+  return out;
 }
 
 /** rpm bands (from, to) where the Drive spent 2 s or more with boost up, from the engine's own load grid. */

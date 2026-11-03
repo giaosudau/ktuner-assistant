@@ -96,11 +96,18 @@
     return typeof v === 'number' && !isNum(v) ? null : v;
   }
 
+  // The health summary: "every check passed" only when no line is Can't tell.
+  function safeText(ctx) {
+    var an = ctx.report.an, S = ctx.T.safe, unread = 0;
+    an.gates.forEach(function (g) { g.checks.forEach(function (c) { if (c.status === 'nodata') unread++; }); });
+    return an.verdict === 'good' && unread ? S.goodUnread(unread) : S[an.verdict];
+  }
+
   function overview(ctx) {
     var r = ctx.report, an = r.an, P = r.plan, I = r.ins;
     var place = function (list) { return list.map(function (a) { return { id: a.tier === 'safety' ? 'fix' : a.id, title: actionTitle(ctx, a), rank: a.rank, tier: a.tier, locked_until: a.blockedBy ? blockerTexts(ctx, a) : undefined }; }); };
     return {
-      verdict: an.verdict, verdict_text: ctx.T.safe[an.verdict],
+      verdict: an.verdict, verdict_text: safeText(ctx),
       checks: [].concat.apply([], an.gates.map(function (g) {
         return g.checks.map(function (c) { var tx = checkText(ctx, c); return { gate: g.id, id: c.id, label: tx.label, status: c.status, value: tx.display }; });
       })),
@@ -301,7 +308,7 @@
   ASK.offline = function (question, ctx) {
     var O = ctx.T.offline, intent = ASK.intent(question), I = ctx.report.ins, F = ctx.F;
     var body = intent === 'unknown' ? O.unknown : O[intent](I, F, ctx.report.plan);
-    if (intent === 'first' || intent === 'unknown') body = ctx.T.safe[ctx.report.an.verdict] + ' ' + body;
+    if (intent === 'first' || intent === 'unknown') body = safeText(ctx) + ' ' + body;
     return { intent: intent, answer: body };
   };
 

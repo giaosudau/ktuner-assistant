@@ -168,3 +168,17 @@ test('built-in answers: intent from English or Vietnamese, numbers from the driv
   assert.ok(a.includes(report.ins.kc.end.toFixed(2)) && /lugging/.test(a));
   assert.match(K.ask.offline('Can I add boost?', ctx).answer, /^Not now/);
 });
+
+// An OK drive with lines the log could not read must not claim every check passed.
+test('the health summary says "every check passed" only when no line is Can\'t tell', () => {
+  const withStatus = (statuses) => {
+    let k = 0;
+    const gates = report.an.gates.map((g) => ({ ...g, checks: g.checks.map((c) => ({ ...c, status: statuses[k++] || 'good' })) }));
+    return K.ask.context({ report: { ...report, an: { ...report.an, verdict: 'good', gates } }, log, T: T.drive, checkText });
+  };
+  const line = (c) => K.ask.runTool(c, 'get_overview', {}).result.verdict_text;
+  assert.equal(line(withStatus([])), 'Yes. Every check passed on this drive.');
+  assert.equal(line(withStatus(['nodata'])), "Nothing wrong seen, but 1 check couldn't be read on this log.");
+  assert.equal(line(withStatus(['nodata', 'good', 'nodata', 'nodata'])), "Nothing wrong seen, but 3 checks couldn't be read on this log.");
+  assert.doesNotMatch(K.ask.offline('Is it safe?', withStatus(['nodata'])).answer, /Every check passed/);
+});

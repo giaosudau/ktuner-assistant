@@ -124,7 +124,7 @@ One of four words for a safety line or a whole drive: **OK**, **Watch**, **Stop*
 _Avoid_: good, warn, fail, pass, nodata
 
 **Safety channel**:
-One of the four channels a safe verdict cannot do without: mixture, fuel trims, Fuel-quality score, fuel pressure. If one is flat or missing, the drive's verdict is Can't tell.
+One of the four channels a safe verdict cannot do without: mixture, fuel trims, Fuel-quality score, fuel pressure. If one is missing, or flat while the drive gives it something to judge, the drive's verdict is Can't tell. Fuel pressure is judged under boost, so a frozen fuel pressure on a drive with no full-throttle samples leaves the verdict alone; the Health report says how many checks couldn't be read and the Next step names the dead gauge.
 
 **Timing pulled**:
 The degrees of ignition timing the ECU removes because of the Fuel-quality score, shown against this car's normal.
