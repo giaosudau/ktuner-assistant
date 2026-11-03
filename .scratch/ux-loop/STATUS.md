@@ -7,7 +7,7 @@ at the first round whose status is not `done`, else opens a new round from the b
 
 Debate and items: `discussion-r1.md`. Audit: `audit.md`. Research: `research.md`.
 Gates at close: `npm test` 253/253 · `cd server && uv run pytest -q` 354 passed, 3 skipped ·
-`cd web && npx tsc --noEmit` clean · `python3 tools/knowledge-graph.py --check` clean · real app
+`cd web && npx tsc --noEmit` clean · `python3 tools/knowledge-graph.py --check` clean · `cd web && npm run e2e` 12/12 on a fresh DB · real app
 walked on a fresh DB at 390 and 1280 (`walk.js`), dark mode checked at 1280. Code review: 7
 findings, all fixed (CVT limits from the engine, IAT lines as reference only, one label/tone per
 kc-ranges line, half-up rounding, the brief slot is the attachment's default only, old chats keep
@@ -46,5 +46,8 @@ their seconds, the raw Ceiling read).
 11. Sidebar and Recap open steps on stage calibrate still list the habit / logger steps apart from
     the Calibration drive; fold them under it.
 12. Console 404 on every page load (find the resource: favicon?).
+14. After a typed answer the chat stays busy a moment after its spinner goes: an Enter then is
+    ignored (the e2e's idle now waits for the composer). Find what still runs (thread save?
+    suggestions?) and either finish it before the spinner stops or let a send queue.
 13. A frozen fuel pressure line on 5 Sep reads "Not logged": say "stuck on one number" (engine
     `flatOut` skips lines already Can't tell).

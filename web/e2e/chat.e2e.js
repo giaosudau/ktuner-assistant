@@ -58,6 +58,10 @@ async function run() {
     } catch (e) {
       results.push('FAIL ' + name + '\n     ' + (e && e.message));
       process.exitCode = 1;
+      // KTA_E2E_SHOTS=<folder>: what the phone showed when the step failed.
+      if (process.env.KTA_E2E_SHOTS) {
+        await page.screenshot({ path: path.join(process.env.KTA_E2E_SHOTS, `fail-${results.length}.png`) }).catch(() => undefined);
+      }
     }
   };
 
@@ -68,7 +72,16 @@ async function run() {
   const noOverflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   const lastAi = () => page.locator('[data-testid="assistant-message"]').last();
   // A live model reply can take minutes on a free provider; the built-in reply takes seconds.
-  const idle = () => page.waitForFunction(() => !document.querySelector('[data-testid="thread"] .spinner, [data-testid="empty"] .spinner'), undefined, { timeout: 300000 });
+  // Idle = no reply spinning and the composer no longer "Working" (the chat can still be saving a
+  // moment after the last spinner goes, and an Enter then is ignored).
+  const idle = () =>
+    page.waitForFunction(
+      () =>
+        !document.querySelector('[data-testid="thread"] .spinner, [data-testid="empty"] .spinner') &&
+        !/^Working/.test(document.querySelector('.composer-hint')?.textContent ?? ''),
+      undefined,
+      { timeout: 300000 },
+    );
 
   try {
     await step('the chat opens on a phone as one composer with + and send, nothing else to fill in', async () => {
@@ -93,7 +106,7 @@ async function run() {
         assert.equal(await page.inputValue('[data-testid="setup-field-transmission"]'), 'CVT');
         await page.click('[data-testid="setup-confirm"]');
         await page.waitForSelector('[data-testid="log-guide"]', { timeout: 30000 });
-        assert.match(await page.textContent('[data-testid="log-guide"]'), /2 pulls/);
+        assert.match(await page.textContent('[data-testid="log-guide"]'), /2 full-throttle pulls/);
         await page.waitForFunction(() => document.querySelector('[data-testid="journey"]')?.dataset.phase === 'baseline');
       });
     }
