@@ -72,16 +72,7 @@ async function run() {
   const noOverflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   const lastAi = () => page.locator('[data-testid="assistant-message"]').last();
   // A live model reply can take minutes on a free provider; the built-in reply takes seconds.
-  // Idle = no reply spinning and the composer no longer "Working" (the chat can still be saving a
-  // moment after the last spinner goes, and an Enter then is ignored).
-  const idle = () =>
-    page.waitForFunction(
-      () =>
-        !document.querySelector('[data-testid="thread"] .spinner, [data-testid="empty"] .spinner') &&
-        !/^Working/.test(document.querySelector('.composer-hint')?.textContent ?? ''),
-      undefined,
-      { timeout: 300000 },
-    );
+  const idle = () => page.waitForFunction(() => !document.querySelector('[data-testid="thread"] .spinner, [data-testid="empty"] .spinner'), undefined, { timeout: 300000 });
 
   try {
     await step('the chat opens on a phone as one composer with + and send, nothing else to fill in', async () => {
@@ -119,7 +110,8 @@ async function run() {
       await page.waitForSelector(`[data-testid="user-message"] >> text=${path.basename(csv)}`, { timeout: 10000 });
       await idle();
       const say = await lastAi().locator('[data-testid="say"]').textContent();
-      assert.match(say, /^(Engine healthy|Nothing broken|Stop driving hard|Can't tell|Nothing read)/, say);
+      // With a model key the sentence is the model's own words; the built-in one is pinned in server/tests.
+      assert.match(say, /\S/, 'the reply says something before the report');
       const verdict = await lastAi().locator('[data-testid="verdict"]').getAttribute('data-verdict');
       assert.ok(['OK', 'Watch', 'Stop', "Can't tell"].includes(verdict), verdict);
       const labels = await lastAi().locator('[data-testid="numbers"] .stat > span').allTextContents();

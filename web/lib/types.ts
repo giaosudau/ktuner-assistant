@@ -304,6 +304,8 @@ export type ReplyCard = {
   settled: SettledStep[];
   /** One kind line when this Drive settled nothing, else null. */
   wasted: string | null;
+  /** Set when this Drive was already in the Car history: the line that says when it was read. */
+  repeat?: { line: string; at: number | null } | null;
   flashPlan: FlashPlan | null;
   nextStep: NextStep | null;
   /** Flash readback on a Drive after a Flash; null when no Flash is being read back. */

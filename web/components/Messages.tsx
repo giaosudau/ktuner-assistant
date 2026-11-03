@@ -219,9 +219,20 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
   const card = turn.card;
   const say = card?.say ?? (turn.lines[0] || "");
   const pictures: Picture[] = [...(card?.pictures ?? []), ...(card?.agent?.pictures ?? [])];
+  // A proved step leads the reply as a banner; the other settled rows stay in "Since last time".
+  const proved = card?.settled?.filter((r) => r.status === "done") ?? [];
+  const settled = card?.settled?.filter((r) => r.status !== "done") ?? [];
+  // "Same as last time" carries why inside the Next step, so the report doesn't say it twice.
+  const sameWhy = card?.nextStep?.same ? card.wasted : null;
   return (
     <>
       <WorkRow turn={turn} startedAt={msg.startedAt} endedAt={msg.endedAt} />
+      {card?.repeat?.line ? (
+        <div className="note-line top" data-testid="repeat">
+          <Icon name="info" />
+          <span>{card.repeat.line}</span>
+        </div>
+      ) : null}
       {say ? (
         <div data-testid="say">
           <Markdown text={say} citations={card?.agent?.citations} />
@@ -232,8 +243,16 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
           ) : null}
         </div>
       ) : null}
+      {proved.map((row) => (
+        <div className="done-banner" key={row.key} data-testid="done-banner" data-key={row.key}>
+          <Icon name="check" />
+          <span>
+            <b>Done</b> · <b>{row.title}.</b> {row.why}
+          </span>
+        </div>
+      ))}
       {/* Verdict first: the Drive report, then the window it was read on, then the brief's checkpoints. */}
-      {card ? <ReportCard card={card} fileName={turn.fileName} /> : null}
+      {card ? <ReportCard card={sameWhy ? { ...card, wasted: null } : card} fileName={turn.fileName} /> : null}
       {card?.window ? (
         <div className="basis" data-testid="drive-basis">
           <Icon name="history" />
@@ -248,15 +267,23 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
       {pictures.map((p, i) => (
         <Chart key={`${p.kind}-${i}`} picture={p} />
       ))}
-      {card?.settled?.length ? <SettledCard rows={card.settled} /> : null}
+      {settled.length ? <SettledCard rows={settled} /> : null}
       {card?.questions?.map((q) => (
         <QuestionCard key={q.id} question={q} busy={a.busy} onAnswer={(choice) => a.onAnswer(msg.id, q, choice)} />
       ))}
-      {card?.tour ? (
+      {/* A Too-short drive (no verdict) read nothing, so a tour of the map would be noise. */}
+      {card?.tour && card.verdict !== null ? (
         <MapTourCard tour={card.tour} plan={card.flashPlan} housing={card.housing} onAsk={a.onSuggest} onView={a.onViewTable} busy={a.busy} />
       ) : null}
       {card?.nextStep ? (
-        <NextStepCard step={card.nextStep} acted={msg.acted} busy={a.busy} onFlash={(...args) => a.onFlash(msg.id, ...args)} onView={a.onViewTable} />
+        <NextStepCard
+          step={card.nextStep}
+          acted={msg.acted}
+          busy={a.busy}
+          onFlash={(...args) => a.onFlash(msg.id, ...args)}
+          onView={a.onViewTable}
+          wasted={card.wasted}
+        />
       ) : null}
       {turn.error ? (
         <div className="err" data-testid="reply-error">
@@ -428,9 +455,18 @@ function Suggestions({ msg, a }: { msg: AiMsg; a: Actions }) {
   const step = msg.turn?.card?.nextStep ?? msg.result?.nextStep;
   let items: Suggestion[] = msg.answer?.suggestions ?? [];
   if (!items.length && msg.kind === "drive" && msg.turn?.card) {
-    if (step && step.kind !== "none") items.push({ label: "Why this step?", action: "send", icon: "help", text: `Why is "${step.title}" my next step?` });
-    items.push({ label: "What's safe to change on my car?", action: "send", icon: "wrench", text: "What is safe to change in my map right now, and what would unlock more?" });
-    items.push({ label: "How do I log the next drive?", action: "guide", icon: "route" });
+    const why: Suggestion | null =
+      step && step.kind !== "none" ? { label: "Why this step?", action: "send", icon: "help", text: `Why is "${step.title}" my next step?` } : null;
+    if (msg.turn.card.verdict === "Stop") {
+      // On a Stop the owner wants to know the car is safe and how to undo, not what to change next.
+      items.push({ label: "Is my engine OK to drive home?", action: "send", icon: "car", text: "Is my engine OK to drive home?" });
+      items.push({ label: "How do I put my old map back?", action: "send", icon: "undo", text: "How do I put my old map back?" });
+      if (why) items.push(why);
+    } else {
+      if (why) items.push(why);
+      items.push({ label: "What's safe to change on my car?", action: "send", icon: "wrench", text: "What is safe to change in my map right now, and what would unlock more?" });
+      items.push({ label: "How do I log the next drive?", action: "guide", icon: "route" });
+    }
   }
   if (!items.length && msg.kind === "profile" && !msg.saved) items = [];
   else if (!items.length) items = a.loop?.suggestions ?? [];
@@ -527,7 +563,7 @@ export function RecapCard({ recap }: { recap: Recap }) {
 export function AssistantMessage({ msg, latest, a }: { msg: AiMsg; latest: boolean; a: Actions }) {
   const [copied, setCopied] = useState(false);
   const text = msg.turn?.card?.say ?? msg.answer?.answer ?? msg.outcome?.line ?? msg.text ?? "";
-  const done = !msg.pending && !msg.turn?.running;
+  const done = !msg.pending && !msg.turn?.running && !msg.live;
   return (
     <div
       className={`msg-ai${latest ? " latest" : ""}${a.focus?.id === msg.id ? " focus" : ""}`}
@@ -541,6 +577,8 @@ export function AssistantMessage({ msg, latest, a }: { msg: AiMsg; latest: boole
       <div className="ai-body">
         <Body msg={msg} a={a} />
         {done && latest ? <Suggestions msg={msg} a={a} /> : null}
+        {/* The answer is in but its run still writes the suggested replies: say so where they land. */}
+        {!msg.pending && msg.live ? <LiveLine label={titleOf(msg.live)} since={msg.startedAt} /> : null}
         {done && text ? (
           <div className="msg-actions">
             <button

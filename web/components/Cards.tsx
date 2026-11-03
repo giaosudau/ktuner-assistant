@@ -152,6 +152,8 @@ const KIND: Record<string, { word: string; icon: string }> = {
   drive: { word: "Drive", icon: "route" },
   none: { word: "Nothing to do", icon: "check" },
 };
+// The Undo is no cells to type: open the old file in KTuner and flash it.
+const UNDO = { word: "Flash back", icon: "undo" };
 
 export function GaugeTableView({ table }: { table: GaugeTable }) {
   return (
@@ -183,14 +185,17 @@ export function NextStepCard({
   busy,
   onFlash,
   onView,
+  wasted,
 }: {
   step: NextStep;
   acted?: string;
   busy: boolean;
   onFlash: FlashAct;
   onView?: (table: string) => void;
+  /** The reply's Wasted line: why a "same as last time" step is asked again. */
+  wasted?: string | null;
 }) {
-  const k = KIND[step.kind] ?? KIND.none;
+  const k = step.key === "undo" ? UNDO : (KIND[step.kind] ?? KIND.none);
   const ktuner = step.kind === "flash" ? step.flashPlan?.ktunerCard : null;
   return (
     <section className="card next" data-testid="next-step" data-kind={step.kind} data-key={step.key}>
@@ -200,6 +205,13 @@ export function NextStepCard({
         <Pill tone="none" word={k.word} />
       </div>
       <h3>{step.title}</h3>
+      {step.same && wasted ? (
+        <div className="note-line" data-testid="next-step-wasted" style={{ margin: "0 0 10px" }}>
+          <Icon name="info" />
+          {/* The server's line says why itself ("This Drive settles nothing: …"); any other gets the lead-in. */}
+          <span>{/^This Drive settles nothing/i.test(wasted) ? wasted : `This drive didn't count: ${wasted}`}</span>
+        </div>
+      ) : null}
       {step.body ? <p>{step.body}</p> : null}
 
       {ktuner?.kind === "change" ? (
@@ -213,7 +225,7 @@ export function NextStepCard({
           <KTunerCard card={ktuner} acted={acted} busy={busy} onFlash={onFlash} />
         </>
       ) : null}
-      {ktuner?.kind === "undo" ? <UndoFlash card={ktuner} acted={acted} busy={busy} onFlash={onFlash} /> : null}
+      {ktuner?.kind === "undo" && !step.recipe?.steps.length ? <UndoFlash card={ktuner} acted={acted} busy={busy} onFlash={onFlash} /> : null}
 
       {step.recipe?.steps.length ? (
         <>
@@ -226,6 +238,8 @@ export function NextStepCard({
           </ol>
         </>
       ) : null}
+      {/* The recipe already says how to Undo in order: the card adds only the button and the proof. */}
+      {ktuner?.kind === "undo" && step.recipe?.steps.length ? <UndoFlash card={ktuner} acted={acted} busy={busy} onFlash={onFlash} listed /> : null}
 
       {step.gauges?.rows.length ? (
         <>

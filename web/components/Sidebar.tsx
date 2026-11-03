@@ -191,7 +191,7 @@ export function Sidebar({
         <div className="side-h">This round</div>
         <div className="round" data-testid="journey" data-phase={phase}>
           <div className="round-h">
-            {phase === "calibrate" ? "Round 0 · Calibrate" : `Round ${(loop?.flashes.length ?? 0) + 1}`}
+            {`Round ${(loop?.flashes.length ?? 0) + 1}${phase === "calibrate" ? " · Calibration drive" : ""}`}
             <span className="muted"> · on {active ? active.label : "Map version 1"}</span>
           </div>
           <ol className="stages" aria-label="Where this round is">

@@ -43,8 +43,7 @@ export function Composer({
   setFile: (f: File | null) => void;
   error: string | null;
   setError: (e: string | null) => void;
-  /** Sends the words as they stand in the box (an Enter can land before React re-renders the text). */
-  onSend: (words: string) => void;
+  onSend: () => void;
   busy: boolean;
   placeholder: string;
   autoFocus?: boolean;
@@ -59,9 +58,6 @@ export function Composer({
   const area = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const canSend = !busy && (text.trim().length > 0 || file !== null);
-  const sendNow = (words: string) => {
-    if (!busy && (words.trim().length > 0 || file !== null)) onSend(words);
-  };
 
   // Grow with the text, up to the CSS max-height, like ChatGPT.
   useEffect(() => {
@@ -83,7 +79,7 @@ export function Composer({
       data-testid="composer"
       onSubmit={(event) => {
         event.preventDefault();
-        sendNow(area.current?.value ?? text);
+        if (canSend) onSend();
       }}
     >
       {file ? (
@@ -152,7 +148,7 @@ export function Composer({
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
             event.preventDefault();
-            sendNow(event.currentTarget.value);
+            if (canSend) onSend();
           }
         }}
         onPaste={(event) => {

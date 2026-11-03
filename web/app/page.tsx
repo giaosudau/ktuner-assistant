@@ -187,7 +187,7 @@ export default function Page() {
         setFile={setFile}
         error={error}
         setError={setError}
-        onSend={(words) => submit(words)}
+        onSend={() => submit()}
         tags={shownTags}
         setTags={changeTags}
         briefSlot={briefSlot}

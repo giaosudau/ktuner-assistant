@@ -106,10 +106,19 @@ const nextId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(coun
 function settle(messages: Msg[]): Msg[] {
   return messages.map((m) =>
     m.role === "assistant" && (m.pending || m.turn?.running)
-      ? { ...m, pending: false, turn: m.turn ? { ...m.turn, running: false, live: undefined } : m.turn, error: m.error ?? "Interrupted by a reload. Send it again." }
-      : m,
+      ? { ...m, pending: false, live: undefined, turn: m.turn ? { ...m.turn, running: false, live: undefined } : m.turn, error: m.error ?? "Interrupted by a reload. Send it again." }
+      : m.role === "assistant" && m.live
+        ? { ...m, live: undefined }
+        : m,
   );
 }
+
+/**
+ * A typed answer lands before its run ends: the server still writes the suggested replies
+ * (graph step `suggest`, a few seconds). The reply keeps this live line until the run ends, so
+ * the spinner, the chips and the composer's "Working" all finish together.
+ */
+const ANSWER_TAIL = "Suggesting replies";
 
 function readLocal(key: string): string | null {
   try {
@@ -484,7 +493,7 @@ export function useChat() {
                 const got = answerFromDelta((event as StateDeltaEvent).delta);
                 if (got) {
                   answer = got;
-                  patch(msgId, { pending: false, live: undefined, answer });
+                  patch(msgId, { pending: false, live: ANSWER_TAIL, answer });
                 }
                 break;
               }
@@ -493,7 +502,7 @@ export function useChat() {
                 const got = snapshot?.answer ? takeAnswer(snapshot.answer) : null;
                 if (got) {
                   answer = got;
-                  patch(msgId, { pending: false, live: undefined, answer });
+                  patch(msgId, { pending: false, live: ANSWER_TAIL, answer });
                 }
                 break;
               }

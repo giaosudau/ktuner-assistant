@@ -1046,6 +1046,32 @@ details[open] > summary .chev {
 .note-line.stop svg.icon {
   color: var(--stop);
 }
+/* A note that leads the reply ("I read this drive before"): the body's gap spaces it. */
+.note-line.top {
+  margin-top: 0;
+}
+
+/* A step this Drive proved, under the verdict sentence: the word "Done" beside the green. */
+.done-banner {
+  display: flex;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--ok);
+  border-radius: var(--radius-sm);
+  background: var(--ok-soft);
+  font-size: 14px;
+  animation: rise 0.3s var(--ease) both;
+}
+.done-banner svg.icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--ok);
+}
+.done-banner b {
+  font-weight: 600;
+}
 
 /* settled rows */
 .rows {

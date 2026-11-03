@@ -191,21 +191,23 @@ export function KTunerCard({ card, acted, busy, onFlash }: { card: Card; acted?:
   );
 }
 
-/** Undo: nothing to type, a file to load and flash back. */
-export function UndoFlash({ card, acted, busy, onFlash }: { card: UndoCard; acted?: string; busy: boolean; onFlash: FlashAct }) {
+/** Undo: nothing to type, a file to load and flash back. `listed`: the Next step already numbers the steps. */
+export function UndoFlash({ card, acted, busy, onFlash, listed }: { card: UndoCard; acted?: string; busy: boolean; onFlash: FlashAct; listed?: boolean }) {
   return (
     <div data-testid="undo-card">
-      <ol className="numbered">
-        <li>{card.restore.line}</li>
-        <li>Tell me here you flashed it back.</li>
-      </ol>
+      {listed ? null : (
+        <ol className="numbered">
+          <li>{card.restore.line}</li>
+          <li>Tell me here you flashed it back.</li>
+        </ol>
+      )}
       <div className="facts">
         {card.proof ? (
           <span>
             <b>Your next drive proves it:</b> {card.proof}
           </span>
         ) : null}
-        <span className="muted">{card.afterFlash}</span>
+        {listed ? null : <span className="muted">{card.afterFlash}</span>}
       </div>
       {acted ? (
         <div className="note-line" data-testid="undo-done">
