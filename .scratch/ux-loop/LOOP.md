@@ -2,7 +2,8 @@
 
 One run of this loop = one **Round** of product improvement. It is run by hand or by the scheduled
 task `ktuner-ux-loop` (every 5 hours). Every run reads this file first and `STATUS.md` second,
-and leaves `STATUS.md` ready for the next run.
+and leaves `STATUS.md` ready for the next run. A round whose status reads `doing (interactive)` is
+owned by a live session: a scheduled run that finds one changes nothing and stops.
 
 Product truth: `/PRODUCT.md` (who, principles), `/DESIGN.md` (tokens, components), `/CONTEXT.md`
 (every word the owner reads). Architecture: `docs/adr/` — the engine owns every number and
@@ -60,6 +61,25 @@ server does not send is a server change first, never a number made up in the bro
 - Motion: tells state (working, done, changed), ≤ 300 ms, off under `prefers-reduced-motion`.
 - Charts: a caption that says what it shows; the numbers also in text; bands only from
   `data/thresholds.json` or a cited card.
+
+## Journey lens (every run, every step the owner takes)
+
+- **What they meet:** at each step, write what the owner sees first, what they must decide,
+  what they're afraid of, and what they do next. A step with no clear next action is a bug.
+- **Language:** the owner's words, short sentences, the verb first ("Type the pedal reading",
+  not "The Pedal full reading is required"). CONTEXT.md terms, KTuner names spelled as KTuner
+  spells them. One name per thing across the whole journey (no "AFM Hz" here and "MAF Hz"
+  there). Say what a number means for the car before the number.
+- **Presenting it:** one place says where the owner is (Round, stage, what's next) and every
+  other place agrees with it. Each reply leads with the answer, then the evidence, then the one
+  Next step; detail folds away. A stage change is announced once ("Undo proved — Round 2
+  starts"), never left for the owner to infer.
+
+## Tech debt (every run)
+
+Keep a short debt list in `STATUS.md`. Each round pays at least one item it touches anyway:
+dead code, a near-copy, a stale comment, a test that pins a timing. Never a refactor for its own
+sake; never one that changes what the owner sees without its own test.
 
 ## Real-world scenarios every run re-checks
 

@@ -18,7 +18,7 @@
    "stage": 13,
    "table": 39,
    "term": 49,
-   "test": 40,
+   "test": 41,
    "threshold": 13,
    "trait": 5
   },
@@ -34,7 +34,7 @@
    "explained-by": 21,
    "gated-by": 14,
    "implemented-by": 21,
-   "imports": 198,
+   "imports": 201,
    "in-family": 39,
    "loads": 3,
    "mentions": 341,
@@ -46,10 +46,10 @@
    "serves": 20,
    "sourced-from": 100,
    "superseded-by": 7,
-   "tests": 62,
+   "tests": 63,
    "touches": 172,
    "uses": 55,
-   "uses-term": 681,
+   "uses-term": 686,
    "works-on": 5,
    "wraps": 1
   }
@@ -1799,7 +1799,7 @@
    "area": "server",
    "path": "server/kta_server/copy.py",
    "description": "The built-in reply: every word the owner reads until the model takes over.",
-   "lines": 1359
+   "lines": 1372
   },
   {
    "id": "file:server/kta_server/db.py",
@@ -1844,7 +1844,7 @@
    "area": "server",
    "path": "server/kta_server/graph.py",
    "description": "The chat's graph: every turn, an upload or a typed message, runs through it.",
-   "lines": 595,
+   "lines": 600,
    "note": "The LangGraph chat graph (front agent -> tuner hand-off, Drive pipeline), not this knowledge graph."
   },
   {
@@ -2178,7 +2178,7 @@
    "area": "tests",
    "path": "server/tests/seam1/test_reply_words.py",
    "description": "Seam 1: the words. What the owner reads is product work, so it is tested.",
-   "lines": 494
+   "lines": 490
   },
   {
    "id": "file:server/tests/seam1/test_scorecard_live.py",
@@ -2206,6 +2206,15 @@
    "path": "server/tests/seam1/test_ux_round1.py",
    "description": "Seam 1: UX round 1 on the server — the brief's slot, one Next step, and the Health report's bands.",
    "lines": 164
+  },
+  {
+   "id": "file:server/tests/seam1/test_ux_round2.py",
+   "kind": "test",
+   "label": "test_ux_round2.py",
+   "area": "tests",
+   "path": "server/tests/seam1/test_ux_round2.py",
+   "description": "Seam 1: UX round 2 on the server — the Undo as numbered steps, and the re-upload note.",
+   "lines": 76
   },
   {
    "id": "file:server/tests/seam1/test_worker_summaries.py",
@@ -2421,7 +2430,7 @@
    "area": "web",
    "path": "web/components/Cards.tsx",
    "description": "The generative-UI cards an assistant message can carry, in the order a reply",
-   "lines": 574
+   "lines": 586
   },
   {
    "id": "file:web/components/Chart.tsx",
@@ -2484,7 +2493,7 @@
    "area": "web",
    "path": "web/components/Messages.tsx",
    "description": "One message in the thread. The owner's are bubbles on the right; the",
-   "lines": 569
+   "lines": 607
   },
   {
    "id": "file:web/components/Pill.tsx",
@@ -2529,7 +2538,7 @@
    "area": "tests",
    "path": "web/e2e/chat.e2e.js",
    "description": "'use strict';",
-   "lines": 215
+   "lines": 219
   },
   {
    "id": "file:web/lib/api.ts",
@@ -2556,7 +2565,7 @@
    "area": "web",
    "path": "web/lib/types.ts",
    "description": "The types the server sends, written once so every card reads the same shape.",
-   "lines": 436
+   "lines": 438
   },
   {
    "id": "file:web/lib/uiTools.ts",
@@ -2574,7 +2583,7 @@
    "area": "web",
    "path": "web/lib/useChat.ts",
    "description": "The conversation: every thing the owner does is a message, and every answer is",
-   "lines": 770
+   "lines": 779
   },
   {
    "id": "mod:bigTurbo",
@@ -8387,6 +8396,11 @@
   },
   {
    "from": "file:server/kta_server/copy.py",
+   "to": "term:Car file",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
    "to": "term:Car history",
    "kind": "uses-term"
   },
@@ -10758,11 +10772,6 @@
    "kind": "uses-term"
   },
   {
-   "from": "file:server/tests/seam1/test_open_steps.py",
-   "to": "term:Shakedown drive",
-   "kind": "uses-term"
-  },
-  {
    "from": "file:server/tests/seam1/test_pictures.py",
    "to": "file:server/kta_server/copy.py",
    "kind": "tests"
@@ -10930,11 +10939,6 @@
   {
    "from": "file:server/tests/seam1/test_reply_words.py",
    "to": "term:Next step",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_reply_words.py",
-   "to": "term:Shakedown drive",
    "kind": "uses-term"
   },
   {
@@ -11130,6 +11134,46 @@
   {
    "from": "file:server/tests/seam1/test_ux_round1.py",
    "to": "term:Pedal full reading",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_ux_round2.py",
+   "to": "file:server/kta_server/copy.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/seam1/test_ux_round2.py",
+   "to": "file:server/tests/conftest.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_ux_round2.py",
+   "to": "file:server/tests/seam1/conftest.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_ux_round2.py",
+   "to": "file:server/tests/seam1/test_reply_words.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_ux_round2.py",
+   "to": "term:Car file",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_ux_round2.py",
+   "to": "term:Car history",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_ux_round2.py",
+   "to": "term:Map version",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_ux_round2.py",
+   "to": "term:Next step",
    "kind": "uses-term"
   },
   {
@@ -12765,6 +12809,11 @@
    "kind": "uses-term"
   },
   {
+   "from": "file:web/components/Messages.tsx",
+   "to": "term:Too-short drive",
+   "kind": "uses-term"
+  },
+  {
    "from": "file:web/components/ShopCards.tsx",
    "to": "file:web/components/Cards.tsx",
    "kind": "imports"
@@ -13042,6 +13091,11 @@
   {
    "from": "file:web/lib/types.ts",
    "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:web/lib/types.ts",
+   "to": "term:Car history",
    "kind": "uses-term"
   },
   {
