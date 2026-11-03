@@ -55,7 +55,7 @@
       fuelPress: { label: 'DI fuel pressure at WOT', display: function (d, F) { return isNum(d.value) ? F.num(d.value * 100, 0) + ' % of target (worst 5 %)' : 'Not logged'; }, fix: function () { return 'The high-pressure pump is at its limit. Do not add boost. Check the fuel filter; E10 needs about 4 % more fuel.'; } },
       overshoot: { label: 'Boost overshoot', display: function (d, F) { return isNum(d.value) ? F.signed(d.value, 1, ' psi') + (isNum(d.rpm) ? ' at ' + F.num(d.rpm) + ' rpm' : '') : 'Needs boost and boost target'; }, fix: function () { return 'Boost passes the pressure the ECU asked for: the exhaust is delivering air faster than the wastegate control expected, usually a freer exhaust system. Rides the overshoot, then the ECU pulls timing for it. Check the exhaust and the wastegate before anything else.'; } },
       undershoot: { label: 'Boost reaches target', display: function (d, F) { if (!isNum(d.value)) return 'Needs boost and boost target'; if (Math.abs(d.value) < 0.3) return 'On target after spool'; return F.num(Math.abs(d.value), 1) + ' psi ' + (d.value > 0 ? 'below' : 'above') + ' target after spool'; }, fix: function () { return 'Boost never reaches the pressure the ECU asked for. Warm-only misses point at the wastegate, misses even cold at a boost leak (intercooler couplers, clamps). Check the hoses and the wastegate before anything else.'; } },
-      mafHz: { label: 'AFM sensor headroom', display: function (d, F) { return isNum(d.value) ? F.hz(d.value) + ' peak' : 'AFM Hz not logged'; }, fix: function () { return 'The air meter is near 10,000 Hz, the end of what it can measure. Above that the ECU cannot know how much air there is, so more boost would be unmeasured fuel. Leave it alone; it is not a fault to chase.'; } },
+      mafHz: { label: 'MAF sensor headroom', display: function (d, F) { return isNum(d.value) ? F.hz(d.value) + ' peak' : 'MAF Hz not logged'; }, fix: function () { return 'The air meter is near 10,000 Hz, the end of what it can measure. Above that the ECU cannot know how much air there is, so more boost would be unmeasured fuel. Leave it alone; it is not a fault to chase.'; } },
       knock: { label: 'Knock retard at WOT', display: function (d, F) { if (d.scheduled) return F.num(d.loadMedian, 1) + '° under boost, scheduled by Knock Control (not knock events)'; return isNum(d.value) ? F.num(d.value, 1) + '° worst' + (isNum(d.rpm) ? ' at ' + F.num(d.rpm) + ' rpm' : '') + (d.multi ? ', several cylinders together' : '') : 'Knock retard not logged'; }, fix: function () { return 'Find the cause before adding anything: heat soak, fuel, boost. Rises while lugging are a driving habit; rises under load are fuel or heat. The Fuel-quality score line and the Drive check show where it came from. Never desensitize the knock sensors.'; } },
       kControl: { label: 'Fuel-quality score (Knock Control)', display: function (d, F) { return isNum(d.end) ? F.num(d.start, 2) + ' → ' + F.num(d.end, 2) + (d.peak > Math.max(d.start, d.end) + 0.02 ? ' (peak ' + F.num(d.peak, 2) + ')' : '') + (d.timingCost >= 0.5 ? '. Under boost your score costs about ' + F.num(d.timingCost, 1) + '° of timing' : '') + (d.noHard ? '. No hard driving until it drops' : '') + (d.highStart ? '. Starts high after a Flash, ECU reset or new tank: give it 10–15 calm minutes before judging' : '') + highRpmNote(d, F, '. ', 'Above ' + n0(F, d.highRpmLimit) + ' rpm it reached ' + n2(F, d.highRpmPeak) + ': the ECU raises the score there on purpose, so those rises do not count toward this line') : 'Not logged'; }, fix: function (d, F) { return (d.noHard ? 'No hard driving until it drops below 0.62: fill RON95 E10 at a busy station, drive the ECO map (18 psi), and wait for a calm stretch.' : (d.high ? 'The ECU is pulling timing for fuel or heat. Add nothing; on hot days use ECO (18 psi).' : 'The ECU kept hearing knock during this drive and moved toward its safer timing. The Drive check shows where it rose; fix that before adding anything.')) + highRpmNote(d, F, ' ', 'Above ' + n0(F, d.highRpmLimit) + ' rpm it reached ' + n2(F, d.highRpmPeak) + ': the ECU raises the score there on purpose, so those rises do not count toward this line.'); } },
       iat: { label: 'Intake air temp', display: function (d, F) { return isNum(d.value) ? F.num(d.value, 0) + ' °C peak' + ({ pull: ' in a pull', load: ' under boost', moving: ' while moving' }[d.where] || '') : 'Not logged'; }, fix: function () { return 'Heat-soaked. Cruise 5 minutes to cool before a pull. If it stays high, check the intercooler airflow and the intake heat shield.'; } },
@@ -65,11 +65,11 @@
       lowBoost: { label: 'Boost below 3,000 rpm', display: function (d, F) { return isNum(d.value) ? F.signed(d.value, 1, ' psi') + ' vs reference map' : 'Needs a pull and boost'; }, fix: function () { return 'More torque than the reference asks for below 3,000 rpm, which is where the CVT belt is most stressed. Log a pull at the same revs twice to confirm it is real before anyone changes the map.'; } }
     },
     readiness: {
-      hzEstimated: function () { return 'Log has AFM g/s but no Hz: Hz estimated from your current AFM table.'; },
-      noAfm: function () { return 'No AFM Hz or g/s column: the app can grade the log but cannot compute AFM corrections.'; },
-      shortCruise: function (r) { return 'Only ' + r.seconds + ' s of steady warm cruise. Drive 5-10 minutes at steady speeds for a reliable AFM correction.'; },
+      hzEstimated: function () { return 'Log has MAF g/s but no Hz: Hz estimated from your current MAF table.'; },
+      noAfm: function () { return 'No MAF Hz or g/s column: the app can grade the log but cannot compute MAF corrections.'; },
+      shortCruise: function (r) { return 'Only ' + r.seconds + ' s of steady warm cruise. Drive 5-10 minutes at steady speeds for a reliable MAF correction.'; },
       noPull: function () { return 'No full-throttle pull found. Fuel, Air and Spark under load stay unchecked.'; },
-      fuelLimited: function () { return 'Fuel pressure fell under 90 % of target during a pull. Only pull samples with fuel pressure at 95 % of target or more feed the AFM correction: a lean reading there can come from fuel supply, not airflow.'; },
+      fuelLimited: function () { return 'Fuel pressure fell under 90 % of target during a pull. Only pull samples with fuel pressure at 95 % of target or more feed the MAF correction: a lean reading there can come from fuel supply, not airflow.'; },
       missing: function (r, T) { return 'Not in this log: ' + r.keys.map(function (k) { return T.channels[k] || k; }).join(', ') + '.'; }
     },
     refs: {
@@ -101,7 +101,7 @@
     s1: {
       carLine: 'Honda Civic FE · 176 hp @ 6,000 rpm · 240 Nm @ 1,700-4,500 rpm (Vietnam spec)',
       mods: {
-        intake: { name: 'High-volume intake', effect: 'Changes how the AFM sensor reads air. Must be calibrated.', badge: 'Tune: Step 3' },
+        intake: { name: 'High-volume intake', effect: 'Changes how the MAF sensor reads air. Must be calibrated.', badge: 'Tune: Step 3' },
         downpipe: { name: 'Downpipe', effect: 'Spools sooner and can overshoot boost. The A/F sensor now sits in it: no leaks upstream.', badge: 'Check: boost' },
         frontpipe: { name: 'Front pipe', effect: 'A little more flow. No table change.', badge: 'No change' },
         catback: { name: 'Cat-back exhaust', effect: 'Sound. No tuning effect.', badge: 'No change' },
@@ -141,7 +141,7 @@
       inLog: 'in log', missing: 'missing'
     },
     s3: {
-      why: 'A bigger intake housing changes how the AFM sensor sees airflow. When the ECU under-reads air it under-fuels. At cruise the {trims} cover it up. At full throttle they switch off, and that is where engines get hurt. So the fix goes into the {afm}, not the trims.',
+      why: 'A bigger intake housing changes how the MAF sensor sees airflow. When the ECU under-reads air it under-fuels. At cruise the {trims} cover it up. At full throttle they switch off, and that is where engines get hurt. So the fix goes into the {afm}, not the trims.',
       trimsLink: 'fuel trims', afmLink: 'AFM Flow table',
       do1: function (intake) { return '<strong>Choose the starting curve.</strong> KTuner has AFM Flow presets for some housings (PRL Race, 27WON Race). If yours has one, select it, flash, and log again before using the numbers below. Your intake: <strong>' + intake + '</strong>.'; },
       intake: { other: 'no KTuner preset, so start from Custom', prl: 'PRL Race preset', won27: '27WON Race preset' },

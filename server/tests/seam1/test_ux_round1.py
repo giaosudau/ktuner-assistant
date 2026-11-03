@@ -135,7 +135,7 @@ def test_the_bands_carry_the_cards_limits(calibrating):
         {"gate": "cvt", "id": "cvtTemp", "label": "CVT fluid temp", "status": "good", "value": "73 °C peak"},
         {"gate": "heat", "id": "iat", "label": "Intake air temp", "status": "good", "value": "39 °C peak in a pull"},
         {"gate": "heat", "id": "ect", "label": "Coolant temp", "status": "good", "value": "92 °C peak"},
-        {"gate": "air", "id": "mafHz", "label": "AFM", "status": "nodata", "value": "AFM Hz not logged"},
+        {"gate": "air", "id": "mafHz", "label": "MAF sensor headroom", "status": "nodata", "value": "MAF Hz not logged"},
     ]
     facts = {"check.kControl.value": 0.4912, "check.trims.value": -3.24, "check.cvtTemp.value": 73.4,
              "check.iat.value": 39.2, "check.ect.value": 92}

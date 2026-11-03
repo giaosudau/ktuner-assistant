@@ -895,7 +895,7 @@
       var tab = opts.table || REF.maf.custom;
       hz = new Float64Array(n);
       for (i = 0; i < n; i++) hz[i] = isNum(log.mafGs[i]) ? invert(axis, tab, log.mafGs[i]) : NaN;
-      hzNote = 'Log has AFM g/s but no Hz: Hz estimated from your current AFM table.';
+      hzNote = 'Log has MAF g/s but no Hz: Hz estimated from your current MAF table.';
     }
 
     // ---- closed-loop fuel trims per AFM point
@@ -1217,8 +1217,8 @@
         !isNum(undershoot) ? 'Needs boost and boost target' : (Math.abs(undershoot) < 0.3 ? 'On target after spool' : F.num(Math.abs(undershoot), 1) + ' psi ' + (undershoot > 0 ? 'below' : 'above') + ' target after spool'),
         'Within 1.5 psi', 'Boost never reaches the pressure the ECU asked for. Warm-only misses point at the wastegate, misses even cold at a boost leak (intercooler couplers, clamps). Check the hoses and the wastegate before anything else.',
         { value: undershoot, hint: 'boost', basis: { t: 'judgement', k: 'undershoot-rule' }, data: { value: undershoot } }),
-      check('mafHz', 'AFM sensor headroom', grade(mafMax, L.mafHz),
-        isNum(mafMax) ? F.hz(mafMax) + ' peak' : 'AFM Hz not logged',
+      check('mafHz', 'MAF sensor headroom', grade(mafMax, L.mafHz),
+        isNum(mafMax) ? F.hz(mafMax) + ' peak' : 'MAF Hz not logged',
         'Under 9,500 Hz', 'The air meter is near 10,000 Hz, the end of what it can measure. Above that the ECU cannot know how much air there is, so more boost would be unmeasured fuel. Leave it alone; it is not a fault to chase.',
         { value: mafMax, hint: 'afm', basis: { t: 'judgement', k: 'mafheadroom' }, data: { value: mafMax } })
     ];
@@ -1347,10 +1347,10 @@
     var readiness = [], readinessCodes = [];
     function ready(code, text, extra) { readiness.push(text); var r = { code: code }; if (extra) for (var k in extra) r[k] = extra[k]; readinessCodes.push(r); }
     if (hzNote) ready('hzEstimated', hzNote);
-    if (!hz) ready('noAfm', 'No AFM Hz or g/s column: the app can grade the log but cannot compute AFM corrections.');
-    if (clSeconds < 180) ready('shortCruise', 'Only ' + Math.round(clSeconds) + ' s of steady warm cruise. Drive 5-10 minutes at steady speeds for a reliable AFM correction.', { seconds: Math.round(clSeconds) });
+    if (!hz) ready('noAfm', 'No MAF Hz or g/s column: the app can grade the log but cannot compute MAF corrections.');
+    if (clSeconds < 180) ready('shortCruise', 'Only ' + Math.round(clSeconds) + ' s of steady warm cruise. Drive 5-10 minutes at steady speeds for a reliable MAF correction.', { seconds: Math.round(clSeconds) });
     if (!events.length) ready('noPull', 'No full-throttle pull found. Fuel, Air and Spark under load stay unchecked.');
-    if (fpLimited * dt > 0.3) ready('fuelLimited', 'Fuel pressure fell under 90 % of target during a pull. Only pull samples with fuel pressure at 95 % of target or more feed the AFM correction: a lean reading there can come from fuel supply, not airflow.');
+    if (fpLimited * dt > 0.3) ready('fuelLimited', 'Fuel pressure fell under 90 % of target during a pull. Only pull samples with fuel pressure at 95 % of target or more feed the MAF correction: a lean reading there can come from fuel supply, not airflow.');
     if (log.missing.length) ready('missing', 'Not in this log: ' + log.missing.map(function (k) { return channelLabel(k); }).join(', ') + '.', { keys: log.missing.slice() });
 
     return {
@@ -1401,7 +1401,7 @@
     if (table.length !== m) throw new Error('The AFM table needs ' + m + ' values; got ' + table.length + '.');
     var maxStep = opts.maxStep || L.mafStepMax;
     var cl = analysis.maf.cl, wt = analysis.maf.wot;
-    if (!cl && !wt) return { ok: false, reason: 'This log has no AFM Hz or g/s, so there is nothing to correct against.' };
+    if (!cl && !wt) return { ok: false, reason: 'This log has no MAF Hz or g/s, so there is nothing to correct against.' };
 
     var corr = new Array(m), src = new Array(m);
     for (var k = 0; k < m; k++) {

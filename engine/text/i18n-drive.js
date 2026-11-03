@@ -173,7 +173,7 @@
         title: 'Log the channels that are missing',
         why: function (ev) {
           var names = ev.missing.map(function (k) { return { afrCmd: 'the AFR (lambda) command', mafHz: 'the AFM flow (Hz or g/s)' }[k] || k; }).join(' and ');
-          return 'This log has no ' + names + '. Without the AFR command the app cannot tell whether a rich full-throttle mixture is asked for by the ECU or caused by an airflow error. Without AFM flow it cannot compute an AFM correction. Two minutes in KTuner, no flash.';
+          return 'This log has no ' + names + '. Without the AFR command the app cannot tell whether a rich full-throttle mixture is asked for by the ECU or caused by an airflow error. Without MAF Hz it cannot compute a MAF correction. Two minutes in KTuner, no flash.';
         },
         steps: [
           'In KTuner, open the datalog (TunerView) channel list and add the AFR or lambda command (target) and the AFM (air flow meter) flow.',
