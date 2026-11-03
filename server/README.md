@@ -15,10 +15,26 @@ server/
                          the raw CSV of every upload
     mapdata.py           the KTuner basemap's tables: Map version 1's copy of the Map
     harness.py           one engine call -> one AG-UI TOOL_CALL_* quartet
-    copy.py              every word the owner reads (the built-in reply)
-    graph.py             ingest -> decide (settle, then one Next step) -> reply
-    app.py               FastAPI: POST /upload, POST /agent (AG-UI), GET /api/state, GET /healthz
+    copy.py              every word the owner reads (the built-in reply), health rows and
+                         their cited bands, the Undo steps, the "read this drive before" line
+    graph.py             an upload: ingest -> decide (settle, then one Next step) -> agent -> reply;
+                         a typed message: chat -> suggest (the suggested replies)
+    chat.py · desk.py    the front agent and the front desk (greeting, where the car is)
+    agent.py · verify.py the explainer with read-only engine tools, and the deterministic check
+                         every model reply passes
+    ask.py · window.py   a typed question answered over the drive window
+    loopstate.py         the Car file, the stage and the one Next step the chat mirrors
+    flash.py · mapcheck.py · flash_routes.py · readback.py
+                         the Flash plan checked twice, its routes, and did the ECU take it
+    profile.py · questions.py · knowledge.py · tour.py · pictures.py · screenshot.py
+                         the Car profile, owner questions, knowledge cards, the map tour, charts,
+                         a KTuner screenshot
+    scorecard.py         the live model scorecard and clarity judge
+    app.py               FastAPI: POST /upload, POST /agent (AG-UI), /api/state, /api/profile,
+                         /api/ask, /api/flash, /api/history, /api/threads, GET /healthz
+  tests/                 knowledge, verify and scorecard tests
   tests/seam1/           the seam-1 harness: post an upload, assert the reply events
+                         (`test_ux_round*.py` pin each UX loop round's server changes)
 ```
 
 ## Run it
@@ -73,11 +89,13 @@ sees a log it did not send.
 ← {"id":"7","ok":false,"error":{"message":"…","code":"…"}}
 ```
 
-Ops: `ping`, `loadLog`, `ingestUpload`, `carHistory`, `carBaseline`, `mapVersions`,
-`mapVersion`, `recordBasemap`, `flashPlan`, `recordFlash`, `answerDrive`,
-`settleOpenSteps`, `nextStep`, `exportHistory`, `importHistory`, `driveFacts`, and
-the `engine/kta-ask.js` tool handlers `overview`, `insight`, `channelStats`,
-`timingCell`, `pull`.
+Ops: `ping` (with the engine's `limits`, CVT included), `loadLog`, `ingestUpload`,
+`carHistory`, `carBaseline`, `carCalibration`, `mapVersions`, `mapVersion`,
+`recordBasemap`, `storeMapTables`, `tableMeta`, `flashPlan`, `checkMapChange`,
+`recordFlash`, `recordRestore`, `answerDrive`, `questions`, `housingOption`,
+`settleOpenSteps`, `nextStep`, `exportHistory`, `importHistory`, `fuelTest`,
+`driveFacts`, `logTargets`, `picture`, and the `engine/kta-ask.js` tool handlers
+`overview`, `insight`, `channelStats`, `timingCell`, `pull`.
 
 ## The loop in two calls
 
@@ -134,4 +152,8 @@ compiled graph. The chat sends `state.upload_id` and `state.thread_id`:
 | `TEXT_MESSAGE_*` | the reply prose: the first sentence, then the window |
 | `TOOL_CALL_START/ARGS/END/RESULT` | one harness step with its inputs and its output |
 | `CUSTOM` name `harness` | `{checked, seconds, line, steps}` — the collapsed line |
-| `STATE_SNAPSHOT` | `state.reply`, the typed card the chat renders: the Verdict sentence, the window, the four numbers, the **Map version line**, what I asked last time, the Wasted drive line, the Flash plan, the harness steps, the one Next step with its recipe or gauge table, and the Open steps list |
+| `STATE_SNAPSHOT` | `state.reply`, the typed card the chat renders: the Verdict sentence, the window, the four numbers, the **Map version line**, what I asked last time, the Wasted drive line, the Flash plan, the harness steps, the one Next step with its recipe or gauge table (an Undo as numbered steps), the Open steps list, the health rows with their cited bands, and `repeat` when this drive was read before (nothing is stored twice) |
+
+On a typed message the `suggest` model call runs **after** the answer's `STATE_SNAPSHOT`; the
+run ends only at `RUN_FINISHED`. The chat shows "Suggesting replies" over that gap, so a client
+must treat the run as busy until `RUN_FINISHED`, not until the answer arrives.

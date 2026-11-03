@@ -47,10 +47,34 @@ cd web && npm run e2e                     # browser smoke through the composer (
 cd server && KTA_SCORECARD=1 uv run python -m kta_server.scorecard   # live model scorecard (needs a key)
 ```
 
+- The e2e runs its car-setup steps only on a fresh database (start the server with an empty
+  `KTA_DB`). `CHROMIUM_PATH=<browser binary>` uses an installed Chrome instead of Playwright's;
+  `KTA_E2E_SHOTS=<folder>` saves a screenshot of any step that fails.
+- `.scratch/ux-loop/walk.js` walks every screen at any width (`KTA_SHOTS=<folder>`);
+  `.scratch/ux-loop/journey.js` replays car setup and the owner's nine real drives in order,
+  then a returning owner, and writes what each reply showed to `journey.json`.
+
+## Improving it: the UX loop
+
+The chat is improved in rounds by a product team (product manager, tuner, KTuner and Hondata
+experts, a car owner, a frontend engineer). Each round walks the real app and the whole owner
+journey, debates, ships at least ten owner-visible fixes with their tests, pays one tech-debt
+item and updates these READMEs. A scheduled task starts the next round every 5 hours.
+
+- `.scratch/ux-loop/LOOP.md` — the procedure: roles, the cycle, the detail checklist, the
+  journey lens (what the owner meets, the words, how a step is shown), real-world scenarios.
+- `.scratch/ux-loop/STATUS.md` — what each round shipped with its proof, the tech-debt list and
+  the next round's backlog.
+- `.scratch/ux-loop/discussion-r*.md` — each round's full debate; `audit.md`, `research.md` —
+  the first UI audit and the sourced owner-mistake scenarios and gauge bands.
+
 ## Docs
 
 - `PRODUCT.md` — who it's for and the principles; `DESIGN.md` — the chat's visual system.
 - `CONTEXT.md` — the vocabulary every reply and every line of code uses.
 - `docs/adr/` — architecture decisions; `docs/research/` — sourced research the knowledge cards cite.
 - `.scratch/tuning-shop/` — the current analysis, decisions, tracker and eval; `.scratch/chat-app/`
-  — the chat UI spec; `.scratch/tuning-loop/` — the loop's engine and server spec.
+  — the chat UI spec; `.scratch/tuning-loop/` — the loop's engine and server spec;
+  `.scratch/calibration-drive/` — the Calibration drive tickets; `.scratch/ux-loop/` — the UX loop.
+- `docs/knowledge-graph/` — the knowledge cards and code linked as one graph
+  (`python3 tools/knowledge-graph.py` rebuilds it, `--check` fails when it is stale).

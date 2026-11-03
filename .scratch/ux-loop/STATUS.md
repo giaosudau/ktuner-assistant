@@ -29,12 +29,20 @@ said twice when the Map version is known, MAF strings the first pass missed).
 Also paid: `undo_sentence` deleted (its tests now guard `undo_recipe`); the e2e no longer pins the
 model's own sentence (the built-in one stays pinned in three server tests).
 
+Docs (added after the round, now step 8 of `LOOP.md`): `README.md` gains the e2e options, the
+walk and journey scripts, the UX loop section and the knowledge graph; `server/README.md` gains
+the full module list, both graph shapes, every worker op, the health/Undo/`repeat` reply fields
+and the rule that a run is busy until `RUN_FINISHED`.
+
 ## Tech debt list
 
 - The legacy "AFM Flow" family name (~40 engine uses, an internal key) vs KTuner's "MAF Scaling":
   rename the owner-facing label once the key is separated from the words.
 - Web words chips, pills and "Done" itself (KIND, Suggestions, the banner), against "the server
   words it": move them into the server's copy when that file next changes.
+- `make kg`, `kg-view`, `kg-eval`, `kg-simulate` are named by `tools/knowledge-graph.py --check`,
+  `overlay.json`, `drives.json` and the graph viewer, but the Makefile has only `run`: add the
+  targets or point the messages at the `python3 tools/…` commands.
 - `NextStepCard`'s "This drive didn't count:" branch never runs today (every Wasted line starts
   "This Drive settles nothing"): delete it if the server's wording stays.
 

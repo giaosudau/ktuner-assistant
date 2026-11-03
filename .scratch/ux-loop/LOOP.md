@@ -41,8 +41,14 @@ server does not send is a server change first, never a number made up in the bro
 6. **Verify.** `npm test` · `cd server && uv run pytest -q` · `cd web && npx tsc --noEmit` ·
    browser check at 390 and 1280, light and dark, with before/after screenshots in the scratchpad.
 7. **Review.** A code-review subagent on the diff; fix what it confirms.
-8. **Commit.** One commit per item or per tight group, message says the owner-visible change.
-9. **Record.** Update `STATUS.md`: what shipped (with proof), what was cut and why, the next
+8. **Docs.** Read `README.md` and `server/README.md` against the round's diff: a new file,
+   module, route, worker op, env var, test command, reply field or event, or a changed flow
+   (what the chat waits for, what the owner sees first) goes in, and anything the round made
+   untrue comes out. Check every path and name you write exists (`ls`, `grep`). Also
+   `CONTEXT.md` when a term changed. No change needed? Say so in `STATUS.md`. The READMEs feed
+   the knowledge graph: rebuild it (`python3 tools/knowledge-graph.py`, then `--check`).
+9. **Commit.** One commit per item or per tight group, message says the owner-visible change.
+10. **Record.** Update `STATUS.md`: what shipped (with proof), what was cut and why, the next
    run's backlog ranked. Never leave the tree red.
 
 ## Detail review checklist (every screen, every control)

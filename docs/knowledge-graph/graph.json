@@ -49,7 +49,7 @@
    "tests": 63,
    "touches": 172,
    "uses": 55,
-   "uses-term": 686,
+   "uses-term": 687,
    "works-on": 5,
    "wraps": 1
   }
@@ -1419,7 +1419,7 @@
    "area": "docs",
    "path": "README.md",
    "description": "KTuner Assistant",
-   "lines": 57
+   "lines": 81
   },
   {
    "id": "file:data/KTuner-Maps-Digitized.xlsx",
@@ -2430,7 +2430,7 @@
    "area": "web",
    "path": "web/components/Cards.tsx",
    "description": "The generative-UI cards an assistant message can carry, in the order a reply",
-   "lines": 586
+   "lines": 588
   },
   {
    "id": "file:web/components/Chart.tsx",
@@ -2475,7 +2475,7 @@
    "area": "web",
    "path": "web/components/KTunerCard.tsx",
    "description": "The plan to type into KTuner, in the order the owner does it: open the file,",
-   "lines": 232
+   "lines": 234
   },
   {
    "id": "file:web/components/Markdown.tsx",
@@ -2538,7 +2538,7 @@
    "area": "tests",
    "path": "web/e2e/chat.e2e.js",
    "description": "'use strict';",
-   "lines": 219
+   "lines": 220
   },
   {
    "id": "file:web/lib/api.ts",
@@ -12736,6 +12736,11 @@
   {
    "from": "file:web/components/KTunerCard.tsx",
    "to": "term:Map version",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:web/components/KTunerCard.tsx",
+   "to": "term:Next step",
    "kind": "uses-term"
   },
   {
