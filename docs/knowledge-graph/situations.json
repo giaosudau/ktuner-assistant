@@ -5243,9 +5243,9 @@
      "id": "kc-rich-wot",
      "title": "My full-throttle mixture reads richer than the map asks",
      "kind": "owner-question",
-     "score": 24.0,
+     "score": 23.9,
      "why": [
-      "keywords 14.0",
+      "keywords 13.9",
       "the shop-round stage's method",
       "about mixture"
      ]
@@ -5265,9 +5265,9 @@
      "id": "kc-maf-wot-calibration",
      "title": "How tuners correct the full-throttle end of the airflow curve",
      "kind": "ktuner-howto",
-     "score": 16.4,
+     "score": 16.3,
      "why": [
-      "keywords 12.4",
+      "keywords 12.3",
       "about mixture"
      ]
     }
@@ -7981,9 +7981,9 @@
      "id": "kc-table-maf",
      "title": "The airflow (MAF Scaling) table comes first",
      "kind": "ktuner-howto",
-     "score": 30.4,
+     "score": 30.5,
      "why": [
-      "keywords 6.4",
+      "keywords 6.5",
       "the decision's reason",
       "about airflow"
      ]
@@ -8013,9 +8013,9 @@
      "id": "kc-maf-data-rules",
      "title": "What a log needs before the airflow curve can be corrected",
      "kind": "rule",
-     "score": 23.5,
+     "score": 23.6,
      "why": [
-      "keywords 13.5",
+      "keywords 13.6",
       "the shop-round stage's method",
       "about airflow"
      ]
@@ -18068,9 +18068,9 @@
      "id": "kc-boost-step",
      "title": "More boost, one proven step at a time",
      "kind": "play",
-     "score": 12.1,
+     "score": 12.3,
      "why": [
-      "keywords 12.1"
+      "keywords 12.3"
      ]
     }
    ],
