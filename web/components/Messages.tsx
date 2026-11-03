@@ -6,11 +6,11 @@
  *
  *   work row (what it checked, collapsible) → prose → cards → quick replies
  */
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import type { Capability, LoopState, Recap, Suggestion, UiCard } from "../lib/api";
 import type { AiMsg, Msg, UserMsg } from "../lib/useChat";
-import { sizeOf } from "../lib/useChat";
+import { secondsWords, sizeOf, useElapsed } from "../lib/useChat";
 import type { CarProfile, HarnessSummary, OwnerQuestion, Picture, Turn } from "../lib/types";
 import { NextStepCard, ProfileCard, QuestionCard, ReportCard, SettledCard } from "./Cards";
 import { Chart } from "./Chart";
@@ -136,20 +136,33 @@ function pretty(value: unknown): string {
   }
 }
 
-function WorkRow({ turn }: { turn: Turn }) {
+/** The live step, the seconds the owner has waited, and how many things were checked so far. */
+function LiveLine({ label, since, count }: { label: string; since?: number; count?: number }) {
+  const secs = useElapsed(since, true);
+  return (
+    <div className="work-live" data-testid="thinking" aria-live="polite">
+      <span className="spinner" />
+      <span className="shimmer">{label}</span>
+      {/* Ticks every second: hidden from screen readers so the live region only announces the step. */}
+      {secs !== null ? (
+        <span className="muted live-secs" data-testid="live-seconds" aria-hidden="true">
+          · {secondsWords(secs)}
+        </span>
+      ) : null}
+      {count ? <span className="muted">· {count} checked</span> : null}
+    </div>
+  );
+}
+
+function WorkRow({ turn, startedAt, endedAt, idle = "Reading your log" }: { turn: Turn; startedAt?: number; endedAt?: number; idle?: string }) {
   const h: HarnessSummary | null = turn.harness;
   const steps = h?.steps ?? [];
-  if (turn.running) {
-    return (
-      <div className="work-live" data-testid="thinking" aria-live="polite">
-        <span className="spinner" />
-        <span className="shimmer">{turn.live ? `${titleOf(turn.live)}…` : "Reading your log…"}</span>
-        {steps.length ? <span className="muted">· {steps.length} checked</span> : null}
-      </div>
-    );
-  }
+  if (turn.running) return <LiveLine label={turn.live ? titleOf(turn.live) : idle} since={startedAt} count={steps.length} />;
   if (!h) return null;
-  const secs = h.seconds ? `${h.seconds < 10 ? h.seconds.toFixed(1) : Math.round(h.seconds)} s` : null;
+  // The wall time the owner waited, from send to done; the tool times stay in the list below.
+  // A chat saved before the wall time was kept falls back to the server's own seconds.
+  const secs =
+    startedAt && endedAt && endedAt >= startedAt ? secondsWords((endedAt - startedAt) / 1000) : h.seconds ? secondsWords(h.seconds) : null;
   const count = h.checked || steps.length;
   return (
     <>
@@ -186,7 +199,7 @@ function WorkRow({ turn }: { turn: Turn }) {
       {turn.thinking ? (
         <details className="think" data-testid="thinking-block">
           <summary>
-            Thinking <span className="tag-unchecked">unchecked</span>
+            My working notes <span className="tag-unchecked">· not checked</span>
             <Icon name="chev" className="icon chev" />
           </summary>
           <pre>{turn.thinking}</pre>
@@ -197,14 +210,8 @@ function WorkRow({ turn }: { turn: Turn }) {
 }
 
 // ------------------------------------------------------------ assistant turns
-function Typing({ live, count }: { live?: string; count?: number }) {
-  return (
-    <div className="work-live" data-testid="thinking" aria-live="polite">
-      <span className="spinner" />
-      <span className="shimmer">{live ? `${live}…` : "Thinking…"}</span>
-      {count ? <span className="muted">· {count} checked</span> : null}
-    </div>
-  );
+function Typing({ live, count, since }: { live?: string; count?: number; since?: number }) {
+  return <LiveLine label={live || "Thinking"} since={since} count={count} />;
 }
 
 function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
@@ -214,7 +221,7 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
   const pictures: Picture[] = [...(card?.pictures ?? []), ...(card?.agent?.pictures ?? [])];
   return (
     <>
-      <WorkRow turn={turn} />
+      <WorkRow turn={turn} startedAt={msg.startedAt} endedAt={msg.endedAt} />
       {say ? (
         <div data-testid="say">
           <Markdown text={say} citations={card?.agent?.citations} />
@@ -225,6 +232,8 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
           ) : null}
         </div>
       ) : null}
+      {/* Verdict first: the Drive report, then the window it was read on, then the brief's checkpoints. */}
+      {card ? <ReportCard card={card} fileName={turn.fileName} /> : null}
       {card?.window ? (
         <div className="basis" data-testid="drive-basis">
           <Icon name="history" />
@@ -233,7 +242,6 @@ function DriveReply({ msg, a }: { msg: AiMsg; a: Actions }) {
         </div>
       ) : null}
       {card?.checkpoints?.length ? <CheckpointsCard rows={card.checkpoints} /> : null}
-      {card ? <ReportCard card={card} fileName={turn.fileName} /> : null}
       {card?.health?.rows.length ? <HealthCard report={card.health} /> : null}
       {card?.calibration ? <CalibrationResultCard card={card.calibration} /> : null}
       {card?.fuelTest ? <FuelTestCard test={card.fuelTest} /> : null}
@@ -264,7 +272,7 @@ function Body({ msg, a }: { msg: AiMsg; a: Actions }) {
   if (msg.pending) {
     // A typed answer streams its work row like a Drive reply does: the harness
     // steps so far and the prose as it arrives, not just the live tool's name.
-    if (!msg.harness?.steps?.length && !msg.lines?.length) return <Typing live={msg.live} count={msg.liveCount} />;
+    if (!msg.harness?.steps?.length && !msg.lines?.length) return <Typing live={msg.live} count={msg.liveCount} since={msg.startedAt} />;
     const live: Turn = {
       id: msg.id,
       fileName: "",
@@ -277,7 +285,7 @@ function Body({ msg, a }: { msg: AiMsg; a: Actions }) {
     const say = (msg.lines ?? []).filter((l) => l.trim()).join("\n\n");
     return (
       <>
-        <WorkRow turn={live} />
+        <WorkRow turn={live} startedAt={msg.startedAt} idle="Thinking" />
         {say ? (
           <div data-testid="ask-answer">
             <Markdown text={say} />
@@ -323,7 +331,7 @@ function Body({ msg, a }: { msg: AiMsg; a: Actions }) {
     };
     return (
       <>
-        <WorkRow turn={work} />
+        <WorkRow turn={work} startedAt={msg.startedAt} endedAt={msg.endedAt} />
         <div data-testid="ask-answer">
           <Markdown text={ans.answer ?? "I have no answer to that yet."} citations={ans.citations} />
         </div>
@@ -416,6 +424,7 @@ function Body({ msg, a }: { msg: AiMsg; a: Actions }) {
  * the reply's own chips when the server sent them, else the drive reply's, else the stage's.
  */
 function Suggestions({ msg, a }: { msg: AiMsg; a: Actions }) {
+  const why = useId();
   const step = msg.turn?.card?.nextStep ?? msg.result?.nextStep;
   let items: Suggestion[] = msg.answer?.suggestions ?? [];
   if (!items.length && msg.kind === "drive" && msg.turn?.card) {
@@ -429,11 +438,24 @@ function Suggestions({ msg, a }: { msg: AiMsg; a: Actions }) {
   return (
     <div className="chips" data-testid="suggestions">
       {items.slice(0, 3).map((s) => (
-        <button key={s.label} type="button" className="chip" disabled={a.busy} onClick={() => a.onChip(s)}>
+        <button
+          key={s.label}
+          type="button"
+          className="chip"
+          disabled={a.busy}
+          title={a.busy ? "Wait for this reply to finish" : undefined}
+          aria-describedby={a.busy ? why : undefined}
+          onClick={() => a.onChip(s)}
+        >
           <Icon name={s.icon ?? "help"} />
           {s.label}
         </button>
       ))}
+      {a.busy ? (
+        <span className="chips-why" id={why}>
+          Wait for this reply to finish.
+        </span>
+      ) : null}
     </div>
   );
 }

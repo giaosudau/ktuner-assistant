@@ -271,6 +271,99 @@ const LOGGER_CHANNELS: { key: "logger_afr_command" | "logger_maf_hz"; label: str
   { key: "logger_maf_hz", label: "MAF Hz" },
 ];
 
+/** The owner's three honest answers about a TunerView channel. */
+const LOGGER_CHOICES: { value: boolean | null; id: string; word: string }[] = [
+  { value: true, id: "yes", word: "Offered" },
+  { value: false, id: "no", word: "Not offered" },
+  { value: null, id: "unknown", word: "Haven’t looked" },
+];
+
+const CAL_NEED = "Needed for: can more boost show?";
+
+/**
+ * The Calibration fields still unset, in the order the card shows them. This only lists the
+ * owner's own input back to them; it reads no log and decides nothing.
+ */
+function calibrationGaps(f: CarProfile): string[] {
+  const gaps: string[] = [];
+  if (f.pedal_full_pct == null) gaps.push("Pedal full reading");
+  if (f.logger_afr_command == null) gaps.push("AFR Command");
+  if (f.logger_maf_hz == null) gaps.push("MAF Hz");
+  if (f.logger_max_rate_hz == null) gaps.push("Fastest logging rate");
+  return gaps;
+}
+
+/** A field's label row: the label, then a status word (amber while unset, green once said). */
+function CalLabel({ label, word, set, htmlFor, id }: { label: string; word: string; set: boolean; htmlFor?: string; id?: string }) {
+  const head = (
+    <>
+      <span className="cal-name">{label}</span>
+      <Pill tone={set ? "good" : "watch"} word={word} />
+    </>
+  );
+  return htmlFor ? (
+    <label className="cal-head" htmlFor={htmlFor} id={id}>
+      {head}
+    </label>
+  ) : (
+    <span className="cal-head" id={id}>
+      {head}
+    </span>
+  );
+}
+
+/** Three-way choice as a radio group of 44 px buttons; arrow keys move the choice. */
+function Segmented({
+  name,
+  labelledBy,
+  value,
+  onChange,
+  testId,
+}: {
+  name: string;
+  labelledBy: string;
+  value: boolean | null | undefined;
+  onChange: (value: boolean | null) => void;
+  testId: string;
+}) {
+  const current = LOGGER_CHOICES.findIndex((c) => c.value === (value ?? null));
+  const pick = (i: number, group: HTMLElement | null) => {
+    const n = LOGGER_CHOICES.length;
+    const next = (i + n) % n;
+    onChange(LOGGER_CHOICES[next].value);
+    group?.querySelectorAll<HTMLButtonElement>("[role=radio]")[next]?.focus();
+  };
+  return (
+    <div className="seg" role="radiogroup" aria-labelledby={labelledBy} data-testid={testId} data-value={LOGGER_CHOICES[current].id}>
+      {LOGGER_CHOICES.map((c, i) => (
+        <button
+          key={c.id}
+          type="button"
+          role="radio"
+          name={name}
+          aria-checked={i === current}
+          tabIndex={i === current ? 0 : -1}
+          className={i === current ? "on" : ""}
+          data-testid={`${testId}-${c.id}`}
+          onClick={() => onChange(c.value)}
+          onKeyDown={(event) => {
+            const group = event.currentTarget.parentElement;
+            if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+              event.preventDefault();
+              pick(i + 1, group);
+            } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+              event.preventDefault();
+              pick(i - 1, group);
+            }
+          }}
+        >
+          {c.word}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 const FIELDS: {
   key: keyof Omit<
     CarProfile,
@@ -334,6 +427,7 @@ export function ProfileCard({
   }
   const toggle = (part: string) =>
     setFields((f) => ({ ...f, parts: f.parts.includes(part) ? f.parts.filter((p) => p !== part) : [...f.parts, part] }));
+  const gaps = calibrationGaps(fields);
   return (
     <section className="card" data-testid="setup-form">
       <h3 className="card-h">
@@ -375,7 +469,7 @@ export function ProfileCard({
           ))}
         </div>
       </div>
-      <label className="small" style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 12 }}>
+      <label className="pf-toggle">
         <input
           type="checkbox"
           checked={fields.eliminate_artificial_kc_rise === true}
@@ -384,60 +478,74 @@ export function ProfileCard({
         />
         <span>
           &ldquo;Eliminate Artificial Knock Control Rise&rdquo; is ticked on my map
-          <br />
           <span className="meta">Unticked, the ECU raises Knock Control above 5,200 rpm on purpose, so I don&rsquo;t count those rises.</span>
         </span>
       </label>
-      <label className="field" style={{ marginTop: 12 }}>
-        <span>Pedal full reading (TPS %)</span>
-        <input
-          type="number"
-          inputMode="decimal"
-          min={60}
-          max={130}
-          step="any"
-          placeholder="Not read yet"
-          value={fields.pedal_full_pct ?? ""}
-          data-testid="setup-field-pedal_full_pct"
-          onChange={(event) => setFields((f) => ({ ...f, pedal_full_pct: event.target.value === "" ? null : Number(event.target.value) }))}
-        />
-        <span className="meta">
-          Parked, ignition on, engine off: press the pedal to the floor and read TPS in TunerView. A pull counts as floored from 90 % of it.
-        </span>
-      </label>
-      <div className="field" style={{ marginTop: 12 }}>
-        <span>What TunerView can log on this car</span>
-        <div className="pf-grid">
-          {LOGGER_CHANNELS.map(({ key, label }) => (
-            <label className="field" key={key}>
-              <span>{label}</span>
-              <select
-                value={fields[key] === true ? "yes" : fields[key] === false ? "no" : ""}
-                data-testid={`setup-field-${key}`}
-                onChange={(event) =>
-                  setFields((f) => ({ ...f, [key]: event.target.value === "yes" ? true : event.target.value === "no" ? false : null }))
-                }
-              >
-                <option value="">Not checked</option>
-                <option value="yes">Offered</option>
-                <option value="no">Not offered</option>
-              </select>
-            </label>
-          ))}
-          <label className="field">
-            <span>Fastest logging rate (a second)</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              min={1}
-              max={50}
-              step="any"
-              placeholder="Not checked"
-              value={fields.logger_max_rate_hz ?? ""}
-              data-testid="setup-field-logger_max_rate_hz"
-              onChange={(event) => setFields((f) => ({ ...f, logger_max_rate_hz: event.target.value === "" ? null : Number(event.target.value) }))}
-            />
-          </label>
+
+      <div className="pf-cal" data-testid="setup-calibration">
+        <div className="sub-h">For the Calibration drive</div>
+        <div className="field cal-field">
+          <CalLabel
+            label="Pedal full reading (TPS %)"
+            htmlFor="pf-pedal"
+            set={fields.pedal_full_pct != null}
+            word={fields.pedal_full_pct != null ? `${fields.pedal_full_pct} %` : "Not read yet"}
+          />
+          <span className="cal-need">{CAL_NEED}</span>
+          <input
+            id="pf-pedal"
+            type="number"
+            inputMode="decimal"
+            min={60}
+            max={130}
+            step="any"
+            placeholder="Not read yet"
+            value={fields.pedal_full_pct ?? ""}
+            data-testid="setup-field-pedal_full_pct"
+            onChange={(event) => setFields((f) => ({ ...f, pedal_full_pct: event.target.value === "" ? null : Number(event.target.value) }))}
+          />
+          <span className="meta">
+            Parked, ignition on, engine off: press the pedal to the floor and read TPS in TunerView. A pull counts as floored from 90 % of it.
+          </span>
+        </div>
+
+        <div className="cal-group-h">What TunerView can log on this car</div>
+        {LOGGER_CHANNELS.map(({ key, label }) => {
+          const choice = LOGGER_CHOICES.find((c) => c.value === (fields[key] ?? null)) ?? LOGGER_CHOICES[2];
+          return (
+            <div className="field cal-field" key={key}>
+              <CalLabel label={label} id={`pf-${key}`} set={fields[key] != null} word={choice.word} />
+              <span className="cal-need">{CAL_NEED}</span>
+              <Segmented
+                name={key}
+                labelledBy={`pf-${key}`}
+                value={fields[key]}
+                testId={`setup-field-${key}`}
+                onChange={(value) => setFields((f) => ({ ...f, [key]: value }))}
+              />
+            </div>
+          );
+        })}
+        <div className="field cal-field">
+          <CalLabel
+            label="Fastest logging rate (a second)"
+            htmlFor="pf-rate"
+            set={fields.logger_max_rate_hz != null}
+            word={fields.logger_max_rate_hz != null ? `${fields.logger_max_rate_hz} a second` : "Haven’t looked"}
+          />
+          <span className="cal-need">{CAL_NEED}</span>
+          <input
+            id="pf-rate"
+            type="number"
+            inputMode="decimal"
+            min={1}
+            max={50}
+            step="any"
+            placeholder={"Haven’t looked"}
+            value={fields.logger_max_rate_hz ?? ""}
+            data-testid="setup-field-logger_max_rate_hz"
+            onChange={(event) => setFields((f) => ({ ...f, logger_max_rate_hz: event.target.value === "" ? null : Number(event.target.value) }))}
+          />
         </div>
         <span className="meta">From TunerView&rsquo;s gauge list and rate menu. A gauge it doesn&rsquo;t offer is never asked for.</span>
       </div>
@@ -446,7 +554,15 @@ export function ProfileCard({
           Still to say: {draft.missing.join(", ")}.
         </p>
       ) : null}
-      <div className="btn-row">
+      {gaps.length ? (
+        <p className="pf-gaps" data-testid="setup-calibration-missing">
+          <Icon name="alert" />
+          <span>
+            Still to read: {gaps.join(", ")}. Your next drive can&rsquo;t answer &ldquo;can more boost show?&rdquo; without them.
+          </span>
+        </p>
+      ) : null}
+      <div className="btn-row pf-save">
         <span className="meta">A changed parts list is saved as an Install with today's date.</span>
         <button type="button" className="btn primary" data-testid="setup-confirm" disabled={busy} onClick={() => onSave(fields)}>
           Save to my car

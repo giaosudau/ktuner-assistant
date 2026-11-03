@@ -221,6 +221,10 @@ export type Picture =
       unit: string;
       series: { name: string; points: [number, number][] }[];
       moment: { at: number; label: string };
+      /** Reference lines from a cited card (e.g. kc-ranges), drawn behind the trace. */
+      marks?: BandMark[];
+      /** A fixed y range so a small change is not drawn as a cliff. */
+      yRange?: [number, number] | null;
     }
   | {
       kind: "map_grid";
@@ -237,10 +241,19 @@ export type Picture =
 /** Did the log meet the drive brief? One row per checkpoint; `met` null when the log can't say. */
 export type Checkpoint = { id: string; label: string; value: string; met: boolean | null };
 
+/** One line on a gauge scale: where Watch or Stop starts, from a cited card or data/thresholds.json. */
+export type BandMark = { at: number; label: string; tone: "good" | "watch" | "stop" | "none" };
+
+/**
+ * A health value on its scale, only for checks whose limits are cited (knowledge card or
+ * data/thresholds.json key in `source`); null for every other check.
+ */
+export type HealthBand = { value: number; unit: string; min: number; max: number; marks: BandMark[]; source: string };
+
 /** The engine's health checks, as the shop's report shows them. */
 export type HealthReport = {
   line: string | null;
-  rows: { system: string; id: string; label: string; value: string; word: string; tone: string }[];
+  rows: { system: string; id: string; label: string; value: string; word: string; tone: string; band?: HealthBand | null }[];
 };
 
 /** The Calibration result (calibration drive C10): Pedal, Logger, Ceiling, What it means — each with its numbers. */
@@ -276,6 +289,8 @@ export type DriveBrief = {
   checkpoints: string[];
   recipe: DriveRecipe | null;
   gauges: GaugeTable | null;
+  /** The KTuner map slot this brief's drive must be on (the Calibration drive: 2), else null. */
+  slot?: number | null;
 };
 
 /** The typed reply card, read from the AG-UI STATE_SNAPSHOT. */

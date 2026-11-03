@@ -8,7 +8,7 @@
 import { useEffect, useRef } from "react";
 
 import { FUELS, type LogTags } from "../lib/api";
-import { sizeOf } from "../lib/useChat";
+import { secondsWords, sizeOf, useElapsed } from "../lib/useChat";
 import { Icon } from "./Icons";
 
 const IMAGES = ["image/png", "image/jpeg", "image/webp"];
@@ -34,6 +34,8 @@ export function Composer({
   autoFocus,
   tags,
   setTags,
+  briefSlot,
+  busySince,
 }: {
   text: string;
   setText: (v: string) => void;
@@ -47,7 +49,12 @@ export function Composer({
   autoFocus?: boolean;
   tags: LogTags;
   setTags: (t: LogTags) => void;
+  /** The KTuner map slot the open drive brief asks for, when it names one. */
+  briefSlot?: number | null;
+  /** When the reply being worked on was sent, for the live seconds in the hint. */
+  busySince?: number;
 }) {
+  const waited = useElapsed(busySince, busy);
   const area = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const canSend = !busy && (text.trim().length > 0 || file !== null);
@@ -102,7 +109,7 @@ export function Composer({
                 </select>
               </label>
               <label title="KTuner can switch between maps on the fly: which one was this drive on?">
-                Map slot
+                KTuner map slot
                 <select value={tags.slot} onChange={(e) => setTags({ ...tags, slot: Number(e.target.value) })} data-testid="tag-slot">
                   {[1, 2, 3, 4].map((n) => (
                     <option key={n} value={n}>
@@ -111,6 +118,18 @@ export function Composer({
                   ))}
                 </select>
               </label>
+            </div>
+          ) : null}
+          {isCsv ? (
+            <div className="slot-guard" role="status">
+              {typeof briefSlot === "number" && tags.slot !== briefSlot ? (
+                <div className="slot-warn" data-testid="slot-warn">
+                  <Icon name="alert" />
+                  <span>
+                    Your drive brief asks for slot {briefSlot} (Tune {briefSlot}). Change it only if you drove on another slot.
+                  </span>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -173,7 +192,7 @@ export function Composer({
         >
           <Icon name="plus" />
         </button>
-        <span className="composer-hint">{busy ? "Working…" : file ? "" : "Attach a TunerView CSV"}</span>
+        <span className="composer-hint">{busy ? (waited !== null ? `Working · ${secondsWords(waited)}` : "Working…") : file ? "" : "Attach a TunerView CSV"}</span>
         <span className="spacer" />
         <button type="submit" className="send-btn" aria-label="Send" data-testid="send" disabled={!canSend}>
           {busy ? <span className="spinner" style={{ borderTopColor: "currentColor" }} /> : <Icon name="send" />}

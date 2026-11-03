@@ -5,7 +5,7 @@
  * it. Inline SVG, no chart library; every number printed here is also in the
  * reply text, and each picture has a caption that says what it shows.
  */
-import type { Picture } from "../lib/types";
+import type { BandMark, Picture } from "../lib/types";
 import { Icon } from "./Icons";
 
 // A narrow coordinate box keeps 11-unit tick labels readable when a phone shrinks the plot.
@@ -28,15 +28,35 @@ function ticks(lo: number, hi: number, n = 4): number[] {
 }
 const fmt = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2));
 
-function Lines({ series, unit, markAt }: { series: { name: string; points: [number, number][] }[]; unit: string; markAt?: number }) {
+function Lines({
+  series,
+  unit,
+  markAt,
+  marks,
+  yRange,
+}: {
+  series: { name: string; points: [number, number][] }[];
+  unit: string;
+  markAt?: number;
+  /** Reference lines the server sends (a cited card's limits); never made up here. */
+  marks?: BandMark[];
+  /** The server's fixed y range; without it the axis fits the data. */
+  yRange?: [number, number] | null;
+}) {
   const all = series.flatMap((s) => s.points);
   const xs = all.map((p) => p[0]);
   const ys = all.map((p) => p[1]);
   const [x0, x1] = [Math.min(...xs), Math.max(...xs)];
   let [y0, y1] = [Math.min(...ys), Math.max(...ys)];
-  const padY = (y1 - y0) * 0.1 || 1;
-  y0 -= padY;
-  y1 += padY;
+  if (yRange && yRange[1] > yRange[0]) {
+    // The fixed scale, widened only if a logged point would fall off it.
+    y0 = Math.min(yRange[0], y0);
+    y1 = Math.max(yRange[1], y1);
+  } else {
+    const padY = (y1 - y0) * 0.1 || 1;
+    y0 -= padY;
+    y1 += padY;
+  }
   const x = scale(x0, x1, PAD.l, W - PAD.r);
   const y = scale(y0, y1, H - PAD.b, PAD.t);
   const path = (pts: [number, number][]) => pts.map((p, i) => `${i ? "L" : "M"}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join("");
@@ -56,6 +76,16 @@ function Lines({ series, unit, markAt }: { series: { name: string; points: [numb
           {unit === "rpm" ? "" : " s"}
         </text>
       ))}
+      {(marks ?? [])
+        .filter((m) => m.at >= y0 && m.at <= y1)
+        .map((m) => (
+          <g key={`${m.at}-${m.label}`} className={`ref ${m.tone}`}>
+            <line x1={PAD.l} x2={W - PAD.r} y1={y(m.at)} y2={y(m.at)} />
+            <text x={W - PAD.r - 2} y={y(m.at) - 4} textAnchor="end">
+              {m.label}
+            </text>
+          </g>
+        ))}
       {markAt !== undefined && markAt >= x0 && markAt <= x1 ? <line className="mark" x1={x(markAt)} x2={x(markAt)} y1={PAD.t} y2={H - PAD.b} /> : null}
       {series.map((s, i) => (
         <path key={s.name} className={i === 0 ? "s1" : "s2"} d={path(s.points)} />
@@ -141,7 +171,7 @@ export function Chart({ picture }: { picture: Picture }) {
       </h3>
       {picture.kind === "trace" ? (
         <>
-          <Lines series={picture.series} unit={picture.unit} markAt={picture.moment.at} />
+          <Lines series={picture.series} unit={picture.unit} markAt={picture.moment.at} marks={picture.marks} yRange={picture.yRange} />
           <div className="legend">
             {picture.series.map((s, i) => (
               <span key={s.name}>
@@ -150,7 +180,7 @@ export function Chart({ picture }: { picture: Picture }) {
                 {picture.unit ? ` (${picture.unit})` : ""}
               </span>
             ))}
-            <span>Seconds around {picture.moment.label.toLowerCase()} (dotted line)</span>
+            <span>Seconds around the moment (dotted line)</span>
           </div>
         </>
       ) : null}

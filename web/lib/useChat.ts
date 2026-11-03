@@ -69,8 +69,31 @@ export type AiMsg = {
   harness?: HarnessSummary | null;
   /** a typed answer streams its prose like a Drive reply's lines, until the answer lands */
   lines?: string[];
+  /** Wall time in this browser, from the owner's send to the reply being done (ms since epoch). */
+  startedAt?: number;
+  endedAt?: number;
 };
 export type Msg = UserMsg | AiMsg;
+
+/** Seconds as the owner reads them: "23 s", "1 min 05 s". */
+export function secondsWords(s: number): string {
+  const whole = Math.max(0, Math.round(s));
+  if (whole < 60) return s < 10 && s > 0 && !Number.isInteger(s) ? `${s.toFixed(1)} s` : `${whole} s`;
+  return `${Math.floor(whole / 60)} min ${String(whole % 60).padStart(2, "0")} s`;
+}
+
+/** Whole seconds since `since`, ticking once a second while `live` (null when there is no start). */
+export function useElapsed(since: number | undefined, live: boolean): number | null {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!live || !since) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [since, live]);
+  if (!since) return null;
+  return Math.max(0, Math.floor((now - since) / 1000));
+}
 
 /** The chat that was open, so a reload comes back to it (the chats themselves live on the server). */
 const CURRENT = "kta-chat-current";
@@ -247,6 +270,7 @@ export function useChat() {
 
         const finish = () => {
           const fromCard = card?.harness?.steps?.length ? card.harness : null;
+          patch(msgId, { endedAt: Date.now() });
           patchTurn(msgId, {
             running: false,
             live: undefined,
@@ -328,10 +352,11 @@ export function useChat() {
         await agent.runAgent({ runId: nextId("run"), tools: [], context: [], forwardedProps: {} });
         finish();
       } catch (error) {
+        patch(msgId, { endedAt: Date.now() });
         patchTurn(msgId, { running: false, live: undefined, error: (error as Error).message });
       }
     },
-    [patchTurn],
+    [patch, patchTurn],
   );
 
   // ------------------------------------------------------------ a typed message
@@ -499,7 +524,7 @@ export function useChat() {
         harness: got.harness ?? harness ?? (order.length ? liveHarness() : null),
         thinking: thinking && !got.thinking ? thinking : (got.thinking ?? undefined),
       };
-      patch(msgId, { pending: false, live: undefined, answer: filled });
+      patch(msgId, { pending: false, live: undefined, answer: filled, endedAt: Date.now() });
       // The car editor is the one card in the thread: the agent's call fills it, never a second one.
       const editor = filled.ui?.find((c) => c.tool === "show_car_editor");
       if (editor && "draft" in editor) openEditor(editor.draft);
@@ -522,24 +547,30 @@ export function useChat() {
         file: file && kind ? { name: file.name, kind, size: file.size, thumb, tags: kind === "csv" ? tags : undefined } : undefined,
       };
 
+      // The owner's wait starts at send: the reply's "Worked for" is this wall time, not tool time.
+      const startedAt = Date.now();
       await guard(async () => {
         const id = nextId("a");
-        if (file && kind === "csv") {
-          add(user, { id, role: "assistant", kind: "drive", turn: { id, fileName: file.name, running: true, card: null, harness: null, lines: [] } });
-          await runDrive(file, words, id, tags);
-          return;
-        }
-        if (file) {
-          add(user, { id, role: "assistant", kind: "ask", pending: true });
-          try {
-            patch(id, { pending: false, answer: await api.askScreenshot(file, words) });
-          } catch (e) {
-            patch(id, { pending: false, error: (e as Error).message });
+        try {
+          if (file && kind === "csv") {
+            add(user, { id, role: "assistant", kind: "drive", startedAt, turn: { id, fileName: file.name, running: true, card: null, harness: null, lines: [] } });
+            await runDrive(file, words, id, tags);
+            return;
           }
-          return;
+          if (file) {
+            add(user, { id, role: "assistant", kind: "ask", pending: true, startedAt });
+            try {
+              patch(id, { pending: false, answer: await api.askScreenshot(file, words), endedAt: Date.now() });
+            } catch (e) {
+              patch(id, { pending: false, error: (e as Error).message });
+            }
+            return;
+          }
+          add(user, { id, role: "assistant", kind: "ask", pending: true, startedAt });
+          await runChat(words, id);
+        } finally {
+          patch(id, (prev) => (prev.endedAt ? {} : { endedAt: Date.now() }));
         }
-        add(user, { id, role: "assistant", kind: "ask", pending: true });
-        await runChat(words, id);
       });
     },
     [add, guard, patch, runDrive, runChat],

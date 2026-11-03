@@ -156,10 +156,12 @@ export function Sidebar({
             <span className="muted">Not set up yet. Tell me about your car in the chat.</span>
           )}
           {active ? (
-            <div className="map-pill" data-testid="active-map" title={`${active.label} · ${active.name}`}>
+            <div className="map-pill" data-testid="active-map">
               <Icon name="file" className="icon" />
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-                {active.label} · {active.name}
+              {/* Two lines, never cut: this is the name the owner must match in KTuner before flashing. */}
+              <span className="map-pill-text">
+                <span className="map-pill-label">{active.label}</span>
+                <span className="map-pill-name">{active.name}</span>
               </span>
             </div>
           ) : null}

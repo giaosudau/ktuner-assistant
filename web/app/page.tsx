@@ -13,7 +13,7 @@ import { Message, RecapCard, type Actions } from "../components/Messages";
 import { phaseOf, Sidebar } from "../components/Sidebar";
 import { TableViewer } from "../components/TableViewer";
 import { FUELS, type LogTags, type Suggestion } from "../lib/api";
-import { useChat } from "../lib/useChat";
+import { useChat, type AiMsg } from "../lib/useChat";
 
 const EXAMPLE =
   "Civic FE 1.5T CVT on E10 RON95, hot city traffic. Intake, downpipe, front pipe, catback, big intercooler and a CVT cooler. I flashed KTuner Starter 21 Dual Tune 2.";
@@ -65,10 +65,23 @@ export default function Page() {
       /* defaults */
     }
   }, []);
+  // The slot the open drive brief asks for (the Calibration drive: 2). A new CSV starts on it,
+  // unless the owner picks another slot for this attachment: no log channel records the slot.
+  const briefSlot = typeof loop?.logGuide?.slot === "number" ? loop.logGuide.slot : null;
+  const isCsv = file ? /\.csv$/i.test(file.name) || file.type === "text/csv" : false;
+  // The brief's slot is this attachment's default only: it never replaces the saved tags, so the
+  // next log after the brief closes is tagged with the owner's own slot again.
+  const [briefPick, setBriefPick] = useState<number | null>(null);
+  useEffect(() => {
+    setBriefPick(isCsv ? briefSlot : null);
+  }, [file, isCsv, briefSlot]);
+  const shownTags: LogTags = briefPick === null ? tags : { ...tags, slot: briefPick };
   const changeTags = (next: LogTags) => {
-    setTags(next);
+    if (next.slot !== shownTags.slot) setBriefPick(null);
+    const saved = next.slot === shownTags.slot ? { ...next, slot: tags.slot } : next;
+    setTags(saved);
     try {
-      localStorage.setItem("kta-tags", JSON.stringify(next));
+      localStorage.setItem("kta-tags", JSON.stringify(saved));
     } catch {
       /* fine */
     }
@@ -98,12 +111,12 @@ export default function Page() {
     (words = text, attached = file) => {
       if (busy) return;
       pinned.current = true;
-      void chat.send(words, attached, tags);
+      void chat.send(words, attached, shownTags);
       setText("");
       setFile(null);
       setError(null);
     },
-    [busy, chat, file, text, tags],
+    [busy, chat, file, text, shownTags],
   );
 
   // "Edit car" pressed again brings the one open car editor into view instead of adding a card.
@@ -161,6 +174,9 @@ export default function Page() {
   const empty = chat.ready && messages.length === 0;
   const car = loop?.carProfile;
   const placeholder = "Message KTuner Assistant…";
+  // The reply being worked on: the latest assistant message not yet done, for the composer's seconds.
+  const working = busy ? ([...messages].reverse().find((m) => m.role === "assistant") as AiMsg | undefined) : undefined;
+  const busySince = working && !working.endedAt ? working.startedAt : undefined;
 
   const composer = (
     <div className="composer-wrap">
@@ -172,8 +188,10 @@ export default function Page() {
         error={error}
         setError={setError}
         onSend={() => submit()}
-        tags={tags}
+        tags={shownTags}
         setTags={changeTags}
+        briefSlot={briefSlot}
+        busySince={busySince}
         busy={busy}
         placeholder={placeholder}
         autoFocus
