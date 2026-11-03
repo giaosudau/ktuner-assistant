@@ -167,13 +167,13 @@ def test_the_chat_shows_the_next_step_with_its_gauge_table_and_drive_recipe(repl
     iat = baseline["gauges"]["rows"][0]
     assert iat["ok"] == "under 42 °C moving, under 48 °C when a pull starts"
 
-    # A Flash step carries the Flash plan and nothing else: its cells come only
-    # from the plan (ticket 13 draws the card).
+    # A Flash step carries the Flash plan: its cells come only from the plan
+    # (ticket 13 draws the card). The Undo's own steps are numbered (UX R2-4).
     undo = replies["aug23-2038"].card["nextStep"]
     assert undo["kind"] == "flash"
     assert undo["flashPlan"]["kind"] == "undo"
-    assert undo["gauges"] is None and undo["recipe"] is None
-    assert "Shakedown drive" in undo["body"]
+    assert undo["gauges"] is None
+    assert "Shakedown" in undo["recipe"]["steps"][-1]
 
 
 def test_a_wasted_drive_is_flagged_kindly_with_what_would_have_settled_one(replayed: Loop):

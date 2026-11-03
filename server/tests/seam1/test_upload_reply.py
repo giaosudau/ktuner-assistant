@@ -192,11 +192,11 @@ def test_a_stop_gives_undo_as_the_only_next_step(loop: Loop):
     assert card["flashPlan"]["kind"] == "undo"
     assert card["nextStep"]["kind"] == "flash"
     assert "map from before" in card["nextStep"]["title"]
-    # The owner never flashed anything she recorded, so the Undo names no file and
-    # asks once: "tell me what you flashed" rather than an invented name.
+    # The owner never flashed anything she recorded, so the Undo names no file:
+    # "the file you ran before this drive" rather than an invented name (UX R2-4).
     assert card["flashPlan"]["undo"]["known"] is False
-    assert "tell me what you flashed" in card["nextStep"]["body"]
-    assert "Starter 21 Dual Tune 2" not in card["nextStep"]["body"].split("Then drive")[0]
+    flash_back = card["nextStep"]["recipe"]["steps"][1]
+    assert flash_back == "Open the file you ran before this drive and flash it."
 
 
 def test_the_owners_nine_drives_in_order_give_the_engine_carc_history_check_verdicts(replayed: Loop):

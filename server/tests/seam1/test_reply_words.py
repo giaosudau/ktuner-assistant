@@ -203,10 +203,10 @@ def test_a_stop_makes_undo_the_only_next_step():
     )
     assert step["kind"] == "flash"
     assert "map from before" in step["title"]
-    assert "Shakedown drive" in step["body"]
-    # A Flash step's cells come only from the Flash plan; there is nothing else.
+    assert "Shakedown" in step["recipe"]["steps"][2]
+    # A Flash step's cells come only from the Flash plan; the Undo adds its three steps (UX R2-4).
     assert step["flashPlan"]["headline"] == "Stop open: …"
-    assert step["gauges"] is None and step["recipe"] is None
+    assert step["gauges"] is None and len(step["recipe"]["steps"]) == 3
 
 
 def test_a_dead_gauge_is_a_watch_step_naming_the_gauge_as_tunerview_spells_it():
@@ -374,23 +374,19 @@ def test_a_map_version_is_explained_once_then_the_app_stops_explaining():
 
 def test_the_undo_names_the_map_version_not_just_the_file():
     undo = {"known": True, "version": 1, "name": "Starter 21 Dual Tune 2", "stamp": "20260823-200000"}
-    assert C.undo_sentence({"undo": undo}) == (
-        "Flash your previous map file (Map version 1 · Starter 21 Dual Tune 2, flashed 23 Aug 20:00). "
-        "Save today's file first so nothing is lost."
+    assert C.undo_recipe({"undo": undo})["steps"][1] == (
+        "Open the file you ran before this drive (Map version 1 · Starter 21 Dual Tune 2, flashed 23 Aug 20:00) "
+        "and flash it."
     )
     # A version the owner never dated says no date, rather than a wrong one.
-    plain = C.undo_sentence({"undo": {"known": True, "version": 2, "name": "Starter 21 r2"}})
-    assert plain.startswith("Flash your previous map file (Map version 2 · Starter 21 r2).")
-    assert "flashed" not in plain
+    plain = C.undo_named({"undo": {"known": True, "version": 2, "name": "Starter 21 r2"}})
+    assert plain == "Map version 2 · Starter 21 r2"
 
 
 def test_the_undo_never_invents_a_map_name():
-    asked = C.undo_sentence({"undo": {"known": False, "version": None, "name": None}})
-    assert "Map version 1 ·" not in asked
-    assert "Map version 2 ·" not in asked
-    assert asked.count("tell me what you flashed") == 1
-    # Even with no structured Undo at all, the sentence asks rather than guesses.
-    assert "tell me what you flashed" in C.undo_sentence(None)
+    for plan in ({"undo": {"known": False, "version": None, "name": None}}, None):
+        assert C.undo_named(plan) is None
+        assert C.undo_recipe(plan)["steps"][1] == "Open the file you ran before this drive and flash it."
 
 
 def test_the_stop_next_step_names_the_map_version_to_flash_back():
@@ -403,8 +399,8 @@ def test_the_stop_next_step_names_the_map_version_to_flash_back():
         },
     )
     assert step["kind"] == "flash"
-    assert "Map version 1 · Starter 21 Dual Tune 2" in step["body"]
-    assert "Shakedown drive" in step["body"]
+    assert "Map version 1 · Starter 21 Dual Tune 2" in step["recipe"]["steps"][1]
+    assert "Shakedown" in step["recipe"]["steps"][2]
 
 
 def our_own_words(card: dict) -> str:

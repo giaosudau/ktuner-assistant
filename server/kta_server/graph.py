@@ -247,6 +247,9 @@ async def _ingest_run(
     drive = ingested["drive"]
     car_state = ingested["state"]
     drive_id = drive["id"]
+    # Already in the Car history? Checked before this ingest writes anything (R2-9).
+    seen = store.drive(drive_id)
+    first = store.get_upload(seen["upload_id"]) if seen and not seen["too_short"] else None
     store.save_car_state(car_state)
     store.bind_upload_drive(upload["upload_id"], drive_id, not drive["tooShort"])
     store.add_drive(
@@ -342,6 +345,8 @@ async def _ingest_run(
         )
         reply["fuelTest"] = {**fuel_test, "line": C.fuel_test_line(fuel_test)}
     reply["tags"] = tags.get(drive.get("id") or "")
+    if first:
+        reply["repeat"] = C.repeat_note(first["received_at"])
     return {
         "upload_id": upload["upload_id"],
         "thread_id": state.get("thread_id") or upload.get("thread_id") or "",

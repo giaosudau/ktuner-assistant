@@ -286,27 +286,28 @@ def map_version_card(drive: Mapping[str, Any], first_drive: bool = False) -> dic
     return card
 
 
-def undo_sentence(plan: Mapping[str, Any] | None) -> str:
-    """How to Undo, naming the Map version to flash back to.
-
-    "Flash your previous map file (Map version 1 · Starter 21 Dual Tune 2,
-    flashed 23 Aug 20:00)". When there is genuinely no earlier version the app
-    says so plainly and asks once — it never invents a file name.
-    """
+def undo_named(plan: Mapping[str, Any] | None) -> str | None:
+    """`Map version 1 · Starter 21 Dual Tune 2, flashed 23 Aug 20:00`, or None when no earlier version is held."""
     undo = (plan or {}).get("undo") or {}
     if not undo.get("known") or undo.get("version") is None:
-        return (
-            "In KTuner: load the file you ran before this Drive and flash it. I have no "
-            "Map version before the one this Drive ran on — tell me what you flashed and I "
-            "can name the file to flash back. Save today's file first so nothing is lost."
-        )
+        return None
     named = f"Map version {undo['version']} · {undo['name']}"
     when = stamp_of(undo.get("stamp"))
-    if when:
-        named += f", flashed {when}"
-    return (
-        f"Flash your previous map file ({named}). Save today's file first so nothing is lost."
-    )
+    return f"{named}, flashed {when}" if when else named
+
+
+def undo_recipe(plan: Mapping[str, Any] | None) -> dict[str, Any]:
+    """The Undo as three numbered steps (R2-4): save today's map, flash the one from before, prove it."""
+    named = undo_named(plan)
+    before = "the file you ran before this drive" + (f" ({named})" if named else "")
+    return {
+        "intro": "",
+        "steps": [
+            "In KTuner, save today's map under a new name so nothing is lost.",
+            f"Open {before} and flash it.",
+            "Drive 10 calm minutes (the Shakedown), then attach the log here.",
+        ],
+    }
 
 
 def window_line(drives_read: list[str], read: int, too_short: bool = False) -> str:
@@ -1166,6 +1167,12 @@ def backfill_step(drive_id: str, newest_id: str) -> dict[str, Any]:
     }
 
 
+def repeat_note(at: int | None) -> dict[str, Any]:
+    """A re-upload of a Drive already in the Car history, said in one line at the top (R2-9)."""
+    when = f", on {stamp_day(at)}" if at is not None else ""
+    return {"line": f"I read this drive before{when}: nothing new is added to your car file.", "at": at}
+
+
 def next_step_card(
     step: Mapping[str, Any] | None,
     plan: Mapping[str, Any] | None = None,
@@ -1198,7 +1205,11 @@ def next_step_card(
         # an Undo (or the save-as name for a forward change), and the Shakedown
         # drive that proves it.
         if key == "undo" or (plan or {}).get("kind") == "undo":
-            body = f"{headline} {undo_sentence(plan)} Then drive a Shakedown drive: 10 calm minutes, no hard driving."
+            # One sentence why (the diagnosed cause, as the install step says it), then the steps.
+            body = cause_line(step.get("diagnose")) or (
+                "Today's log is worse than the map before it: put that map back first."
+            )
+            recipe = undo_recipe(plan)
         elif (plan or {}).get("kind") == "blocked":
             # Both map checks (ADR 0003) must pass before a cell reaches the owner:
             # a refused change says why and offers nothing to type.
@@ -1350,7 +1361,9 @@ __all__ = [
     "sg",
     "stamp_day",
     "stamp_of",
-    "undo_sentence",
+    "repeat_note",
+    "undo_named",
+    "undo_recipe",
     "verdict_word",
     "wasted_line",
     "window_card",
