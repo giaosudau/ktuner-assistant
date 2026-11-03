@@ -33,6 +33,37 @@ def ensure_map_version_one(store: Any, name: str) -> None:
     store.ensure_map_version(1, name, basemap_tables(), source=KTUNER_BASEMAP_SOURCE, kind="ktuner-basemap")
 
 
+async def one_next_step(
+    worker: Any, store: Any, car_state: Any, plan: Any, open_steps: list[dict[str, Any]] | None,
+    step: dict[str, Any] | None, cal: Any = None,
+) -> dict[str, Any] | None:
+    """The one Next step every reply shows (a Drive reply, a typed answer, a re-decided question).
+
+    On the Calibrate stage (`desk.stage_of`, the sidebar's own rule) it is the Calibration drive, whatever
+    the engine would ask next: the Calibration card in the same reply asks for that drive, so the owner
+    reads one thing to do. `cal` is the Ceiling read when the caller already holds it; else it is read.
+    A Flash, a Too-short drive's line and a missing step are never replaced.
+    """
+    if not step or step.get("kind") == "flash" or step.get("key") == "tooShort":
+        return step
+    cal = cal if cal is not None else await FL.ceiling_read(worker, store, car_state)
+    if cal.get("settled"):
+        return step
+    drives = sorted((d for d in store.list_drives() if not d["too_short"]), key=lambda d: d["started_at"] or 0)
+    loop = {
+        "carProfile": store.car_profile(),
+        "hasDrives": bool(drives),
+        "carHistory": [{"id": d["id"], "start": d["started_at"], "verdict": d["verdict"]} for d in drives],
+        "flashes": store.list_flashes(),
+        "flashPlan": plan,
+        "openSteps": [s for s in open_steps or [] if s.get("status") != "done"],
+        "calibration": cal,
+    }
+    if D.stage_of(loop) != "calibrate":
+        return step
+    return C.calibration_step(cal, store.car_profile())
+
+
 async def loop_state(store: Any, worker: Any, settings: Any) -> dict[str, Any]:
     """The Car file and the loop, as `GET /api/state` returns it."""
     # First use counts too: if the worker was down when the app was built,

@@ -265,6 +265,7 @@ def create_app(
         housing_saved = saved.get(f"housing:{drive_id}", {})
         housing_choice = housing_saved.get("choice") if isinstance(housing_saved, dict) else None
         step = C.next_step_card(decided["step"], plan, worker.limits, decided["openSteps"])
+        step = await LS.one_next_step(worker, store, state, plan, decided["openSteps"], step)
         read_back = await RB.for_drive(worker, store, state, drive_id)
         if read_back and read_back["state"] == "mismatch":
             step = RB.recheck_step(read_back)

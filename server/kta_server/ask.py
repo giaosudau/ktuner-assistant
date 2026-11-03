@@ -20,6 +20,7 @@ from . import agent as agent_node
 from . import copy as C
 from . import flash as FL
 from . import knowledge as K
+from . import loopstate as LS
 from . import window as W
 from .harness import Harness
 
@@ -162,6 +163,7 @@ async def answer_question(
             "nextStep", state=window_state, driveId=latest_id, openSteps=store.list_open_steps(), installs=installs
         )
         step = C.next_step_card(decided["step"], plan, worker.limits, decided["openSteps"])
+        step = await LS.one_next_step(worker, store, state, plan, decided["openSteps"], step)
     next_line = f" Next step: {step['title']}." if step and step.get("title") else ""
 
     # A no-drive answer stays Upload-first even with a key: the tuner may still

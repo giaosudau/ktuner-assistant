@@ -16,6 +16,7 @@ from typing import Any
 from . import agent as agent_node
 from . import copy as C
 from . import flash as FL
+from . import loopstate as LS
 from . import window as W
 from .harness import Harness
 
@@ -55,6 +56,7 @@ async def answer_screenshot(
         "nextStep", state=window_state, driveId=latest_id, openSteps=store.list_open_steps(), installs=installs
     )
     step = C.next_step_card(decided["step"], plan, worker.limits, decided["openSteps"])
+    step = await LS.one_next_step(worker, store, state, plan, decided["openSteps"], step)
     out["window"] = C.window_card(win)["line"]
     drive = {"id": latest_id, "summary": (state.get("drives") or {}).get(latest_id), "map": None}
     reply = {"say": PLAIN_UNCHECKED, "window": out["window"], "nextStep": step, "flashPlan": plan}

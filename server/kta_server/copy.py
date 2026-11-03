@@ -35,7 +35,9 @@ the worker with the limit it was read against.
 from __future__ import annotations
 
 import json
+import math
 import subprocess
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Mapping
 
 from .config import REPO_ROOT
@@ -556,6 +558,10 @@ def log_guide(
     return _calibration_guide(guide, profile) if calibrate else guide
 
 
+#: The trial slot the Calibration drive's floored pulls run on (kc-drive-brief tune-two; kc-calibration-drive).
+CALIBRATION_SLOT = 2
+
+
 def _calibration_guide(guide: dict[str, Any], profile: Mapping[str, Any] | None) -> dict[str, Any]:
     """The Baseline brief with C6's three changes: parked asks first, floored pulls on slot 2, two more checkpoints."""
     profile = profile or {}
@@ -575,11 +581,12 @@ def _calibration_guide(guide: dict[str, Any], profile: Mapping[str, Any] | None)
         parked.append("Open TunerView's logging rate menu and type its fastest logging rate in the Logger setup too.")
     parked.append("If you can, attach a screenshot of KTuner's Quick Adjustments screen here, so I can see the map's settings.")
     hold, rpm = num_words(gates["hold_s"]), f"{gates['rpm_min']:,}"
+    slot = f"{CALIBRATION_SLOT} (Tune {CALIBRATION_SLOT})"
     sections = [{"title": "Parked, the evening before", "steps": parked}]
     for section in guide["sections"]:
         if section["title"] == "The two pulls":
             section = {**section, "steps": [
-                "Choose slot 2 (Tune 2) when you start the car: while you choose, the tach shows 2,000 rpm for it. Turn ECO off.",
+                f"Choose slot {slot} when you start the car: while you choose, the tach shows 2,000 rpm for it. Turn ECO off.",
                 "Put the gearbox in S.",
                 f"From a steady 50 km/h, press the pedal to the floor, all the way, and hold it until 100 km/h: "
                 f"at least 5 seconds, above {rpm} rpm for {hold} s or more.",
@@ -596,7 +603,8 @@ def _calibration_guide(guide: dict[str, Any], profile: Mapping[str, Any] | None)
             "that is an answer too. About 25 minutes, done once."
         ),
         "sections": sections,
-        "checkpoints": [*guide["checkpoints"], f"2 floored pulls held {hold} s or more above {rpm} rpm", "On slot 2 (Tune 2)"],
+        "checkpoints": [*guide["checkpoints"], f"2 floored pulls held {hold} s or more above {rpm} rpm", f"On slot {slot}"],
+        "slot": CALIBRATION_SLOT,
     }
 
 
@@ -652,6 +660,7 @@ def _baseline_guide(limits: Mapping[str, Any], profile: Mapping[str, Any] | None
         "checkpoints": checkpoints,
         "recipe": drive_recipe("baseline", limits, channels_open=bool(asked)),
         "gauges": gauge_table(["iat", "kc", "afr", "trims"], limits),
+        "slot": None,
     }
 
 
@@ -750,6 +759,44 @@ def calibration_card(
     }
 
 
+def calibration_step(cal: Mapping[str, Any] | None, profile: Mapping[str, Any] | None) -> dict[str, Any]:
+    """The Next step while the Calibration drive is unsettled (stage `calibrate`): what is missing first, then the drive.
+
+    One Next step, always: the Calibration card in the same reply asks for the same drive. Same shape as
+    `next_step_card`, kind `drive`, settled by the Calibration drive's upload.
+    """
+    profile, status = profile or {}, (cal or {}).get("status") or "none"
+    unchecked = [label for field, (_, label) in P.LOGGER_CHANNELS.items() if profile.get(field) is None]
+    logger = [f"say whether TunerView offers {join_names(unchecked)}"] if unchecked else []
+    if profile.get(P.LOGGER_RATE) is None:
+        logger.append("type TunerView's fastest logging rate")
+    first = [
+        *(["Type the Pedal full reading in your car profile."] if profile.get(P.PEDAL_FULL) is None else []),
+        *([f"In your car profile's Logger setup, {', and '.join(logger)}."] if logger else []),
+    ]
+    drive = (f"drive the Calibration drive on slot {CALIBRATION_SLOT} (Tune {CALIBRATION_SLOT}): it answers "
+             "whether more boost can show on your car.")
+    body = f"First: {' '.join(first)} Then {drive}" if first else drive[0].upper() + drive[1:]
+    # A read that came back Can't tell for a reason says how to drive it differently this time.
+    if status not in ("none", "no-reading") and status in CEILING_MEANS:
+        body += " " + CEILING_MEANS[status]
+    upload = "your Calibration drive, driven to its brief"
+    return {
+        "kind": "drive",
+        "key": "calibration",
+        "title": "The Calibration drive: can more boost show on your car?",
+        "body": body,
+        "recipe": None,
+        "gauges": None,
+        "same": False,
+        "proves": "whether a raised boost cell can show in your log (the Ceiling read)",
+        "upload": upload,
+        "uploadWhen": f"Upload when: {upload}.",
+        "flashPlan": None,
+        "also": None,
+    }
+
+
 def log_checkpoints(
     quality: Mapping[str, Any] | None,
     heat: Mapping[str, Any] | None,
@@ -832,10 +879,75 @@ def fuel_test_line(test: Mapping[str, Any] | None) -> str:
     )
 
 
-def health_rows(overview: Mapping[str, Any] | None) -> dict[str, Any] | None:
-    """The engine's health checks as the report shows them: system, check, value, verdict word."""
+#: Health report bands, only where a knowledge card cites the limits (research §2): per check id, the card,
+#: the unit, the decimals the row's words show, and the scale. Knock Control, trims and CVT marks are the
+#: engine's own limits (the ones its Verdict word grades against), each checked equal to the card's number;
+#: thresholds.json's boost_step_gates agree (kc_max 0.56, trim_max_pct 5). Intake air is graded against
+#: engine-only limits (50/60) that no card backs, so its two brief lines (cool 42, pull start 48) are drawn
+#: as reference lines that start no zone. Coolant has no band.
+HEALTH_BANDS: dict[str, dict[str, Any]] = {
+    "kControl": {"source": "kc-ranges", "unit": "", "decimals": 2, "min": 0.45, "max": 0.85},
+    "trims": {"source": "kc-trims", "unit": "%", "decimals": 1, "min": -15, "max": 15},
+    "cvtTemp": {"source": "kc-cvt", "unit": "°C", "decimals": 0, "min": 30, "max": 110},
+    "iat": {"source": "kc-drive-brief", "unit": "°C", "decimals": 0, "min": 20, "max": 60},
+}
+
+
+def _band_marks(check_id: str, limits: Mapping[str, Any]) -> list[tuple[float, str, str]] | None:
+    """`(at, word, tone)` per mark, or None when a limit is missing (no band beats a made-up one)."""
+    get = lambda path: lim(limits, path, None)  # noqa: E731
+    if check_id == "kControl":  # kc-ranges kc-floor, kc-watch, kc-nohard, kc-stop
+        marks = [(get("LIMITS.score.baseline"), "Floor", "good"), (get("LIMITS.score.watch"), "Watch", "watch"),
+                 (get("LIMITS.score.noHard"), "No hard driving", "watch"), (get("LIMITS.score.stop"), "Stop", "stop")]
+    elif check_id == "trims":  # kc-trims trim-ok (OK within it), trim-stop: a symmetric scale
+        ok, stop = get("LIMITS.trim.good"), get("LIMITS.trim.watch")
+        marks = [] if ok is None or stop is None else [
+            (-stop, "Stop", "stop"), (-ok, "Watch", "watch"), (ok, "Watch", "watch"), (stop, "Stop", "stop")]
+    elif check_id == "cvtTemp":  # kc-cvt cvt-fluid-watch, cvt-fluid-stop
+        marks = [(get("LIMITS.cvt.good"), "Watch", "watch"), (get("LIMITS.cvt.watch"), "Stop", "stop")]
+    elif check_id == "iat":  # kc-drive-brief brief-cool-iat, brief-pull-iat: reference lines only
+        marks = [(get("CAR_RULES.coolIat"), "Cool", "none"), (get("DRIVE_LIMITS.pullIatGood"), "Pull start", "none")]
+    else:
+        return None
+    return marks if marks and all(isinstance(at, (int, float)) for at, _, _ in marks) else None
+
+
+def health_band(check_id: Any, value: Any, limits: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """The bullet bar for one check: its own number (as the row shows it) on the card's scale, else None."""
+    spec = HEALTH_BANDS.get(str(check_id))
+    marks = _band_marks(str(check_id), limits or {}) if spec else None
+    if not marks or not isinstance(value, (int, float)) or isinstance(value, bool):
+        return None
+    places = spec["decimals"]
+    # Half away from zero, as the engine's toFixed words the row (Python's round() goes to even).
+    q = Decimal(str(abs(value))).quantize(Decimal(1).scaleb(-places), ROUND_HALF_UP)
+    shown = math.copysign(float(q), value) if places else int(math.copysign(int(q), value))
+    low, high = spec["min"], spec["max"]
+    if low == -high:  # a symmetric scale stays symmetric
+        high = max(high, abs(shown))
+        low = -high
+    def word(at: float) -> str:
+        text = str(int(at)) if float(at).is_integer() else n(at, places)
+        return "+" + text if spec["min"] < 0 < at else text
+    return {
+        "value": shown, "unit": spec["unit"], "min": min(low, shown), "max": max(high, shown),
+        "marks": [{"at": at, "label": f"{label} {word(at)}", "tone": tone} for at, label, tone in marks],
+        "source": spec["source"],
+    }
+
+
+def health_rows(
+    overview: Mapping[str, Any] | None, facts: Mapping[str, Any] | None = None, limits: Mapping[str, Any] | None = None
+) -> dict[str, Any] | None:
+    """The engine's health checks as the report shows them: system, check, value, verdict word.
+
+    `facts` is the engine's `driveFacts`: each check's own number (`check.<id>.value`) puts it on its
+    cited band, marked with the engine's `limits`. A check with no number, or one that reads Can't tell
+    (a flat or missing channel), gets no band.
+    """
     if not overview or not overview.get("checks"):
         return None
+    facts = facts or {}
     gates = {"fuel": "Fuel", "air": "Air & boost", "spark": "Spark", "heat": "Heat", "cvt": "CVT"}
     tones = {"good": "good", "watch": "watch", "stop": "stop", "nodata": "none"}
     rows = []
@@ -844,7 +956,8 @@ def health_rows(overview: Mapping[str, Any] | None) -> dict[str, Any] | None:
         word, tone = VERDICT_WORDS.get(status, VERDICT_WORDS["nodata"]), tones.get(status, "none")
         rows.append(
             {"system": gates.get(str(check.get("gate")), str(check.get("gate") or "")), "id": check.get("id"),
-             "label": check.get("label"), "value": check.get("value"), "word": word, "tone": tone}
+             "label": check.get("label"), "value": check.get("value"), "word": word, "tone": tone,
+             "band": None if status == "nodata" else health_band(check.get("id"), facts.get(f"check.{check.get('id')}.value"), limits)}
         )
     return {"line": overview.get("verdict_text"), "rows": rows}
 
@@ -1105,8 +1218,8 @@ def next_step_card(
             body += f" Upload {upload}."
     elif key == "none":
         body = (
-            "Most Drives end here, and that is an answer, not a gap: on this car the turbo has no headroom "
-            "left. Nothing to type in KTuner."
+            "Most Drives end here, and that is an answer, not a gap: nothing in your logs calls for a map "
+            "change. Nothing to type in KTuner."
         )
         flash_plan = plan or None
     else:
@@ -1214,6 +1327,7 @@ __all__ = [
     "VERDICT_WORDS",
     "VERDICT_LEAD",
     "build_reply",
+    "calibration_step",
     "cause_line",
     "channel_name",
     "drive_recipe",

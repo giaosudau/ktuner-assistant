@@ -52,6 +52,7 @@ from langgraph.graph.message import add_messages
 from . import agent as agent_node
 from . import copy as C
 from . import flash as FL
+from . import loopstate as LS
 from . import pictures as PIC
 from . import profile as P
 from . import tour as TOUR
@@ -275,13 +276,13 @@ async def _ingest_run(
 
     # 4-5. Safety lines and the numbers the reply quotes. A Too-short drive has
     #      no verdict to read and no numbers to quote, so neither is checked.
-    overview = quality = heat = None
+    overview = quality = heat = facts = None
     if not drive["tooShort"]:
         overview = await harness.step(
             config, "overview", "Check every safety line", {"driveId": drive_id},
             lambda: worker.call("overview", driveId=drive_id),
         )
-        await harness.step(
+        facts = await harness.step(
             config, "driveFacts", "Read this Drive's numbers", {"driveId": drive_id},
             lambda: worker.call("driveFacts", driveId=drive_id),
         )
@@ -324,7 +325,7 @@ async def _ingest_run(
     # whole map at a high level. All engine facts and the map the app holds; nothing decided here.
     if not drive["tooShort"]:
         reply["checkpoints"] = C.log_checkpoints(quality, heat, drive.get("summary"), limits, store.car_profile())
-        reply["health"] = C.health_rows(overview)
+        reply["health"] = C.health_rows(overview, (facts or {}).get("facts"), limits)
         # The Calibration result (calibration drive C10): while the ceiling is unsettled, or when this
         # Drive is the one that settled it. The map tour's boost row quotes the same reason.
         if not cal.get("settled") or cal.get("driveId") == drive_id:
@@ -433,6 +434,10 @@ async def _decide(
 
     step = C.next_step_card(
         decided["step"], reply.get("flashPlan"), worker.limits, decided["openSteps"]
+    )
+    # On the Calibrate stage the Next step is the Calibration drive, as the Calibration card says.
+    step = await LS.one_next_step(
+        worker, store, car_state, reply.get("flashPlan"), decided["openSteps"], step
     )
     # Flash readback: a mismatch is the Next step (one step, always).
     read_back = None if drive.get("tooShort") else await RB.for_drive(worker, store, car_state, drive_id)
