@@ -33,19 +33,13 @@
 var path = require('path');
 
 // ---------------------------------------------------------------------------
-// The engine, and the interface text its ask tools read (engine/text/i18n*.js
-// hang off window, a leftover of the retired browser app; only loaded).
+// The engine, and the interface text its ask tools read.
 // ---------------------------------------------------------------------------
-globalThis.window = globalThis.window || {};
-require(path.join(__dirname, '..', '..', 'engine', 'text', 'i18n.js'));
-require(path.join(__dirname, '..', '..', 'engine', 'text', 'i18n-drive.js'));
-require(path.join(__dirname, '..', '..', 'engine', 'text', 'i18n-map.js'));
-
 var KTA = require(path.join(__dirname, '..', '..', 'engine', 'kta-car.js'));
 require(path.join(__dirname, '..', '..', 'engine', 'kta-ask.js')); // adds KTA.ask
 var PICTURE = require(path.join(__dirname, '..', '..', 'engine', 'kta-picture.js')); // chart data (ticket 15)
 var MAP_DEFAULT = require(path.join(__dirname, '..', '..', 'data', 'ktuner-maps-digitized.json'));
-var TEXTS = globalThis.window.KTA_I18N.en;
+var TEXTS = require(path.join(__dirname, '..', '..', 'engine', 'text', 'i18n-map.js')); // the chain's end: i18n + drive + map
 
 // Where a Map version's tables come from. `ktuner-basemap` is this app's own
 // digitized KTuner basemap — Map version 1's tables. A version whose tables the

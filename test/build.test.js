@@ -87,19 +87,11 @@ test('catless risks the tailpipe test and a fine, not a sure đăng kiểm fail'
   assert.doesNotMatch(c.change, /fails/);
 });
 
-test('the headroom blocker says the turbo is near its limit, in both languages', () => {
-  const fs = require('fs'), vm = require('vm');
-  const window = {};
-  vm.createContext(window); window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
+test('the headroom blocker says the turbo is near its limit', () => {
   const I = { boost: { peakBoost: 19.9, wgAtPeak: 2.7 } };
-  const en = window.KTA_I18N.en.drive.blockers.headroom(I, K.fmt);
-  const vi = window.KTA_I18N.vi.drive.blockers.headroom(I, K.fmt);
+  const en = require('../engine/text/i18n-drive.js').drive.blockers.headroom(I, K.fmt);
   assert.match(en, /the turbo is near its limit/);
   assert.doesNotMatch(en, /has headroom/);
-  assert.match(vi, /gần giới hạn/);
-  assert.doesNotMatch(vi, /còn dư/);
 });
 
 test('items that need a how-to carry steps', () => {

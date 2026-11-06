@@ -4,13 +4,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const zlib = require('zlib');
-global.window = globalThis;
 const K = require('../engine/kta-ask.js');
-require('../engine/text/i18n.js');
-require('../engine/text/i18n-drive.js');
 require('../data/example-aug30-1601.js');
 
-const T = window.KTA_I18N.en;
+const T = require('../engine/text/i18n-drive.js');
 const log = K.readLog(zlib.gunzipSync(Buffer.from(globalThis.KTA_EXAMPLES['aug30-1601'].gz, 'base64')).toString('utf8'));
 const report = K.checkDrive(log);
 const checkText = (c) => { const d = T.checks[c.id]; return d ? { label: d.label, display: d.display(c.data || {}, K.fmt), fix: d.fix(c.data || {}, K.fmt) } : c; };

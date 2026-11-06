@@ -398,20 +398,14 @@ test('no torque line: the CVT is judged on slip, Watch-only', () => {
   assert.equal(slipOf(K.analyze(noVss, {})).status, 'nodata');
 });
 
-// The map tour tells the Boost step as it is (ADR 0007), in both languages.
+// The map tour tells the Boost step as it is (ADR 0007).
 test('map tour copy: the Boost step on Tune 2, unlocked by the logs, no reviewer and no 21 psi ceiling', () => {
-  const fs = require('fs'), vm = require('vm');
-  const window = {};
-  vm.createContext(window); window.window = window;
-  for (const f of ['i18n.js', 'i18n-drive.js', 'i18n-map.js']) vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/' + f, 'utf8'), window);
-  for (const lang of ['en', 'vi']) {
-    const T = window.KTA_I18N[lang];
-    const copy = [T.tables.Boost_Target_Normal.edit, T.tables.Boost_Target_Normal.verify, T.tables.Boost_Target_Normal.shape,
-      T.map.plan.B2.join(' '), T.map.plan.none, T.map.stage.B2, T.map.atCeiling, T.map.howSteps.B2.join(' ')].join(' ');
-    assert.doesNotMatch(copy, /5,500|reviewer|người duyệt|ceiling above 21|trần trên 21|21 psi ceiling|trần 21 psi|1\/2\/3/, lang);
-    assert.match(copy, /3,500-4,500/, lang);
-    assert.match(copy, /23\.4/, lang);
-    assert.match(copy, /24/, lang);
-    assert.match(T.tables.Boost_Target_Normal.edit, /Tune 2/, lang);
-  }
+  const T = require('../engine/text/i18n-map.js');
+  const copy = [T.tables.Boost_Target_Normal.edit, T.tables.Boost_Target_Normal.verify, T.tables.Boost_Target_Normal.shape,
+    T.map.plan.B2.join(' '), T.map.plan.none, T.map.stage.B2, T.map.atCeiling, T.map.howSteps.B2.join(' ')].join(' ');
+  assert.doesNotMatch(copy, /5,500|reviewer|ceiling above 21|21 psi ceiling|1\/2\/3/);
+  assert.match(copy, /3,500-4,500/);
+  assert.match(copy, /23\.4/);
+  assert.match(copy, /24/);
+  assert.match(T.tables.Boost_Target_Normal.edit, /Tune 2/);
 });

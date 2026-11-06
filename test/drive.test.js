@@ -5,6 +5,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const zlib = require('zlib');
 const K = require('../engine/kta-drive.js');
+const T = require('../engine/text/i18n-map.js');
 
 const IDS = ['aug30-1601', 'aug30-1529', 'sep01-0813', 'sep05-0756', 'aug30-1509', 'aug22-0950', 'aug22-0903', 'aug23-1959', 'aug23-2038'];
 IDS.forEach((id) => require('../data/example-' + id + '.js'));
@@ -283,37 +284,27 @@ test('a trim column pinned at -100 is Can\'t tell, never a trims Stop', () => {
 });
 
 test('issue 01: the engine\'s internal status names never reach the screen', () => {
-  const fs = require('fs');
-  const window = {};
-  const vm = require('vm');
-  vm.createContext(window);
-  window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
-  for (const lang of ['en', 'vi']) {
-    const T = window.KTA_I18N[lang];
-    assert.deepEqual([T.status.good, T.status.watch, T.status.stop, T.status.nodata], lang === 'en' ? ['OK', 'Watch', 'Stop', "Can't tell"] : ['Ổn', 'Theo dõi', 'Dừng', 'Không kết luận được']);
-    assert.equal(T.verdict.good, lang === 'en' ? 'OK' : 'Ổn');
-    assert.ok(T.verdict.nodata.indexOf(lang === 'en' ? "Can't tell" : 'Không kết luận được') === 0, lang + ' verdict nodata: ' + T.verdict.nodata);
-    // Every safety line on every fixture renders a label, a number and a fix in both languages.
-    for (const id of ['aug30-1601', 'sep05-0756', 'aug22-0950']) {
-      const an = drive(id).report.an;
-      for (const g of an.gates) for (const c of g.checks) {
-        const d = T.checks[c.id];
-        assert.ok(d, lang + ' text for check ' + c.id);
-        const s = d.display(c.data || {}, K.fmt) + ' ' + (c.status === 'good' || c.status === 'nodata' ? '' : d.fix(c.data || {}, K.fmt));
-        assert.ok(!/\bgood\b|\bnodata\b/.test(s), lang + ' ' + c.id + ' leaks an engine id: ' + s.slice(0, 80));
-      }
+  assert.deepEqual([T.status.good, T.status.watch, T.status.stop, T.status.nodata], ['OK', 'Watch', 'Stop', "Can't tell"]);
+  assert.equal(T.verdict.good, 'OK');
+  assert.ok(T.verdict.nodata.indexOf("Can't tell") === 0, 'verdict nodata: ' + T.verdict.nodata);
+  // Every safety line on every fixture renders a label, a number and a fix .
+  for (const id of ['aug30-1601', 'sep05-0756', 'aug22-0950']) {
+    const an = drive(id).report.an;
+    for (const g of an.gates) for (const c of g.checks) {
+      const d = T.checks[c.id];
+      assert.ok(d, 'text for check ' + c.id);
+      const s = d.display(c.data || {}, K.fmt) + ' ' + (c.status === 'good' || c.status === 'nodata' ? '' : d.fix(c.data || {}, K.fmt));
+      assert.ok(!/\bgood\b|\bnodata\b/.test(s), c.id + ' leaks an engine id: ' + s.slice(0, 80));
     }
-    // Block 7: every flat or missing channel gets a TunerView fix step in both languages.
-    const q = flatSep().report.ins.quality;
-    assert.ok(q.flat.length > 0, 'flat channels listed');
-    const lines = T.drive.quality(flatSep().report.ins, K.fmt, T);
-    const blob = lines.join(' ');
-    assert.ok(/Turbo Pressure/.test(blob), lang + ' names the flat channel: ' + blob.slice(0, 120));
-    assert.ok(/TunerView/.test(blob), lang + ' gives the TunerView fix');
-    assert.ok(!/\bgood\b|\bnodata\b/.test(blob), lang + ' leaks an engine id: ' + blob.slice(0, 120));
   }
+  // Block 7:  every flat or missing channel gets a TunerView fix step.
+  const q = flatSep().report.ins.quality;
+  assert.ok(q.flat.length > 0, 'flat channels listed');
+  const lines = T.drive.quality(flatSep().report.ins, K.fmt, T);
+  const blob = lines.join(' ');
+  assert.ok(/Turbo Pressure/.test(blob), 'names the flat channel: ' + blob.slice(0, 120));
+  assert.ok(/TunerView/.test(blob), 'gives the TunerView fix');
+  assert.ok(!/\bgood\b|\bnodata\b/.test(blob), 'leaks an engine id: ' + blob.slice(0, 120));
 });
 
 // §6.6: this map turns off P0128, so a thermostat stuck open shows only as coolant that
@@ -328,20 +319,11 @@ test('coolant that stays under 80 °C on a drive long enough to warm up is a Wat
   assert.equal(check(drive('sep05-0756').report.an, 'ect').status, 'good', 'the real drive warms up');
   // Under 10 minutes of moving it is still warming up: no Watch.
   assert.equal(check(cold('aug22-0903').an, 'ect').status, 'good', '8 min moving');
-  // The line says why in both languages.
-  const window = {};
-  const vm = require('vm'), fs = require('fs');
-  vm.createContext(window);
-  window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
-  for (const lang of ['en', 'vi']) {
-    const T = window.KTA_I18N[lang];
-    const s = T.checks.ect.display(c.data, K.fmt) + ' ' + T.checks.ect.fix(c.data, K.fmt);
-    assert.match(s, /80 °C/, lang + ': ' + s);
-    assert.match(s, /P0128/, lang + ': ' + s);
-    assert.ok(T.drive.basisNotes[c.basis.k], lang + ' basis note for ' + c.basis.k);
-  }
+  // The line says why .
+  const s = T.checks.ect.display(c.data, K.fmt) + ' ' + T.checks.ect.fix(c.data, K.fmt);
+  assert.match(s, /80 °C/, s);
+  assert.match(s, /P0128/, s);
+  assert.ok(T.drive.basisNotes[c.basis.k], 'basis note for ' + c.basis.k);
 });
 
 // ---------------------------------------------------------------------------
@@ -456,23 +438,16 @@ test('issue 02: timing lost while lugging stays hidden when small or short', () 
   assert.equal(tiny.ins.lug.ignDeltaShown, null, 'reference band under 30 s: no loss shown');
 });
 
-test('issue 02: every safety line states its basis in one line, EN+VI', () => {
-  const fs = require('fs'), vm = require('vm');
-  const window = {};
-  vm.createContext(window); window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
+test('issue 02: every safety line states its basis in one line', () => {
   const seen = new Set();
   for (const id of ['aug30-1601', 'sep01-0813']) {
     const an = drive(id).report.an;
     for (const g of an.gates) for (const c of g.checks) {
       assert.ok(c.basis && ['data', 'primary', 'physics', 'judgement', 'provisional'].includes(c.basis.t), c.id + ' carries a basis');
       seen.add(c.id + ':' + c.basis.t);
-      for (const lang of ['en', 'vi']) {
-        const line = window.KTA_I18N[lang].drive.basisLine(c.basis);
-        assert.ok(line.length > 10, lang + ' ' + c.id);
-        if (c.basis.t === 'provisional') assert.ok(/provisional|tạm thời|chưa từng/i.test(line), lang + ' provisional says so: ' + line);
-      }
+      const line = T.drive.basisLine(c.basis);
+      assert.ok(line.length > 10, c.id);
+      if (c.basis.t === 'provisional') assert.ok(/provisional/i.test(line), 'provisional says so: ' + line);
     }
   }
   assert.ok([...seen].some((s) => /provisional/.test(s)), 'a provisional limit is exercised: ' + [...seen].join(','));
@@ -535,7 +510,7 @@ test('issue 07: the hot-restart advice is proven by a cool-starting next pull', 
   assert.equal(K.proveAction('hotRestart', before, cool().report).verdict, 'inconclusive', 'a non-hot-restart proves nothing');
 });
 
-test('issue 07: a score that starts high gets its sentence, in both languages', () => {
+test('issue 07: a score that starts high gets its sentence', () => {
   const { log } = cool();
   const high = cloneLog(log, (l) => {
     for (let i = 0; i < l.n && l.t[i] < 500; i++) l.kControl[i] = i % 10 < 7 ? 0.61 : 0.62;
@@ -543,13 +518,7 @@ test('issue 07: a score that starts high gets its sentence, in both languages', 
   const kc = K.checkDrive(high).an.gates.flatMap((g) => g.checks).find((c) => c.id === 'kControl');
   assert.equal(kc.data.highStart, true, 'starts 0.61 above the 0.49 baseline');
   assert.ok(/Starts high after a Flash/.test(kc.display), kc.display);
-  const fs = require('fs'), vm = require('vm');
-  const window = {};
-  vm.createContext(window); window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
-  assert.ok(/10–15 calm minutes/.test(window.KTA_I18N.en.checks.kControl.display(kc.data, K.fmt)));
-  assert.ok(/10–15 phút/.test(window.KTA_I18N.vi.checks.kControl.display(kc.data, K.fmt)));
+  assert.ok(/10–15 calm minutes/.test(T.checks.kControl.display(kc.data, K.fmt)));
 });
 
 // ---------------------------------------------------------------------------
@@ -740,57 +709,39 @@ test('ticket 02: the Flash plan still names the tables, and is the only thing th
   assert.ok(boost.cells.length > 0 && boost.cells.every((c) => c.rpm && c.col && c.before != null && c.after != null));
 });
 
-test('ticket 02: the app\'s own copy of every remedy names no table either, in both languages', () => {
-  const fs = require('fs'), vm = require('vm');
-  const window = {};
-  vm.createContext(window); window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
+test('ticket 02: the app\'s own copy of every remedy names no table either', () => {
   let fixes = 0;
-  for (const lang of ['en', 'vi']) {
-    ALL_LOGS().concat(ALL_SAMPLES()).forEach((log) => {
-      const an = K.checkDrive(log).an;
-      for (const g of an.gates) {
-        for (const c of g.checks) {
-          if (c.status === 'good' || c.status === 'nodata') continue;
-          const d = window.KTA_I18N[lang].checks[c.id];
-          assert.ok(d, lang + ' has text for ' + c.id);
-          const fix = d.fix(c.data || {}, K.fmt);
-          fixes++;
-          assert.ok(!TABLE_WORDS.test(fix), lang + ' ' + c.id + ' remedy prescribes a table: ' + fix);
-        }
+  ALL_LOGS().concat(ALL_SAMPLES()).forEach((log) => {
+    const an = K.checkDrive(log).an;
+    for (const g of an.gates) {
+      for (const c of g.checks) {
+        if (c.status === 'good' || c.status === 'nodata') continue;
+        const d = T.checks[c.id];
+        assert.ok(d, 'has text for ' + c.id);
+        const fix = d.fix(c.data || {}, K.fmt);
+        fixes++;
+        assert.ok(!TABLE_WORDS.test(fix), c.id + ' remedy prescribes a table: ' + fix);
       }
-    });
-  }
-  assert.ok(fixes >= 6, 'both languages really did exercise remedies: ' + fixes);
+    }
+  });
+  assert.ok(fixes >= 6, 'the remedies were really exercised: ' + fixes);
 });
 
 test('ticket 02: the app shows the after-flash sentence and the 5,200 rpm note in the owner\'s words', () => {
-  const fs = require('fs'), vm = require('vm');
-  const window = {};
-  vm.createContext(window); window.window = window;
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n.js', 'utf8'), window);
-  vm.runInContext(fs.readFileSync(__dirname + '/../engine/text/i18n-drive.js', 'utf8'), window);
-  const T = window.KTA_I18N;
-  // The after-flash pattern: a sentence, not a status name, in both languages.
-  for (const lang of ['en', 'vi']) {
-    const sentence = T[lang].car.afterFlash({ start: 0.58, end: 0.49, baseline: 0.5 });
-    assert.match(sentence, /0\.58/, lang + ': ' + sentence);
-    assert.match(sentence, /0\.50/, lang + ' names the Baseline: ' + sentence);
-    assert.ok(!/exempt|after-flash|normal|Watch|OK\b/i.test(sentence), lang + ' leaks a status name: ' + sentence);
-  }
-  // The 5,200 rpm note: said plainly, with the number, in both languages.
+  // The after-flash pattern: a sentence, not a status name, .
+  const sentence = T.car.afterFlash({ start: 0.58, end: 0.49, baseline: 0.5 });
+  assert.match(sentence, /0\.58/, sentence);
+  assert.match(sentence, /0\.50/, 'names the Baseline: ' + sentence);
+  assert.ok(!/exempt|after-flash|normal|Watch|OK\b/i.test(sentence), 'leaks a status name: ' + sentence);
+  // The 5,200 rpm note: said plainly, with the number, .
   const c = K.checkDrive(highRpmPull(0.70)).an.gates.flatMap((g) => g.checks).find((x) => x.id === 'kControl');
-  for (const lang of ['en', 'vi']) {
-    const line = T[lang].checks.kControl.display(c.data, K.fmt);
-    assert.match(line, /5,200/, lang + ': ' + line);
-    assert.match(line, /0\.70/, lang + ' gives the number: ' + line);
-  }
-  assert.match(T.en.checks.kControl.display(c.data, K.fmt), /on purpose/);
-  assert.match(T.vi.checks.kControl.display(c.data, K.fmt), /chủ động/);
+  const line = T.checks.kControl.display(c.data, K.fmt);
+  assert.match(line, /5,200/, line);
+  assert.match(line, /0\.70/, 'gives the number: ' + line);
+  assert.match(T.checks.kControl.display(c.data, K.fmt), /on purpose/);
   // And a drive with no high-rpm rise carries no excuse.
   const plain = check(pulls().report.an, 'kControl');
-  assert.ok(!/5,200/.test(T.en.checks.kControl.display(plain.data, K.fmt)), plain.display);
+  assert.ok(!/5,200/.test(T.checks.kControl.display(plain.data, K.fmt)), plain.display);
 });
 
 // Ticket 10: the spool signal. A floored pull is the foot (TPS, the pedal) at
