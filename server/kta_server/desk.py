@@ -258,33 +258,7 @@ def part_change(text: str, profile: Mapping[str, Any]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Where the car is: the stage and the Recap
 # ---------------------------------------------------------------------------
-#: Open steps a Calibration drive never jumps ahead of (calibration drive C9): the Undo,
-#: unmetered air, a lean downpipe and dead gauges are safety reads.
-SAFETY_STEPS = ("undo", "install", "downpipe", "logger")
-
-
-def stage_of(loop: Mapping[str, Any]) -> str:
-    """`car`, `baseline`, `calibrate`, `read`, `plan` or `verify` — the sidebar reads it as `loop.stage`."""
-    if not loop.get("carProfile"):
-        return "car"
-    if not loop.get("hasDrives"):
-        return "baseline"
-    rows = loop.get("carHistory") or []
-    last_drive = max([r.get("start") or 0 for r in rows] or [0])
-    last_flash = max([(f.get("flashed_at") or f.get("time") or 0) for f in loop.get("flashes") or []] or [0])
-    if last_flash > last_drive:
-        return "verify"
-    if ((loop.get("flashPlan") or {}).get("kind")) in ("one-family", "undo"):
-        return "plan"
-    steps = loop.get("openSteps") or []
-    if any(s.get("key") == "baseline" for s in steps):
-        return "baseline"
-    stop = bool(rows) and str(rows[-1].get("verdict") or "").lower() == "stop"
-    if not stop and not any(s.get("key") in SAFETY_STEPS for s in steps) and not (loop.get("calibration") or {}).get("settled"):
-        return "calibrate"
-    return "read"
-
-
+#: The engine decides the Stage (`KTA.carStage`, read here as `loop["stage"]`); these are its words.
 STAGE_WORDS = {
     "car": "We haven't met your car yet.",
     "baseline": "We're at the start: I need your first log, driven to the brief.",
@@ -305,7 +279,7 @@ def recap(loop: Mapping[str, Any]) -> dict[str, Any] | None:
     profile = loop.get("carProfile")
     if not profile:
         return None
-    stage = stage_of(loop)
+    stage = loop["stage"]
     rows = loop.get("carHistory") or []
     flashes = loop.get("flashes") or []
     active = loop.get("activeMapVersion") or {}
@@ -352,7 +326,7 @@ def chip(label: str, action: str, text: str | None = None, icon: str = "help") -
 
 def stage_suggestions(loop: Mapping[str, Any]) -> list[dict[str, Any]]:
     """The stage's chips: what a shop would offer next. Deterministic, at most three."""
-    stage = stage_of(loop)
+    stage = loop["stage"]
     if stage == "car":
         return [
             chip("Use an example description", "example", icon="car"),
@@ -426,7 +400,7 @@ def reply(intent: str, text: str, loop: Mapping[str, Any]) -> dict[str, Any] | N
     fixed answer the app gives when no model is configured, and the shape the agent's answers share.
     """
     profile = loop.get("carProfile")
-    stage = stage_of(loop)
+    stage = loop["stage"]
     base = {"ok": True, "kind": "desk", "intent": intent, "citations": [], "window": None, "nextStep": None}
 
     if intent in ("greeting", "capabilities") and not profile:
@@ -516,5 +490,5 @@ def reply(intent: str, text: str, loop: Mapping[str, Any]) -> dict[str, Any] | N
 
 __all__ = [
     "CAPABILITIES", "answer_suggestions", "capabilities_answer", "capability_answer", "capability_lines", "car_line",
-    "match_capability", "part_change", "parts_draft", "recap", "reply", "sort_intent", "stage_of", "stage_suggestions",
+    "match_capability", "part_change", "parts_draft", "recap", "reply", "sort_intent", "stage_suggestions",
 ]

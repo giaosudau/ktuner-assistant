@@ -33,13 +33,19 @@ def ensure_map_version_one(store: Any, name: str) -> None:
     store.ensure_map_version(1, name, basemap_tables(), source=KTUNER_BASEMAP_SOURCE, kind="ktuner-basemap")
 
 
+async def car_stage(worker: Any, loop: dict[str, Any]) -> str:
+    """Where the car is: the engine's one answer (`KTA.carStage`), from the facts it reads."""
+    facts = ("carProfile", "hasDrives", "carHistory", "flashes", "flashPlan", "openSteps", "calibration")
+    return (await worker.call("stage", **{k: loop.get(k) for k in facts}))["stage"]
+
+
 async def one_next_step(
     worker: Any, store: Any, car_state: Any, plan: Any, open_steps: list[dict[str, Any]] | None,
     step: dict[str, Any] | None, cal: Any = None,
 ) -> dict[str, Any] | None:
     """The one Next step every reply shows (a Drive reply, a typed answer, a re-decided question).
 
-    On the Calibrate stage (`desk.stage_of`, the sidebar's own rule) it is the Calibration drive, whatever
+    On the Calibrate stage (`KTA.carStage`, the sidebar's own rule) it is the Calibration drive, whatever
     the engine would ask next: the Calibration card in the same reply asks for that drive, so the owner
     reads one thing to do. `cal` is the Ceiling read when the caller already holds it; else it is read.
     A Flash, a Too-short drive's line and a missing step are never replaced.
@@ -59,7 +65,7 @@ async def one_next_step(
         "openSteps": [s for s in open_steps or [] if s.get("status") != "done"],
         "calibration": cal,
     }
-    if D.stage_of(loop) != "calibrate":
+    if await car_stage(worker, loop) != "calibrate":
         return step
     return C.calibration_step(cal, store.car_profile())
 
@@ -110,7 +116,7 @@ async def loop_state(store: Any, worker: Any, settings: Any) -> dict[str, Any]:
         "logGuide": C.log_guide(worker.limits, store.car_profile(), calibrate=not calibration.get("settled")),
     }
     # The front desk (tuning-shop D20, D25): where the car is, the Recap, the stage's suggested replies.
-    state["stage"] = D.stage_of(state)
+    state["stage"] = await car_stage(worker, state)
     state["recap"] = D.recap(state)
     state["suggestions"] = D.stage_suggestions(state)
     state["capabilities"] = [

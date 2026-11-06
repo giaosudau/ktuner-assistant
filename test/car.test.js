@@ -1934,3 +1934,40 @@ test('E1 diagnose: held overshoot after a Flash is "after the change", never the
     'spool', { installs: [{ part: 'PRL intercooler', installed_at: 150000 }] });
   assert.doesNotMatch(other.cause, /downpipe/i);
 });
+
+// -- Stage: where the car is, decided once ----------------------------------------------
+const STAGE_FACTS = {
+  carProfile: { model: 'Civic FE 1.5T', transmission: 'CVT', fuel: 'E10 RON95', parts: [] },
+  hasDrives: true,
+  carHistory: [{ id: '20260822-090322', start: 100, verdict: 'ok' }],
+  flashes: [],
+  openSteps: [],
+  calibration: { status: 'no-reading', settled: false }
+};
+const stageWith = (over) => K.carStage(Object.assign({}, STAGE_FACTS, over));
+
+test('calibrate comes after a stop or an open safety step', () => {
+  assert.equal(stageWith({}), 'calibrate');
+  assert.equal(stageWith({ carHistory: [{ start: 100, verdict: 'stop' }] }), 'read');
+  ['undo', 'install', 'logger', 'downpipe'].forEach((key) => {
+    assert.equal(stageWith({ openSteps: [{ key, status: 'open' }] }), 'read', key);
+  });
+  // A habit test or the channels ask is not a safety step: the calibration still comes next.
+  assert.equal(stageWith({ openSteps: [{ key: 'habit', status: 'open' }] }), 'calibrate');
+  assert.equal(stageWith({ openSteps: [{ key: 'channels', status: 'open' }] }), 'calibrate');
+  // Settled (a decisive Ceiling read): the stage is over until something moves the ceiling.
+  assert.equal(stageWith({ calibration: { status: 'capped', settled: true } }), 'read');
+});
+
+test('the stages before calibrate come first, each on its own boundary', () => {
+  assert.equal(stageWith({ carProfile: null }), 'car');
+  assert.equal(stageWith({ carProfile: {} }), 'car');
+  assert.equal(stageWith({ hasDrives: false }), 'baseline');
+  assert.equal(stageWith({ openSteps: [{ key: 'baseline', status: 'open' }] }), 'baseline');
+  assert.equal(stageWith({ flashes: [{ time: 200 }] }), 'verify');
+  assert.equal(stageWith({ flashes: [{ flashed_at: 101 }] }), 'verify');
+  assert.equal(stageWith({ flashes: [{ flashed_at: 100 }] }), 'calibrate', 'a Flash equal to the last Drive is not after it');
+  assert.equal(stageWith({ flashPlan: { kind: 'one-family' } }), 'plan');
+  assert.equal(stageWith({ flashPlan: { kind: 'undo' } }), 'plan');
+  assert.equal(stageWith({ flashPlan: { kind: 'no-change' } }), 'calibrate');
+});

@@ -499,6 +499,11 @@ var OPS = {
    * `installs` is the app's Install list, so a symptom right after a fitted
    * part reads as one.
    */
+  /** Where the car is: the one Stage (`KTA.carStage`). */
+  stage: function (args) {
+    return { stage: KTA.carStage(args) };
+  },
+
   nextStep: function (args) {
     var state = stateOf(args);
     var driveId = need(args, 'driveId', 'string');

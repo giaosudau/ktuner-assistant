@@ -30,7 +30,7 @@ const NEED: Record<Phase, string> = {
   verify: "Drive the Shakedown: 10 calm minutes, no hard driving. Then attach the log so I can check the car runs what you flashed.",
 };
 
-/** Where the owner is: the server's stage (`desk.stage_of`), never guessed from the thread. */
+/** Where the owner is: the server's stage (`KTA.carStage`), never guessed from the thread. */
 export function phaseOf(loop: api.LoopState | null): Phase {
   return loop?.carProfile ? ((loop.stage as Phase | undefined) ?? "read") : "car";
 }

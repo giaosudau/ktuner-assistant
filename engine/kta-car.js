@@ -2007,6 +2007,7 @@
   // Drive this car never logged can never settle anything.
   var STEP_JUDGES = {
     undo: {
+      safety: true,
       key: 'undo', title: 'Undo: trims back within ±' + TRIM_OK + ' %', short: 'the Undo',
       would: 'a drive of ' + (SHAKEDOWN_CALM / 60) + ' calm minutes', needs: ['stft', 'ltft'],
       reask: 1, wasted: 1,
@@ -2091,6 +2092,7 @@
       }
     },
     logger: {
+      safety: true,
       key: 'logger', title: 'Fix the logger: dead gauges', short: 'the logger fix',
       would: 'a drive with every gauge moving', needs: [],
       reask: 2, wasted: 2,
@@ -2105,6 +2107,7 @@
       }
     },
     install: {
+      safety: true,
       // Clamps and hoses, never "flanges": the front A/F is in the turbo outlet,
       // so a downpipe flange leak never reads lean on it (ticket 12).
       key: 'install', title: 'Check the install: clamps and hoses', short: 'the install check',
@@ -2131,6 +2134,7 @@
       }
     },
     downpipe: {
+      safety: true,
       key: 'downpipe', title: 'Flash the downpipe trim, then two pulls', short: 'the downpipe trim',
       would: 'two pulls on a cool morning', needs: ['boost', 'boostTarget'],
       reask: 7, wasted: 7,
@@ -2172,6 +2176,28 @@
   /** The steps that can be the one Next step, in the order they are re-asked. */
   var STEP_ORDER = stepsRankedBy('reask');
   KTA.STEP_KEYS = STEP_ORDER.slice();
+
+  /**
+   * Where the car is: `car`, `baseline`, `calibrate`, `read`, `plan` or `verify`. The sidebar, the
+   * Recap and the model all read this one answer. `safety` steps come before the Calibration drive
+   * (calibration drive C9): the Undo, unmetered air, a lean downpipe and dead gauges are safety reads.
+   */
+  KTA.carStage = function (facts) {
+    var f = facts || {};
+    if (!f.carProfile || !Object.keys(f.carProfile).length) return 'car';
+    if (!f.hasDrives) return 'baseline';
+    var rows = f.carHistory || [];
+    var lastDrive = rows.reduce(function (at, r) { return Math.max(at, r.start || 0); }, 0);
+    var lastFlash = (f.flashes || []).reduce(function (at, x) { return Math.max(at, x.flashed_at || x.time || 0); }, 0);
+    if (lastFlash > lastDrive) return 'verify';
+    var plan = (f.flashPlan || {}).kind;
+    if (plan === 'one-family' || plan === 'undo') return 'plan';
+    var steps = f.openSteps || [];
+    if (steps.some(function (s) { return s.key === 'baseline'; })) return 'baseline';
+    var stop = rows.length > 0 && String(rows[rows.length - 1].verdict || '').toLowerCase() === 'stop';
+    var safety = steps.some(function (s) { var j = STEP_JUDGES[s.key]; return !!(j && j.safety); });
+    return !stop && !safety && !(f.calibration || {}).settled ? 'calibrate' : 'read';
+  };
 
   function stepOf(key) { return STEP_JUDGES[key]; }
 

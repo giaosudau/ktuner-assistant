@@ -125,8 +125,8 @@ def car_file(loop: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "profile": profile,
         "known": bool(profile),
-        "stage": loop.get("stage") or D.stage_of(loop),
-        "stageLine": D.STAGE_WORDS[loop.get("stage") or D.stage_of(loop)],
+        "stage": loop["stage"],
+        "stageLine": D.STAGE_WORDS[loop["stage"]],
         "recap": loop.get("recap"),
         "drivesHeld": len(loop.get("carHistory") or []),
         "activeMapVersion": (loop.get("activeMapVersion") or {}).get("label"),
@@ -415,7 +415,7 @@ async def suggest(
         "Suggest the two or three replies the owner of this car is most likely to send next, as tappable chips. Each must be "
         "something the shop can actually do (below). Prefer: the stage's next action, then a natural follow-up to the reply. "
         "No numbers, never ask the shop for more boost, more timing or a change it can't make.",
-        f"Where the car is: {D.STAGE_WORDS[loop.get('stage') or D.stage_of(loop)]}",
+        f"Where the car is: {D.STAGE_WORDS[loop['stage']]}",
         "What the shop can do:", *D.capability_lines(),
     ])
     messages = [

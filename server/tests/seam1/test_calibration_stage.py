@@ -16,6 +16,7 @@ from kta_server import desk as D
 
 #: A car with one Drive read, nothing open, and no ceiling read yet.
 LOOP = {
+    "stage": "calibrate",
     "carProfile": {"model": "Civic FE 1.5T", "transmission": "CVT", "fuel": "E10 RON95", "parts": []},
     "hasDrives": True,
     "carHistory": [{"id": "20260822-090322", "start": 100, "verdict": "ok"}],
@@ -27,20 +28,6 @@ LOOP = {
 
 def steps_text(guide: dict) -> str:
     return " ".join(step for section in guide["sections"] for step in section["steps"])
-
-
-def test_calibrate_comes_after_a_stop_or_an_open_safety_step():
-    assert D.stage_of(LOOP) == "calibrate"
-    assert D.stage_of({**LOOP, "carHistory": [{**LOOP["carHistory"][0], "verdict": "stop"}]}) == "read"
-    for key in ("undo", "install", "logger", "downpipe"):
-        assert D.stage_of({**LOOP, "openSteps": [{"key": key, "status": "open"}]}) == "read", key
-    # A habit test or the channels ask is not a safety step: the calibration still comes next.
-    assert D.stage_of({**LOOP, "openSteps": [{"key": "habit", "status": "open"}]}) == "calibrate"
-    # Settled (a decisive Ceiling read): the stage is over until something moves the ceiling.
-    assert D.stage_of({**LOOP, "calibration": {"status": "capped", "settled": True}}) == "read"
-    # The stages before it are unchanged.
-    assert D.stage_of({**LOOP, "flashes": [{"time": 200}]}) == "verify"
-    assert D.stage_of({**LOOP, "hasDrives": False}) == "baseline"
 
 
 def test_the_recap_and_the_chips_name_the_calibration_drive():
@@ -78,6 +65,30 @@ def test_the_calibration_brief_asks_first_for_the_pedal_and_the_logger():
     assert "press Start twice" not in told and "fastest logging rate" not in told
     # Not calibrating: the Baseline brief, unchanged.
     assert C.log_guide({})["title"] == "One Cool drive with 2 pulls"
+
+
+def test_the_loops_stage_is_the_engines_stage_after_a_real_upload(tmp_path):
+    loop = Loop(tmp_path).start()
+    try:
+        confirm(loop, {**draft(loop)["fields"], **CENSUS})
+        loop.upload_and_reply("sep01-0813")
+        state = loop.get("/api/state").json()
+        assert state["stage"] == "calibrate"
+        facts = {k: state[k] for k in ("carProfile", "hasDrives", "carHistory", "flashes", "flashPlan", "openSteps", "calibration")}
+        assert loop.run(loop.worker.call("stage", **facts))["stage"] == state["stage"]
+    finally:
+        loop.close()
+
+
+def test_with_no_worker_the_state_answers_the_way_every_worker_failure_does(tmp_path):
+    loop = Loop(tmp_path).start()
+    try:
+        loop.run(loop.worker.aclose())
+        loop.worker.script = tmp_path / "gone.js"
+        response = loop.get("/api/state")
+        assert response.status_code == 502 and response.json()["error"]["code"] == "worker-missing"
+    finally:
+        loop.close()
 
 
 def test_a_new_owners_first_brief_is_the_calibration_brief(tmp_path):
