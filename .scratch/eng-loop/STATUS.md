@@ -123,8 +123,24 @@ speed   npm_test=21s  pytest=49s
 2. One container, one URL: static export served by FastAPI, Railway service with a volume (done)
 3. Owners: invite link, one app instance per owner, upload limit, model cap, first-run notice,
    and a test that one owner can't reach another's car (done)
-4. Invite 5–10 owners. Track the proving Drive after a Flash, and what they asked
+4. Deploy, then invite 5–10 owners. Track the proving Drive after a Flash, and what they asked.
+   This is the owner's step: it needs their Railway account and their invitees
 5. Then the top 10 in the `review-r1.md` §7 order, with whatever owners hit first going ahead
    of it. Item 1 (Stage) and item 8 (contract check) are next by default
 
-**Debt:** `server/kta_server/profile.py:189` `ponytail:` marker has no upgrade trigger.
+**Independent review of steps 1–3 (2026-11-06):** suites rerun: 244 JS and 466 Python pass, `tsc`
+clean. A replay of the nine drives, old engine against new, is byte-identical. A live gate on port
+8765 gave 401 on every route without the cookie, kept Ben's car empty after Ann's upload and chat,
+and returned 413 to a real browser for a 21 MB file, with the next upload working. No secret
+in the logs. No Must fix or Should fix findings.
+
+**Accepted risks:**
+- `POST /join` allows a request with no `Sec-Fetch-Site`. Only a browser older than about 2023
+  sends none, and the attacker would have to be an invited owner, since it needs a real secret.
+  Refusing those requests would lock out owners on old phones.
+- A disconnected `/api/ask/stream` turn that outlives the idle stop could leave one Node process
+  until the next redeploy.
+
+**Before inviting anyone:** on the first deploy, try one upload (see "Not checked" above), and check
+whether Railway Hobby backs up the volume. Have the notice wording read by someone who knows the law
+where the owners live. None of this has been verified.
