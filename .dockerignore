@@ -19,6 +19,6 @@ docs/*
 test
 tools
 **/__pycache__
-# data/: the worker reads thresholds.json and ktuner-maps-digitized.json; nothing at runtime reads the rest
+# data/: the engine and server read thresholds.json, car-words.json and ktuner-maps-digitized.json; nothing at runtime reads the rest
 data/*.xlsx
 data/example-*.js

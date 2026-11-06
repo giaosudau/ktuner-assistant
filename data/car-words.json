@@ -1,0 +1,55 @@
+{
+  "channels": {
+    "boost": "Turbo Pressure",
+    "boostTarget": "Turbo Pressure Target",
+    "fp": "DIFP",
+    "fpTarget": "DIFP Target",
+    "cvt": "Transmission Temperature",
+    "stft": "STFT B1",
+    "ltft": "LTFT B1",
+    "kControl": "Knock Control",
+    "lam": "O2",
+    "lamCmd": "AFR Command",
+    "afrCmd": "AFR Command",
+    "mafHz": "MAF Hz",
+    "mafGs": "MAF Hz",
+    "iat": "IAT",
+    "iat2": "IAT2",
+    "egt": "EGT",
+    "map": "MAP",
+    "rpm": "Engine RPM",
+    "vss": "Vehicle Speed"
+  },
+  "months": [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ],
+  "stepStatus": {
+    "done": {
+      "word": "Done",
+      "tone": "good"
+    },
+    "open": {
+      "word": "Not yet",
+      "tone": "watch"
+    },
+    "fail": {
+      "word": "Still off",
+      "tone": "stop"
+    },
+    "wait": {
+      "word": "Can't tell yet",
+      "tone": "none"
+    }
+  }
+}

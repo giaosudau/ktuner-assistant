@@ -36,10 +36,12 @@
  * (pass meta.now to fix the clock in tests).
  */
 (function (root, factory) {
-  var KTA = typeof module === 'object' && module.exports ? require('./kta-drive.js') : root.KTA;
-  var api = factory(KTA);
+  var inNode = typeof module === 'object' && module.exports;
+  var KTA = inNode ? require('./kta-drive.js') : root.KTA;
+  // The words the server also reads: data/car-words.json, one file for both.
+  var api = factory(KTA, inNode ? require('../data/car-words.json') : root.KTA_CAR_WORDS);
   if (typeof module === 'object' && module.exports) module.exports = api;
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (KTA) {
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (KTA, CAR_WORDS) {
   'use strict';
 
   var isNum = KTA.util.isNum, median = KTA.util.median;
@@ -1956,18 +1958,9 @@
   // repeated step is one short line (`same`), never a second essay. Only the
   // Flash plan names a KTuner table: nothing here writes a cell or a table name.
   // ---------------------------------------------------------------------------
-  var LOG_CHANNEL_NAMES = {
-    boost: 'Turbo Pressure', boostTarget: 'Turbo Pressure Target', fp: 'DIFP',
-    fpTarget: 'DIFP Target', cvt: 'Transmission Temperature', stft: 'STFT B1',
-    ltft: 'LTFT B1', kControl: 'Knock Control', lam: 'O2', lamCmd: 'AFR Command',
-    afrCmd: 'AFR Command', mafHz: 'MAF Hz', mafGs: 'MAF Hz',
-    iat: 'IAT', iat2: 'IAT2', egt: 'EGT', map: 'MAP', rpm: 'Engine RPM', vss: 'Vehicle Speed'
-  };
+  var LOG_CHANNEL_NAMES = CAR_WORDS.channels;
   /** The four words an Open step's status shows, and the pill tone each wears. */
-  var STEP_STATUS = {
-    done: { word: 'Done', tone: 'good' }, open: { word: 'Not yet', tone: 'watch' },
-    fail: { word: 'Still off', tone: 'stop' }, wait: { word: "Can't tell yet", tone: 'none' }
-  };
+  var STEP_STATUS = CAR_WORDS.stepStatus;
   /** A logged channel named the way TunerView spells it. */
   function logChannel(key) { return LOG_CHANNEL_NAMES[key] || key; }
   function logChannelList(keys) {
@@ -1981,7 +1974,7 @@
   /** Signed, with the real minus sign the owner reads (copy.py spells it the same). */
   function sg1(v) { return KTA.fmt.signed(v, 1, '').replace('-', '−'); }
   function minutes(sec) { return Math.round((isNum(sec) ? sec : 0) / 60); }
-  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var MONTHS = CAR_WORDS.months;
   /** A Drive's id the way the owner reads it: `20260830-160151` → `30 Aug 16:01`. */
   function driveStamp(id) {
     var m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})$/.exec(String(id == null ? '' : id));
@@ -2769,8 +2762,8 @@
   };
 
   /**
-   * Owner-facing words, decided here once (ADR 0004). The server reads this table
-   * at startup and passes the words through; no other module spells them.
+   * Owner-facing words, decided once in data/car-words.json (ADR 0004). The server reads
+   * that file directly at import; no other module spells them.
    */
   KTA.carWords = { channels: LOG_CHANNEL_NAMES, months: MONTHS, stepStatus: STEP_STATUS, driveStamp: driveStamp };
 

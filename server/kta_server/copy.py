@@ -34,9 +34,7 @@ the worker with the limit it was read against.
 
 from __future__ import annotations
 
-import json
 import math
-import subprocess
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Mapping
 
@@ -45,16 +43,8 @@ from . import profile as P
 from .mapcheck import load_thresholds
 from .profile import part_display
 
-def _engine_words() -> dict[str, Any]:
-    """The owner-facing words the engine decides once (`KTA.carWords`). Read here, never re-spelled."""
-    out = subprocess.run(
-        ["node", "-p", "JSON.stringify(require('./engine/kta-car.js').carWords)"],
-        cwd=REPO_ROOT, capture_output=True, text=True, check=True,
-    ).stdout
-    return json.loads(out)
-
-
-_WORDS = _engine_words()
+#: The owner-facing words the engine shares (`KTA.carWords`): one file, read here, never re-spelled.
+_WORDS = load_thresholds(REPO_ROOT / "data" / "car-words.json")
 MONTHS: list[str] = _WORDS["months"]
 # The gauge names TunerView spells, for the dead-gauge step (KTuner's channel names).
 CHANNEL_NAMES: dict[str, str] = _WORDS["channels"]
