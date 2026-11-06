@@ -67,7 +67,7 @@ async def one_next_step(
     }
     if await car_stage(worker, loop) != "calibrate":
         return step
-    return C.calibration_step(cal, store.car_profile())
+    return C.calibration_step(cal, store.car_profile(), worker.limits)
 
 
 async def loop_state(store: Any, worker: Any, settings: Any) -> dict[str, Any]:

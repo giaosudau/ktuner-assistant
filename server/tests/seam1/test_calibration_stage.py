@@ -7,7 +7,7 @@ Stop or open safety step, never before one.
 
 from __future__ import annotations
 
-from conftest import OWNER_DRIVES, Loop, owner_csv
+from conftest import LIMITS, Loop, OWNER_DRIVES, owner_csv
 
 from test_car_profile import CENSUS, confirm, draft
 
@@ -41,7 +41,7 @@ def test_the_recap_and_the_chips_name_the_calibration_drive():
 
 
 def test_the_calibration_brief_asks_first_for_the_pedal_and_the_logger():
-    guide = C.log_guide({}, None, calibrate=True)
+    guide = C.log_guide(LIMITS, None, calibrate=True)
     assert guide["title"] == "The Calibration drive"
     first = guide["sections"][0]
     assert first["title"] == "Parked, the evening before"
@@ -60,11 +60,11 @@ def test_the_calibration_brief_asks_first_for_the_pedal_and_the_logger():
     text = steps_text(guide)
     assert "Never in traffic" in text and "90 °C" in text and "brake launch" in text
     # What the owner already said isn't asked again.
-    told = steps_text(C.log_guide({}, {**CENSUS, "pedal_full_pct": 94}, calibrate=True))
+    told = steps_text(C.log_guide(LIMITS, {**CENSUS, "pedal_full_pct": 94}, calibrate=True))
     assert "Your Pedal full reading is on file: 94 %" in told
     assert "press Start twice" not in told and "fastest logging rate" not in told
     # Not calibrating: the Baseline brief, unchanged.
-    assert C.log_guide({})["title"] == "One Cool drive with 2 pulls"
+    assert C.log_guide(LIMITS)["title"] == "One Cool drive with 2 pulls"
 
 
 def test_the_loops_stage_is_the_engines_stage_after_a_real_upload(tmp_path):

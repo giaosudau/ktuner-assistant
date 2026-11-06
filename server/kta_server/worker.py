@@ -67,7 +67,7 @@ class Worker:
         )
         self._reader = asyncio.create_task(self._read_loop())
         ping = await self.call("ping")
-        self.limits = ping.get("limits") or {}
+        self.limits.update(ping.get("limits") or {})  # in place: a reply that took `worker.limits` before the first call still sees them
         self.ktuner_basemap = ping.get("ktunerBasemap") or self.ktuner_basemap
 
     async def aclose(self) -> None:

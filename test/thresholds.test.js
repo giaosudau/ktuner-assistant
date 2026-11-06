@@ -29,6 +29,14 @@ test('the engine limits come from the thresholds file', () => {
   assert.deepEqual(K.LIMITS.wotTargetAfr, { min: TH.wot_target_band.value.min, max: TH.wot_target_band.value.max });
 });
 
+test('the brief, fuel-test, read-back and slot numbers come from the thresholds file', () => {
+  const v = (k) => TH[k].value;
+  assert.deepEqual(K.LIMITS.logBrief, { rateHz: v('log_brief').rate_hz, movingS: v('log_brief').moving_s, warmEctC: v('log_brief').warm_ect_c });
+  assert.deepEqual(K.LIMITS.fuelTest, { sameDeg: v('fuel_test').same_deg });
+  assert.deepEqual(K.LIMITS.readback, { rpmTol: v('readback').rpm_tol, matchPsi: v('readback').match_psi, bandPsi: v('readback').band_psi });
+  assert.equal(K.LIMITS.calibrationSlot, v('calibration_slot'));
+});
+
 test('the editable and forbidden lists match the engine table roles exactly', () => {
   const edit = Object.keys(K.TABLES).filter((id) => K.TABLES[id].role === 'edit').sort();
   assert.deepEqual(Object.keys(TH.editable_tables.value).sort(), edit);

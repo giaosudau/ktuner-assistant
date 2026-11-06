@@ -401,7 +401,7 @@ def create_app(
     async def api_fuel_test() -> dict[str, Any]:
         """Is the premium fuel worth it? Matched drives on each fuel, judged by Knock Control (tuning-shop)."""
         out = await worker.call("fuelTest", state=store.car_state(None) or {}, tags=store.drive_tags())
-        return {**out, "line": C.fuel_test_line(out)}
+        return {**out, "line": C.fuel_test_line(out, worker.limits)}
 
     @app.post("/api/ask/stream")
     async def api_ask_stream(request: Request) -> StreamingResponse:

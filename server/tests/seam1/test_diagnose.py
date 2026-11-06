@@ -9,7 +9,7 @@ drive, silence everywhere else, and the same Next steps the loop eval locks.
 
 from __future__ import annotations
 
-from conftest import Loop, template_replies
+from conftest import LIMITS, Loop, template_replies
 
 from kta_server import copy as C
 
@@ -89,7 +89,7 @@ def test_an_install_step_reads_as_a_physical_check_with_no_map_change():
         "diagnose": {"sentence": "Trims add +9.2 % at idle and low airflow but read fine higher up, right after a change: air is getting in past the sensor, so no map change."},
         "previous": None, "flat": [],
     }
-    card = C.next_step_card(step, {"kind": "no-change", "headline": "Your logs support no map change right now."}, {"trimOk": 5, "trimStop": 10, "mapTargetAfr": 11.0, "leanLimitAfr": 12.0}, [])
+    card = C.next_step_card(step, {"kind": "no-change", "headline": "Your logs support no map change right now."}, LIMITS, [])
     assert card["kind"] == "watch"
     assert "no map change" in card["body"].lower()
     assert len(card["recipe"]["steps"]) == 3
@@ -110,7 +110,7 @@ def test_a_downpipe_flash_step_carries_the_plan_headline_not_an_undo():
         "kind": "one-family", "headline": "Boost targets: −1 psi at 3,500–4,000 rpm, because overshoot held 3.0 psi there.",
         "saveAs": "Starter 21 Dual Tune 2 · 20260830 · boost r1",
     }
-    card = C.next_step_card(step, plan, {}, [])
+    card = C.next_step_card(step, plan, LIMITS, [])
     assert card["kind"] == "flash"
     assert "−1 psi at 3,500–4,000 rpm" in card["body"]
     assert "Shakedown drive" in card["body"]

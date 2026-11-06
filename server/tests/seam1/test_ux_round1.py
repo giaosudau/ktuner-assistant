@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from conftest import OWNER_DRIVES, Loop, owner_csv
+from conftest import LIMITS, Loop, OWNER_DRIVES, owner_csv
 
 from test_car_profile import confirm, draft
 
@@ -21,12 +21,12 @@ from kta_server import copy as C
 # 1. The brief's slot
 # ---------------------------------------------------------------------------
 def test_the_calibration_brief_names_slot_2_and_the_baseline_brief_none():
-    calibration = C.log_guide({}, None, calibrate=True)
+    calibration = C.log_guide(LIMITS, None, calibrate=True)
     assert calibration["slot"] == 2
     pulls = " ".join(next(s for s in calibration["sections"] if s["title"] == "The two pulls")["steps"])
     assert f"slot {calibration['slot']} (Tune {calibration['slot']})" in pulls
     assert f"On slot {calibration['slot']} (Tune {calibration['slot']})" in calibration["checkpoints"]
-    assert C.log_guide({})["slot"] is None
+    assert C.log_guide(LIMITS)["slot"] is None
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ def test_a_chat_answer_quotes_the_same_next_step(calibrating):
 def test_calibration_step_with_everything_on_file_is_just_the_drive():
     from test_car_profile import CENSUS
 
-    step = C.calibration_step({"status": "not-floored"}, {**CENSUS, "pedal_full_pct": 94})
+    step = C.calibration_step({"status": "not-floored"}, {**CENSUS, "pedal_full_pct": 94}, LIMITS)
     assert step["kind"] == "drive" and step["key"] == "calibration"
     assert step["body"].startswith("Drive the Calibration drive on slot 2 (Tune 2)"), step["body"]
     assert "Pedal full reading" not in step["body"] and "Logger setup" not in step["body"]

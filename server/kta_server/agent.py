@@ -757,7 +757,7 @@ async def _shop_tool(
             test = await worker.call("fuelTest", state=store.car_state(None) or {}, tags=store.drive_tags())
             from . import copy as C
 
-            return {**test, "line": C.fuel_test_line(test), "cards": _cards_for(["kc-fuel-test"])}
+            return {**test, "line": C.fuel_test_line(test, worker.limits), "cards": _cards_for(["kc-fuel-test"])}
         return await harness.step(config, "fuelTest", "Compare the fuels on matched drives", {}, run)
     proposal = K.propose(
         str(args.get("title") or ""), str(args.get("claim") or ""), str(args.get("why") or ""), str(args.get("source_hint") or "")

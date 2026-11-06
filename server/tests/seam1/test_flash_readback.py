@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import Loop, owner_csv, OWNER_FILE_NAMES
+from conftest import LIMITS, Loop, OWNER_FILE_NAMES, owner_csv
 
 from kta_server import readback as R
 from test_flash_step import flashed, propose, proposing  # noqa: F401  (fixture)
@@ -95,7 +95,7 @@ def test_cells_that_share_a_value_are_one_group_and_a_lone_cell_is_named_by_its_
     new = {"Boost_Target_1_Normal_L": {"rpm_axis": [2500, 2750], "values": [[1.0, 14.0, 14.0], [1.0, 15.0, 16.0]]}}
     groups = R.groups(old, new)
     assert [(g["rpm"], g["cols"]) for g in groups] == [(2500, [3]), (2750, [2]), (2750, [3])]
-    judged = R.judge(groups, {2500: [{"psi": 15.0, "n": 3}], 2750: [{"psi": 15.0, "n": 2}, {"psi": 16.0, "n": 2}]})
+    judged = R.judge(groups, {2500: [{"psi": 15.0, "n": 3}], 2750: [{"psi": 15.0, "n": 2}, {"psi": 16.0, "n": 2}]}, LIMITS)
     assert [g["status"] for g in judged] == ["mismatch", "match", "match"]
     assert R.verdict(judged, 2)["mismatches"] == ["2,500 rpm column 3 reads 15.0, planned 14.0"]
 

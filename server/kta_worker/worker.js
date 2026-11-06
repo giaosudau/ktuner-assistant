@@ -148,7 +148,11 @@ var LIMITS = {
     overshoot: KTA.LIMITS.overshoot,
     score: pick(S, ['baseline', 'tableDeg', 'watch', 'noHard', 'stop']),
     mixture: pick(KTA.LIMITS.mixture, ['target', 'leanLimit']),
-    cvt: KTA.LIMITS.cvt
+    cvt: KTA.LIMITS.cvt,
+    logBrief: KTA.LIMITS.logBrief,
+    fuelTest: KTA.LIMITS.fuelTest,
+    readback: KTA.LIMITS.readback,
+    calibrationSlot: KTA.LIMITS.calibrationSlot
   },
   CAR_RULES: pick(KTA.CAR_RULES, ['minMoving', 'coolIat', 'shakedownCalm', 'lugOk', 'uploadScore']),
   DRIVE_LIMITS: pick(KTA.DRIVE_LIMITS, ['hotDrive', 'pullIatGood'])

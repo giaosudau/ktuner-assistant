@@ -20,10 +20,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-# Judgement thresholds (not map limits, so not in data/thresholds.json).
-RPM_TOL = 30        # a sample counts for a row within this many rpm of its axis point
-MATCH_PSI = 0.3     # a logged target this close to the planned value reads as it
-BAND_PSI = 1.5      # a reading this close to a changed cell's old/new value is about that cell
+from .copy import lim
 
 BOOST_TABLES = {f"Boost_Target_{n}_Normal_{s}" for n in (1, 2, 3) for s in ("L", "H")}
 
@@ -77,26 +74,29 @@ def groups(old: Mapping[str, Any], new: Mapping[str, Any]) -> list[dict[str, Any
     return list(grouped.values())
 
 
-def judge(group_list: list[dict[str, Any]], observed: Mapping[float, list[Mapping[str, Any]]]) -> list[dict[str, Any]]:
+def judge(
+    group_list: list[dict[str, Any]], observed: Mapping[float, list[Mapping[str, Any]]], limits: Mapping[str, Any]
+) -> list[dict[str, Any]]:
     """Per group: match / mismatch (with the reading) / unseen, from the tallies of logged targets."""
+    match, band = lim(limits, "LIMITS.readback.matchPsi"), lim(limits, "LIMITS.readback.bandPsi")
     rows: dict[int, list[dict[str, Any]]] = {}
     for g in group_list:
         rows.setdefault(g["row"], []).append(g)
     result = []
     for g in group_list:
         a, b = g["after"], g["before"]
-        lo, hi = min(a, b) - BAND_PSI, max(a, b) + BAND_PSI
+        lo, hi = min(a, b) - band, max(a, b) + band
         mine = [
             t["psi"] for t in observed.get(g["rpm"], [])
-            if lo <= t["psi"] <= hi and not any(abs(t["psi"] - u) <= MATCH_PSI for u in g["others"])
+            if lo <= t["psi"] <= hi and not any(abs(t["psi"] - u) <= match for u in g["others"])
         ]
         # A reading belongs to the group of this row whose planned value it matches,
         # else to the one it is closest to (a typed value that is not any planned one).
         def owner(psi: float) -> dict[str, Any]:
-            hit = [o for o in rows[g["row"]] if abs(psi - o["after"]) <= MATCH_PSI]
+            hit = [o for o in rows[g["row"]] if abs(psi - o["after"]) <= match]
             return hit[0] if hit else min(rows[g["row"]], key=lambda o: min(abs(psi - o["after"]), abs(psi - o["before"])))
         mine = [p for p in mine if owner(p) is g]
-        if any(abs(p - a) <= MATCH_PSI for p in mine):
+        if any(abs(p - a) <= match for p in mine):
             status, reads = "match", a
         elif mine:
             status, reads = "mismatch", min(mine, key=lambda p: abs(p - a))
@@ -174,13 +174,13 @@ async def for_drive(worker, store, car_state: Mapping[str, Any], drive_id: str |
         if not upload:
             continue
         await worker.call("loadLog", csv=upload["csv"].decode("utf-8", "replace"), fileName=upload["file_name"], driveId=d["id"])
-        got = await worker.call("logTargets", driveId=d["id"], rpms=sorted({g["rpm"] for g in glist}), tol=RPM_TOL)
+        got = await worker.call("logTargets", driveId=d["id"], rpms=sorted({g["rpm"] for g in glist}), tol=lim(worker.limits, "LIMITS.readback.rpmTol"))
         for row in got["rows"]:
             tally = observed.setdefault(row["rpm"], {})
             for t in row["targets"]:
                 tally[t["psi"]] = tally.get(t["psi"], 0) + t["n"]
     seen = {rpm: [{"psi": p, "n": n} for p, n in sorted(t.items())] for rpm, t in observed.items()}
-    judged = judge(glist, seen)
+    judged = judge(glist, seen, worker.limits)
     return {**verdict(judged, version["n"]), "version": version["n"], "cells": judged}
 
 

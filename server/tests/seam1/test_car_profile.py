@@ -10,7 +10,7 @@ reply states its window, and Drives outside it never decide the Next step.
 
 from __future__ import annotations
 
-from conftest import Loop, owner_csv
+from conftest import LIMITS, Loop, owner_csv
 
 from test_reply_words import BANNED
 
@@ -170,29 +170,29 @@ def test_checkpoints_follow_the_logger_census():
     # The engine moved both channels to notOffered (CENSUS); this car logs 7.5 a second.
     quality = {"quality": {"missing": [], "notOffered": ["afrCmd", "mafHz"], "flat": [], "movingSeconds": 900},
                "samples_per_second": 7.5}
-    rows = by_id(C.log_checkpoints(quality, {}, {}, {}, CENSUS))
+    rows = by_id(C.log_checkpoints(quality, {}, {}, LIMITS, CENSUS))
     assert rows["channels"]["met"] is None
     assert rows["channels"]["value"] == "can't say: TunerView doesn't offer AFR Command and MAF Hz on this car"
     assert (rows["rate"]["label"], rows["rate"]["met"]) == ("Logged 7.5 times a second or faster", True)
     # Not stated: the 10 a second bar, which 7.5 misses.
-    assert by_id(C.log_checkpoints(quality, {}, {}, {}, None))["rate"]["met"] is False
+    assert by_id(C.log_checkpoints(quality, {}, {}, LIMITS, None))["rate"]["met"] is False
     # Stated under 6: the bar stops at 6.
     slow = {**quality, "samples_per_second": 5.0}
-    rows = by_id(C.log_checkpoints(slow, {}, {}, {}, {**CENSUS, "logger_max_rate_hz": 5}))
+    rows = by_id(C.log_checkpoints(slow, {}, {}, LIMITS, {**CENSUS, "logger_max_rate_hz": 5}))
     assert (rows["rate"]["label"], rows["rate"]["met"]) == ("Logged 6 times a second or faster", False)
     # Stated over 10: the bar stays at 10.
-    assert by_id(C.log_checkpoints(quality, {}, {}, {}, {"logger_max_rate_hz": 20}))["rate"]["label"] == "Logged 10 times a second or faster"
+    assert by_id(C.log_checkpoints(quality, {}, {}, LIMITS, {"logger_max_rate_hz": 20}))["rate"]["label"] == "Logged 10 times a second or faster"
 
 
 def test_the_drive_brief_follows_the_logger_census():
-    guide = C.log_guide({}, CENSUS)
+    guide = C.log_guide(LIMITS, CENSUS)
     text = " ".join(step for section in guide["sections"] for step in section["steps"]) + " ".join(guide["recipe"]["steps"])
     assert "AFR Command" not in text and "MAF Hz" not in text, "never ask for what TunerView can't log"
     assert "7.5 samples a second" in text
     assert "Logged 7.5 times a second or faster" in guide["checkpoints"]
     assert not any("AFR Command" in c for c in guide["checkpoints"])
     # Not checked yet: asked for, if the app offers them.
-    assert "AFR Command and MAF Hz if your app offers them" in " ".join(C.log_guide({})["sections"][0]["steps"])
+    assert "AFR Command and MAF Hz if your app offers them" in " ".join(C.log_guide(LIMITS)["sections"][0]["steps"])
 
 
 def test_a_census_drive_has_no_channels_step_and_no_failed_checkpoint(tmp_path):

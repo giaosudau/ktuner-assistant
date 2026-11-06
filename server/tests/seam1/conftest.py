@@ -15,6 +15,7 @@ import json
 import re
 import shutil
 import sqlite3
+import subprocess
 import sys
 import uuid
 import zlib
@@ -31,9 +32,15 @@ if str(SERVER_ROOT) not in sys.path:
 import httpx  # noqa: E402
 
 from kta_server.app import create_app  # noqa: E402
-from kta_server.config import Settings  # noqa: E402
+from kta_server.config import WORKER_SCRIPT, Settings  # noqa: E402
 from kta_server.db import Store  # noqa: E402
 from kta_server.worker import Worker  # noqa: E402
+
+# The limits the engine reports, as `Worker.limits` holds them: tests that call a wording function
+# directly pass these, never numbers of their own.
+LIMITS = json.loads(subprocess.run(
+    ["node", str(WORKER_SCRIPT)], input='{"id":"1","op":"ping","args":{}}\n', capture_output=True, text=True, check=True,
+).stdout)["result"]["limits"]
 
 # The clock is fixed so the same Drive always gives the same reply.
 NOW = 1756723200000

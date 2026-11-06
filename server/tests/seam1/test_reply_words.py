@@ -11,11 +11,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from conftest import Loop, template_replies
+from conftest import LIMITS, Loop, template_replies
 
 from kta_server import copy as C
-
-LIMITS = {"LIMITS": {"mixture": {"target": 11.0, "leanLimit": 12.0}, "trim": {"good": 5}}}
 
 
 def drive(verdict: str, **summary) -> dict:

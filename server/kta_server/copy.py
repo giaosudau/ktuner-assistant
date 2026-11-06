@@ -39,6 +39,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Mapping
 
 from .config import REPO_ROOT
+from .worker import WorkerError
 from . import profile as P
 from .mapcheck import load_thresholds
 from .profile import part_display
@@ -164,16 +165,16 @@ def first_sentence(drive: Mapping[str, Any], limits: Mapping[str, Any]) -> str:
     # are the cause, so they lead. When the trims are inside ±5 % there is no
     # trim clause at all, and the sentence stays the shape the prototype fixed.
     trim = summary.get("trimWorst")
-    trim_ok = lim(limits, "LIMITS.trim.good", 5)
+    trim_ok = lim(limits, "LIMITS.trim.good")
     if trim is not None and abs(trim) > trim_ok:
         clauses.append(f"worst fuel trim {sg(trim, 1)} %")
 
     leanest = summary.get("mixLeanest")
     if leanest is not None:
-        target = summary.get("mixTarget") or lim(limits, "LIMITS.mixture.target", None)
+        target = summary.get("mixTarget") or lim(limits, "LIMITS.mixture.target")
         clauses.append(
             f"full-throttle AFR {n(leanest, 1)} (map asks {n(target, 1)}, "
-            f"lean limit {n(lim(limits, 'LIMITS.mixture.leanLimit', None), 1)})"
+            f"lean limit {n(lim(limits, 'LIMITS.mixture.leanLimit'), 1)})"
         )
 
     peak = summary.get("kcPeak")
@@ -449,56 +450,56 @@ def wasted_line(wasted: Mapping[str, Any] | None) -> str | None:
 GAUGE_COLUMNS = ["Gauge in TunerView", "OK", "If you see", "Then"]
 
 
-def lim(limits: Mapping[str, Any], path: str, fallback: Any) -> Any:
-    """One limit by the engine's own dotted name, e.g. `LIMITS.trim.good`."""
+def lim(limits: Mapping[str, Any], path: str) -> Any:
+    """One limit by the engine's own dotted name, e.g. `LIMITS.trim.good`. Never a fallback: the number's one home is data/thresholds.json or the engine."""
     node: Any = limits
     for part in path.split("."):
         node = node.get(part) if isinstance(node, Mapping) else None
-    return fallback if node is None else node
+    if node is None:
+        # A WorkerError so a worker that never reported its limits gets the reply every worker failure gets.
+        raise WorkerError(f"The engine has not reported the limit {path}.", "limits-missing")
+    return node
 
 
 def gauge_row(key: str, limits: Mapping[str, Any], dead: list[str] | None = None) -> dict[str, str] | None:
     """One gauge, the four cells the owner reads. `None` when there is no such row."""
-    def at(path: str, fallback: Any) -> Any:
-        return lim(limits, path, fallback)
-
     if key == "trims":
         return {
             "gauge": "STFT B1 + LTFT B1",
-            "ok": f"within ±{n(at('LIMITS.trim.good', 5), 0)} %",
-            "see": f"beyond ±{n(at('LIMITS.trim.watch', 10), 0)} %",
+            "ok": f"within ±{n(lim(limits, 'LIMITS.trim.good'), 0)} %",
+            "see": f"beyond ±{n(lim(limits, 'LIMITS.trim.watch'), 0)} %",
             "then": "Stop pulling. Drive home calm, upload.",
         }
     if key == "kc":
         return {
             "gauge": "Knock Control",
-            "ok": f"at or under {n(at('LIMITS.score.watch', 0.56), 2)}",
-            "see": f"above {n(at('LIMITS.score.noHard', 0.62), 2)}",
+            "ok": f"at or under {n(lim(limits, 'LIMITS.score.watch'), 2)}",
+            "see": f"above {n(lim(limits, 'LIMITS.score.noHard'), 2)}",
             "then": (
                 "Ease off, and note what you were doing (rpm, heat, hill). "
-                f"Up to {n(at('LIMITS.score.noHard', 0.62), 2)} costs about 1.3° of timing, not damage."
+                f"Up to {n(lim(limits, 'LIMITS.score.noHard'), 2)} costs about 1.3° of timing, not damage."
             ),
         }
     if key == "iat":
         return {
             "gauge": "IAT2",
-            "ok": f"under {n(at('CAR_RULES.coolIat', 42), 0)} °C moving, under {n(at('DRIVE_LIMITS.pullIatGood', 48), 0)} °C when a pull starts",
-            "see": f"over {n(at('DRIVE_LIMITS.pullIatGood', 48), 0)} °C",
+            "ok": f"under {n(lim(limits, 'CAR_RULES.coolIat'), 0)} °C moving, under {n(lim(limits, 'DRIVE_LIMITS.pullIatGood'), 0)} °C when a pull starts",
+            "see": f"over {n(lim(limits, 'DRIVE_LIMITS.pullIatGood'), 0)} °C",
             "then": "Hold a steady speed 1–2 min before the pull. A hot pull is not a test.",
         }
     if key == "afr":
-        target = at("LIMITS.mixture.target", 11.0)
+        target = lim(limits, "LIMITS.mixture.target")
         return {
             "gauge": "O2 (AFR) at full throttle",
             "ok": f"{n(target - 1.0, 1)}–{n(target + 0.5, 1)}",
-            "see": f"leaner than {n(at('LIMITS.mixture.leanLimit', 12.0), 1)}",
+            "see": f"leaner than {n(lim(limits, 'LIMITS.mixture.leanLimit'), 1)}",
             "then": "Lift. Upload before the next pull.",
         }
     if key == "boost":
         return {
             "gauge": "Turbo Pressure",
-            "ok": f"within +{n(at('LIMITS.overshoot.good', 1.5), 1)} psi of Turbo Pressure Target",
-            "see": f"more than +{n(at('LIMITS.overshoot.watch', 2.5), 1)} psi above Turbo Pressure Target, held",
+            "ok": f"within +{n(lim(limits, 'LIMITS.overshoot.good'), 1)} psi of Turbo Pressure Target",
+            "see": f"more than +{n(lim(limits, 'LIMITS.overshoot.watch'), 1)} psi above Turbo Pressure Target, held",
             "then": "Upload. A held overshoot is the only reason to touch boost.",
         }
     if key == "rpm":
@@ -546,14 +547,10 @@ def log_guide(
     (calibration drive C6), the same drive with the parked asks first and the pulls floored on slot 2.
     """
     guide = _baseline_guide(limits, profile)
-    return _calibration_guide(guide, profile) if calibrate else guide
+    return _calibration_guide(guide, profile, limits) if calibrate else guide
 
 
-#: The trial slot the Calibration drive's floored pulls run on (kc-drive-brief tune-two; kc-calibration-drive).
-CALIBRATION_SLOT = 2
-
-
-def _calibration_guide(guide: dict[str, Any], profile: Mapping[str, Any] | None) -> dict[str, Any]:
+def _calibration_guide(guide: dict[str, Any], profile: Mapping[str, Any] | None, limits: Mapping[str, Any]) -> dict[str, Any]:
     """The Baseline brief with C6's three changes: parked asks first, floored pulls on slot 2, two more checkpoints."""
     profile = profile or {}
     gates = load_thresholds()["boost_step_gates"]["value"]
@@ -572,7 +569,8 @@ def _calibration_guide(guide: dict[str, Any], profile: Mapping[str, Any] | None)
         parked.append("Open TunerView's logging rate menu and type its fastest logging rate in the Logger setup too.")
     parked.append("If you can, attach a screenshot of KTuner's Quick Adjustments screen here, so I can see the map's settings.")
     hold, rpm = num_words(gates["hold_s"]), f"{gates['rpm_min']:,}"
-    slot = f"{CALIBRATION_SLOT} (Tune {CALIBRATION_SLOT})"
+    slot_no = lim(limits, "LIMITS.calibrationSlot")
+    slot = f"{slot_no} (Tune {slot_no})"
     sections = [{"title": "Parked, the evening before", "steps": parked}]
     for section in guide["sections"]:
         if section["title"] == "The two pulls":
@@ -595,15 +593,16 @@ def _calibration_guide(guide: dict[str, Any], profile: Mapping[str, Any] | None)
         ),
         "sections": sections,
         "checkpoints": [*guide["checkpoints"], f"2 floored pulls held {hold} s or more above {rpm} rpm", f"On slot {slot}"],
-        "slot": CALIBRATION_SLOT,
+        "slot": slot_no,
     }
 
 
 def _baseline_guide(limits: Mapping[str, Any], profile: Mapping[str, Any] | None) -> dict[str, Any]:
-    cool = n(lim(limits, "CAR_RULES.coolIat", 42), 0)
-    pull_iat = n(lim(limits, "DRIVE_LIMITS.pullIatGood", 48), 0)
+    cool = n(lim(limits, "CAR_RULES.coolIat"), 0)
+    pull_iat = n(lim(limits, "DRIVE_LIMITS.pullIatGood"), 0)
     # The Logger census (calibration drive C4, C5): never ask for what TunerView can't log.
-    rate = num_words(rate_bar(profile))
+    rate = num_words(rate_bar(profile, limits))
+    moving_min, warm = lim(limits, "LIMITS.logBrief.movingS") // 60, lim(limits, "LIMITS.logBrief.warmEctC")
     asked = [label for _, label in P.LOGGER_CHANNELS.values() if label not in not_offered_names(profile)]
     gauges = "Turn on every gauge in the table below" + (
         f", plus {join_names(asked)} if your app offers them." if asked else ".")
@@ -618,7 +617,7 @@ def _baseline_guide(limits: Mapping[str, Any], profile: Mapping[str, Any] | None
             "Pick a straight, empty road where full throttle is legal and safe. Never in traffic.",
         ]},
         {"title": "Warm up, then cruise", "steps": [
-            f"Drive about 10 minutes normally, until coolant reads {BRIEF_WARM_ECT} °C or more.",
+            f"Drive about 10 minutes normally, until coolant reads {warm} °C or more.",
             "Then cruise steady at a few different speeds, light throttle, several minutes in all: your fuel trims are read from this.",
         ]},
         {"title": "The two pulls", "steps": [
@@ -627,16 +626,16 @@ def _baseline_guide(limits: Mapping[str, Any], profile: Mapping[str, Any] | None
             f"Cruise calmly about a minute so the intake cools, check it reads under {pull_iat} °C, then do the second pull the same way.",
         ]},
         {"title": "Finish", "steps": [
-            f"Keep at least {BRIEF_MOVING_S // 60} minutes of moving time in the log in all.",
+            f"Keep at least {moving_min} minutes of moving time in the log in all.",
             "Idle a minute, stop the log, export it as CSV, and attach it here.",
         ]},
     ]
     checkpoints = [
         f"Logged {rate} times a second or faster",
-        f"{BRIEF_MOVING_S // 60} minutes or more of moving",
+        f"{moving_min} minutes or more of moving",
         "Every gauge moving",
         *([f"{join_names(asked)} in the log"] if asked else []),
-        f"Engine warm (coolant {BRIEF_WARM_ECT} °C or more)",
+        f"Engine warm (coolant {warm} °C or more)",
         f"Cool intake while moving (under {cool} °C)",
         "2 full-throttle pulls",
         f"Pulls started under {pull_iat} °C intake",
@@ -655,18 +654,14 @@ def _baseline_guide(limits: Mapping[str, Any], profile: Mapping[str, Any] | None
     }
 
 
-#: The drive brief's own bars (kc-log-gate, kc-drive-brief; drive-check-tuner-analysis.md §4 Gate 0).
-BRIEF_RATE_HZ = 10
-BRIEF_MOVING_S = 600
-BRIEF_WARM_ECT = 80
 #: The slowest log a Boost step proof can read (thresholds.json boost_step_gates.rate_min_hz).
 RATE_MIN_HZ = load_thresholds()["boost_step_gates"]["value"]["rate_min_hz"]
 
 
-def rate_bar(profile: Mapping[str, Any] | None) -> float:
+def rate_bar(profile: Mapping[str, Any] | None, limits: Mapping[str, Any]) -> float:
     """The logging-rate bar (calibration drive C5): TunerView's stated fastest rate, from 6 to 10 a second."""
-    stated = (profile or {}).get(P.LOGGER_RATE)
-    return BRIEF_RATE_HZ if stated is None else max(RATE_MIN_HZ, min(BRIEF_RATE_HZ, stated))
+    stated, top = (profile or {}).get(P.LOGGER_RATE), lim(limits, "LIMITS.logBrief.rateHz")
+    return top if stated is None else max(RATE_MIN_HZ, min(top, stated))
 
 
 def not_offered_names(profile: Mapping[str, Any] | None) -> list[str]:
@@ -750,7 +745,7 @@ def calibration_card(
     }
 
 
-def calibration_step(cal: Mapping[str, Any] | None, profile: Mapping[str, Any] | None) -> dict[str, Any]:
+def calibration_step(cal: Mapping[str, Any] | None, profile: Mapping[str, Any] | None, limits: Mapping[str, Any]) -> dict[str, Any]:
     """The Next step while the Calibration drive is unsettled (stage `calibrate`): what is missing first, then the drive.
 
     One Next step, always: the Calibration card in the same reply asks for the same drive. Same shape as
@@ -765,7 +760,8 @@ def calibration_step(cal: Mapping[str, Any] | None, profile: Mapping[str, Any] |
         *(["Type the Pedal full reading in your car profile."] if profile.get(P.PEDAL_FULL) is None else []),
         *([f"In your car profile's Logger setup, {', and '.join(logger)}."] if logger else []),
     ]
-    drive = (f"drive the Calibration drive on slot {CALIBRATION_SLOT} (Tune {CALIBRATION_SLOT}): it answers "
+    slot = lim(limits, "LIMITS.calibrationSlot")
+    drive = (f"drive the Calibration drive on slot {slot} (Tune {slot}): it answers "
              "whether more boost can show on your car.")
     body = f"First: {' '.join(first)} Then {drive}" if first else drive[0].upper() + drive[1:]
     # A read that came back Can't tell for a reason says how to drive it differently this time.
@@ -808,10 +804,11 @@ def log_checkpoints(
     missing = [channel_name(k) for k in q.get("missing") or []]
     # Calibration drive C5: what TunerView doesn't offer on this car can't be asked for.
     not_offered = [channel_name(k) for k in q.get("notOffered") or []]
-    bar = rate_bar(profile)
+    bar = rate_bar(profile, limits)
+    moving_min_s, warm_ect = lim(limits, "LIMITS.logBrief.movingS"), lim(limits, "LIMITS.logBrief.warmEctC")
     flat = [channel_name(k) for k in q.get("flat") or []]
-    cool_iat = lim(limits, "CAR_RULES.coolIat", 42)
-    pull_iat_max = lim(limits, "DRIVE_LIMITS.pullIatGood", 48)
+    cool_iat = lim(limits, "CAR_RULES.coolIat")
+    pull_iat_max = lim(limits, "DRIVE_LIMITS.pullIatGood")
     pulls = s.get("hardPulls")
     ect, iat_moving, pull_iat = h.get("ectMax"), h.get("iatMoving"), h.get("pullIat")
 
@@ -821,16 +818,16 @@ def log_checkpoints(
     return [
         row("rate", f"Logged {num_words(bar)} times a second or faster",
             f"{n(rate, 1)} a second" if rate is not None else "unknown", None if rate is None else rate >= bar),
-        row("moving", f"{BRIEF_MOVING_S // 60} minutes or more of moving",
-            f"{n(moving / 60 if moving is not None else None, 0)} min", None if moving is None else moving >= BRIEF_MOVING_S),
+        row("moving", f"{moving_min_s // 60} minutes or more of moving",
+            f"{n(moving / 60 if moving is not None else None, 0)} min", None if moving is None else moving >= moving_min_s),
         row("gauges", "Every gauge moving", "all moving" if not flat else "stuck: " + join_names(flat), not flat),
         row("channels", "AFR Command and MAF Hz in the log",
             "missing: " + join_names(missing) if missing
             else f"can't say: TunerView doesn't offer {join_names(not_offered)} on this car" if not_offered
             else "both logged",
             False if missing else None if not_offered else True),
-        row("warm", f"Engine warm (coolant {BRIEF_WARM_ECT} °C or more)",
-            f"{n(ect)} °C peak" if ect is not None else "not logged", None if ect is None else ect >= BRIEF_WARM_ECT),
+        row("warm", f"Engine warm (coolant {warm_ect} °C or more)",
+            f"{n(ect)} °C peak" if ect is not None else "not logged", None if ect is None else ect >= warm_ect),
         row("cool", f"Cool intake while moving (under {n(cool_iat)} °C)",
             f"{n(iat_moving)} °C" if iat_moving is not None else "not logged",
             None if iat_moving is None else iat_moving < cool_iat),
@@ -842,11 +839,7 @@ def log_checkpoints(
     ]
 
 
-#: KTuner logs knock retard in 0.5° steps (ktuner-only-tuning.md §1): a smaller gap between fuels is noise.
-FUEL_SAME_DEG = 0.5
-
-
-def fuel_test_line(test: Mapping[str, Any] | None) -> str:
+def fuel_test_line(test: Mapping[str, Any] | None, limits: Mapping[str, Any]) -> str:
     """The premium-fuel verdict in one sentence, from the engine's matched pairs (kc-fuel-test)."""
     test = test or {}
     if test.get("status") != "measured" or not test.get("pairs"):
@@ -858,10 +851,11 @@ def fuel_test_line(test: Mapping[str, Any] | None) -> str:
     peaks = f"Knock Control peak {n(p['kcPeakA'], 2)} on {p['fuelA']} vs {n(p['kcPeakB'], 2)} on {p['fuelB']}"
     if ta is None or tb is None:
         return f"{peaks}, on {count} within {n(test.get('iatMatch'))} °C intake."
-    if abs(ta - tb) <= FUEL_SAME_DEG:
+    same_deg = lim(limits, "LIMITS.fuelTest.sameDeg")
+    if abs(ta - tb) <= same_deg:
         return (
             f"No measurable difference yet: {peaks} ({n(ta, 1)}° vs {n(tb, 1)}° of timing pulled), inside KTuner's "
-            f"{FUEL_SAME_DEG}° logging step, on {count} within {n(test.get('iatMatch'))} °C intake."
+            f"{same_deg}° logging step, on {count} within {n(test.get('iatMatch'))} °C intake."
         )
     better = p["fuelA"] if ta < tb else p["fuelB"]
     return (
@@ -885,8 +879,8 @@ HEALTH_BANDS: dict[str, dict[str, Any]] = {
 
 
 def _band_marks(check_id: str, limits: Mapping[str, Any]) -> list[tuple[float, str, str]] | None:
-    """`(at, word, tone)` per mark, or None when a limit is missing (no band beats a made-up one)."""
-    get = lambda path: lim(limits, path, None)  # noqa: E731
+    """`(at, word, tone)` per mark; a limit the engine did not report raises (no band beats a made-up one)."""
+    get = lambda path: lim(limits, path)  # noqa: E731
     if check_id == "kControl":  # kc-ranges kc-floor, kc-watch, kc-nohard, kc-stop
         marks = [(get("LIMITS.score.baseline"), "Floor", "good"), (get("LIMITS.score.watch"), "Watch", "watch"),
                  (get("LIMITS.score.noHard"), "No hard driving", "watch"), (get("LIMITS.score.stop"), "Stop", "stop")]
@@ -955,7 +949,7 @@ def health_rows(
 
 def _baseline_recipe(limits: Mapping[str, Any], channels_open: bool, dead: list[str]) -> dict[str, Any]:
     steps = [
-        f"Before 8 am, or after an hour parked in shade: intake under {n(lim(limits, 'CAR_RULES.coolIat', 42), 0)} °C.",
+        f"Before 8 am, or after an hour parked in shade: intake under {n(lim(limits, 'CAR_RULES.coolIat'), 0)} °C.",
         "10 minutes of normal driving first, so the engine and the CVT are warm.",
         "Then two pulls in S, 50 → 100 km/h, on a straight safe road, a minute apart.",
     ]
@@ -963,7 +957,7 @@ def _baseline_recipe(limits: Mapping[str, Any], channels_open: bool, dead: list[
         steps.append(
             "While you are in TunerView: add AFR Command and MAF Hz to the logged list if your app "
             f"offers them. Without AFR Command I judge the mixture against the map's "
-            f"{n(lim(limits, 'LIMITS.mixture.target', 11.0), 1)}, not what the ECU asked for."
+            f"{n(lim(limits, 'LIMITS.mixture.target'), 1)}, not what the ECU asked for."
         )
     return {
         "intro": (

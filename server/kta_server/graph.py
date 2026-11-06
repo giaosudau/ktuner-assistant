@@ -343,7 +343,7 @@ async def _ingest_run(
             config, "fuelTest", "Compare the fuels on matched drives", {"drives": len(tags)},
             lambda: worker.call("fuelTest", state=store.car_state(None) or {}, tags=tags),
         )
-        reply["fuelTest"] = {**fuel_test, "line": C.fuel_test_line(fuel_test)}
+        reply["fuelTest"] = {**fuel_test, "line": C.fuel_test_line(fuel_test, worker.limits)}
     reply["tags"] = tags.get(drive.get("id") or "")
     if first:
         reply["repeat"] = C.repeat_note(first["received_at"])

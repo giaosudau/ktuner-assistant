@@ -114,5 +114,33 @@
     "basis": "judgement",
     "source": "engine P4 (engine/kta-car.js carFlashPlan: one table family per Flash, the rest wait to be proven)",
     "note": "Every table in a change belongs to one family: AFM Flow, boost or mixture."
+  },
+  "log_brief": {
+    "value": {"rate_hz": 10, "moving_s": 600, "warm_ect_c": 80},
+    "unit": "mixed (Hz, s, °C)",
+    "basis": "judgement",
+    "source": "drive-check-tuner-analysis.md §4 Gate 0 (rate at least 10 Hz and 10 minutes of moving time are the panel's own bar, with no outside source); afr-tuning-research.md §2 Step A (warm engine: ECT above about 80 °C, a civicx tip)",
+    "note": "The Baseline drive's brief and its checkpoints: the fastest logging rate asked for, the moving time to keep, and the coolant temperature that counts as warm."
+  },
+  "fuel_test": {
+    "value": {"same_deg": 0.5},
+    "unit": "deg",
+    "basis": "source",
+    "source": "ktuner-only-tuning.md §1 (KTuner logs Knock Retard rounded to 0.5°: never read meaning into a 0.5° change)",
+    "note": "Two fuels whose timing pulled differs by no more than this read as no measurable difference."
+  },
+  "readback": {
+    "value": {"rpm_tol": 30, "match_psi": 0.3, "band_psi": 1.5},
+    "unit": "mixed (rpm, psi)",
+    "basis": "judgement",
+    "source": "app choice, no outside source: a sample counts for an axis row within rpm_tol of it; a logged Turbo Pressure Target within match_psi of the planned value reads as it; a reading within band_psi of a changed cell's old or new value is about that cell",
+    "note": "How the Flash readback places the logged Turbo Pressure Target against the cells that changed."
+  },
+  "calibration_slot": {
+    "value": 2,
+    "unit": "slot",
+    "basis": "judgement",
+    "source": "ADR 0007 and downpipe-power-research.md §8 (boost steps are written to Tune 2 alone, so the owner can switch back to Tune 1 at once); fact-check.md (Starter 21 Dual Tune 2)",
+    "note": "The trial slot the Calibration drive's floored pulls run on."
   }
 }

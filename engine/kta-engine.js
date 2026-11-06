@@ -193,6 +193,12 @@
       min: THRESHOLDS_FILE.wot_target_band.value.min,
       max: THRESHOLDS_FILE.wot_target_band.value.max
     };
+    // What the reply words and the server checks read: shipped to Python by the worker's ping.
+    var brief = THRESHOLDS_FILE.log_brief.value, readback = THRESHOLDS_FILE.readback.value;
+    KTA.LIMITS.logBrief = { rateHz: brief.rate_hz, movingS: brief.moving_s, warmEctC: brief.warm_ect_c };
+    KTA.LIMITS.fuelTest = { sameDeg: THRESHOLDS_FILE.fuel_test.value.same_deg };
+    KTA.LIMITS.readback = { rpmTol: readback.rpm_tol, matchPsi: readback.match_psi, bandPsi: readback.band_psi };
+    KTA.LIMITS.calibrationSlot = THRESHOLDS_FILE.calibration_slot.value;
   }
 
   var RANK = { nodata: 0, good: 1, watch: 2, stop: 3 };
