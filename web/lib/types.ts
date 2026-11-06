@@ -45,6 +45,8 @@ export type KTunerGroup = {
   effect: string;
   same: boolean;
   pasteRow: string | null;
+  /** The tables' ids as the Map version stores them; `tables` is what KTuner shows. */
+  tableIds: string[];
   cells: KTunerCell[];
 };
 
@@ -91,14 +93,47 @@ export type FlashPlan = {
   saveAs: string | null;
   undoName: string | null;
   /** The Map version to flash back to, when the app knows it. */
-  undo?: { known: boolean; version: number | null; name: string | null; stamp: string | null } | null;
+  undo?: {
+    known: boolean;
+    version: number | null;
+    name: string | null;
+    from: number | null;
+    stamp: string | null;
+    label: string | null;
+    headline: string;
+  } | null;
   /** The Map version this plan is written on. */
-  mapVersion?: { n: number; label: string; name: string; tablesPending?: boolean } | null;
+  mapVersion?: {
+    n: number;
+    label: string;
+    name: string;
+    kind: string;
+    tablesFrom: string;
+    tablesPending: boolean;
+    from: number | null;
+    flashId: string | null;
+    changed: string | null;
+    note: string;
+    updatedAt: number | null;
+  } | null;
   /** The Flash plan's own route: preset means the MAF Scaling choice. */
   route?: string | null;
+  /** What the plan is read from: the Flash plan's evidence basis. */
+  basis?: string | null;
+  ceilingPsi?: number | null;
+  /** The change as the engine wrote it; the KTuner card is the words for it. */
+  tables?: { id: string; kind: string; cellCount: number; pasteRow: string | null }[];
+  cells?: { table: string; rpm: number; rpmRow: number; col: number; of: number; before: number; after: number }[];
+  afmPasteRow?: string | null;
+  afmAfter?: number[] | null;
+  /** What the last Flash changed, when the plan reads one. */
+  flashChanged?: string | null;
+  deferred?: { id: string; family: string; note: string }[];
+  /** The Boost step that failed; the app keeps it so the ladder stays closed. */
+  stepFail?: { at: number; drives: string[]; fuels: string[]; shut: boolean } | null;
   cellCount: number;
   evidence: { drives?: string[]; text: string; basis?: string }[];
-  levers: { id: string; title: string; status: string; reason: string; unlocks: string }[];
+  levers: { id: string; family: string | null; title: string; status: string; reason: string; unlocks: string }[];
   openIssues: unknown;
 };
 
@@ -126,7 +161,8 @@ export type HousingOption = { housing: string; option: string | null; detail: st
  * done (proved — and then no longer Open).
  */
 export type OpenStep = {
-  id: string;
+  /** The store's row id; null on a step the engine has only just opened. */
+  id: string | null;
   key: string;
   title: string;
   status: string;
@@ -164,7 +200,8 @@ export type DriveRecipe = { intro: string; steps: string[] };
 export type AlsoStep = { key: string; title: string; why: string; steps: string[]; settlesOn: string };
 
 export type NextStep = {
-  kind: "flash" | "watch" | "drive" | "none";
+  /** `change`: re-check cells already typed in KTuner (the Flash readback's mismatch). */
+  kind: "flash" | "change" | "watch" | "drive" | "none";
   /** Which step this is, so the chat can style it: undo, baseline, habit, logger, install, downpipe… */
   key: string;
   title: string;
@@ -214,13 +251,18 @@ export type AgentInfo = {
  */
 export type Picture =
   | { kind: "cant-tell"; title: string; why: string }
-  | { kind: "baseline" | "proof"; title: string; unit: string; bars: { label: string; value: number }[]; note?: string }
+  | { kind: "baseline" | "proof"; title: string; unit: string; bars: { label: string; value: number }[]; numbers: number[]; note?: string }
   | {
       kind: "trace";
       title: string;
       unit: string;
       series: { name: string; points: [number, number][] }[];
       moment: { at: number; label: string };
+      /** Every number the picture prints, so the reply's check can read them. */
+      numbers: number[];
+      /** Which of the Drive's `moments` this one is. */
+      momentIndex: number;
+      moments: number;
       /** Reference lines from a cited card (e.g. kc-ranges), drawn behind the trace. */
       marks?: BandMark[];
       /** A fixed y range so a small change is not drawn as a cliff. */
@@ -296,7 +338,11 @@ export type DriveBrief = {
 /** The typed reply card, read from the AG-UI STATE_SNAPSHOT. */
 export type ReplyCard = {
   say: string;
+  /** What a fresh flash does to the reading, when this Drive is the one right after a Flash. */
+  afterFlash: string | null;
   window: string;
+  windowDrives: string[];
+  windowSince: DriveWindow["since"];
   numbers: NumberTile[];
   mapVersion: MapVersionCard | null;
   verdict: VerdictWord;
@@ -309,7 +355,15 @@ export type ReplyCard = {
   flashPlan: FlashPlan | null;
   nextStep: NextStep | null;
   /** Flash readback on a Drive after a Flash; null when no Flash is being read back. */
-  readback?: { state: "credited" | "mismatch" | "open" | "not-possible"; credited: boolean | null; line: string } | null;
+  readback?: {
+    state: "credited" | "mismatch" | "open" | "not-possible";
+    credited: boolean | null;
+    mismatches: string[];
+    line: string;
+    next: string;
+    version: number;
+    cells: { rpm: number; cols: number[]; before: number; after: number; status: string; reads: number | null }[];
+  } | null;
   /** The one diagnosed cause, in one plain-words sentence — null when none. */
   cause: string | null;
   /** What only the owner knows, as tap-to-answer choices — never the model. */
@@ -331,31 +385,6 @@ export type ReplyCard = {
   pictures?: Picture[] | null;
   /** The explainer's record, when a model wrote the sentence above. */
   agent?: (AgentInfo & { pictures?: Picture[] | null; thinking?: string | null }) | null;
-  error?: { message: string; code: string };
-};
-
-export type DriveSummary = {
-  id: string;
-  tooShort: boolean;
-  verdict: string;
-  fileName?: string;
-  summary: {
-    start: number | null;
-    iatMoving: number | null;
-    kcStart: number | null;
-    kcPeak: number | null;
-    timingCostDeg: number | null;
-    trimWorst: number | null;
-    hardPulls: number | null;
-    cool: boolean;
-  } | null;
-};
-
-export type LoopState = {
-  upload_id?: string;
-  thread_id?: string;
-  drive?: DriveSummary;
-  reply?: ReplyCard;
   error?: { message: string; code: string };
 };
 
@@ -412,6 +441,8 @@ export type ProfileDraft = {
   filled: Record<string, boolean>;
   missing: string[];
   prefilled: string[];
+  /** The parts a typed message named, when it changes the Car profile. */
+  changed?: string[];
 };
 
 /** An Install: a part fitted or removed, with its date (CONTEXT.md). */

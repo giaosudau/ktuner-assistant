@@ -593,7 +593,8 @@ class Store:
     def list_asked_questions(self) -> list[dict[str, Any]]:
         return [
             {"id": r["id"], "drive_id": r["drive_id"], "kind": r["kind"], "title": r["title"], "askedOn": r["drive_id"]}
-            for r in self._all("SELECT * FROM asked_questions ORDER BY asked_at, id")
+            # rowid, not id: two questions of one reply stay in the order they were asked.
+            for r in self._all("SELECT * FROM asked_questions ORDER BY asked_at, rowid")
         ]
 
     def list_unanswered_questions(self) -> list[dict[str, Any]]:

@@ -313,8 +313,12 @@ def loop(tmp_path: Path):
 def _build_replay_template(home: Path) -> None:
     running = Loop(home).start()
     try:
-        replies = dict(running.run(running.reply_to_all_owner_drives()))
-        events = {example_id: reply.events for example_id, reply in replies.items()}
+        # /api/state too, before the first Drive and after each: the reply contract reads them.
+        states = [running.get("/api/state").json()]
+        events = {}
+        for example_id, file_name in OWNER_DRIVES:
+            events[example_id] = running.upload_and_reply(example_id, file_name).events
+            states.append(running.get("/api/state").json())
         thread_id = running.thread_id
     finally:
         running.close()
@@ -322,7 +326,7 @@ def _build_replay_template(home: Path) -> None:
     # the DB file so copying the one file is a complete database.
     with sqlite3.connect(home / "ktuner.db", timeout=30) as c:
         c.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-    (home / "meta.json.tmp").write_text(json.dumps({"thread_id": thread_id, "events": events}))
+    (home / "meta.json.tmp").write_text(json.dumps({"thread_id": thread_id, "events": events, "states": states}))
     (home / "meta.json.tmp").rename(home / "meta.json")  # written last: its presence means "done"
 
 
@@ -348,7 +352,7 @@ def _replay_template(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]
         if not (home / "meta.json").exists():
             _build_replay_template(home)
     meta = json.loads((home / "meta.json").read_text())
-    return {"db": home / "ktuner.db", "thread_id": meta["thread_id"], "events": meta["events"]}
+    return {"db": home / "ktuner.db", "thread_id": meta["thread_id"], "events": meta["events"], "states": meta["states"]}
 
 
 @pytest.fixture
@@ -368,6 +372,7 @@ def replayed(tmp_path: Path, _replay_template: dict[str, Any]):
     # answers after the replay continues the same conversation.
     running.thread_id = _replay_template["thread_id"]
     running._template_events = _replay_template["events"]
+    running._template_states = _replay_template["states"]
     try:
         yield running
     finally:

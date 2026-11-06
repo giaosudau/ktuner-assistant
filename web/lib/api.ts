@@ -40,19 +40,120 @@ export type LoopState = {
   hasLlm: boolean;
   driveWindow: DriveWindow | null;
   ktunerBasemap: string;
-  carHistory: { id: string; start?: number | null }[];
-  flashes: { id: string; flashed_at?: number; time?: number; map?: string }[];
+  carHistory: CarHistoryRow[];
+  baseline: { value: number; n: number } | null;
+  flashes: { id: string; flashed_at: number; map: string; changed: string; note: string; restores: number | null }[];
   installs: InstallRow[];
-  activeMapVersion: { n: number; label: string; name: string } | null;
+  mapVersions: MapVersionRow[];
+  activeMapVersion: MapVersionRow | null;
   openSteps: OpenStep[];
+  answers: Record<string, string>;
+  questionAnswers: Record<string, { id: string; drive_id: string; kind: string; choice: string; answered_at: number }>;
   unansweredQuestions: PendingQuestion[];
+  drives: DriveRow[];
   flashPlan: FlashPlan | null;
+  /** The Ceiling read: settled means a decisive answer on file. */
+  calibration: { driveId: string | null; status: string; text?: string; mapAction: "boost-step-gates" | "no-change"; settled: boolean };
   logGuide?: DriveBrief | null;
   /** Where the car is, the Recap and the stage's suggested replies (the front desk). */
   stage?: string;
   recap?: Recap | null;
   suggestions?: Suggestion[];
   capabilities?: Capability[];
+};
+
+/** One Drive in the Car history, as the engine's Car history rows give it. */
+export type CarHistoryRow = {
+  id: string;
+  start: number;
+  fileName: string;
+  duration: number;
+  moving: number;
+  cool: boolean;
+  hot: boolean;
+  hotRestart: boolean;
+  verdict: string;
+  kcStart: number;
+  kcEnd: number;
+  kcPeak: number;
+  trimWorst: number;
+  iatMoving: number;
+  cvtPeak: number;
+  lugShare: number;
+  accel5070: { seconds: number; iat: number } | null;
+  boostTarget: number | null;
+  hardPulls: number;
+  overshoot: number | null;
+  wgAtPeak: number | null;
+  map: string;
+  mapVersion: number;
+  shakedown: string;
+  answered: string | null;
+};
+
+/** One saved Map version, without its tables. */
+export type MapVersionRow = {
+  id: number;
+  n: number;
+  label: string;
+  name: string;
+  kind: string;
+  source: string;
+  parent_id: number | null;
+  flash_id: string | null;
+  changed: string | null;
+  note: string;
+  flashed_at: number | null;
+  created_at: number;
+  updated_at: number;
+  has_tables: boolean;
+};
+
+/** One upload as the store keeps it, with the engine's summary. */
+export type DriveRow = {
+  id: string;
+  upload_id: string;
+  file_name: string;
+  /** Null on a Too-short drive: it has no Verdict and an empty summary. */
+  started_at: number | null;
+  received_at: number;
+  too_short: boolean;
+  verdict: string | null;
+  summary: DriveFacts | Record<string, never>;
+};
+
+/** What the engine read from one Drive. */
+export type DriveFacts = {
+  id: string;
+  start: number;
+  fileName: string;
+  durationSec: number;
+  movingSec: number;
+  iatMoving: number;
+  cool: boolean;
+  hot: boolean;
+  hotRestart: boolean;
+  kcStart: number;
+  kcEnd: number;
+  kcPeak: number;
+  timingCostDeg: number;
+  trimWorst: number;
+  hardPulls: number;
+  mixLeanest: number | null;
+  mixTarget: number;
+  boostTarget: number | null;
+  overshoot: number | null;
+  wgAtPeak: number | null;
+  cvtPeak: number;
+  lugShare: number;
+  kcUpSteps: number;
+  lugUpSteps: number;
+  lugRpm: number;
+  accel5070: number | null;
+  flat: string[];
+  missing: string[];
+  calmSec: number;
+  shakedown: string;
 };
 
 /** A suggested reply: send words, open the drive brief, attach a log, or fill the example. */
@@ -103,10 +204,11 @@ export async function uploadCsv(file: File, threadId: string, tags?: LogTags): P
 
 /** What a typed question comes back with: the answer, the window it reads, the cards it cites. */
 export type AskAnswer = {
+  ok: boolean;
   kind: string;
   answer?: string;
   draft?: ProfileDraft;
-  window?: string;
+  window?: string | null;
   citations?: { id: string; title: string }[];
   nextStep?: ReplyCard["nextStep"] | string | null;
   /** What the tuner did to answer, and its own unchecked thinking. */
@@ -119,6 +221,8 @@ export type AskAnswer = {
   intent?: string;
   suggestions?: Suggestion[];
   basis?: string | null;
+  /** Whether the answer read the owner's Drives. */
+  readDrives?: boolean;
   /** The cards the agent chose to show (AG-UI frontend tools), with the server's own data in them. */
   ui?: UiCard[];
 };
