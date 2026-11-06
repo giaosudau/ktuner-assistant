@@ -277,8 +277,9 @@ export type Picture =
       changes: { row: number; col: number; before: number; after: number; rpm: number }[];
       driven: number[];
       unit: string;
+      numbers: number[];
     }
-  | { kind: "maf_gap"; title: string; x: number[]; before: number[]; after: number[]; gapPct: number; unit: string };
+  | { kind: "maf_gap"; title: string; x: number[]; before: number[]; after: number[]; gapPct: number; unit: string; numbers: number[] };
 
 /** Did the log meet the drive brief? One row per checkpoint; `met` null when the log can't say. */
 export type Checkpoint = { id: string; label: string; value: string; met: boolean | null };

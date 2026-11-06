@@ -1698,7 +1698,7 @@
    "area": "engine",
    "path": "engine/kta-car.js",
    "description": "KTA car module: one owner's Car history, Flashes, Shakedown drive,",
-   "lines": 2798
+   "lines": 2800
   },
   {
    "id": "file:engine/kta-drive.js",
@@ -2634,7 +2634,7 @@
    "area": "web",
    "path": "web/lib/types.ts",
    "description": "The types the server sends, written once so every card reads the same shape.",
-   "lines": 469
+   "lines": 470
   },
   {
    "id": "file:web/lib/uiTools.ts",

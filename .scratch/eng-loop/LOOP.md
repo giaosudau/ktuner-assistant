@@ -86,7 +86,7 @@ Every round runs top-down and never skips a level:
    - A new or changed AD becomes an ADR.
    - Rebuild the knowledge graph (`python3 tools/knowledge-graph.py`, then `--check`).
 10. **Commit.** One commit per item. The message says what got simpler (e.g. "Engine: Stage
-    is decided once, in carNextStep").
+    is decided once, in carStage").
 11. **Record.** In `STATUS.md`: measure "after", what shipped with proof, what was cut and
     why, and the next round's top 10 ranked. Never leave the tree red.
 

@@ -24,6 +24,7 @@
  *   KTA.carSettle(state, driveId, steps)     judge every Open step against one Drive
  *   KTA.carDiagnose(state, driveId, opts)    one cause per symptom pattern, before deciding
  *   KTA.carNextStep(state, driveId, steps)   exactly one Next step, and the Open step it opens
+ *   KTA.carStage(facts)                      where the car is: the one Stage
  *   KTA.carQuestions(state, driveId, opts)   owner questions with tap-to-answer choices
  *   KTA.mafOptionFor(housing)                the MAF Scaling option for one housing
  *
@@ -36,13 +37,14 @@
  * (pass meta.now to fix the clock in tests).
  */
 (function (root, factory) {
-  var inNode = typeof module === 'object' && module.exports;
-  var KTA = inNode ? require('./kta-drive.js') : root.KTA;
-  // The words the server also reads: data/car-words.json, one file for both.
-  var api = factory(KTA, inNode ? require('../data/car-words.json') : root.KTA_CAR_WORDS);
+  var KTA = typeof module === 'object' && module.exports ? require('./kta-drive.js') : root.KTA;
+  var api = factory(KTA);
   if (typeof module === 'object' && module.exports) module.exports = api;
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (KTA, CAR_WORDS) {
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (KTA) {
   'use strict';
+
+  // The words the server also reads: one file for both. The engine runs in Node only now.
+  var CAR_WORDS = require('../data/car-words.json');
 
   var isNum = KTA.util.isNum, median = KTA.util.median;
 
