@@ -18,7 +18,7 @@
    "stage": 13,
    "table": 39,
    "term": 49,
-   "test": 41,
+   "test": 42,
    "threshold": 13,
    "trait": 5
   },
@@ -34,10 +34,10 @@
    "explained-by": 21,
    "gated-by": 14,
    "implemented-by": 21,
-   "imports": 201,
+   "imports": 203,
    "in-family": 39,
    "loads": 3,
-   "mentions": 341,
+   "mentions": 337,
    "method": 56,
    "next": 17,
    "reads": 58,
@@ -46,8 +46,8 @@
    "serves": 20,
    "sourced-from": 100,
    "superseded-by": 7,
-   "tests": 63,
-   "touches": 172,
+   "tests": 66,
+   "touches": 171,
    "uses": 55,
    "uses-term": 687,
    "works-on": 5,
@@ -1674,7 +1674,7 @@
    "area": "engine",
    "path": "engine/kta-car.js",
    "description": "KTA car module: one owner's Car history, Flashes, Shakedown drive,",
-   "lines": 2826
+   "lines": 2779
   },
   {
    "id": "file:engine/kta-drive.js",
@@ -1683,7 +1683,7 @@
    "area": "engine",
    "path": "engine/kta-drive.js",
    "description": "KTA drive check: what one real drive says, and the one thing to do next.",
-   "lines": 1037
+   "lines": 1005
   },
   {
    "id": "file:engine/kta-engine.js",
@@ -1692,7 +1692,7 @@
    "area": "engine",
    "path": "engine/kta-engine.js",
    "description": "KTA engine 1.0: the tuning math behind Civic FE Tune Assist.",
-   "lines": 2427
+   "lines": 2007
   },
   {
    "id": "file:engine/kta-picture.js",
@@ -1710,7 +1710,7 @@
    "area": "engine",
    "path": "engine/text/i18n-drive.js",
    "description": "Text for the Drive check page: the 1-2-3 loop, the ranked actions, the engineering graphs and",
-   "lines": 1084
+   "lines": 557
   },
   {
    "id": "file:engine/text/i18n-map.js",
@@ -1719,7 +1719,7 @@
    "area": "engine",
    "path": "engine/text/i18n-map.js",
    "description": "Text for the Map screen (your KTuner map in 2D and 3D) and the Guide screen (road tune,",
-   "lines": 525
+   "lines": 276
   },
   {
    "id": "file:engine/text/i18n.js",
@@ -1727,8 +1727,8 @@
    "label": "i18n.js",
    "area": "engine",
    "path": "engine/text/i18n.js",
-   "description": "Civic FE Tune Assist: interface text in English and Vietnamese.",
-   "lines": 552
+   "description": "Civic FE Tune Assist: interface text, English. Plain CommonJS: i18n-map.js is the entry (it requires i18n-drive.js, which requires this).",
+   "lines": 288
   },
   {
    "id": "file:knowledge/index.json",
@@ -1989,7 +1989,7 @@
    "area": "worker",
    "path": "server/kta_worker/worker.js",
    "description": "!/usr/bin/env node",
-   "lines": 832
+   "lines": 826
   },
   {
    "id": "file:server/tests/conftest.py",
@@ -2295,7 +2295,7 @@
    "area": "tests",
    "path": "test/ask.test.js",
    "description": "'use strict';",
-   "lines": 185
+   "lines": 182
   },
   {
    "id": "file:test/banned-advice.test.js",
@@ -2313,7 +2313,7 @@
    "area": "tests",
    "path": "test/build.test.js",
    "description": "'use strict';",
-   "lines": 108
+   "lines": 100
   },
   {
    "id": "file:test/car.test.js",
@@ -2322,7 +2322,7 @@
    "area": "tests",
    "path": "test/car.test.js",
    "description": "'use strict';",
-   "lines": 1964
+   "lines": 1937
   },
   {
    "id": "file:test/drive.test.js",
@@ -2331,7 +2331,7 @@
    "area": "tests",
    "path": "test/drive.test.js",
    "description": "'use strict';",
-   "lines": 1050
+   "lines": 986
   },
   {
    "id": "file:test/engine.test.js",
@@ -2340,7 +2340,16 @@
    "area": "tests",
    "path": "test/engine.test.js",
    "description": "'use strict';",
-   "lines": 418
+   "lines": 331
+  },
+  {
+   "id": "file:test/sample-csv.js",
+   "kind": "test",
+   "label": "sample-csv.js",
+   "area": "tests",
+   "path": "test/sample-csv.js",
+   "description": "'use strict';",
+   "lines": 142
   },
   {
    "id": "file:test/thresholds.test.js",
@@ -7701,6 +7710,11 @@
   },
   {
    "from": "file:engine/text/i18n-drive.js",
+   "to": "file:engine/text/i18n.js",
+   "kind": "imports"
+  },
+  {
+   "from": "file:engine/text/i18n-drive.js",
    "to": "term:Car history",
    "kind": "uses-term"
   },
@@ -7738,6 +7752,11 @@
    "from": "file:engine/text/i18n-map.js",
    "to": "file:data/KTuner-Maps-Digitized.xlsx",
    "kind": "reads"
+  },
+  {
+   "from": "file:engine/text/i18n-map.js",
+   "to": "file:engine/text/i18n-drive.js",
+   "kind": "imports"
   },
   {
    "from": "file:engine/text/i18n-map.js",
@@ -7787,6 +7806,16 @@
   {
    "from": "file:engine/text/i18n.js",
    "to": "file:docs/research/owner-voices.md",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:engine/text/i18n.js",
+   "to": "file:engine/text/i18n-drive.js",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:engine/text/i18n.js",
+   "to": "file:engine/text/i18n-map.js",
    "kind": "mentions"
   },
   {
@@ -9768,17 +9797,7 @@
   },
   {
    "from": "file:server/kta_worker/worker.js",
-   "to": "file:engine/text/i18n-drive.js",
-   "kind": "imports"
-  },
-  {
-   "from": "file:server/kta_worker/worker.js",
    "to": "file:engine/text/i18n-map.js",
-   "kind": "imports"
-  },
-  {
-   "from": "file:server/kta_worker/worker.js",
-   "to": "file:engine/text/i18n.js",
    "kind": "imports"
   },
   {
@@ -11587,11 +11606,6 @@
    "kind": "tests"
   },
   {
-   "from": "file:test/ask.test.js",
-   "to": "file:engine/text/i18n.js",
-   "kind": "tests"
-  },
-  {
    "from": "file:test/banned-advice.test.js",
    "to": "adr:0003",
    "kind": "mentions"
@@ -11634,12 +11648,7 @@
   {
    "from": "file:test/build.test.js",
    "to": "file:engine/text/i18n-drive.js",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:test/build.test.js",
-   "to": "file:engine/text/i18n.js",
-   "kind": "mentions"
+   "kind": "tests"
   },
   {
    "from": "file:test/build.test.js",
@@ -11973,13 +11982,18 @@
   },
   {
    "from": "file:test/drive.test.js",
-   "to": "file:engine/text/i18n-drive.js",
-   "kind": "mentions"
+   "to": "file:engine/text/i18n-map.js",
+   "kind": "tests"
   },
   {
    "from": "file:test/drive.test.js",
    "to": "file:engine/text/i18n.js",
    "kind": "mentions"
+  },
+  {
+   "from": "file:test/drive.test.js",
+   "to": "file:test/sample-csv.js",
+   "kind": "imports"
   },
   {
    "from": "file:test/drive.test.js",
@@ -12063,23 +12077,13 @@
   },
   {
    "from": "file:test/engine.test.js",
-   "to": "file:engine/text/i18n-drive.js",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:test/engine.test.js",
    "to": "file:engine/text/i18n-map.js",
-   "kind": "mentions"
+   "kind": "tests"
   },
   {
    "from": "file:test/engine.test.js",
-   "to": "file:engine/text/i18n.js",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:test/engine.test.js",
-   "to": "table:Boost_By_Gear_Limits",
-   "kind": "touches"
+   "to": "file:test/sample-csv.js",
+   "kind": "imports"
   },
   {
    "from": "file:test/engine.test.js",
@@ -12125,6 +12129,11 @@
    "from": "file:test/engine.test.js",
    "to": "term:Map tour",
    "kind": "uses-term"
+  },
+  {
+   "from": "file:test/sample-csv.js",
+   "to": "file:engine/kta-engine.js",
+   "kind": "tests"
   },
   {
    "from": "file:test/thresholds.test.js",

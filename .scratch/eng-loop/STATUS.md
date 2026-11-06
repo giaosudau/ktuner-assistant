@@ -16,6 +16,51 @@ dead    23 engine exports with no production caller
 speed   npm_test=25.5s (CPU 52s; car.test.js 21.0s, drive.test.js 13.5s)  pytest=63.7s (CPU 220s, 357 passed)
 ```
 
+### Step 1 done: deletions (2026-11-06)
+
+Commits: items 2 and 3, then the small cleanups. Engine output is byte-identical: a replay of the
+nine real drives through the worker (ingest, facts, overview, 8 insights, next step, questions)
+diffed empty after each commit.
+
+**Before** (`measure.sh --tests`):
+
+```
+lines   engine=9193  server=10713  web=7879
+tests   js=3895  py=6760
+deps    py=10  web=4
+dead    23 engine exports with no production caller
+speed   npm_test=22s  pytest=58s   (253 JS tests, 357 pytest passed)
+```
+
+**After:**
+
+```
+lines   engine=7654  server=10707  web=7879
+tests   js=3847  py=6760
+deps    py=9  web=4
+stack   runtimes=3  deploy_files=0  owner_columns=0
+dead    6 engine exports with no production caller: REF tableEdits smoothPreview STEP_KEYS carWords parseDriveStart
+speed   npm_test=23s  pytest=57s   (244 JS tests, 357 pytest passed)
+```
+
+**Shipped:** Vietnamese text and the `window.KTA_I18N` shim gone (text files are CommonJS, entry
+`engine/text/i18n-map.js`); 14 dead exports and their helpers gone; `sampleCsv` moved to
+`test/sample-csv.js` (byte-identical output); `langchain-openai` gone (also drops openai,
+tiktoken, regex from the lock); `deploy_units` gone from `measure.sh`; the `profile.py` shortcut
+has its trigger. Nine tests deleted (they only exercised deleted code).
+
+**Kept on purpose:** `tableEdits`, `smoothPreview` (`tools/edit-plan.js` feeds
+`tools/annotate-xlsx.py`, which writes `data/KTuner-Maps-Edit-Plan.xlsx`); `REF`, `STEP_KEYS`,
+`carWords`, `parseDriveStart` (planned or read by `copy.py`); `RANGES`, `TIERS`, `SAFETY_ORDER`,
+`QUESTION_ORDER` as internal variables (only the export lines went); `suggestWotLean`,
+`suggestBoostStep`, `toRow` (the Flash plan uses them).
+
+**Leads for the next round:** about 640 of the 1,121 English text lines are never read by the
+worker (`car`, `guide`, `map`, most of `i18n.js`); `KTA.view.*` chart builders and
+`kta-engine.js` `analyze` paths may be dead too (the export scan cannot see nested exports);
+`stat` and `rangeSecs` in `kta-drive.js` are unused; `kta-ask.js` still has Vietnamese
+phrases in its guard regexes (kept: they reject unsafe advice in either language).
+
 **Stack decided 2026-11-06** (`stack-r1.md`, "Final call"): keep today's stack and ship to 5–10
 real owners on one small box. The Next.js port waits until 5 owners each upload a proving Drive
 after a Flash. The spike stays valid as evidence: the engine runs in a Next.js route, with
