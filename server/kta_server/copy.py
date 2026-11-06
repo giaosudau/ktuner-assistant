@@ -953,65 +953,95 @@ def health_rows(
     return {"line": overview.get("verdict_text"), "rows": rows}
 
 
-def drive_recipe(
-    key: str, limits: Mapping[str, Any], channels_open: bool = False, drive: Mapping[str, Any] | None = None
-) -> dict[str, Any] | None:
-    """`{intro, steps}` for the Drive a step asks for, or None when it asks for none."""
-    def at(path: str, fallback: Any) -> Any:
-        return lim(limits, path, fallback)
+def _baseline_recipe(limits: Mapping[str, Any], channels_open: bool, dead: list[str]) -> dict[str, Any]:
+    steps = [
+        f"Before 8 am, or after an hour parked in shade: intake under {n(lim(limits, 'CAR_RULES.coolIat', 42), 0)} °C.",
+        "10 minutes of normal driving first, so the engine and the CVT are warm.",
+        "Then two pulls in S, 50 → 100 km/h, on a straight safe road, a minute apart.",
+    ]
+    if channels_open:
+        steps.append(
+            "While you are in TunerView: add AFR Command and MAF Hz to the logged list if your app "
+            f"offers them. Without AFR Command I judge the mixture against the map's "
+            f"{n(lim(limits, 'LIMITS.mixture.target', 11.0), 1)}, not what the ECU asked for."
+        )
+    return {
+        "intro": (
+            "Every “did it work?” needs a Drive to compare against. Heat moves boost, timing and the "
+            "50→70 time on its own, so the Baseline has to be a Cool Drive."
+        ),
+        "steps": steps,
+    }
 
-    if key == "baseline":
-        steps = [
-            f"Before 8 am, or after an hour parked in shade: intake under {n(at('CAR_RULES.coolIat', 42), 0)} °C.",
-            "10 minutes of normal driving first, so the engine and the CVT are warm.",
-            "Then two pulls in S, 50 → 100 km/h, on a straight safe road, a minute apart.",
-        ]
-        if channels_open:
-            steps.append(
-                "While you are in TunerView: add AFR Command and MAF Hz to the logged list if your app "
-                f"offers them. Without AFR Command I judge the mixture against the map's "
-                f"{n(at('LIMITS.mixture.target', 11.0), 1)}, not what the ECU asked for."
-            )
-        return {
-            "intro": (
-                "Every “did it work?” needs a Drive to compare against. Heat moves boost, timing and the "
-                "50→70 time on its own, so the Baseline has to be a Cool Drive."
-            ),
-            "steps": steps,
-        }
-    if key == "habit":
-        return {
-            "intro": "",
-            "steps": [
-                "Below 60 km/h, put it in S (or tap a paddle) before you press past a third of the pedal.",
-                "No pulls out of traffic or out of a car park: steady speed for 1–2 minutes first.",
-                "Log your next hot-afternoon Drive, same kind of traffic.",
-            ],
-        }
-    if key == "logger":
-        dead = [channel_name(k) for k in ((drive or {}).get("summary") or {}).get("flat") or []]
-        return {
-            "intro": (
-                f"{join_names(dead)} sat on one number the whole Drive while the revs moved. The car is "
-                "fine; the log isn't. Without boost in the log I cannot check the next pull, and the habit "
-                "test cannot be scored."
-            ),
-            "steps": [
-                "Open TunerView before you drive, and check the gauges below move when you blip the throttle.",
-                "If one is stuck: remove it from the gauge list, add it back, restart logging.",
-            ],
-        }
-    if key == "install":
-        return {
-            "intro": "No map change: this is a physical check, not a flash.",
-            "steps": [
-                "With the engine cold, check every clamp between the sensor and the engine is tight.",
-                "A lean reading under boost is a real lean (fuel pressure or the airflow sensor): a downpipe flange "
-                "leak never reads lean on the front A/F, it shows on the rear O2 / P0420.",
-                "Log your next drive, any kind, with the same gauges.",
-            ],
-        }
-    return None
+
+def _habit_recipe(limits: Mapping[str, Any], channels_open: bool, dead: list[str]) -> dict[str, Any]:
+    return {
+        "intro": "",
+        "steps": [
+            "Below 60 km/h, put it in S (or tap a paddle) before you press past a third of the pedal.",
+            "No pulls out of traffic or out of a car park: steady speed for 1–2 minutes first.",
+            "Log your next hot-afternoon Drive, same kind of traffic.",
+        ],
+    }
+
+
+def _logger_recipe(limits: Mapping[str, Any], channels_open: bool, dead: list[str]) -> dict[str, Any]:
+    return {
+        "intro": (
+            f"{join_names([channel_name(k) for k in dead])} sat on one number the whole Drive while the revs moved. "
+            "The car is fine; the log isn't. Without boost in the log I cannot check the next pull, and the habit "
+            "test cannot be scored."
+        ),
+        "steps": [
+            "Open TunerView before you drive, and check the gauges below move when you blip the throttle.",
+            "If one is stuck: remove it from the gauge list, add it back, restart logging.",
+        ],
+    }
+
+
+def _install_recipe(limits: Mapping[str, Any], channels_open: bool, dead: list[str]) -> dict[str, Any]:
+    return {
+        "intro": "No map change: this is a physical check, not a flash.",
+        "steps": [
+            "With the engine cold, check every clamp between the sensor and the engine is tight.",
+            "A lean reading under boost is a real lean (fuel pressure or the airflow sensor): a downpipe flange "
+            "leak never reads lean on the front A/F, it shows on the rear O2 / P0420.",
+            "Log your next drive, any kind, with the same gauges.",
+        ],
+    }
+
+
+def _habit_body(step: Mapping[str, Any]) -> str:
+    return (step.get("cause") or {}).get("why") or "The Baseline is in. Keep the habit going: the next hot afternoon scores it."
+
+
+def _install_body(step: Mapping[str, Any]) -> str:
+    return ((step.get("diagnose") or {}).get("sentence") or "").strip() or "No map change: this is a physical check, not a flash."
+
+
+def _undo_flash(step: Mapping[str, Any], plan: Mapping[str, Any] | None) -> tuple[str, dict[str, Any] | None]:
+    # One sentence why (the diagnosed cause, as the install step says it), then the steps.
+    body = cause_line(step.get("diagnose")) or "Today's log is worse than the map before it: put that map back first."
+    return body, undo_recipe(plan)
+
+
+#: A step kind's words, one entry per `KTA.STEP_KEYS` key (a contract test holds the two together):
+#: `body` is the opening line, `recipe` the Drive it asks for, `flash` its body and recipe as a Flash.
+STEP_WORDS: dict[str, dict[str, Any]] = {
+    "undo": {"flash": _undo_flash},
+    "logger": {"recipe": _logger_recipe},
+    "habit": {"body": _habit_body, "recipe": _habit_recipe},
+    "channels": {},
+    "baseline": {"recipe": _baseline_recipe},
+    "install": {"body": _install_body, "recipe": _install_recipe},
+    "downpipe": {},
+}
+
+
+def drive_recipe(key: str, limits: Mapping[str, Any], channels_open: bool = False, dead: list[str] | None = None) -> dict[str, Any] | None:
+    """`{intro, steps}` for the Drive a step asks for, or None when it asks for none."""
+    recipe = STEP_WORDS.get(key, {}).get("recipe")
+    return recipe(limits, channels_open, dead or []) if recipe else None
 
 
 # ---------------------------------------------------------------------------
@@ -1194,12 +1224,10 @@ def next_step_card(
         # the card): the plan's own headline, the Map version to flash back to for
         # an Undo (or the save-as name for a forward change), and the Shakedown
         # drive that proves it.
-        if key == "undo" or (plan or {}).get("kind") == "undo":
-            # One sentence why (the diagnosed cause, as the install step says it), then the steps.
-            body = cause_line(step.get("diagnose")) or (
-                "Today's log is worse than the map before it: put that map back first."
-            )
-            recipe = undo_recipe(plan)
+        # An Undo plan reads as the Undo step, whichever step carried it here.
+        flash_words = STEP_WORDS.get("undo" if (plan or {}).get("kind") == "undo" else key, {}).get("flash")
+        if flash_words:
+            body, recipe = flash_words(step, plan)
         elif (plan or {}).get("kind") == "blocked":
             # Both map checks (ADR 0003) must pass before a cell reaches the owner:
             # a refused change says why and offers nothing to type.
@@ -1224,18 +1252,10 @@ def next_step_card(
         )
         flash_plan = plan or None
     else:
-        cause = step.get("cause") or {}
-        if key == "habit":
-            body = (
-                cause.get("why")
-                or "The Baseline is in. Keep the habit going: the next hot afternoon scores it."
-            )
-        if key == "install":
-            diagnose = step.get("diagnose") or {}
-            body = (diagnose.get("sentence") or "").strip() or (
-                "No map change: this is a physical check, not a flash."
-            )
-        recipe = drive_recipe(key, limits, channels_open, {"summary": {"flat": dead}})
+        body_words = STEP_WORDS.get(key, {}).get("body")
+        if body_words:
+            body = body_words(step)
+        recipe = drive_recipe(key, limits, channels_open, dead)
         gauges = gauge_table(step.get("gauges"), limits, dead)
         # The recipe's opening line is the step's body; its numbered steps are
         # what the owner does about it.
@@ -1356,6 +1376,7 @@ __all__ = [
     "calibration_step",
     "cause_line",
     "channel_name",
+    "STEP_WORDS",
     "drive_recipe",
     "drive_stamp",
     "first_sentence",

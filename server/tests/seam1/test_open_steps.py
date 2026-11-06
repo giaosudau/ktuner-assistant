@@ -16,6 +16,8 @@ import json
 
 from conftest import OWNER_DRIVES, Loop, template_replies
 
+from kta_server import copy as C
+
 # Drive → (what the Next step is, what settles it), as the ticket's fixed order
 # walks the owner's own nine uploads. 30 Aug 16:01 opens the lugging habit beside
 # the Baseline step; 5 Sep 07:56 is the dead-gauge Drive.
@@ -260,3 +262,11 @@ def test_an_older_log_uploaded_later_joins_history_and_leaves_the_steps_alone(lo
     assert newest.card["nextStep"]["key"] != "backfill"
     # It still joined the Car history.
     assert any(r["id"].startswith("20260822") for r in loop.get("/api/state").json()["carHistory"])
+
+
+def test_every_step_kind_has_its_words_and_every_entry_is_a_step_kind(loop: Loop):
+    engine = loop.run(loop.worker.call("ping"))["stepKeys"]
+    for key in engine:
+        assert key in C.STEP_WORDS, f"The engine has a step kind `{key}`: give it an entry in STEP_WORDS in server/kta_server/copy.py."
+    for key in C.STEP_WORDS:
+        assert key in engine, f"STEP_WORDS in server/kta_server/copy.py has `{key}`, which is not in the engine's STEP_JUDGES: remove it."

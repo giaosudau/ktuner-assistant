@@ -368,6 +368,7 @@ var OPS = {
     return {
       ok: true, engine: { carVersion: KTA.CAR_RULES.version, driveVersion: KTA.DRIVE_LIMITS.version || null },
       limits: LIMITS,
+      stepKeys: KTA.STEP_KEYS,
       cachedDrives: CACHE_ORDER.slice(),
       ktunerBasemap: KTA.CAR_RULES.ktunerBasemap,
       mapVersionSeed: {
