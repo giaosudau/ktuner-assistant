@@ -17,7 +17,7 @@ echo "homes   engine_procs=$(( 1 + $(grep -c 'subprocess.run' server/kta_server/
      " lim_fallbacks=$(grep -cE 'lim\([^)]*, *[0-9.]+\)' server/kta_server/copy.py || true)"
 
 echo "deps    py=$(sed -n '/^dependencies/,/^]/p' server/pyproject.toml | grep -c '^ *"')  web=$(node -p 'Object.keys(require("./web/package.json").dependencies).length')"
-echo "stack   runtimes=$(( 2 + $(git ls-files server/pyproject.toml | wc -l) ))  deploy_units=$(( 1 + $(git ls-files server/pyproject.toml | wc -l) ))  deploy_files=$(git ls-files | grep -ciE '(^|/)(dockerfile|vercel\.json|netlify\.toml|procfile)$' || true)  owner_columns=$(grep -c 'owner_id' server/kta_server/db.py 2>/dev/null || true)"
+echo "stack   runtimes=$(( 2 + $(git ls-files server/pyproject.toml | wc -l) ))  deploy_files=$(git ls-files | grep -ciE '(^|/)(dockerfile|vercel\.json|netlify\.toml|procfile)$' || true)  owner_columns=$(grep -c 'owner_id' server/kta_server/db.py 2>/dev/null || true)"
 echo "debt    $(git ls-files | xargs grep -nE '(#|//) ?ponytail:' 2>/dev/null | wc -l | tr -d ' ') ponytail: markers"
 
 # Engine exports nothing in production calls (the worker and the engine itself).

@@ -186,7 +186,7 @@ def downpipe_type(text: str) -> str | None:
         return {"200": "catted-200", "400": "catted-400"}.get(cells.group(1), "unknown")
     if re.search(r"27\s*won", lowered):
         return "catted-200"
-    # ponytail: a brand named anywhere in the text is read as the pipe's brand; the owner corrects the card.
+    # ponytail: a brand named anywhere in the text is read as the pipe's brand; the owner corrects the card; upgrade when an owner reports a wrong brand.
     if re.search(r"\b(tsp|rv6|gesi)\b", lowered):
         return "catted-400"
     return None
