@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from conftest import OWNER_DRIVES, REPO_ROOT, Loop, template_replies
+from conftest import NOW, OWNER_DRIVES, REPO_ROOT, Loop, template_replies
 
 from test_chat_agent import PROFILE, chat
 
@@ -90,6 +90,25 @@ def past_the_replay(home: Path) -> tuple[list[Any], list[Any]]:
         loop.close()
 
 
+def the_verify_state(home: Path) -> Any:
+    """A Flash recorded after the last Drive: the stage the replay's fixed clock never reaches."""
+    home.mkdir()
+    loop = Loop(home).start()
+    try:
+        save_profile(loop)
+        loop.upload_and_reply(*OWNER_DRIVES[7])
+        car = loop.store.car_state(None)
+        for summary in car["drives"].values():
+            summary["overshoot"] = 3.4
+        loop.store.save_car_state(car)
+        flash = {"changeId": loop.get("/api/state").json()["flashPlan"]["ktunerCard"]["changeId"]}
+        object.__setattr__(loop.settings, "now", NOW + 400 * 86_400_000)  # the settings are frozen; the clock is the test's
+        assert loop.run(loop._client.post("/api/flash/confirm", json=flash)).status_code == 200
+        return normal(loop.get("/api/state").json())
+    finally:
+        loop.close()
+
+
 def fixture_text(loop: Loop, home: Path) -> str:
     cards = [normal(reply.card) for reply in template_replies(loop).values()]
     states = [normal(state) for state in loop._template_states]
@@ -101,8 +120,8 @@ def fixture_text(loop: Loop, home: Path) -> str:
     more_cards, more_states = past_the_replay(home)
     cards += more_cards
     states += more_states
-    # Not `verify`: the fixed clock is older than the Drives, so a Flash here never reads as after them.
-    assert {s["stage"] for s in states} == {"car", "baseline", "calibrate", "read", "plan"}
+    states.append(the_verify_state(home.parent / "verify"))
+    assert {s["stage"] for s in states} == {"car", "baseline", "calibrate", "read", "plan", "verify"}
 
     # Every state's digest is a gate; the full literal only where the shape differs (see DIGEST_ONLY).
     digests = [digest(state) for state in states]
@@ -122,3 +141,10 @@ def test_the_committed_replies_are_what_the_server_sends(replayed: Loop, tmp_pat
     if os.environ.get("KTA_WRITE_REPLIES"):
         FIXTURE.write_text(text, encoding="utf-8")
     assert text == FIXTURE.read_text(encoding="utf-8"), f"What the server sends changed from web/fixtures/replies.fixture.ts. If that is right, refresh it: {REFRESH}"
+
+
+def test_the_fixture_holds_a_state_for_every_stage_an_owner_can_be_in():
+    """The Stages whose words and chips differ must stay pinned: the calibrate and verify ones are the easy to lose."""
+    text = FIXTURE.read_text(encoding="utf-8")
+    for stage in ("car", "baseline", "calibrate", "read", "plan", "verify"):
+        assert f'"stage": "{stage}"' in text, f"web/fixtures/replies.fixture.ts has no {stage} state: {REFRESH}"

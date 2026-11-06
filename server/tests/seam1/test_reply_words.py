@@ -9,7 +9,6 @@ word outside CONTEXT.md's vocabulary sneaks in.
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 
 from conftest import Loop, template_replies
@@ -452,32 +451,18 @@ def test_the_reply_never_promises_power_or_calls_the_drive_dangerous(loop: Loop)
 # -- owner-facing words are decided once (refactor A2) -------------------
 def test_the_reply_events_carry_the_engine_status_words(replayed: Loop):
     """Open steps arrive worded: the web renders `word`/`tone`, it spells neither."""
-    engine = json.loads(
-        subprocess.run(
-            ["node", "-p", "JSON.stringify(require('./engine/kta-car.js').carWords)"],
-            cwd=C.REPO_ROOT, capture_output=True, text=True, check=True,
-        ).stdout
-    )
+    words = json.loads((C.REPO_ROOT / "data" / "car-words.json").read_text(encoding="utf-8"))
     steps = [s for r in template_replies(replayed).values() for s in r.card["openSteps"]]
     assert steps
     for s in steps:
-        assert (s["word"], s["tone"]) == tuple(engine["stepStatus"][s["status"]].values())
-    # settled rows and channel names read the same table
-    assert C.CHANNEL_NAMES == engine["channels"] and C.MONTHS == engine["months"]
+        assert (s["word"], s["tone"]) == tuple(words["stepStatus"][s["status"]].values())
     assert C.settled_rows([{"status": "fail"}])[0]["word"] == "Still off"
 
 
-def test_the_python_stamp_is_the_engine_stamp():
-    """Engine `driveStamp` and copy.py `drive_stamp` spell a Drive alike (the day is padded here only)."""
+def test_the_python_stamp_spells_a_drive_as_the_engine_does():
+    """Engine `driveStamp` (pinned in test/car.test.js) and copy.py `drive_stamp` spell a Drive alike (the day is padded here only)."""
     ids = ["20260830-160151", "20260901-081358", "20261231-235959"]
-    js = json.loads(
-        subprocess.run(
-            ["node", "-p", f"JSON.stringify({ids!r}.map(require('./engine/kta-car.js').carWords.driveStamp))"],
-            cwd=C.REPO_ROOT, capture_output=True, text=True, check=True,
-        ).stdout
-    )
-    assert js == ["30 Aug 16:01", "1 Sep 08:13", "31 Dec 23:59"]
-    assert [C.drive_stamp(i).lstrip("0") for i in ids] == js
+    assert [C.drive_stamp(i).lstrip("0") for i in ids] == ["30 Aug 16:01", "1 Sep 08:13", "31 Dec 23:59"]
 
 
 def test_the_web_no_longer_spells_status_or_stamp_words():

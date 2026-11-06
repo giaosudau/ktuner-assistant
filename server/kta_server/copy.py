@@ -43,7 +43,7 @@ from . import profile as P
 from .mapcheck import load_thresholds
 from .profile import part_display
 
-#: The owner-facing words the engine shares (`KTA.carWords`): one file, read here, never re-spelled.
+#: The owner-facing words the engine shares (`data/car-words.json`): one file, read here, never re-spelled.
 _WORDS = load_thresholds(REPO_ROOT / "data" / "car-words.json")
 MONTHS: list[str] = _WORDS["months"]
 # The gauge names TunerView spells, for the dead-gauge step (KTuner's channel names).

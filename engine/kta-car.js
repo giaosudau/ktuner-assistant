@@ -1961,8 +1961,6 @@
   // Flash plan names a KTuner table: nothing here writes a cell or a table name.
   // ---------------------------------------------------------------------------
   var LOG_CHANNEL_NAMES = CAR_WORDS.channels;
-  /** The four words an Open step's status shows, and the pill tone each wears. */
-  var STEP_STATUS = CAR_WORDS.stepStatus;
   /** A logged channel named the way TunerView spells it. */
   function logChannel(key) { return LOG_CHANNEL_NAMES[key] || key; }
   function logChannelList(keys) {
@@ -2788,12 +2786,6 @@
     out.sort(function (a, b) { return QUESTION_ORDER.indexOf(a.kind) - QUESTION_ORDER.indexOf(b.kind); });
     return out;
   };
-
-  /**
-   * Owner-facing words, decided once in data/car-words.json (ADR 0004). The server reads
-   * that file directly at import; no other module spells them.
-   */
-  KTA.carWords = { channels: LOG_CHANNEL_NAMES, months: MONTHS, stepStatus: STEP_STATUS, driveStamp: driveStamp };
 
   return KTA;
 }));

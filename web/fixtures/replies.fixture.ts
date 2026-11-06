@@ -1,5 +1,5 @@
 // Generated: do not edit. Real replies, checked by `tsc`. To refresh: cd server && KTA_WRITE_REPLIES=1 uv run pytest tests/seam1/test_reply_contract.py -n0
-// Every state, in order, including those only kept as a digest: sha1:41f783a33c0d sha1:76bc6220d997 sha1:8d43b388caf4 sha1:8ac09f08a30f sha1:24579ffc5277 sha1:d7661ddcc518 sha1:9f8e4a61f9a9 sha1:3e4acf2d9f85 sha1:9009cce3ae22 sha1:6adc30461f86 sha1:5bfc8da8edc6 sha1:87d90bf83d38 sha1:50cb7c7076a9 sha1:96faf2fc41fc sha1:d71abccbf1f2
+// Every state, in order, including those only kept as a digest: sha1:41f783a33c0d sha1:76bc6220d997 sha1:8d43b388caf4 sha1:8ac09f08a30f sha1:24579ffc5277 sha1:d7661ddcc518 sha1:9f8e4a61f9a9 sha1:3e4acf2d9f85 sha1:9009cce3ae22 sha1:6adc30461f86 sha1:5bfc8da8edc6 sha1:87d90bf83d38 sha1:50cb7c7076a9 sha1:96faf2fc41fc sha1:d71abccbf1f2 sha1:f50eb737a8a8
 import type { AskAnswer, LoopState } from "../lib/api";
 import type { ReplyCard } from "../lib/types";
 
@@ -20342,6 +20342,557 @@ export const states: LoopState[] = [
 "action": "send",
 "icon": "help",
 "text": "Why won't you raise my boost?"
+}
+],
+"capabilities": [
+{
+"id": "read-log",
+"status": "can",
+"title": "Read your TunerView log",
+"says": "Attach a TunerView CSV and I read every row: is the engine OK (OK, Watch, Stop or Can't tell), the health report by system, and whether the log met the drive brief."
+},
+{
+"id": "car-file",
+"status": "can",
+"title": "Keep your car's file",
+"says": "I keep your car: model, fuel, parts with the date fitted, every Map version and Flash, and every Drive, so each answer is read against your car's own history."
+},
+{
+"id": "next-step",
+"status": "can",
+"title": "Name the one next step",
+"says": "After each log I name one thing to do — a change to flash, a gauge to watch, or a drive to log — and the drive that will prove it."
+},
+{
+"id": "maf",
+"status": "partly",
+"title": "Correct your airflow (MAF Scaling)",
+"says": "I can correct MAF Scaling at part throttle from your trims, a few points at a time, when your logs call for it.",
+"limit": "Full throttle needs AFR Command in your log, which your logs don't have yet, so I don't correct that end of the curve."
+},
+{
+"id": "boost-down",
+"status": "partly",
+"title": "Change boost",
+"says": "I can lower boost where your logs show overshoot or lugging.",
+"limit": "I never raise boost: on this turbo the wastegate has no headroom left."
+},
+{
+"id": "afr",
+"status": "partly",
+"title": "Judge your AFR (mixture)",
+"says": "I judge full-throttle AFR against your map's target and say if it is OK, Watch or Stop.",
+"limit": "I don't change the full-throttle AFR target: no gain is shown on this car, and leaning it costs timing."
+},
+{
+"id": "fuel",
+"status": "can",
+"title": "E10 and RON95 III vs RON97 III",
+"says": "Tag each log with its fuel and I compare RON95 III and RON97 III on matched drives by Knock Control, so you see if premium is worth it on your car."
+},
+{
+"id": "tables",
+"status": "can",
+"title": "Explain any table in your map",
+"says": "I can walk your map family by family and show any table in 2D or 3D with your own values, and explain what it does."
+},
+{
+"id": "slots",
+"status": "partly",
+"title": "KTuner map slots (on-the-fly switching)",
+"says": "Tag each log with the map slot it ran on, and I never compare drives from different slots.",
+"limit": "I keep one map line for the car, not one per slot, so I can't yet tune a separate RON97 map in its own slot."
+},
+{
+"id": "ignition",
+"status": "cannot",
+"title": "Add ignition timing or lower knock sensitivity",
+"says": "I read and explain the ignition and knock tables, and show how much timing Knock Control pulls.",
+"limit": "I never add timing or lower knock sensitivity: a street log can't prove that change is safe, and a wrong one costs an engine."
+},
+{
+"id": "flash",
+"status": "cannot",
+"title": "Flash the ECU for you",
+"says": "I give you the exact cells to type into KTuner and keep each Map version.",
+"limit": "You flash in KTuner yourself; I can't connect to the car or the ECU."
+},
+{
+"id": "live",
+"status": "cannot",
+"title": "Watch the car live",
+"says": "I read a log after the drive.",
+"limit": "I can't see live data: log in TunerView, then attach the CSV."
+},
+{
+"id": "power",
+"status": "cannot",
+"title": "Promise power or dyno numbers",
+"says": "I can time a 50 to 70 km/h run from your log and compare like with like.",
+"limit": "A street log can't give horsepower, and I never promise a gain."
+},
+{
+"id": "other-car",
+"status": "partly",
+"title": "Cars other than the Civic FE 1.5T",
+"says": "My limits and knowledge are built for a Honda 1.5T on KTuner.",
+"limit": "On any other car I'm not sure my limits hold: I'd read the log, but treat every verdict as unproven."
+}
+]
+},
+{
+"carProfile": {
+"model": "Civic FE 1.5T",
+"engine": "L15 turbo",
+"transmission": "CVT",
+"fuel": "E10 RON95",
+"climate": "hot city traffic",
+"basemap": "Starter 21 Dual Tune 2",
+"parts": [
+"intake",
+"downpipe"
+],
+"eliminate_artificial_kc_rise": false
+},
+"profileSpec": {
+"fields": [
+"model",
+"engine",
+"transmission",
+"fuel",
+"climate",
+"basemap"
+],
+"parts": [
+"intake",
+"downpipe",
+"front-pipe",
+"catback",
+"intercooler",
+"cvt-cooler"
+],
+"basemap": "Starter 21 Dual Tune 2",
+"basemapNote": "Prefilled from the map the app holds: you never type a table name."
+},
+"hasDrives": true,
+"driveWindow": {
+"driveIds": [
+"20260901-081358"
+],
+"count": 1,
+"since": null,
+"line": "based on this Drive only (01 Sep 08:13)"
+},
+"ktunerBasemap": "Starter 21 Dual Tune 2",
+"carHistory": [
+{
+"id": "20260901-081358",
+"start": 1788225238000,
+"fileName": "TunerView_20260901_081358.csv",
+"duration": 2427,
+"moving": 1797,
+"cool": true,
+"hot": false,
+"hotRestart": false,
+"verdict": "good",
+"kcStart": 0.51,
+"kcEnd": 0.49,
+"kcPeak": 0.54,
+"trimWorst": 1.6,
+"iatMoving": 37,
+"cvtPeak": 73,
+"lugShare": 5.11,
+"accel5070": {
+"seconds": 1.97,
+"iat": 39
+},
+"boostTarget": 13.7,
+"hardPulls": 2,
+"overshoot": 3.4,
+"wgAtPeak": 2.5,
+"map": "Starter 21 Dual Tune 2",
+"mapVersion": 1,
+"shakedown": "none",
+"answered": null
+}
+],
+"baseline": {
+"value": 0.49,
+"n": 1
+},
+"flashes": [
+{
+"id": "fmuwjrmyo-starter-21-dual-",
+"flashed_at": 1791283200000,
+"map": "Starter 21 Dual Tune 2 · 20261006 · boost r1",
+"changed": "boost",
+"note": "Boost overshoot 3.4 psi, over the 2.5 psi hold, at 3,500–4,000 rpm.",
+"restores": null
+}
+],
+"installs": [],
+"mapVersions": [
+{
+"id": 1,
+"n": 1,
+"label": "Map version 1",
+"name": "Starter 21 Dual Tune 2",
+"kind": "ktuner-basemap",
+"source": "ktuner-basemap",
+"parent_id": null,
+"flash_id": null,
+"changed": null,
+"note": "",
+"flashed_at": null,
+"created_at": 0,
+"updated_at": 0,
+"has_tables": true
+},
+{
+"id": 2,
+"n": 2,
+"label": "Map version 2",
+"name": "Starter 21 Dual Tune 2 · 20261006 · boost r1",
+"kind": "flash",
+"source": "flash",
+"parent_id": 1,
+"flash_id": "fmuwjrmyo-starter-21-dual-",
+"changed": "boost",
+"note": "Boost overshoot 3.4 psi, over the 2.5 psi hold, at 3,500–4,000 rpm.",
+"flashed_at": 1791283200000,
+"created_at": 0,
+"updated_at": 0,
+"has_tables": true
+}
+],
+"activeMapVersion": {
+"id": 2,
+"n": 2,
+"label": "Map version 2",
+"name": "Starter 21 Dual Tune 2 · 20261006 · boost r1",
+"kind": "flash",
+"source": "flash",
+"parent_id": 1,
+"flash_id": "fmuwjrmyo-starter-21-dual-",
+"changed": "boost",
+"note": "Boost overshoot 3.4 psi, over the 2.5 psi hold, at 3,500–4,000 rpm.",
+"flashed_at": 1791283200000,
+"created_at": 0,
+"updated_at": 0,
+"has_tables": true
+},
+"openSteps": [
+{
+"id": "channels",
+"key": "channels",
+"title": "Log AFR Command and MAF Hz",
+"status": "open",
+"why": "Asked on 1 Sep 08:13.",
+"askedOn": "20260901-081358",
+"askedAt": 1788225238000,
+"lastAskedOn": null,
+"settledBy": null,
+"settledAt": null,
+"word": "Not yet",
+"tone": "watch"
+}
+],
+"answers": {},
+"questionAnswers": {},
+"unansweredQuestions": [],
+"drives": [
+{
+"id": "20260901-081358",
+"upload_id": "<id>",
+"file_name": "TunerView_20260901_081358.csv",
+"started_at": 1788225238000,
+"received_at": 0,
+"too_short": false,
+"verdict": "good",
+"summary": {
+"id": "20260901-081358",
+"start": 1788225238000,
+"fileName": "TunerView_20260901_081358.csv",
+"durationSec": 2427,
+"movingSec": 1797,
+"iatMoving": 37,
+"cool": true,
+"hot": false,
+"hotRestart": false,
+"kcStart": 0.51,
+"kcEnd": 0.49,
+"kcPeak": 0.54,
+"timingCostDeg": 0.5,
+"trimWorst": 1.6,
+"hardPulls": 2,
+"mixLeanest": 10.8,
+"mixTarget": 11,
+"boostTarget": 13.7,
+"overshoot": 0.1,
+"wgAtPeak": 2.5,
+"cvtPeak": 73,
+"lugShare": 5.11,
+"kcUpSteps": 7,
+"lugUpSteps": 1,
+"lugRpm": 1506,
+"accel5070": 1.97,
+"flat": [],
+"missing": [
+"mafHz",
+"afrCmd"
+],
+"calmSec": 1708,
+"shakedown": "none"
+}
+}
+],
+"flashPlan": {
+"kind": "no-change",
+"changeId": null,
+"family": null,
+"headline": "Your logs support no map change right now.",
+"route": null,
+"basis": "Data",
+"proof": null,
+"saveAs": null,
+"undoName": null,
+"undo": null,
+"mapVersion": {
+"n": 2,
+"name": "Starter 21 Dual Tune 2 · 20261006 · boost r1",
+"label": "Map version 2",
+"kind": "flash",
+"tablesFrom": "app-store",
+"tablesPending": false,
+"from": 1791283200000,
+"flashId": "fmuwjrmyo-starter-21-dual-",
+"changed": "boost",
+"note": "Boost overshoot 3.4 psi, over the 2.5 psi hold, at 3,500–4,000 rpm.",
+"updatedAt": 1791283200000
+},
+"ceilingPsi": 23.4,
+"tables": [],
+"cellCount": 0,
+"cells": [],
+"afmPasteRow": null,
+"afmAfter": null,
+"flashChanged": null,
+"evidence": [],
+"deferred": [],
+"levers": [
+{
+"id": "afm",
+"family": "AFM Flow",
+"title": "AFM Flow curve",
+"status": "not-needed",
+"reason": "No change: trims within ±5 % (median 1.6 %).",
+"unlocks": "A drive whose trims pass ±5 % in some airflow bins."
+},
+{
+"id": "mixture",
+"family": "mixture",
+"title": "Mixture target (WOT 11.0 → 11.5)",
+"status": "locked",
+"reason": "Locked, provisional: no evidence of gain on this car; measured already 10.1–10.7 under boost against the 11.0 target.",
+"unlocks": "The AFR command is logged, the car is healthy in heat, and a like-for-like proof is possible."
+},
+{
+"id": "boostPlus",
+"family": "boost",
+"title": "Boost step +1 psi (Tune 2)",
+"status": "locked",
+"reason": "Locked: the open step \"Log AFR Command and MAF Hz\" comes first; the B2 overshoot trim comes first; the latest Cool drive (1 Sep 08:13) was read without a Pedal full reading: say what TPS reads with the pedal floored; no hot drive yet.",
+"unlocks": "A Cool drive with 2 floored pulls that pass every gate (target within 0.5 psi of the table, undershoot and overshoot within 1.5 psi, target + overshoot at most 24, Knock Control settled and at most 0.56, mixture never leaner than 12.0 and at or richer than target, DIFP at least 90 %, trims within ±5 %), and a hot drive with Knock Control at most 0.56."
+},
+{
+"id": "boostLow",
+"family": "boost",
+"title": "Boost lower at low rpm",
+"status": "locked",
+"reason": "Locked by P3: keep the revs up comes first — free beats a Flash.",
+"unlocks": "Try keep the revs up; if the score still rises while lugging, this lever unlocks."
+},
+{
+"id": "downpipe",
+"family": "boost",
+"title": "Boost −1 psi at 3,500–4,000 rpm",
+"status": "deferred",
+"reason": "Finish the Shakedown drive first: while it is open nothing else is planned (P2).",
+"unlocks": "A passing Shakedown drive."
+},
+{
+"id": "hot",
+"family": null,
+"title": "Hot days",
+"status": "no-edit",
+"reason": "No edit needed: ECO mode already runs the 18 psi targets (KTuner Starter 21 Dual Tune 2) (file peak 18 psi).",
+"unlocks": "—"
+}
+],
+"openIssues": {
+"stop": null,
+"watch": null,
+"shakedownPending": true,
+"unexplained": []
+},
+"stepFail": null
+},
+"hasLlm": false,
+"calibration": {
+"status": "none",
+"driveId": null,
+"mapAction": "no-change",
+"settled": false
+},
+"logGuide": {
+"title": "The Calibration drive",
+"intro": "One drive answers whether more boost can show on your car: it reads whether the boost target reaches your map's table with the pedal floored. It adds no power by itself, and it can come back \"capped\": that is an answer too. About 25 minutes, done once.",
+"sections": [
+{
+"title": "Parked, the evening before",
+"steps": [
+"Ignition on, engine off (press Start twice without the brake), TunerView's live screen open: press the pedal to the floor and hold it, three times. Read TPS at each hold and type the highest in your car profile as the Pedal full reading.",
+"In TunerView's gauge list, check whether it offers AFR Command and MAF Hz, and say so in your car profile's Logger setup.",
+"Open TunerView's logging rate menu and type its fastest logging rate in the Logger setup too.",
+"If you can, attach a screenshot of KTuner's Quick Adjustments screen here, so I can see the map's settings."
+]
+},
+{
+"title": "Before you drive, in TunerView",
+"steps": [
+"Turn on every gauge in the table below, plus AFR Command and MAF Hz if your app offers them.",
+"Set the logging rate as fast as it goes: 10 samples a second or more.",
+"Mount the phone where you won't touch it, and start the log before you set off."
+]
+},
+{
+"title": "When and where",
+"steps": [
+"Before 8 am, or after an hour parked in shade, so the intake reads under 42 °C.",
+"Pick a straight, empty road where full throttle is legal and safe. Never in traffic."
+]
+},
+{
+"title": "Warm up, then cruise",
+"steps": [
+"Drive about 10 minutes normally, until coolant reads 80 °C or more.",
+"Then cruise steady at a few different speeds, light throttle, several minutes in all: your fuel trims are read from this."
+]
+},
+{
+"title": "The two pulls",
+"steps": [
+"Choose slot 2 (Tune 2) when you start the car: while you choose, the tach shows 2,000 rpm for it. Turn ECO off.",
+"Put the gearbox in S.",
+"From a steady 50 km/h, press the pedal to the floor, all the way, and hold it until 100 km/h: at least 5 seconds, above 3,500 rpm for 4 s or more.",
+"Cruise calmly about a minute so the intake cools, check it reads under 48 °C, then do the second pull the same way.",
+"No brake launch, and no pull with the CVT fluid at 90 °C or more."
+]
+},
+{
+"title": "Finish",
+"steps": [
+"Keep at least 10 minutes of moving time in the log in all.",
+"Idle a minute, stop the log, export it as CSV, and attach it here."
+]
+}
+],
+"checkpoints": [
+"Logged 10 times a second or faster",
+"10 minutes or more of moving",
+"Every gauge moving",
+"AFR Command and MAF Hz in the log",
+"Engine warm (coolant 80 °C or more)",
+"Cool intake while moving (under 42 °C)",
+"2 full-throttle pulls",
+"Pulls started under 48 °C intake",
+"2 floored pulls held 4 s or more above 3,500 rpm",
+"On slot 2 (Tune 2)"
+],
+"recipe": {
+"intro": "Every “did it work?” needs a Drive to compare against. Heat moves boost, timing and the 50→70 time on its own, so the Baseline has to be a Cool Drive.",
+"steps": [
+"Before 8 am, or after an hour parked in shade: intake under 42 °C.",
+"10 minutes of normal driving first, so the engine and the CVT are warm.",
+"Then two pulls in S, 50 → 100 km/h, on a straight safe road, a minute apart.",
+"While you are in TunerView: add AFR Command and MAF Hz to the logged list if your app offers them. Without AFR Command I judge the mixture against the map's 11.0, not what the ECU asked for."
+]
+},
+"gauges": {
+"columns": [
+"Gauge in TunerView",
+"OK",
+"If you see",
+"Then"
+],
+"rows": [
+{
+"gauge": "IAT2",
+"ok": "under 42 °C moving, under 48 °C when a pull starts",
+"see": "over 48 °C",
+"then": "Hold a steady speed 1–2 min before the pull. A hot pull is not a test."
+},
+{
+"gauge": "Knock Control",
+"ok": "at or under 0.56",
+"see": "above 0.62",
+"then": "Ease off, and note what you were doing (rpm, heat, hill). Up to 0.62 costs about 1.3° of timing, not damage."
+},
+{
+"gauge": "O2 (AFR) at full throttle",
+"ok": "10.0–11.5",
+"see": "leaner than 12.0",
+"then": "Lift. Upload before the next pull."
+},
+{
+"gauge": "STFT B1 + LTFT B1",
+"ok": "within ±5 %",
+"see": "beyond ±10 %",
+"then": "Stop pulling. Drive home calm, upload."
+}
+]
+},
+"slot": 2
+},
+"stage": "verify",
+"recap": {
+"car": "Civic FE 1.5T · CVT · E10 RON95",
+"parts": "intake, downpipe",
+"map": "Map version 2",
+"round": 2,
+"stage": "verify",
+"stageLine": "You flashed a change: the next drive proves it.",
+"lines": [
+{
+"label": "Last drive",
+"value": "01 Sep 08:13"
+},
+{
+"label": "Drives in your car file",
+"value": "1"
+},
+{
+"label": "Waiting on",
+"value": "Log AFR Command and MAF Hz"
+}
+]
+},
+"suggestions": [
+{
+"label": "How do I drive the Shakedown?",
+"action": "guide",
+"icon": "route"
+},
+{
+"label": "Attach my log",
+"action": "attach",
+"icon": "paperclip"
+},
+{
+"label": "How do I undo it?",
+"action": "send",
+"icon": "help",
+"text": "How do I undo the change I flashed?"
 }
 ],
 "capabilities": [
