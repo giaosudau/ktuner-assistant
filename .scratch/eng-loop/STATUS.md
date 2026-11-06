@@ -144,3 +144,72 @@ in the logs. No Must fix or Should fix findings.
 **Before inviting anyone:** on the first deploy, try one upload (see "Not checked" above), and check
 whether Railway Hobby backs up the volume. Have the notice wording read by someone who knows the law
 where the owners live. None of this has been verified.
+
+## Top 10, part 1 done (2026-11-07)
+
+Items 8, 6, 1 and 7 from `review-r1.md`. Replies did not change through items 6, 1 and 7: the fixture
+test passed after each with no refresh. Suites: 246 JS and 469 Python pass, `tsc` clean, the browser
+e2e passes with no key, and `next build` takes 8 s and leaves the fixture out of the page.
+
+**Before** (`measure.sh --tests`, `py_step_branches` as the old regex counted it):
+
+```
+lines   engine=7654  server=11017  web=7882
+tests   js=3847  py=7251
+homes   engine_procs=2  stage_in_python=1  llm_callers=3  py_step_branches=58  py_tuning_consts=5  lim_fallbacks=5
+deps    py=9  web=4
+stack   runtimes=3  deploy_files=1  owner_columns=0
+debt    3 ponytail: markers
+dead    6 engine exports with no production caller: REF tableEdits smoothPreview STEP_KEYS carWords parseDriveStart
+speed   npm_test=22s  pytest=58s
+```
+
+**After:**
+
+```
+lines   engine=7675  server=11015  web=8018
+tests   js=3884  py=7401
+homes   engine_procs=1  stage_in_python=0  llm_callers=3  py_step_branches=4  py_tuning_consts=5  lim_fallbacks=7
+deps    py=9  web=4
+stack   runtimes=3  deploy_files=1  owner_columns=0
+debt    3 ponytail: markers
+dead    5 engine exports with no production caller: REF tableEdits smoothPreview carWords parseDriveStart
+speed   npm_test=22s  pytest=54s
+```
+
+**Corrected branch count.** 58 counted part names and reply keys. The new regex counts real step-key
+branches: 13 at `c80b029`, 4 now. Importing `kta_server.copy` went from about 64 ms to about 30 ms.
+`lim_fallbacks` rose from 5 to 7 with no new number: the two literals behind `drive_recipe`'s old `at()`
+wrapper are now visible to the regex. Item 5 deletes them.
+
+**Shipped:**
+
+- Item 8: `web/fixtures/replies.fixture.ts`, 400 KB. It holds 11 cards, 8 `/api/state`s and 4 typed
+  answers. Cut to fit: harness inputs and outputs are digests on every card, and 7 of the replay's
+  states are digests only, so a change to any of them still fails the test. Two runs are byte-identical.
+- Item 6: `data/car-words.json`, read by the engine and by `copy.py`. `KTA.carWords` is byte-identical.
+- Item 1: `KTA.carStage`, the worker's `stage` op, `safety: true` on four `STEP_JUDGES`, ADR 0010. Old
+  and new agreed on 122,472 hand-built cases plus every replayed state before `stage_of` was deleted.
+- Item 7: `STEP_WORDS` in `copy.py`, `stepKeys` in `ping`, a contract test that fails both ways.
+
+**Drift the compiler found** (all types behind the server, none a blank card): `nextStep.kind` had no
+`"change"` (the Flash readback's recheck step). `OpenStep.id` is null on a step the engine has just
+opened. `DriveRow.started_at`, `verdict` and `AskAnswer.window` can be null, and `calibration.text` can
+be absent. Undeclared keys on `ReplyCard` (`afterFlash`, `windowDrives`, `windowSince`), `FlashPlan`,
+`KTunerGroup.tableIds`, `readback`, pictures (`numbers`, `momentIndex`, `moments`), levers, `ProfileDraft`,
+`AskAnswer` and most of `LoopState`. The unused snapshot `LoopState` and `DriveSummary` are deleted.
+
+**One real flake fixed, one reply order made fixed.** Two questions from one reply could swap places in
+"Waiting for you" when a millisecond fell between them (`ORDER BY asked_at, id`). It is now `asked_at, rowid`,
+always the order they were asked, which is what two existing tests pin.
+
+**Left on purpose, decisions and not words:** `loopstate.one_next_step`'s `key == "tooShort"` (a Too-short
+line is never replaced) and `next_step_card`'s `channels_open` (reads another step's state to add a line).
+`tooShort` and `none` in `next_step_card` are word choices, but they aren't step kinds, so the contract
+test's key list doesn't hold them.
+
+**Not in the fixture:** `verify` (the replay's fixed clock is older than the Drives), and the `map_grid`,
+`maf_gap`, `baseline` and `cant-tell` pictures. `carStage`'s `verify` has engine tests. The picture types
+were read against `pictures.py` by hand.
+
+**Next:** the owner's step 4 above, then the rest of the top 10 in order.
