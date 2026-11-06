@@ -3,12 +3,12 @@
   "generator": "tools/knowledge-graph.py",
   "overlay": "docs/knowledge-graph/overlay.json",
   "nodes": {
-   "adr": 9,
+   "adr": 10,
    "area": 9,
    "card": 54,
    "channel": 32,
    "claim": 11,
-   "data": 14,
+   "data": 15,
    "doc": 18,
    "family": 6,
    "mod": 5,
@@ -18,7 +18,7 @@
    "stage": 13,
    "table": 39,
    "term": 49,
-   "test": 44,
+   "test": 45,
    "threshold": 13,
    "trait": 5
   },
@@ -26,7 +26,7 @@
    "about": 81,
    "affects": 11,
    "bounds": 59,
-   "calls": 61,
+   "calls": 65,
    "changes": 14,
    "checks": 1,
    "cites": 27,
@@ -34,22 +34,22 @@
    "explained-by": 21,
    "gated-by": 14,
    "implemented-by": 21,
-   "imports": 208,
+   "imports": 211,
    "in-family": 39,
    "loads": 4,
-   "mentions": 343,
+   "mentions": 345,
    "method": 56,
    "next": 17,
-   "reads": 58,
+   "reads": 60,
    "reads-channel": 39,
    "runs": 1,
    "serves": 20,
    "sourced-from": 100,
    "superseded-by": 7,
-   "tests": 71,
+   "tests": 72,
    "touches": 171,
    "uses": 55,
-   "uses-term": 689,
+   "uses-term": 697,
    "works-on": 5,
    "wraps": 1
   }
@@ -126,6 +126,14 @@
    "area": "docs",
    "path": "docs/adr/0009-one-app-instance-per-owner.md",
    "description": "One app instance per owner, behind one small gate"
+  },
+  {
+   "id": "adr:0010",
+   "kind": "adr",
+   "label": "ADR 0010",
+   "area": "docs",
+   "path": "docs/adr/0010-stage-decided-in-the-engine.md",
+   "description": "Stage is decided once, in the engine"
   },
   {
    "id": "area:data",
@@ -1427,7 +1435,7 @@
    "area": "docs",
    "path": "README.md",
    "description": "KTuner Assistant",
-   "lines": 82
+   "lines": 83
   },
   {
    "id": "file:data/KTuner-Maps-Digitized.xlsx",
@@ -1442,6 +1450,14 @@
    "label": "KTuner-Maps-Edit-Plan.xlsx",
    "area": "data",
    "path": "data/KTuner-Maps-Edit-Plan.xlsx"
+  },
+  {
+   "id": "file:data/car-words.json",
+   "kind": "data",
+   "label": "car-words.json",
+   "area": "data",
+   "path": "data/car-words.json",
+   "lines": 56
   },
   {
    "id": "file:data/example-aug22-0903.js",
@@ -1682,7 +1698,7 @@
    "area": "engine",
    "path": "engine/kta-car.js",
    "description": "KTA car module: one owner's Car history, Flashes, Shakedown drive,",
-   "lines": 2779
+   "lines": 2798
   },
   {
    "id": "file:engine/kta-drive.js",
@@ -1807,7 +1823,7 @@
    "area": "server",
    "path": "server/kta_server/copy.py",
    "description": "The built-in reply: every word the owner reads until the model takes over.",
-   "lines": 1397
+   "lines": 1408
   },
   {
    "id": "file:server/kta_server/db.py",
@@ -1816,7 +1832,7 @@
    "area": "server",
    "path": "server/kta_server/db.py",
    "description": "SQLite: everything the loop remembers (spec §Storage).",
-   "lines": 800
+   "lines": 801
   },
   {
    "id": "file:server/kta_server/desk.py",
@@ -1825,7 +1841,7 @@
    "area": "server",
    "path": "server/kta_server/desk.py",
    "description": "The front desk (tuning-shop D19–D25): what the shop says before any tuning.",
-   "lines": 521
+   "lines": 495
   },
   {
    "id": "file:server/kta_server/flash.py",
@@ -1880,7 +1896,7 @@
    "area": "server",
    "path": "server/kta_server/loopstate.py",
    "description": "The loop as the chat mirrors it: the Car file, where the car is, and what the shop offers next.",
-   "lines": 121
+   "lines": 127
   },
   {
    "id": "file:server/kta_server/mapcheck.py",
@@ -2006,7 +2022,7 @@
    "area": "worker",
    "path": "server/kta_worker/worker.js",
    "description": "!/usr/bin/env node",
-   "lines": 826
+   "lines": 832
   },
   {
    "id": "file:server/tests/conftest.py",
@@ -2024,7 +2040,7 @@
    "area": "tests",
    "path": "server/tests/seam1/conftest.py",
    "description": "Seam 1: the tuning loop at the server's front door (ADR 0004 §\"Where each seam's tests live\").",
-   "lines": 386
+   "lines": 391
   },
   {
    "id": "file:server/tests/seam1/replay.py",
@@ -2060,7 +2076,7 @@
    "area": "tests",
    "path": "server/tests/seam1/test_calibration_stage.py",
    "description": "Seam 1: the Calibrate stage, the Calibration brief and the Next step (calibration drive C6, C9).",
-   "lines": 121
+   "lines": 132
   },
   {
    "id": "file:server/tests/seam1/test_car_profile.py",
@@ -2168,7 +2184,7 @@
    "area": "tests",
    "path": "server/tests/seam1/test_open_steps.py",
    "description": "Seam 1: Open steps and the Next step (ticket 04).",
-   "lines": 263
+   "lines": 273
   },
   {
    "id": "file:server/tests/seam1/test_pictures.py",
@@ -2187,6 +2203,15 @@
    "path": "server/tests/seam1/test_questions.py",
    "description": "Seam 1: owner questions pause, answer, resume (ticket 07).",
    "lines": 179
+  },
+  {
+   "id": "file:server/tests/seam1/test_reply_contract.py",
+   "kind": "test",
+   "label": "test_reply_contract.py",
+   "area": "tests",
+   "path": "server/tests/seam1/test_reply_contract.py",
+   "description": "The reply contract: real replies, committed as object literals `tsc` checks against the web's types.",
+   "lines": 125
   },
   {
    "id": "file:server/tests/seam1/test_reply_words.py",
@@ -2357,7 +2382,7 @@
    "area": "tests",
    "path": "test/car.test.js",
    "description": "'use strict';",
-   "lines": 1937
+   "lines": 1974
   },
   {
    "id": "file:test/drive.test.js",
@@ -2591,7 +2616,7 @@
    "area": "web",
    "path": "web/lib/api.ts",
    "description": "Every call the chat makes to the server, in one place. The browser never reads",
-   "lines": 297
+   "lines": 401
   },
   {
    "id": "file:web/lib/chatEvents.ts",
@@ -2609,7 +2634,7 @@
    "area": "web",
    "path": "web/lib/types.ts",
    "description": "The types the server sends, written once so every card reads the same shape.",
-   "lines": 438
+   "lines": 469
   },
   {
    "id": "file:web/lib/uiTools.ts",
@@ -4651,6 +4676,36 @@
    "from": "adr:0009",
    "to": "adr:0005",
    "kind": "mentions"
+  },
+  {
+   "from": "adr:0010",
+   "to": "adr:0002",
+   "kind": "mentions"
+  },
+  {
+   "from": "adr:0010",
+   "to": "adr:0004",
+   "kind": "mentions"
+  },
+  {
+   "from": "adr:0010",
+   "to": "file:server/kta_server/desk.py",
+   "kind": "mentions"
+  },
+  {
+   "from": "adr:0010",
+   "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "adr:0010",
+   "to": "term:Ceiling read",
+   "kind": "uses-term"
+  },
+  {
+   "from": "adr:0010",
+   "to": "term:Recap",
+   "kind": "uses-term"
   },
   {
    "from": "card:kc-21psi-no-margin",
@@ -7265,6 +7320,11 @@
   },
   {
    "from": "file:engine/kta-car.js",
+   "to": "file:data/car-words.json",
+   "kind": "reads"
+  },
+  {
+   "from": "file:engine/kta-car.js",
    "to": "file:data/ktuner-maps-digitized.json",
    "kind": "reads"
   },
@@ -8420,6 +8480,11 @@
   },
   {
    "from": "file:server/kta_server/copy.py",
+   "to": "file:data/car-words.json",
+   "kind": "reads"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
    "to": "file:data/thresholds.json",
    "kind": "reads"
   },
@@ -8431,11 +8496,6 @@
   {
    "from": "file:server/kta_server/copy.py",
    "to": "file:docs/research/ktuner-only-tuning.md",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:server/kta_server/copy.py",
-   "to": "file:engine/kta-car.js",
    "kind": "mentions"
   },
   {
@@ -10022,6 +10082,11 @@
   },
   {
    "from": "file:server/tests/seam1/conftest.py",
+   "to": "route:/api/state",
+   "kind": "calls"
+  },
+  {
+   "from": "file:server/tests/seam1/conftest.py",
    "to": "route:/upload",
    "kind": "calls"
   },
@@ -10842,6 +10907,11 @@
   },
   {
    "from": "file:server/tests/seam1/test_open_steps.py",
+   "to": "file:server/kta_server/copy.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/seam1/test_open_steps.py",
    "to": "file:server/tests/conftest.py",
    "kind": "imports"
   },
@@ -10988,6 +11058,41 @@
   {
    "from": "file:server/tests/seam1/test_questions.py",
    "to": "term:Shakedown drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_reply_contract.py",
+   "to": "file:server/tests/conftest.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_reply_contract.py",
+   "to": "file:server/tests/seam1/conftest.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_reply_contract.py",
+   "to": "file:server/tests/seam1/test_chat_agent.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_reply_contract.py",
+   "to": "route:/api/flash/confirm",
+   "kind": "calls"
+  },
+  {
+   "from": "file:server/tests/seam1/test_reply_contract.py",
+   "to": "route:/api/profile",
+   "kind": "calls"
+  },
+  {
+   "from": "file:server/tests/seam1/test_reply_contract.py",
+   "to": "route:/api/state",
+   "kind": "calls"
+  },
+  {
+   "from": "file:server/tests/seam1/test_reply_contract.py",
+   "to": "term:Car profile",
    "kind": "uses-term"
   },
   {
@@ -13224,6 +13329,16 @@
   },
   {
    "from": "file:web/lib/api.ts",
+   "to": "term:Car history",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:web/lib/api.ts",
+   "to": "term:Ceiling read",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:web/lib/api.ts",
    "to": "term:Drive brief",
    "kind": "uses-term"
   },
@@ -13253,6 +13368,11 @@
    "kind": "uses-term"
   },
   {
+   "from": "file:web/lib/api.ts",
+   "to": "term:Too-short drive",
+   "kind": "uses-term"
+  },
+  {
    "from": "file:web/lib/chatEvents.ts",
    "to": "file:web/lib/api.ts",
    "kind": "imports"
@@ -13276,6 +13396,11 @@
    "from": "file:web/lib/types.ts",
    "to": "route:/agent",
    "kind": "calls"
+  },
+  {
+   "from": "file:web/lib/types.ts",
+   "to": "term:Boost step",
+   "kind": "uses-term"
   },
   {
    "from": "file:web/lib/types.ts",

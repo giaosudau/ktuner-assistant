@@ -86,6 +86,7 @@ docker run --rm -p 8765:8000 -e KTA_LLM_API_KEY="" -e KTA_OWNERS="me:<secret>" -
 ```bash
 cd server && uv run pytest tests -q     # no key, no network
 uv run python tests/seam1/replay.py     # read all nine real Drives end to end
+KTA_WRITE_REPLIES=1 uv run pytest tests/seam1/test_reply_contract.py -n0   # refresh the pinned replies, only with a reason
 ```
 
 The suite runs parallel by default (`-n auto` in `pyproject.toml`: every test

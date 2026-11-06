@@ -101,8 +101,8 @@ Every round runs top-down and never skips a level:
   check id or table family. Never `if key == "…"` chains.
 - **The engine** is reached only through `server/kta_worker/worker.js`.
 - **The LLM** is reached only through `kta_server/llm.py` (once AD-5 ships).
-- **The contract** is `web/lib/types.ts`, checked by `tsc` against the replay fixture (once
-  AD-6 ships).
+- **The contract** is `web/lib/types.ts`, checked by `tsc` against the replay fixture.
+- Replies are pinned: `web/fixtures/replies.fixture.ts` changes only with a reason.
 - **Add a feature:**
   - a new Open step kind = one `STEP_JUDGES` entry, one `STEP_WORDS` entry, one thresholds
     row; the contract test names any missing one.

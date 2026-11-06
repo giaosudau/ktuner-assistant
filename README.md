@@ -44,6 +44,7 @@ suggestions checked in code, and the conversation kept per chat by LangGraph's S
 ```bash
 npm test                                  # engine
 cd server && uv run pytest                # server: the loop, verify, map checks, map recommendation eval
+cd web && npx tsc --noEmit                # real replies (web/fixtures/replies.fixture.ts) against the web's types
 cd web && npm run e2e                     # browser smoke through the composer (server + chat running)
 cd server && KTA_SCORECARD=1 uv run python -m kta_server.scorecard   # live model scorecard (needs a key)
 ```
