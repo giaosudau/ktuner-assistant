@@ -66,10 +66,22 @@ real owners on one small box. The Next.js port waits until 5 owners each upload 
 after a Flash. The spike stays valid as evidence: the engine runs in a Next.js route, with
 214–260 ms ingest on a 1.95 MB drive, and the `window` shim crashes Next.js server code.
 
+### Step 2 done: one container, one URL (2026-11-06)
+
+`output: "export"` builds `web/out`; FastAPI serves it from `KTA_WEB_DIR` (mounted last in
+`create_app`), so chat and API share one origin. `Dockerfile` (node:24-slim, uv, Python 3.13) and
+`railway.toml` (Dockerfile builder, `/healthz`, restart on failure); the volume at `/data` is set in
+the dashboard and the steps are in `server/README.md` "Deploy". No auth or caps: not safe on a public URL until step 3.
+
+**Proof:** `grep -rl 127.0.0.1:8000 web/out` prints nothing; the browser e2e passes against one origin natively
+and against the image. Data survives `docker rm` with the same volume (1 Drive before and after);
+54 knowledge cards load in the container. Image 668 MB (`docker images`, uncompressed). `docs/research`
+ships in the image because cards fail to load without the doc each one cites.
+
 **Next, in order:**
 
-1. Delete: items 2 and 3, `langchain-openai`, and `deploy_units` in `measure.sh`
-2. One container, one URL: static export served by FastAPI, Railway service with a volume
+1. Delete: items 2 and 3, `langchain-openai`, and `deploy_units` in `measure.sh` (done)
+2. One container, one URL: static export served by FastAPI, Railway service with a volume (done)
 3. Owners: invite link, one app instance per owner, upload limit, model cap, first-run notice,
    and a test that one owner can't reach another's car
 4. Invite 5–10 owners. Track the proving Drive after a Flash, and what they asked

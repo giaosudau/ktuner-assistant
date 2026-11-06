@@ -36,6 +36,8 @@ class Settings:
     llm_models: tuple[str, ...] = field(default_factory=tuple)
     #: Fix the clock so the same Drive always gives the same reply in tests.
     now: int | None = None
+    #: A built static chat (web/out) to serve at `/`. None: the API only, the chat runs on its own port.
+    web_dir: Path | None = None
     #: Browsers the chat may come from. Local-first, no cookies, no auth.
     cors_origins: tuple[str, ...] = (
         "http://localhost:3000",
@@ -50,7 +52,7 @@ class Settings:
         return self.now if self.now is not None else int(__import__("time").time() * 1000)
 
 
-def _path(name: str, fallback: Path) -> Path:
+def _path(name: str, fallback: Path | None) -> Path | None:
     raw = os.environ.get(name)
     if not raw:
         return fallback
@@ -68,6 +70,7 @@ def load_settings() -> Settings:
     raw_now = os.environ.get("KTA_NOW")
     return Settings(
         db_path=_path("KTA_DB", SERVER_ROOT / "ktuner.db"),
+        web_dir=_path("KTA_WEB_DIR", None),
         worker_script=_path("KTA_WORKER", WORKER_SCRIPT),
         node_exe=os.environ.get("KTA_NODE") or "node",
         llm_base_url=os.environ.get("KTA_LLM_BASE_URL") or None,

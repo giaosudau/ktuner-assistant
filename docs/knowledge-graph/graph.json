@@ -18,7 +18,7 @@
    "stage": 13,
    "table": 39,
    "term": 49,
-   "test": 42,
+   "test": 43,
    "threshold": 13,
    "trait": 5
   },
@@ -26,7 +26,7 @@
    "about": 81,
    "affects": 11,
    "bounds": 59,
-   "calls": 52,
+   "calls": 54,
    "changes": 14,
    "checks": 1,
    "cites": 27,
@@ -46,7 +46,7 @@
    "serves": 20,
    "sourced-from": 100,
    "superseded-by": 7,
-   "tests": 66,
+   "tests": 68,
    "touches": 171,
    "uses": 55,
    "uses-term": 687,
@@ -1419,7 +1419,7 @@
    "area": "docs",
    "path": "README.md",
    "description": "KTuner Assistant",
-   "lines": 81
+   "lines": 82
   },
   {
    "id": "file:data/KTuner-Maps-Digitized.xlsx",
@@ -1763,7 +1763,7 @@
    "area": "server",
    "path": "server/kta_server/app.py",
    "description": "The FastAPI app: the owner's own upload button, the AG-UI agent, and the state.",
-   "lines": 533
+   "lines": 540
   },
   {
    "id": "file:server/kta_server/ask.py",
@@ -1790,7 +1790,7 @@
    "area": "server",
    "path": "server/kta_server/config.py",
    "description": "Where the pieces live and how they are configured (ADR 0004 §Configuration).",
-   "lines": 82
+   "lines": 85
   },
   {
    "id": "file:server/kta_server/copy.py",
@@ -2287,6 +2287,15 @@
    "path": "server/tests/test_verify.py",
    "description": "Unit tests for the deterministic verify (ticket 08): no worker, no network.",
    "lines": 210
+  },
+  {
+   "id": "file:server/tests/test_web_on_same_origin.py",
+   "kind": "test",
+   "label": "test_web_on_same_origin.py",
+   "area": "tests",
+   "path": "server/tests/test_web_on_same_origin.py",
+   "description": "The built chat is served by the API on one origin (KTA_WEB_DIR), and never shadows an API route.",
+   "lines": 38
   },
   {
    "id": "file:test/ask.test.js",
@@ -11589,6 +11598,26 @@
    "from": "file:server/tests/test_verify.py",
    "to": "term:Flash plan",
    "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/test_web_on_same_origin.py",
+   "to": "file:server/kta_server/app.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/test_web_on_same_origin.py",
+   "to": "file:server/kta_server/config.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/test_web_on_same_origin.py",
+   "to": "route:/api/state",
+   "kind": "calls"
+  },
+  {
+   "from": "file:server/tests/test_web_on_same_origin.py",
+   "to": "route:/healthz",
+   "kind": "calls"
   },
   {
    "from": "file:test/ask.test.js",

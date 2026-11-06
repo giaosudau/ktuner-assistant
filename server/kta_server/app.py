@@ -8,6 +8,7 @@ Routes (ADR 0004 §"How the chat reaches Python"):
 | `POST /agent`      | the AG-UI endpoint (`ag_ui_langgraph.add_langgraph_fastapi_endpoint`) |
 | `GET /api/state`   | Car profile, Car history, Map versions, Open steps, questions  |
 | `GET /healthz`     | liveness                                                        |
+| `GET /` and the rest | the built chat (`KTA_WEB_DIR`), mounted last so no API route is shadowed |
 | `GET /api/history` | the History file export (a later ticket's UI, same data)       |
 | `POST /api/history`| import a History file                                           |
 
@@ -34,6 +35,7 @@ from ag_ui_langgraph import LangGraphAgent, add_langgraph_fastapi_endpoint
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 
 from .config import Settings, load_settings
@@ -131,9 +133,10 @@ def create_app(
 
     app = FastAPI(title="Civic FE Tune Assist", version="0.1.0", lifespan=lifespan)
 
-    # The chat runs on its own port (Next.js) and calls /upload and /agent from
-    # the browser, so the loop's two halves need CORS. Local-first: no auth, no
-    # cookies, only this owner's own machine.
+    # In local dev the chat runs on its own port (Next.js) and calls /upload and
+    # /agent from the browser, so the two halves need CORS. When KTA_WEB_DIR
+    # serves the chat from this server the origin is shared and CORS goes unused.
+    # Local-first: no auth, no cookies, only this owner's own machine.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.cors_origins),
@@ -508,6 +511,10 @@ def create_app(
     app.state.graph = graph
     agent = LangGraphAgent(name=AGENT_NAME, graph=graph, emit_raw_events=False)
     add_langgraph_fastapi_endpoint(app, agent, path="/agent")
+
+    # Last on purpose: a mount at "/" shadows every route registered after it.
+    if settings.web_dir:
+        app.mount("/", StaticFiles(directory=settings.web_dir, html=True), name="web")
 
     return app
 

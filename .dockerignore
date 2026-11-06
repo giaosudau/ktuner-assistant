@@ -1,0 +1,24 @@
+# Keep the build context to what the image runs. Cards are checked against
+# docs/research at load, so only that folder of docs stays.
+.git
+.scratch
+.claude
+.impeccable
+.playwright-mcp
+**/node_modules
+web/.next
+web/out
+server/.venv
+server/*.db*
+server/eval-results
+server/tests
+**/.env
+**/.env.*
+docs/*
+!docs/research
+test
+tools
+**/__pycache__
+# data/: the worker reads thresholds.json and ktuner-maps-digitized.json; nothing at runtime reads the rest
+data/*.xlsx
+data/example-*.js

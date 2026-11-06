@@ -50,6 +50,26 @@ answers `ok` once the Node worker is up.
 `pyproject.toml` + `uv.lock` are the one source of truth for Python deps
 (`requirements.txt` was removed deliberately; `uv` is the primary runner).
 
+## Deploy
+
+One container serves the chat and the API from one URL (the `Dockerfile` builds the static
+chat and FastAPI serves it, so there is no CORS). `railway.toml` points Railway at it.
+
+**Not safe on a public URL yet: every visitor shares one car, and there is no upload or model limit.**
+
+- Env vars: `KTA_DB=/data/ktuner.db` and `KTA_WEB_DIR=/repo/web/out` (set in the image). Add
+  `KTA_LLM_BASE_URL`, `KTA_LLM_API_KEY`, `KTA_LLM_MODEL` for a model; without them every reply is the built-in one.
+- Mount one volume at `/data`. Railway cannot declare volumes in `railway.toml`.
+- One replica only: SQLite lives on one disk, and Railway does not allow replicas with a volume.
+- Run the image locally:
+
+```bash
+docker build -t kta-beta .
+docker volume create kta-beta-data
+docker run --rm -p 8765:8000 -e KTA_LLM_API_KEY="" -v kta-beta-data:/data kta-beta
+# http://127.0.0.1:8765  (/healthz -> ok)
+```
+
 ## Test it
 
 ```bash

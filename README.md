@@ -20,6 +20,7 @@ make run
   `KTA_LLM_BASE_URL`, `KTA_LLM_API_KEY`, `KTA_LLM_MODEL` (and `KTA_LLM_MODELS` for the scorecard).
   With no key the app still works: every reply is the built-in one.
 - Data: SQLite at `server/ktuner.db` (`KTA_DB` to change).
+- One container, one URL (Railway): see the Deploy section of `server/README.md`.
 
 ## How it works
 
