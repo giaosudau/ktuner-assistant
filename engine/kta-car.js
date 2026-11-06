@@ -6,8 +6,8 @@
  *   KTA.carEmpty()                          a fresh Car history
  *   KTA.carIngest(state, log, meta)         remember one drive (checkDrive runs inside)
  *   KTA.carReport(state, driveId)           what the screen shows for a remembered drive
- *   KTA.carRecordFlash / carEditFlash / carDeleteFlash
- *   KTA.carHide / carUnhide                 a Hidden drive leaves charts and the Baseline
+ *   KTA.carRecordFlash
+ *   KTA.carHide                 a Hidden drive leaves charts and the Baseline
  *   KTA.carAnswer(state, driveId, answer)   I flashed / New tank of fuel / Neither
  *   KTA.carBaseline(state)                  this car's own normal Fuel-quality score
  *   KTA.carMapVersions(state)               every Map version the app holds, in order
@@ -641,47 +641,6 @@
     v.updatedAt = nowOf(meta);
     return { state: s, version: versionOut(v) };
   };
-  KTA.carEditFlash = function (state, id, patch, meta) {
-    var s = clone(state), found = false;
-    s.flashes.forEach(function (f) {
-      if (f.id !== id) return;
-      found = true;
-      if (patch.time != null) { if (!isNum(patch.time)) throw new Error('A Flash needs a date and time.'); f.time = patch.time; }
-      if (patch.map != null) { if (!String(patch.map).trim()) throw new Error('A Flash needs a Map name.'); f.map = String(patch.map); }
-      if (patch.changed != null) f.changed = CHANGED[patch.changed] ? patch.changed : 'other';
-      if (patch.note != null) f.note = String(patch.note);
-      f.updatedAt = nowOf(meta);
-    });
-    if (!found) throw new Error('Flash not found: ' + id);
-    sortFlashes(s);
-    // The Map version that Flash produced keeps step with it, or Undo would name
-    // a file the owner has just renamed.
-    s.mapVersions.forEach(function (v) {
-      if (v.flashId !== id) return;
-      var f = s.flashes.filter(function (x) { return x.id === id; })[0];
-      if (f) { v.name = f.map; v.from = f.time; v.changed = f.changed; v.note = f.note; }
-      v.updatedAt = nowOf(meta);
-    });
-    return s;
-  };
-  KTA.carDeleteFlash = function (state, id) {
-    var s = clone(state);
-    s.flashes = s.flashes.filter(function (f) { return f.id !== id; });
-    if (s.shakedown.flashId === id) s.shakedown = emptyShakedown();
-    s.mapRestores = s.mapRestores.filter(function (r) { return r.flashId !== id; });
-    // The Map version that Flash produced goes with it, or Undo would name a
-    // version the Car history no longer has a Flash for.
-    var kept = s.mapVersions.filter(function (v) { return v.flashId !== id; });
-    if (kept.length !== s.mapVersions.length) s.mapVersions = normVersions(renumber(kept));
-    return s;
-  };
-  /** Versions numbered 1..n with no gaps, so a deleted Flash leaves no hole. */
-  function renumber(list) {
-    return list.slice().sort(function (a, b) { return a.n - b.n; }).map(function (v, i) {
-      return Object.assign({}, v, { n: i + 1 });
-    });
-  }
-
   // ---------------------------------------------------------------------------
   // The main operation: check a drive, remember it, judge the new state
   // ---------------------------------------------------------------------------
@@ -936,11 +895,6 @@
     if (s.hidden.indexOf(driveId) < 0) s.hidden.push(driveId);
     return s;
   };
-  KTA.carUnhide = function (state, driveId) {
-    var s = clone(state);
-    s.hidden = s.hidden.filter(function (id) { return id !== driveId; });
-    return s;
-  };
   KTA.carAnswer = function (state, driveId, answer) {
     var s = clone(state);
     if (['flashed', 'fuel', 'neither'].indexOf(answer) < 0) throw new Error('Answer one of: flashed, fuel, neither.');
@@ -1147,7 +1101,7 @@
   // Candidate shapes reuse the existing lever math: suggestBoostStep builds the
   // Boost step's cells (capped by the Final Boost Target peak), suggestWotLean builds the
   // WOT 11.0 -> 11.5 lever (locked provisional), LIMITS.mafStepMax caps the AFM
-  // round, pairOf/TABLES enforce P6/P7, toRow renders the paste-ready AFM row.
+  // round, TABLES enforce P6/P7, toRow renders the paste-ready AFM row.
   // ---------------------------------------------------------------------------
   var NORMAL_BOOST_IDS = [
     'Boost_Target_1_Normal_L', 'Boost_Target_1_Normal_H',
@@ -2739,7 +2693,6 @@
     };
     return FIT[housing] || null;
   };
-  KTA.QUESTION_ORDER = QUESTION_ORDER.slice();
   KTA.carQuestions = function (state, driveId, opts) {
     var s = normalize(state);
     var sum = s.drives[driveId] || null;

@@ -134,19 +134,6 @@
   /* REF:END */
   KTA.REF = REF;
 
-  KTA.CAR = {
-    name: 'Honda Civic FE (11th gen) 1.5T CVT',
-    spec: 'Vietnam spec 176 hp @ 6,000 rpm, 240 Nm @ 1,700-4,500 rpm',
-    stockTorqueNm: 240,
-    stockPeakBoostPsi: 16.5,
-    tankLiters: 47
-  };
-
-  KTA.FUEL = {
-    'e10-95': { label: 'E10 RON95', stoich: 14.1, ok: true },
-    'e5-92': { label: 'E5 RON92', stoich: 14.4, ok: false }
-  };
-
   // Thresholds for the health gates. Every limit rests on this car's data, a primary
   // source, or physics — see docs/research/fact-check.md, quoted in each check's basis.
   // The Fuel-quality score is judged by the timing it costs under boost
@@ -502,7 +489,6 @@
     knock: [0, 30], kControl: [0, 1.2], ign: [-30, 60],
     wgPos: [-5, 105], wgTarget: [-5, 105], mafHz: [100, 12000], mafGs: [0, 600], torque: [-200, 800]
   };
-  KTA.RANGES = RANGES;
 
   function rollingMedian(a, half) {
     var n = a.length, out = new Float64Array(n), win = [];
@@ -1383,86 +1369,6 @@
   // Suggestions
   // ---------------------------------------------------------------------------
 
-  /**
-   * New AFM Flow (g/s) values from one analysis. Rules:
-   *  - closed-loop trims set the correction where there is data;
-   *  - settled WOT mixture error fills higher Hz, only where fuel pressure held;
-   *  - gaps are interpolated; below the data the first value is held;
-   *  - above the data a richening correction is held, a leaning one tapers to zero
-   *    (cruise data never leans out the full-throttle end);
-   *  - every point moves at most LIMITS.mafStepMax per round;
-   *  - the curve must rise at every point.
-   */
-  KTA.suggestMaf = function (analysis, table, opts) {
-    opts = opts || {};
-    var L = KTA.LIMITS;
-    var axis = analysis.maf.axis, m = axis.length;
-    table = (table || REF.maf.custom).map(Number);
-    if (table.length !== m) throw new Error('The AFM table needs ' + m + ' values; got ' + table.length + '.');
-    var maxStep = opts.maxStep || L.mafStepMax;
-    var cl = analysis.maf.cl, wt = analysis.maf.wot;
-    if (!cl && !wt) return { ok: false, reason: 'This log has no MAF Hz or g/s, so there is nothing to correct against.' };
-
-    var corr = new Array(m), src = new Array(m);
-    for (var k = 0; k < m; k++) {
-      corr[k] = null; src[k] = 'none';
-      if (cl && cl[k].weight >= L.minBinWeight && isNum(cl[k].mean)) { corr[k] = cl[k].mean / 100; src[k] = 'log'; }
-      else if (opts.useWot !== false && wt && wt[k].weight >= L.minWotWeight && isNum(wt[k].mean)) { corr[k] = wt[k].mean / 100; src[k] = 'wot'; }
-    }
-    var idx = [];
-    for (k = 0; k < m; k++) if (corr[k] !== null) idx.push(k);
-    if (!idx.length) return { ok: false, reason: 'Not enough steady cruise or settled full-throttle data at any AFM point yet. Log longer, then try again.' };
-
-    // 1-2-1 smoothing across neighbours that have data
-    var sm = corr.slice();
-    idx.forEach(function (k2) {
-      var s = 2 * corr[k2], w = 2;
-      if (k2 > 0 && corr[k2 - 1] !== null) { s += corr[k2 - 1]; w++; }
-      if (k2 < m - 1 && corr[k2 + 1] !== null) { s += corr[k2 + 1]; w++; }
-      sm[k2] = s / w;
-    });
-    for (var a = 0; a < idx.length - 1; a++) {
-      var lo = idx[a], hi = idx[a + 1];
-      for (k = lo + 1; k < hi; k++) { var f = (k - lo) / (hi - lo); sm[k] = sm[lo] + f * (sm[hi] - sm[lo]); src[k] = 'interp'; }
-    }
-    var first = idx[0], last = idx[idx.length - 1];
-    for (k = 0; k < first; k++) { sm[k] = sm[first]; src[k] = 'hold'; }
-    for (k = last + 1; k < m; k++) {
-      if (sm[last] >= 0) { sm[k] = sm[last]; src[k] = 'hold'; }
-      else { var tf = (k - last) / 8; sm[k] = tf >= 1 ? 0 : sm[last] * (1 - tf); src[k] = tf >= 1 ? 'none' : 'taper'; }
-    }
-    var clamped = 0;
-    for (k = 0; k < m; k++) { var c = clamp(sm[k], -maxStep, maxStep); if (Math.abs(c - sm[k]) > 1e-12) clamped++; sm[k] = c; }
-
-    var after = table.map(function (v, k3) { return v * (1 + sm[k3]); });
-    var monoFixes = 0;
-    for (k = 1; k < m; k++) if (!(after[k] > after[k - 1])) { after[k] = after[k - 1] * 1.002; monoFixes++; }
-    after = after.map(roundTable);
-
-    var pct = after.map(function (v, k4) { return (v / table[k4] - 1) * 100; });
-    var changed = pct.filter(function (p) { return Math.abs(p) >= 0.05; }).length;
-    var bands = [];
-    for (var lo2 = 2000; lo2 < 10000; lo2 += 1000) {
-      var ks = [];
-      for (k = 0; k < m; k++) if (axis[k] >= lo2 && axis[k] < lo2 + 1000 + (lo2 === 9000 ? 1 : 0)) ks.push(k);
-      if (!ks.length) continue;
-      var ps = ks.map(function (k5) { return pct[k5]; });
-      var srcs = {};
-      ks.forEach(function (k6) { srcs[src[k6]] = (srcs[src[k6]] || 0) + 1; });
-      var main = Object.keys(srcs).sort(function (x, y) { return srcs[y] - srcs[x]; })[0];
-      bands.push({ from: lo2, to: lo2 + 1000, minPct: Math.min.apply(null, ps), maxPct: Math.max.apply(null, ps), meanPct: mean(ps), source: main });
-    }
-    return {
-      ok: true, axis: axis, before: table, after: after, pct: pct, source: src, bands: bands,
-      stats: {
-        changed: changed, maxUp: Math.max.apply(null, pct), maxDown: Math.min.apply(null, pct),
-        clampedPoints: clamped, monotonicFixes: monoFixes,
-        logPoints: src.filter(function (s) { return s === 'log'; }).length,
-        wotPoints: src.filter(function (s) { return s === 'wot'; }).length
-      }
-    };
-  };
-
   /** Gain lever 1: WOT target from 11.0 to 11.5 AFR (11.3 above 5,500 rpm) in the full-load columns. */
   KTA.suggestWotLean = function (values) {
     values = values || REF.wot.values;
@@ -1515,28 +1421,6 @@
   // ---------------------------------------------------------------------------
   // Paste helpers (KTuner copies tables as tab-separated text)
   // ---------------------------------------------------------------------------
-  KTA.parseNumbers = function (text) {
-    var out = [];
-    String(text || '').split(/[\s,;]+/).forEach(function (tok) {
-      if (!tok) return;
-      var v = parseFloat(tok);
-      if (isNum(v)) out.push(v);
-    });
-    return out;
-  };
-  /** Accepts one row of 103 values, or two rows (Hz axis, then values). */
-  KTA.parseAfmPaste = function (text) {
-    var lines = String(text || '').split(/\r\n|\n|\r/).map(KTA.parseNumbers).filter(function (r) { return r.length; });
-    var m = REF.maf.hz.length;
-    if (lines.length >= 2 && lines[0].length === lines[1].length && lines[0][0] > 1000) {
-      return lines[1].length === m ? { ok: true, values: lines[1], axis: lines[0] } : { ok: false, reason: 'Expected ' + m + ' values per row, got ' + lines[1].length + '.' };
-    }
-    var flat = [];
-    lines.forEach(function (r) { flat = flat.concat(r); });
-    if (flat.length !== m) return { ok: false, reason: 'Expected ' + m + ' AFM Flow values, got ' + flat.length + '. Copy the whole row from KTuner.' };
-    for (var k = 1; k < m; k++) if (!(flat[k] > flat[k - 1])) return { ok: false, reason: 'Values must rise from left to right; check point ' + (k + 1) + '.' };
-    return { ok: true, values: flat };
-  };
   KTA.toRow = function (values, sep) { return values.map(function (v) { return String(roundTable(v)); }).join(sep || '\t'); };
 
   // ---------------------------------------------------------------------------
@@ -1571,7 +1455,6 @@
   def(['DI_Fuel_Pressure_Target_0pct', 'DI_Fuel_Pressure_Target_55pct'], { unit: 'kPa', role: 'check', group: 'fuel', digits: 0 });
   def(['WOT_Exhaust_VTC_Low_Cam'], { kind: 'curve', x: 'rpm', unit: '°', role: 'leave', group: 'air' });
   KTA.TABLES = TABLES;
-  KTA.ROLE_ORDER = ['edit', 'check', 'leave', 'never', 'preset', 'info'];
 
   /** One table from the digitized JSON, normalized: curves come back as one row. */
   KTA.readTable = function (name, raw) {
@@ -1583,14 +1466,6 @@
       values: curve ? raw.values[0].slice() : raw.values.map(function (r) { return r.slice(); })
     };
   };
-  /** The other half of an _L / _H pair, or ''. */
-  KTA.pairOf = function (name) {
-    var m = /^(.*)_(L|H)$/.exec(name);
-    if (!m) return '';
-    var other = m[1] + '_' + (m[2] === 'L' ? 'H' : 'L');
-    return TABLES[other] ? other : '';
-  };
-
   /**
    * One side of the two-sided map check (ticket 12, ADR 0003): is this proposed
    * change safe to type into KTuner on top of these tables? Pure engine, no DOM.
@@ -1748,7 +1623,7 @@
 
   /**
    * The basic-stage change for one table, cell by cell, or null for a table the
-   * basic stage leaves alone. opts: { maf: suggestMaf result, fin: Final Boost
+   * basic stage leaves alone. opts: { maf: { ok, after } AFM Flow correction, fin: Final Boost
    * Target (digitized shape), rpm: the boost table's rows }.
    * AFM Flow stays "pending" until a log gives a correction.
    */
@@ -1770,56 +1645,6 @@
       values.forEach(function (row, r) { row.forEach(function (v, c) { if (Math.abs(after[r][c] - v) > 1e-9) changed.push({ r: r, c: c, from: v, to: after[r][c] }); }); });
     }
     return { name: name, stage: meta.stage, before: values, after: after, changed: changed, pending: pending };
-  };
-
-  /**
-   * Does an edit keep the table's shape? Flags any cell the edit turns into a new
-   * spike or dip against its neighbours (by more than tol). Ramps are fine: the ECU
-   * interpolates between cells, so a difference between neighbours becomes a slope,
-   * not a jump. Shapes already in the stock table are not flagged, because Honda and
-   * KTuner put some of them there on purpose. Curves (AFM Flow) are judged on the
-   * percentage change, which must be smooth, and on rising at every point.
-   */
-  KTA.smoothness = function (before, after, opts) {
-    opts = opts || {};
-    var curve = !Array.isArray(after[0]);
-    var B, A, tol = isNum(opts.tol) ? opts.tol : 0, spikes = [], k;
-    if (curve) {
-      B = [before.map(function () { return 0; })];
-      A = [after.map(function (v, i) { return before[i] ? (v / before[i] - 1) * 100 : 0; })];
-      for (k = 1; k < after.length; k++) if (!(after[k] > after[k - 1])) spikes.push({ r: 0, c: k, value: after[k], by: round(after[k] - after[k - 1], 4), kind: 'fall' });
-    } else { B = before; A = after; }
-    var R = A.length, C = A[0].length, near = [], changed = 0, r, c;
-    for (r = 0; r < R; r++) near.push(new Uint8Array(C));
-    for (r = 0; r < R; r++) for (c = 0; c < C; c++) {
-      if (Math.abs((curve ? after[c] - before[c] : A[r][c] - B[r][c])) <= 1e-9) continue;
-      changed++;
-      for (var dr = -1; dr <= 1; dr++) for (var dc = -1; dc <= 1; dc++) {
-        var rr = r + dr, cc = c + dc;
-        if (rr >= 0 && rr < R && cc >= 0 && cc < C) near[rr][cc] = 1;
-      }
-    }
-    function excess(M, r, c) {
-      var n = [];
-      if (r > 0) n.push(M[r - 1][c]);
-      if (r < R - 1) n.push(M[r + 1][c]);
-      if (c > 0) n.push(M[r][c - 1]);
-      if (c < C - 1) n.push(M[r][c + 1]);
-      if (n.length < 2) return 0;
-      var hi = Math.max.apply(null, n), lo = Math.min.apply(null, n), v = M[r][c];
-      return v > hi ? v - hi : (v < lo ? v - lo : 0);
-    }
-    var stepB = 0, stepA = 0;
-    for (r = 0; r < R; r++) for (c = 0; c < C; c++) {
-      if (!near[r][c]) continue;
-      var eA = excess(A, r, c), eB = excess(B, r, c);
-      if (Math.abs(eA) > tol && Math.abs(eA) > Math.abs(eB) + 1e-9) spikes.push({ r: r, c: c, value: curve ? after[c] : A[r][c], by: round(eA, 3), kind: eA > 0 ? 'spike' : 'dip' });
-      if (!curve) {
-        if (r + 1 < R) { stepB = Math.max(stepB, Math.abs(B[r + 1][c] - B[r][c])); stepA = Math.max(stepA, Math.abs(A[r + 1][c] - A[r][c])); }
-        if (c + 1 < C) { stepB = Math.max(stepB, Math.abs(B[r][c + 1] - B[r][c])); stepA = Math.max(stepA, Math.abs(A[r][c + 1] - A[r][c])); }
-      }
-    }
-    return { ok: spikes.length === 0, changed: changed, spikes: spikes, stepBefore: round(stepB, 3), stepAfter: round(stepA, 3) };
   };
 
   /**
@@ -1860,251 +1685,6 @@
       raised: up.length,
       cut: all.filter(function (u) { return u.delta <= -th; }).length
     };
-  };
-
-  // ---------------------------------------------------------------------------
-  // Reference checks and the review packet
-  // ---------------------------------------------------------------------------
-  /**
-   * ctx: { maf: suggestMaf result | null, wotValues, boostValues, finalBoost,
-   *        lastAnalysis, hotLogDone, untouchedConfirmed }
-   */
-  KTA.referenceChecks = function (ctx) {
-    ctx = ctx || {};
-    var L = KTA.LIMITS, out = [];
-    function add(id, label, status, detail, data) { out.push({ id: id, label: label, status: status, detail: detail, data: data || {} }); }
-    var s = ctx.maf;
-    if (s && s.ok) {
-      var rising = s.after.every(function (v, k) { return k === 0 || v > s.after[k - 1]; });
-      add('afmRising', 'AFM Flow curve rises at every point', rising ? 'good' : 'stop', rising ? 'All ' + s.after.length + ' points rise.' : 'A point is not higher than the one before it.', { ok: rising, n: s.after.length });
-      var within = s.pct.every(function (p) { return Math.abs(p) <= L.mafStepMax * 100 + 0.05; });
-      add('afmStep', 'No AFM point moved more than ' + (L.mafStepMax * 100) + ' % this round', within ? 'good' : 'stop', 'Largest change ' + KTA.fmt.signed(s.stats.maxUp >= -s.stats.maxDown ? s.stats.maxUp : s.stats.maxDown, 1, ' %') + '.', { largest: s.stats.maxUp >= -s.stats.maxDown ? s.stats.maxUp : s.stats.maxDown, limit: L.mafStepMax * 100 });
-      var fromFactory = s.after.map(function (v, k) { return (v / REF.maf.factory[k] - 1) * 100; });
-      var drift = Math.max.apply(null, fromFactory.map(Math.abs));
-      add('afmDrift', 'Total change vs the factory curve', drift <= 25 ? 'good' : 'watch', 'Up to ' + KTA.fmt.num(drift, 1) + ' % from factory' + (drift > 25 ? '. Large for a housing that should match a preset: confirm the intake preset.' : '.'), { drift: drift });
-    } else add('afmRising', 'AFM Flow correction', 'nodata', 'No correction computed yet.', { none: true });
-
-    var wv = ctx.wotValues || REF.wot.values;
-    var cols = wv[0].length, bad = [];
-    wv.forEach(function (row, r) {
-      if (REF.wot.rpm[r] < 3000) return;
-      for (var c = cols - 3; c < cols; c++) if (row[c] < L.wotTargetAfr.min - 1e-9 || row[c] > L.wotTargetAfr.max + 1e-9) bad.push(REF.wot.rpm[r]);
-    });
-    add('wotBand', 'WOT targets inside 11.0-12.0 AFR (λ 0.75-0.82)', bad.length ? 'stop' : 'good', bad.length ? 'Outside the band at ' + bad.slice(0, 4).join(', ') + ' rpm.' : 'Full-load columns from 3,000 rpm are in the band.', { bad: bad.slice(0, 4) });
-
-    var bv = ctx.boostValues || REF.boost.normal;
-    // The ceiling is a rule (ADR 0007): each row under the Final Boost Target peak there, 24 at most.
-    var peak = Math.max.apply(null, bv.map(function (r) { return Math.max.apply(null, r); }));
-    var overRows = REF.boost.rpm.filter(function (rpm, r) {
-      return Math.max.apply(null, bv[r]) > KTA.boostCeilingAt(ctx.finalBoost, rpm, L.boostCeilingPsi) + 1e-9;
-    });
-    add('boostPeak', 'Boost targets at or under the Final Boost Target peak (24 psi at most)', overRows.length ? 'stop' : 'good',
-      'Peak ' + peak + ' psi' + (overRows.length ? '; over the ceiling at ' + overRows.slice(0, 4).join(', ') + ' rpm.' : ', under the ceiling on every row.'),
-      { peak: peak, overRows: overRows.slice(0, 4) });
-    // Adding boost below 3,000 rpm loads the CVT belt hardest; taking some out there is allowed.
-    var lowRaised = 0, lowCut = 0;
-    bv.forEach(function (row, r) {
-      if (REF.boost.rpm[r] >= 3000) return;
-      row.forEach(function (v, c) { var d = v - REF.boost.normal[r][c]; if (d > 1e-9) lowRaised++; else if (d < -1e-9) lowCut++; });
-    });
-    add('boostLow', 'No added boost below 3,000 rpm (CVT belt)', lowRaised ? 'stop' : 'good', lowRaised ? lowRaised + ' low-rpm cell(s) above the reference map.' : (lowCut ? lowCut + ' low-rpm cell(s) lowered, none raised.' : 'Same as the reference map.'), { changed: lowRaised > 0, raised: lowRaised, cut: lowCut });
-
-    var an = ctx.lastAnalysis;
-    if (an) {
-      var hasPull = an.events.length > 0;
-      add('evidence', 'Latest log passes the five gates', an.verdict === 'stop' ? 'stop' : (an.verdict === 'nodata' ? 'nodata' : an.verdict), an.verdictLabel + (hasPull ? '' : ' (no full-throttle pull in it)'), { verdict: an.verdict, hasPull: hasPull });
-    } else add('evidence', 'Latest log passes the five gates', 'nodata', 'Load a verification log in Step 5.', { none: true });
-    add('hotLog', 'Verified on a hot afternoon after traffic', ctx.hotLogDone ? 'good' : 'watch', ctx.hotLogDone ? 'Hot-day log checked.' : 'Still to do: Vietnam heat is the worst case.', { done: !!ctx.hotLogDone });
-    add('untouched', 'Ignition, knock sensitivity, DI pressure, cylinder fill, VTC untouched', ctx.untouchedConfirmed ? 'good' : 'watch', ctx.untouchedConfirmed ? 'Confirmed by the tuner.' : 'Tick it after comparing the maps in KTuner.', { done: !!ctx.untouchedConfirmed });
-    return out;
-  };
-
-  /** Markdown review packet for a second tuner (Zalo, Facebook group, email). */
-  KTA.reviewPacket = function (ctx) {
-    ctx = ctx || {};
-    var F = KTA.fmt, lines = [];
-    var mods = (ctx.mods || []).join(', ') || 'none listed';
-    lines.push('# Civic FE Tune Assist: review packet');
-    lines.push('');
-    lines.push('- Car: ' + KTA.CAR.name + ' (' + KTA.CAR.spec + ')');
-    lines.push('- Fuel: ' + (ctx.fuel || 'E10 RON95') + ' | Tool: ' + (ctx.tool || 'KTuner'));
-    lines.push('- Mods: ' + mods);
-    lines.push('- Stage: ' + (ctx.stage || 'A (fuel matches the mods)') + ' | Date: ' + (ctx.date || ''));
-    lines.push('');
-    lines.push('## Changes');
-    var s = ctx.maf;
-    if (s && s.ok) {
-      lines.push('- AFM Flow (Custom): ' + s.stats.changed + ' of ' + s.after.length + ' points changed, ' + F.signed(s.stats.maxDown, 1, '%') + ' to ' + F.signed(s.stats.maxUp, 1, '%') + '.');
-      s.bands.forEach(function (b) { if (Math.abs(b.meanPct) >= 0.05) lines.push('  - ' + F.num(b.from) + '-' + F.num(b.to) + ' Hz: ' + F.signed(b.minPct, 1, '%') + ' to ' + F.signed(b.maxPct, 1, '%') + ' (' + b.source + ')'); });
-    } else lines.push('- AFM Flow: unchanged');
-    lines.push('- WOT AFR targets: ' + (ctx.wotChanged ? ctx.wotChanged : 'unchanged'));
-    lines.push('- Boost targets: ' + (ctx.boostChanged ? ctx.boostChanged : 'unchanged'));
-    lines.push('');
-    var an = ctx.lastAnalysis;
-    lines.push('## Evidence' + (ctx.logName ? ' (' + ctx.logName + ')' : ''));
-    if (an) {
-      lines.push('- ' + F.num(an.meta.duration / 60, 1) + ' min, ' + an.events.length + ' full-throttle pull(s), ' + F.num(an.closedLoopSeconds / 60, 1) + ' min steady cruise');
-      lines.push('- Verdict: ' + an.verdictLabel);
-      lines.push('');
-      lines.push('| Gate | Status | Numbers |');
-      lines.push('|---|---|---|');
-      an.gates.forEach(function (g) {
-        lines.push('| ' + g.label + ' | ' + KTA.STATUS_LABEL[g.status] + ' | ' + g.checks.map(function (c) { return c.label + ': ' + c.display; }).join('; ') + ' |');
-      });
-    } else lines.push('- No verification log loaded.');
-    lines.push('');
-    lines.push('## Reference checks');
-    KTA.referenceChecks(ctx).forEach(function (c) {
-      lines.push('- [' + (c.status === 'good' ? 'x' : ' ') + '] ' + c.label + ': ' + c.detail);
-    });
-    lines.push('');
-    lines.push('## Reviewer');
-    lines.push('- Name: ' + (ctx.reviewer || '________') + ' | Uses: ' + (ctx.reviewerTool || 'KTuner / Hondata'));
-    lines.push('- Decision: ' + (ctx.decision || 'Approve / Changes needed'));
-    if (ctx.reviewNotes) lines.push('- Notes: ' + ctx.reviewNotes);
-    return lines.join('\n');
-  };
-
-  // ---------------------------------------------------------------------------
-  // Sample logs (simulated, deterministic) so every screen can be tried
-  // without a car. Clearly labelled as simulated wherever they are shown.
-  // ---------------------------------------------------------------------------
-  function mulberry32(a) {
-    return function () {
-      a |= 0; a = (a + 0x6D2B79F5) | 0;
-      var t = Math.imul(a ^ (a >>> 15), 1 | a);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-  function gaussFrom(rnd) {
-    return function (s) { var u = 1 - rnd(), v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v) * s; };
-  }
-  // How far the factory AFM curve under-reads with a larger intake housing (simulation only).
-  function intakeError(hz) { return interp1([2000, 3000, 4500, 6000, 8000, 10000], [0.035, 0.085, 0.095, 0.075, 0.06, 0.05], hz); }
-
-  KTA.SAMPLES = {
-    before: { title: 'Sample A: after mods, before calibration', note: 'Simulated. The new intake makes the factory AFM curve under-read airflow by 4-10 %.' },
-    after: { title: 'Sample B: after one AFM correction', note: 'Simulated. Same car after one correction round and a 0.5 psi spool-zone trim.' },
-    hot: { title: 'Sample C: hot afternoon, heat-soaked', note: 'Simulated. 36 °C ambient after 20 minutes of traffic.' }
-  };
-
-  /**
-   * Builds a simulated KTuner-style CSV. opts.ecuTable overrides the AFM table
-   * the simulated ECU uses (lets tests check that a correction converges).
-   */
-  KTA.sampleCsv = function (id, opts) {
-    opts = opts || {};
-    var sc = { before: { seed: 11, corrected: false, ovs: 2.1, hot: false }, after: { seed: 23, corrected: true, ovs: 1.1, hot: false }, hot: { seed: 37, corrected: true, ovs: 1.3, hot: true } }[id];
-    if (!sc) throw new Error('Unknown sample: ' + id);
-    var rnd = mulberry32(sc.seed), g = gaussFrom(rnd);
-    var hzAx = REF.maf.hz, fac = REF.maf.factory;
-    var trueTab = fac.map(function (v, k) { return v * (1 + intakeError(hzAx[k])); });
-    var ecuTab = opts.ecuTable || (sc.corrected
-      ? fac.map(function (v, k) { return v * (1 + intakeError(hzAx[k]) + 0.011 * Math.sin(hzAx[k] / 700)); })
-      : fac.slice());
-    var diRpm = REF.di.rpm, di = REF.di.values;
-    function diTarget(rpm, col) { var r = locate(diRpm, rpm); return di[Math.min(r.i + (r.f > 0.5 ? 1 : 0), di.length - 1)][col]; }
-    var segs = [['idle', 45], ['city', 170], ['highway', 100], ['decel', 7], ['wot', 7.5], ['cruise', 70], ['wot', 7.5], ['decel', 7], ['city', 60], ['idle', 25]];
-    var dt = 0.1, t = 0;
-    var amb = sc.hot ? 36 : 31;
-    var st = { ltft: 0, lam: 1, iat: amb + (sc.hot ? 20 : 9), ect: sc.hot ? 98 : 88, cvt: sc.hot ? 95 : 72, kc: sc.hot ? 0.52 : 0.46, boost: -8, kr: [0, 0, 0, 0], lamQ: [], tReach: -1, pull: 0 };
-    var head = ['Time (s)', 'Engine Speed (rpm)', 'Vehicle Speed (km/h)', 'Throttle Position (%)', 'MAP (kPa)', 'Boost (psi)', 'Boost Target (psi)',
-      'MAF (Hz)', 'MAF (g/s)', 'AFR', 'AFR Command', 'STFT (%)', 'LTFT (%)', 'Ignition Timing (deg)',
-      'Knock Retard Cyl1 (deg)', 'Knock Retard Cyl2 (deg)', 'Knock Retard Cyl3 (deg)', 'Knock Retard Cyl4 (deg)', 'Knock Control',
-      'IAT (C)', 'ECT (C)', 'CVT Temp (C)', 'Fuel Pressure (kPa)', 'Fuel Pressure Target (kPa)'];
-    var out = [head.join(',')];
-    segs.forEach(function (seg) {
-      var kind = seg[0], dur = seg[1], steps = Math.round(dur / dt);
-      if (kind === 'wot') { st.pull++; st.tReach = -1; }
-      for (var s = 0; s < steps; s++) {
-        var u = s * dt, rpm, tps, vss, mapK, target;
-        if (kind === 'idle') { rpm = 720 + g(10); tps = 0; vss = 0; mapK = 33 + g(0.5); }
-        else if (kind === 'city') {
-          rpm = 1650 + 420 * Math.sin(u / 3.7) + 260 * Math.sin(u / 1.9 + 1) + g(12);
-          tps = clamp(14 + 7 * Math.sin(u / 3.1) + 5 * Math.sin(u / 1.3 + 0.5) + g(0.3), 3, 32);
-          vss = clamp(rpm * 0.024, 5, 70); mapK = 30 + tps * 1.9 + g(0.7);
-        } else if (kind === 'highway' || kind === 'cruise') {
-          var base = kind === 'highway' ? 2350 : 2100;
-          rpm = base + 170 * Math.sin(u / 9) + 90 * Math.sin(u / 2.3) + g(9);
-          tps = clamp((kind === 'highway' ? 20 : 16) + 5 * Math.sin(u / 6) + 3 * Math.sin(u / 1.7) + g(0.25), 8, 34);
-          vss = rpm * 0.033; mapK = 36 + tps * 1.75 + g(0.7);
-        } else if (kind === 'decel') { rpm = 2600 - 1300 * (u / dur); tps = 0; vss = rpm * 0.03; mapK = 22 + g(0.4); }
-        else {
-          var x = u / dur;
-          rpm = 2400 + 3800 * Math.pow(x, 1.15) + g(6);
-          tps = u < 0.25 ? 20 + (u / 0.25) * 80 : 100;
-          vss = rpm * 0.0175;
-          target = refBoostAt(rpm) - (rpm >= 2500 && rpm <= 3250 && sc.corrected ? 0.5 : 0);
-          var spool = interp1([2000, 2400, 2800, 3200, 3600, 5500, 6200, 6600], [6, 12, 18.5, 22.5, 23.5, 23.5, 22.2, 21.4], rpm);
-          st.boost += (Math.min(target, spool) - st.boost) * Math.min(1, dt / 0.3);
-          if (st.tReach < 0 && st.boost >= target - 0.3) st.tReach = u;
-          var spike = st.tReach >= 0 ? sc.ovs * Math.exp(-(u - st.tReach) / 0.45) : 0;
-          mapK = 101.3 + (st.boost + spike) * 6.895 + g(0.6);
-        }
-        if (kind !== 'wot') { st.boost = (mapK - 101.3) / 6.895; target = st.boost + 0.3 + g(0.1); }
-        var boost = (mapK - 101.3) / 6.895;
-        var isWot = kind === 'wot' && tps > 60;
-
-        // airflow: what the engine really breathes, what the sensor reports, what the ECU believes
-        var air = 0.01132 * rpm * (mapK / 101.3) * (0.93 + 0.05 * Math.sin(rpm / 1400));
-        var hz = clamp(invert(hzAx, trueTab, air) + g(6), hzAx[0], hzAx[hzAx.length - 1]);
-        var ecuAir = interp1(hzAx, ecuTab, hz);
-        var ratio = air / ecuAir;
-
-        var fpCol = isWot ? 9 : (kind === 'idle' ? 3 : 5);
-        var fpT = diTarget(rpm, fpCol);
-        var fpR = isWot ? (sc.hot ? 0.97 - 0.12 * clamp((rpm - 4200) / 1800, 0, 1) : 0.978) + g(0.004) : 0.99 + g(0.004);
-
-        var lamCmd = 1, stft = 0, lamTarget = 1;
-        if (isWot) {
-          lamCmd = (u < 0.55 ? 11.5 : 11.0) / GAS;
-          lamTarget = lamCmd * ratio / Math.sqrt(fpR);
-        } else if (kind === 'decel') { lamTarget = 2.4; }
-        else {
-          var need = (ratio - 1) * 100;
-          st.ltft += (need - st.ltft) * dt / 45;
-          var trans = (kind === 'city' && Math.abs(Math.sin(u / 1.3)) > 0.97) ? g(2.5) : 0;
-          stft = ((1 + need / 100) / (1 + st.ltft / 100) - 1) * 100 + g(1.1) + trans;
-          lamTarget = 1 + g(0.006);
-        }
-        st.lamQ.push(lamTarget);
-        var delayed = st.lamQ.length > 2 ? st.lamQ[st.lamQ.length - 3] : lamTarget;
-        st.lam += (delayed - st.lam) * Math.min(1, dt / 0.15);
-
-        // knock
-        for (var c = 0; c < 4; c++) st.kr[c] = Math.max(0, st.kr[c] - 1.0 * dt);
-        if (isWot) {
-          if (sc.hot && rpm > 3300 && rpm < 5000) {
-            var base2 = [2.4, 4.1, 3.6, 1.7];
-            for (c = 0; c < 4; c++) st.kr[c] = Math.max(st.kr[c], base2[c] + g(0.3));
-            st.kc = Math.min(0.82, st.kc + 0.004);
-          } else if (rnd() < 0.015) { st.kr[Math.floor(rnd() * 4)] = 0.6 + rnd() * 0.3; }
-        }
-        var krMax = Math.max.apply(null, st.kr);
-        var ign = isWot ? 3 + ((rpm - 2400) / 3800) * 9 - krMax + g(0.2) : (kind === 'decel' ? 5 : 31 - tps * 0.3 + g(0.4));
-
-        // heat
-        var iatGoal = amb + (kind === 'idle' ? 15 : (kind === 'city' ? 9 : 6)) + (sc.hot ? 18 : 0);
-        if (isWot) st.iat += 0.6 * dt; else st.iat += (iatGoal - st.iat) * dt / 40;
-        var ectGoal = (sc.hot ? 100 : 89) + (isWot ? 3 : 0) + 1.5 * Math.sin(t / 60);
-        st.ect += (ectGoal - st.ect) * dt / 25;
-        var cvtGoal = (sc.hot ? 101.5 : 86) + (isWot ? 4 : 0);
-        st.cvt += (cvtGoal - st.cvt) * dt / 90;
-
-        out.push([
-          t.toFixed(1), Math.round(rpm), Math.round(vss), tps.toFixed(1), mapK.toFixed(1), boost.toFixed(1), (isNum(target) ? target : boost).toFixed(1),
-          Math.round(hz), ecuAir.toFixed(2), (st.lam * GAS).toFixed(2), (lamCmd * GAS).toFixed(2), stft.toFixed(1), st.ltft.toFixed(1), ign.toFixed(1),
-          st.kr[0].toFixed(1), st.kr[1].toFixed(1), st.kr[2].toFixed(1), st.kr[3].toFixed(1),
-          // A real Knock Control channel steps in 0.01 moves even on a happy drive; a frozen
-          // value for minutes is a dead channel, and the quality gate reads it as one.
-          (st.kc + (Math.floor(t * 10) % 41 < 6 ? 0.01 : 0)).toFixed(2),
-          Math.round(st.iat), Math.round(st.ect), Math.round(st.cvt), Math.round(fpT * fpR), Math.round(fpT)
-        ].join(','));
-        t += dt;
-      }
-    });
-    return out.join('\n');
   };
 
   // ---------------------------------------------------------------------------

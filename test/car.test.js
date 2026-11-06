@@ -100,9 +100,6 @@ test('hiding a cool drive removes it from baseline and table; unhide restores bo
   s = K.carHide(s, '20260901-081358');
   assert.equal(K.carBaseline(s).n, 2);
   assert.ok(!K.carTableRows(s).some((r) => r.id === '20260901-081358'));
-  s = K.carUnhide(s, '20260901-081358');
-  assert.equal(K.carBaseline(s).n, 3);
-  assert.ok(K.carTableRows(s).some((r) => r.id === '20260901-081358'));
 });
 
 test('the same log and state always give the same result', () => {
@@ -281,24 +278,6 @@ test('the map on the card is the Map version active when the drive started', () 
   assert.equal(K.carReport(s, '20260823-203853').map.version, 2);
   assert.equal(K.carReport(s, '20260823-195901').map.version, 1);
   assert.equal(K.carReport(s, '20260823-195901').map.name, 'Starter 21 Dual Tune 2');
-});
-
-test('flash CRUD: edit fixes a typo, delete asks nothing here but removes once', () => {
-  let s = K.carEmpty();
-  const f = K.carRecordFlash(s, { time: 1000, map: 'Starter 21', changed: 'boost', note: '' }, { now: NOW });
-  s = f.state;
-  const id = f.flash.id;
-  s = K.carEditFlash(s, id, { map: 'Starter 21 rev2' });
-  // The Flash's Map version keeps step with it, so Undo never names a file the
-  // owner has just renamed.
-  assert.equal(K.carMapAt(s, 2000).name, 'Starter 21 rev2');
-  assert.equal(K.carMapAt(s, 2000).n, 2);
-  s = K.carDeleteFlash(s, id);
-  // Deleting the Flash takes its Map version with it; the car is back on
-  // Map version 1, the map it started on, with no gap in the numbering.
-  assert.equal(K.carMapAt(s, 2000).n, 1);
-  assert.equal(K.carMapAt(s, 2000).name, 'Starter 21 Dual Tune 2');
-  assert.deepEqual(K.carMapVersions(s).map((v) => v.n), [1]);
 });
 
 test('Aug 23 with a flash at 20:00: 20:38 is a shakedown drive that fails and names the flash', () => {
@@ -553,8 +532,7 @@ test('importing an older file into a newer state loses nothing; flash edits win'
   let cur = K.carEmpty();
   cur = ingest(cur, 'aug23-1959').state;
   cur = ingest(cur, 'aug23-2038').state;
-  cur = K.carRecordFlash(cur, { time: 1000, map: 'Starter 21', changed: 'afm', note: '' }, { now: NOW }).state;
-  cur = K.carEditFlash(cur, f.flash.id, { note: 'preset fixed' }, { now: NOW + 1000 });
+  cur = K.carRecordFlash(cur, { time: 1000, map: 'Starter 21', changed: 'afm', note: 'preset fixed' }, { now: NOW + 1000 }).state;
   const merged = K.carImport(cur, K.carExport(old));
   assert.equal(merged.error, undefined);
   assert.equal(K.carTableRows(merged.state).length, 2);
@@ -582,8 +560,6 @@ test('a hidden drive leaves the charts too; unhide restores it', () => {
   const hid = K.carChartSeries(s);
   assert.equal(hid.series[0].points.length, 2);
   assert.ok(hid.series.every((g) => g.points.every((p) => p.x !== '20260823-203853')));
-  s = K.carUnhide(s, '20260823-203853');
-  assert.equal(K.carChartSeries(s).series[0].points.length, 3);
 });
 
 test('shakedown carry-over survives a reload: banked minutes are not double-counted', () => {
@@ -1851,9 +1827,6 @@ test('the History file carries restores and merges them without a phantom Map ve
   assert.deepEqual(into.mapVersions.map((v) => v.n), [1, 2], 'the restore Flash is not a new version');
   assert.equal(K.carActiveMapVersion(into).n, 1);
   assert.equal(K.carImport(into, doc).state.mapRestores.length, 1, 'importing twice adds nothing');
-  // Deleting the Flash takes its restore with it.
-  const id = s.flashes[s.flashes.length - 1].id;
-  assert.equal(K.carDeleteFlash(s, id).mapRestores.length, 0);
 });
 
 // ---- The premium-fuel test (tuning-shop) ----

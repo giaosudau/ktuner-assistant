@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const zlib = require('zlib');
 const K = require('../engine/kta-drive.js');
 const T = require('../engine/text/i18n-map.js');
+const { sampleCsv } = require('./sample-csv.js');
 
 const IDS = ['aug30-1601', 'aug30-1529', 'sep01-0813', 'sep05-0756', 'aug30-1509', 'aug22-0950', 'aug22-0903', 'aug23-1959', 'aug23-2038'];
 IDS.forEach((id) => require('../data/example-' + id + '.js'));
@@ -126,11 +127,11 @@ test('the queue: safety first, then the biggest effect for the least work; the s
 });
 
 test('the queue: while anything says Stop, only safety work is open, worst first', () => {
-  const r = K.checkDrive(K.readLog(K.sampleCsv('hot')));
+  const r = K.checkDrive(K.readLog(sampleCsv('hot')));
   assert.equal(r.plan.now[0].id, 'fix:knock');
   assert.ok(r.plan.next.every((a) => a.tier === 'safety'));
   assert.ok(r.plan.later.filter((a) => !a.gain).every((a) => a.blockedBy.includes('safety')));
-  const healthy = K.checkDrive(K.readLog(K.sampleCsv('after')));
+  const healthy = K.checkDrive(K.readLog(sampleCsv('after')));
   assert.ok(healthy.plan.next.some((a) => a.id === 'moreBoost'), 'gain levers open on a proven-healthy car');
 });
 
@@ -156,28 +157,12 @@ test('proof: a cooler or a highway drive cannot prove a heat or knock fix', () =
 });
 
 test('proof: a new Stop means undo a flash, or stop and fix for a habit', () => {
-  const before = K.checkDrive(K.readLog(K.sampleCsv('after')));
-  const after = K.checkDrive(K.readLog(K.sampleCsv('hot')));
+  const before = K.checkDrive(K.readLog(sampleCsv('after')));
+  const after = K.checkDrive(K.readLog(sampleCsv('hot')));
   const flash = K.proveAction('afm', before, after), habit = K.proveAction('revs', before, after);
   assert.ok(flash.newStops.length > 0);
   assert.equal(flash.verdict, 'undo');
   assert.equal(habit.verdict, 'stop');
-});
-
-test('proof: the stored snapshot proves exactly like the full report', () => {
-  const a = hot().report;
-  const snap = JSON.parse(JSON.stringify(K.proofSnapshot(a)));
-  assert.ok(JSON.stringify(snap).length < 4000, 'small enough for localStorage');
-  for (const id of K.ACTION_IDS) {
-    for (const b of [cool().report, pulls().report]) assert.equal(JSON.stringify(K.proveAction(id, snap, b)), JSON.stringify(K.proveAction(id, a, b)), id);
-  }
-});
-
-test('reference check: taking boost out below 3,000 rpm is allowed, adding it is not', () => {
-  const cut = K.REF.boost.normal.map((row, r) => row.map((v, c) => (K.REF.boost.rpm[r] >= 1250 && K.REF.boost.rpm[r] <= 2000 && c >= 10 ? v - 2 : v)));
-  assert.equal(K.referenceChecks({ boostValues: cut }).find((c) => c.id === 'boostLow').status, 'good');
-  const add = K.REF.boost.normal.map((row, r) => row.map((v) => (K.REF.boost.rpm[r] === 2000 ? v + 1 : v)));
-  assert.equal(K.referenceChecks({ boostValues: add }).find((c) => c.id === 'boostLow').status, 'stop');
 });
 
 test('graph view models: finite geometry on every example', () => {
@@ -665,7 +650,7 @@ const TABLE_WORDS = /\b(AFM[ _]Flow|WOT[ _]Enrich|Boost[ _]Target|MAF[ _]Scaling
 // samples, so a remedy can never be written that the fixtures never reach.
 const ALL_LOGS = () => ['aug30-1601', 'aug30-1529', 'sep01-0813', 'sep05-0756', 'aug22-0950', 'aug22-0903', 'aug23-1959', 'aug23-2038']
   .map((id) => K.readLog(csv(id)));
-const ALL_SAMPLES = () => ['hot', 'after'].map((name) => K.readLog(K.sampleCsv(name)));
+const ALL_SAMPLES = () => ['hot', 'after'].map((name) => K.readLog(sampleCsv(name)));
 
 test('ticket 02: no check names a KTuner table, on any Drive the app can be given', () => {
   const logs = ALL_LOGS().concat(ALL_SAMPLES());

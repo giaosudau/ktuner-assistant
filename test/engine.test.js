@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const K = require('../engine/kta-engine.js');
+const { sampleCsv } = require('./sample-csv.js');
 
 const status = (an, gate, id) => an.gates.find((g) => g.id === gate).checks.find((c) => c.id === id).status;
 const gateStatus = (an, gate) => an.gates.find((g) => g.id === gate).status;
@@ -44,7 +45,7 @@ test('parseCSV: rejects files that are not logs', () => {
 });
 
 test('detectChannels: the sample export maps every channel the method needs', () => {
-  const p = K.parseCSV(K.sampleCsv('after'));
+  const p = K.parseCSV(sampleCsv('after'));
   const map = K.detectChannels(p.headers, p.columns);
   for (const key of ['time', 'rpm', 'mafHz', 'mafGs', 'stft', 'ltft', 'afr', 'afrCmd', 'tps', 'boost', 'boostTarget', 'iat', 'ect', 'cvt', 'fp', 'fpTarget', 'kControl', 'ign', 'map', 'vss']) {
     assert.ok(map[key] != null, `missing ${key}`);
@@ -115,7 +116,7 @@ test('buildLog: AFR on the gasoline scale becomes lambda', () => {
 });
 
 test('analyze: sample A (after mods, before calibration) is flagged and explained', () => {
-  const an = K.analyze(K.readLog(K.sampleCsv('before')));
+  const an = K.analyze(K.readLog(sampleCsv('before')));
   assert.equal(an.verdict, 'watch');
   assert.equal(an.events.length, 2);
   assert.ok(an.closedLoopSeconds > 300);
@@ -127,63 +128,19 @@ test('analyze: sample A (after mods, before calibration) is flagged and explaine
 });
 
 test('analyze: sample B (after the correction) passes every gate', () => {
-  const an = K.analyze(K.readLog(K.sampleCsv('after')));
+  const an = K.analyze(K.readLog(sampleCsv('after')));
   assert.equal(an.verdict, 'good');
   for (const g of an.gates) assert.ok(g.status === 'good' || g.status === 'nodata', `${g.id} is ${g.status}`);
 });
 
 test('analyze: sample C (hot, heat-soaked) stops on spark and CVT; heat caps at Watch', () => {
-  const an = K.analyze(K.readLog(K.sampleCsv('hot')));
+  const an = K.analyze(K.readLog(sampleCsv('hot')));
   assert.equal(an.verdict, 'stop');
   assert.equal(gateStatus(an, 'spark'), 'stop');
   assert.equal(status(an, 'heat', 'iat'), 'watch', 'intake heat alone never stops');
   assert.equal(status(an, 'cvt', 'cvtTemp'), 'stop');
   assert.equal(status(an, 'fuel', 'fuelPress'), 'watch');
   assert.ok(an.readiness.some((r) => /Fuel pressure fell/.test(r)));
-});
-
-test('method converges: one correction round fixes trims and full-throttle mixture', () => {
-  const before = K.analyze(K.readLog(K.sampleCsv('before')));
-  const sug = K.suggestMaf(before, K.REF.maf.custom);
-  assert.ok(sug.ok);
-  assert.ok(sug.stats.maxUp <= 10.0001, 'respects the 10 % step limit');
-  for (let i = 1; i < sug.after.length; i++) assert.ok(sug.after[i] > sug.after[i - 1], 'curve rises');
-  const again = K.analyze(K.readLog(K.sampleCsv('before', { ecuTable: sug.after })));
-  assert.ok(Math.abs(again.numbers.trimWorst) < 3, `trims after correction ${again.numbers.trimWorst}`);
-  assert.equal(status(again, 'fuel', 'trims'), 'good');
-  assert.equal(status(again, 'fuel', 'wotAfr'), 'good');
-});
-
-test('suggestMaf: never leans the full-throttle end from cruise data', () => {
-  const an = K.analyze(K.readLog(K.sampleCsv('after')));
-  const cl = an.maf.cl.map((b) => ({ ...b, mean: b.weight >= 8 ? -6 : NaN }));
-  const fake = { maf: { axis: an.maf.axis, cl, wot: null } };
-  const sug = K.suggestMaf(fake, K.REF.maf.custom);
-  const lastLog = sug.source.lastIndexOf('log');
-  assert.ok(lastLog > 0);
-  assert.ok(sug.pct[lastLog] < -5);
-  assert.ok(Math.abs(sug.pct[102]) < 0.01, 'tapers back to zero at the top');
-  assert.ok(sug.source.slice(lastLog + 1).every((s) => s === 'taper' || s === 'none'));
-});
-
-test('suggestMaf: holds a richening correction above the data and clamps big steps', () => {
-  const axis = K.REF.maf.hz;
-  const cl = axis.map((hz, k) => ({ hz, weight: k >= 10 && k <= 30 ? 20 : 0, mean: k >= 10 && k <= 30 ? 25 : NaN }));
-  const sug = K.suggestMaf({ maf: { axis, cl, wot: null } }, K.REF.maf.custom);
-  assert.ok(Math.abs(sug.stats.maxUp - 10) < 0.05, 'clamped to +10 %');
-  assert.ok(sug.pct[80] > 9.9, 'held above the data');
-  assert.equal(sug.source[80], 'hold');
-});
-
-test('parseAfmPaste: one row, two rows, and helpful errors', () => {
-  const row = K.REF.maf.custom.join('\t');
-  assert.deepEqual(K.parseAfmPaste(row).values, K.REF.maf.custom);
-  const two = K.parseAfmPaste(K.REF.maf.hz.join('\t') + '\n' + row);
-  assert.ok(two.ok);
-  assert.equal(two.axis.length, 103);
-  assert.match(K.parseAfmPaste('1 2 3').reason, /Expected 103/);
-  const broken = K.REF.maf.custom.slice(); broken[50] = 1;
-  assert.match(K.parseAfmPaste(broken.join(' ')).reason, /must rise/);
 });
 
 test('gain lever 1: WOT lean-out touches only the full-load columns from 3,000 rpm', () => {
@@ -193,8 +150,6 @@ test('gain lever 1: WOT lean-out touches only the full-load columns from 3,000 r
     if (K.REF.wot.rpm[r] < 3000 || c < 7) assert.equal(v, was);
     else assert.equal(v, K.REF.wot.rpm[r] >= 5500 ? 11.3 : 11.5);
   }));
-  const refs = K.referenceChecks({ wotValues: s.values });
-  assert.equal(refs.find((c) => c.id === 'wotBand').status, 'good');
 });
 
 // ADR 0007: the Boost step is +1 psi on the 3,500-4,500 rpm rows, cells of 15 psi
@@ -214,25 +169,12 @@ test('Boost step: rows 3,500-4,500, cells of 15 psi and up, capped by the Final 
   const same = K.suggestBoostStep(flat);
   assert.equal(same.atCeiling, true);
   assert.equal(same.mapPeak, 21);
-  const refs = K.referenceChecks({ boostValues: up.values, finalBoost: fin });
-  assert.equal(refs.find((c) => c.id === 'boostLow').status, 'good');
-  assert.equal(refs.find((c) => c.id === 'boostPeak').status, 'good');
-  const over = K.referenceChecks({ boostValues: up.values, finalBoost: flat });
-  assert.equal(over.find((c) => c.id === 'boostPeak').status, 'stop');
-});
-
-test('review packet carries changes, evidence, reference checks and sign-off', () => {
-  const an = K.analyze(K.readLog(K.sampleCsv('before')));
-  const maf = K.suggestMaf(an);
-  const md = K.reviewPacket({ maf, lastAnalysis: K.analyze(K.readLog(K.sampleCsv('after'))), mods: ['Intake', 'Downpipe'], reviewer: 'Anh T.', decision: 'Approve', date: '2026-09-28' });
-  for (const part of ['# Civic FE Tune Assist', '## Changes', '## Evidence', '| Gate | Status | Numbers |', '## Reference checks', '## Reviewer', 'Anh T.', 'Approve']) assert.ok(md.includes(part), part);
 });
 
 test('view models produce finite geometry', () => {
-  const log = K.readLog(K.sampleCsv('before'));
+  const log = K.readLog(sampleCsv('before'));
   const an = K.analyze(log);
-  const sug = K.suggestMaf(an);
-  const charts = [K.view.trimChart(an, sug), K.view.wotChart(an), K.view.pullChart(log, an, 0), K.view.afmCurves()];
+  const charts = [K.view.trimChart(an), K.view.wotChart(an), K.view.pullChart(log, an, 0), K.view.afmCurves()];
   for (const c of charts) {
     const s = JSON.stringify(c);
     assert.ok(!/NaN|Infinity|null,"y"/.test(s), s.slice(0, 200));
@@ -259,8 +201,6 @@ test('map catalog: every digitized table has a role, and only three kinds are ed
   assert.deepEqual(new Set(edited.map((n) => K.TABLES[n].stage)), new Set(['A', 'B1', 'B2']));
   assert.ok(edited.every((n) => /^(MAF_Scaling_Custom|WOT_Enrich_[LH]|Boost_Target_[123]_Normal_[LH])$/.test(n)));
   for (const n of names.filter((x) => /^Knock_Sens/.test(x))) assert.equal(K.TABLES[n].role, 'never');
-  assert.equal(K.pairOf('WOT_Enrich_L'), 'WOT_Enrich_H');
-  assert.equal(K.pairOf('Boost_By_Gear_Limits'), '');
   const maf = table('MAF_Scaling_Custom');
   assert.ok(maf.curve);
   assert.equal(maf.values.length, 103);
@@ -272,7 +212,6 @@ test('edit plan: lever 1 and the Boost step name the exact cells, and keep the s
     assert.equal(e.changed.length, 27, n);                     // 9 rows from 3,000 rpm x 3 full-load columns
     assert.ok(e.changed.every((x) => t.x[x.r] >= 3000 && x.c >= 7));
     assert.ok(e.changed.every((x) => x.to === (t.x[x.r] >= 5500 ? 11.3 : 11.5)));
-    assert.ok(K.smoothness(e.before, e.after, { tol: t.meta.tol }).ok, n);
   }
   // The Boost step goes on Tune 2 only; Tunes 1 and 3 take it only after its proof.
   const fin = MAP.Final_Boost_Target_H;
@@ -282,29 +221,9 @@ test('edit plan: lever 1 and the Boost step name the exact cells, and keep the s
   const e = K.tableEdits(b.name, b.values, { fin, rpm: b.x });
   assert.ok(e.changed.length > 0);
   assert.ok(e.changed.every((x) => [3500, 4000, 4500].includes(b.x[x.r]) && x.from >= 15 && x.to === x.from + 1 && x.to <= 23.4));
-  assert.ok(K.smoothness(e.before, e.after, { tol: 1 }).ok);
   assert.equal(K.tableEdits('Ignition_Base_H', table('Ignition_Base_H').values, {}), null);
   const maf = table('MAF_Scaling_Custom');
   assert.equal(K.tableEdits(maf.name, maf.values, {}).pending, true);
-});
-
-test('smoothness: flags a new spike, ignores shapes already in the stock table', () => {
-  const t = table('WOT_Enrich_L');
-  const bad = t.values.map((r) => r.slice());
-  bad[13][8] = 12.6;                                            // one lean cell at 4,000 rpm
-  const s = K.smoothness(t.values, bad, { tol: 0.2 });
-  assert.equal(s.ok, false);
-  assert.equal(s.spikes[0].kind, 'spike');
-  assert.equal(s.spikes[0].r, 13);
-  const ign = table('Ignition_Base_H');
-  assert.ok(K.smoothness(ign.values, ign.values.map((r) => r.slice()), { tol: 2 }).ok);
-  // AFM Flow: a smooth correction passes, a single-point bump and a fall do not
-  const m = table('MAF_Scaling_Custom').values;
-  assert.ok(K.smoothness(m, m.map((v) => v * 1.04), { tol: 1.5 }).ok);
-  const bump = m.slice(); bump[40] *= 1.06;
-  assert.equal(K.smoothness(m, bump, { tol: 1.5 }).ok, false);
-  const fall = m.slice(); fall[50] = fall[49];
-  assert.ok(K.smoothness(m, fall, { tol: 1.5 }).spikes.some((x) => x.kind === 'fall'));
 });
 
 test('blind smoothing would add timing to the stock ignition map', () => {
@@ -336,10 +255,10 @@ test('3-D surface and line views produce finite geometry, rotated any way', () =
 });
 
 test('knock control: RON95-level is fine, a high held level is a Watch with no hard driving', () => {
-  const base = K.readLog(K.sampleCsv('after'));
+  const base = K.readLog(sampleCsv('after'));
   const an = K.analyze(base, {});
   assert.equal(status(an, 'spark', 'kControl'), 'good');
-  const lines = K.sampleCsv('after').split('\n');
+  const lines = sampleCsv('after').split('\n');
   const col = lines[0].split(',').indexOf('Knock Control');
   // A real Knock Control channel steps in 0.01 moves; a frozen value is a dead
   // channel (issue 01), so the synthetic high level wobbles like the real one.
@@ -377,13 +296,13 @@ test('airflow correction: rows at 8 psi and up, or with STFT frozen at 0, are dr
 test('no torque line: the CVT is judged on slip, Watch-only', () => {
   const slipOf = (an) => an.gates.flatMap((g) => g.checks).find((c) => c.id === 'slip');
   for (const id of ['before', 'after', 'hot']) {
-    const an = K.analyze(K.readLog(K.sampleCsv(id)));
+    const an = K.analyze(K.readLog(sampleCsv(id)));
     assert.equal(an.gates.flatMap((g) => g.checks).find((c) => c.id === 'torque'), undefined, id + ' carries no torque line');
     assert.ok(slipOf(an), id + ' carries a slip line');
     assert.ok(['good', 'watch'].includes(slipOf(an).status), id + ' slip is ' + slipOf(an).status);
   }
   // Revs jumping 300 rpm with no speed under boost is a Watch, never a Stop.
-  const log = K.readLog(K.sampleCsv('after'));
+  const log = K.readLog(sampleCsv('after'));
   let at = -1;
   for (let i = 0; i < log.n; i++) if (log.load[i] >= 10 && log.vss[i] > 40) { at = i; break; }
   assert.ok(at > 0);
@@ -393,7 +312,7 @@ test('no torque line: the CVT is judged on slip, Watch-only', () => {
   assert.equal(slipOf(slipped).status, 'watch');
   assert.ok(!slipped.gates.some((g) => g.checks.some((c) => c.id === 'slip' && c.status === 'stop')));
   // Without speed the line is honest about what it cannot judge.
-  const noVss = K.readLog(K.sampleCsv('after'));
+  const noVss = K.readLog(sampleCsv('after'));
   noVss.vss = null; noVss.has.vss = false;
   assert.equal(slipOf(K.analyze(noVss, {})).status, 'nodata');
 });

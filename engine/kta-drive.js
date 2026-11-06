@@ -521,16 +521,14 @@
 
   // ---------------------------------------------------------------------------
   // The action catalog. Order of work: safety, then value for effort.
-  // Text for each id lives in the app (EN / VI); the engine owns the rules.
+  // Text for each id lives in the app (English); the engine owns the rules.
   //   impact 1-3 (3 = the car feels or is protected most), effort 1-3 (1 = minutes,
   //   no tools; 3 = a flash and logs), risk 0-2, flash: needs a reflash.
   // ---------------------------------------------------------------------------
   var TIERS = { safety: 0, drive: 1, data: 2, hardware: 3, tune: 4, gain: 5 };
-  KTA.TIERS = TIERS;
   // When several checks say Stop, fix the one that can break the engine first: knock and a lean
   // mixture, then what feeds them (fuel pressure, boost, heat), then the drivetrain.
   var SAFETY_ORDER = ['knock', 'wotAfr', 'fuelPress', 'kControl', 'overshoot', 'iat', 'ect', 'undershoot', 'mafHz', 'cvtTemp', 'lowBoost', 'trims'];
-  KTA.SAFETY_ORDER = SAFETY_ORDER;
 
   function gateCheck(an, id) {
     var out = null;
@@ -860,36 +858,6 @@
       default: out.verdict = 'inconclusive';
     }
     return out;
-  };
-
-  /**
-   * The part of a report that proveAction reads, small enough to keep in localStorage while the
-   * owner drives: the "before" of the action in progress survives a reload.
-   */
-  KTA.proofSnapshot = function (report) {
-    var I = report.ins, an = report.an;
-    function pick(o, keys) { if (!o) return null; var r = {}; keys.forEach(function (k) { r[k] = o[k]; }); return r; }
-    return {
-      v: 1,
-      an: { verdict: an.verdict, gates: an.gates.map(function (g) { return { id: g.id, status: g.status, checks: g.checks.map(function (c) { return { id: c.id, status: c.status }; }) }; }) },
-      ins: {
-        meta: pick(I.meta, ['duration', 'movingSeconds', 'townSeconds', 'source']),
-        heat: pick(I.heat, ['iatMoving', 'iatStill', 'iatLoad', 'cvtMax', 'cvtMed', 'hot', 'cool']),
-        hotRestart: I.hotRestart ? { isRestart: I.hotRestart.isRestart, advice: I.hotRestart.advice, gapMin: I.hotRestart.gapMin, startIAT: I.hotRestart.startIAT, firstPull: I.hotRestart.firstPull ? { t0: I.hotRestart.firstPull.t0, iat0: I.hotRestart.firstPull.iat0 } : null } : null,
-        lug: pick(I.lug, ['seconds', 'share', 'ign', 'ignRef']),
-        kc: I.kc ? {
-          start: I.kc.start, end: I.kc.end, peak: I.kc.peak, rise: I.kc.rise,
-          judgedPeak: I.kc.judgedPeak, judgedRise: I.kc.judgedRise,
-          lugRises: I.kc.lugRises, countedLugRises: I.kc.countedLugRises,
-          countedRises: I.kc.countedRises, excludedRises: I.kc.excludedRises
-        } : null,
-        boost: pick(I.boost, ['hard', 'pullIat', 'peakMap']),
-        mix: pick(I.mix, ['fullLoadAfr', 'cmd']),
-        trims: pick(I.trims, ['worst']),
-        accel: I.accel ? { headline: I.accel.headline } : null,
-        quality: { missing: I.quality.missing.slice() }
-      }
-    };
   };
 
   // ---------------------------------------------------------------------------
