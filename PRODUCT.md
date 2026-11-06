@@ -40,7 +40,8 @@ screen, collapsible, like Claude / ChatGPT / Cursor.
 
 - Phone or laptop browser; TunerView CSV exported after a drive; KTuner desktop/app open to type
   cells and flash.
-- One car, one owner, local-first (no login, SQLite). English replies; KTuner names spelled as
+- A local run is one car and one owner with no login; the hosted beta gives each invited owner their
+  own car and database (SQLite). English replies; KTuner names spelled as
   KTuner spells them; vocabulary from `CONTEXT.md`.
 
 ## Capabilities and Constraints

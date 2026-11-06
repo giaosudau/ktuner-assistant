@@ -165,6 +165,12 @@ CREATE TABLE IF NOT EXISTS thread_messages (
   created_at  INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS thread_messages_by_thread ON thread_messages(thread_id, created_at);
+
+-- Model calls this owner made per UTC day (the hosted beta's cap, `owners.py`).
+CREATE TABLE IF NOT EXISTS model_calls (
+  day    TEXT PRIMARY KEY,
+  calls  INTEGER NOT NULL
+);
 """
 
 
@@ -248,6 +254,17 @@ class Store:
     def _all(self, sql: str, args: tuple = ()) -> list[sqlite3.Row]:
         with self._conn() as c:
             return list(c.execute(sql, args).fetchall())
+
+    # -- the model cap ------------------------------------------------------
+    def count_model_call(self, day: str, limit: int) -> bool:
+        """Count one model call on `day`, if under `limit`. False: refused, and not counted."""
+        return bool(
+            self._all(
+                "INSERT INTO model_calls (day, calls) VALUES (?, 1) "
+                "ON CONFLICT(day) DO UPDATE SET calls = calls + 1 WHERE calls < ? RETURNING calls",
+                (day, limit),
+            )
+        )
 
     # -- the Car history: the engine's own state document --------------------
     def car_state(self, fallback: dict[str, Any] | None = None) -> dict[str, Any] | None:

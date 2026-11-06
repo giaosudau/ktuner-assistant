@@ -12,6 +12,9 @@ RUN npm run build
 FROM node:24-slim
 COPY --from=ghcr.io/astral-sh/uv:0.13.3 /uv /usr/local/bin/uv
 ENV UV_PYTHON=3.13 UV_PYTHON_INSTALL_DIR=/opt/python UV_LINK_MODE=copy
+COPY server/pyproject.toml server/uv.lock /repo/server/
+WORKDIR /repo/server
+RUN uv sync --frozen --no-dev
 COPY engine /repo/engine
 COPY data /repo/data
 COPY knowledge /repo/knowledge
@@ -19,12 +22,10 @@ COPY knowledge /repo/knowledge
 COPY docs/research /repo/docs/research
 COPY server/kta_server /repo/server/kta_server
 COPY server/kta_worker /repo/server/kta_worker
-COPY server/pyproject.toml server/uv.lock /repo/server/
-WORKDIR /repo/server
-RUN uv sync --frozen --no-dev
 COPY --from=web /repo/web/out /repo/web/out
 
 # shortcut: runs as root because Railway volumes break non-root images (set RAILWAY_RUN_UID=0 or run as root), move to a non-root user with a chown entrypoint when more than the beta runs here
 ENV KTA_DB=/data/ktuner.db KTA_WEB_DIR=/repo/web/out
 EXPOSE 8000
-CMD ["sh", "-c", "exec .venv/bin/uvicorn kta_server.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# --no-access-log: the access log would write every /join/<secret> to the logs.
+CMD ["sh", "-c", "exec .venv/bin/uvicorn kta_server.owners:app --no-access-log --host 0.0.0.0 --port ${PORT:-8000}"]

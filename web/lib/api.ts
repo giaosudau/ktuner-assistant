@@ -94,7 +94,10 @@ export async function uploadCsv(file: File, threadId: string, tags?: LogTags): P
     body.append("slot", String(tags.slot));
   }
   const response = await fetch(`${SERVER_URL}/upload`, { method: "POST", body });
-  if (!response.ok) throw new Error(`The upload did not go through (${response.status}).`);
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    throw new Error(payload?.detail ?? `The upload did not go through (${response.status}).`);
+  }
   return (await response.json()) as { uploadId: string };
 }
 

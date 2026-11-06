@@ -38,7 +38,7 @@ class Settings:
     now: int | None = None
     #: A built static chat (web/out) to serve at `/`. None: the API only, the chat runs on its own port.
     web_dir: Path | None = None
-    #: Browsers the chat may come from. Local-first, no cookies, no auth.
+    #: Browsers the chat may come from in local dev. No credentials cross origins.
     cors_origins: tuple[str, ...] = (
         "http://localhost:3000",
         "http://127.0.0.1:3000",

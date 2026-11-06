@@ -32,6 +32,7 @@ server/
     scorecard.py         the live model scorecard and clarity judge
     app.py               FastAPI: POST /upload, POST /agent (AG-UI), /api/state, /api/profile,
                          /api/ask, /api/flash, /api/history, /api/threads, GET /healthz
+    owners.py            the hosted beta: an invite gate in front of one `create_app` per owner
   tests/                 knowledge, verify and scorecard tests
   tests/seam1/           the seam-1 harness: post an upload, assert the reply events
                          (`test_ux_round*.py` pin each UX loop round's server changes)
@@ -55,10 +56,20 @@ answers `ok` once the Node worker is up.
 One container serves the chat and the API from one URL (the `Dockerfile` builds the static
 chat and FastAPI serves it, so there is no CORS). `railway.toml` points Railway at it.
 
-**Not safe on a public URL yet: every visitor shares one car, and there is no upload or model limit.**
+Each invited owner gets their own car, database and worker behind one invite gate
+(`kta_server/owners.py`, ADR 0009). `make run` stays one owner with no login.
 
-- Env vars: `KTA_DB=/data/ktuner.db` and `KTA_WEB_DIR=/repo/web/out` (set in the image). Add
-  `KTA_LLM_BASE_URL`, `KTA_LLM_API_KEY`, `KTA_LLM_MODEL` for a model; without them every reply is the built-in one.
+- Generate a secret per owner: `python3 -c "import secrets; print(secrets.token_urlsafe(32))"`.
+- Set `KTA_OWNERS=slug:secret,slug:secret` (slug: `a-z`, `0-9`, `-`, up to 32 characters). A missing
+  or bad list stops the container with a message saying what is wrong, so it never runs open.
+- The invite link is `https://<host>/join/<secret>`. Send it privately: it is the owner's identity.
+- Revoke an owner: remove their entry and redeploy. Their data stays until you delete it.
+- Delete an owner's data, after revoking them so nothing has it open: `rm -rf /data/owners/<slug>`.
+- Limits: 20 MB request body, 200 model calls per owner per UTC day (then the built-in reply), and an
+  owner's app stops after 15 minutes idle and starts again on their next request.
+- Env vars: `KTA_DB=/data/ktuner.db` (owners live beside it, in `/data/owners/`) and
+  `KTA_WEB_DIR=/repo/web/out` (set in the image). Add `KTA_LLM_BASE_URL`, `KTA_LLM_API_KEY`,
+  `KTA_LLM_MODEL` for a model; without them every reply is the built-in one.
 - Mount one volume at `/data`. Railway cannot declare volumes in `railway.toml`.
 - One replica only: SQLite lives on one disk, and Railway does not allow replicas with a volume.
 - Run the image locally:
@@ -66,8 +77,8 @@ chat and FastAPI serves it, so there is no CORS). `railway.toml` points Railway 
 ```bash
 docker build -t kta-beta .
 docker volume create kta-beta-data
-docker run --rm -p 8765:8000 -e KTA_LLM_API_KEY="" -v kta-beta-data:/data kta-beta
-# http://127.0.0.1:8765  (/healthz -> ok)
+docker run --rm -p 8765:8000 -e KTA_LLM_API_KEY="" -e KTA_OWNERS="me:<secret>" -v kta-beta-data:/data kta-beta
+# http://127.0.0.1:8765/join/<secret>  (/healthz -> ok)
 ```
 
 ## Test it

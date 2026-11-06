@@ -136,7 +136,7 @@ def create_app(
     # In local dev the chat runs on its own port (Next.js) and calls /upload and
     # /agent from the browser, so the two halves need CORS. When KTA_WEB_DIR
     # serves the chat from this server the origin is shared and CORS goes unused.
-    # Local-first: no auth, no cookies, only this owner's own machine.
+    # CORS never allows credentials: the hosted beta's gate (`owners.py`) holds the only cookie.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.cors_origins),

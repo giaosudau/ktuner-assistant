@@ -78,12 +78,51 @@ and against the image. Data survives `docker rm` with the same volume (1 Drive b
 54 knowledge cards load in the container. Image 668 MB (`docker images`, uncompressed). `docs/research`
 ships in the image because cards fail to load without the doc each one cites.
 
+### Step 3 done: one app instance per owner, behind one small gate (2026-11-06)
+
+`server/kta_server/owners.py` (ADR 0009): invite link `/join/<secret>` with the risk notice and a button
+(a GET never sets the cookie), one lazy `create_app` per owner with their own database, chat file and
+worker, a 15-minute idle stop, a 20 MB stated-size limit, 200 model calls per owner per UTC day in that
+owner's database. The container exits if `KTA_OWNERS` is missing or bad. `make run` is unchanged. No
+SQL changed apart from the `model_calls` table.
+
+**Proof:** browser e2e (12 of 12 steps) through the invite button, natively and against the image.
+Without the cookie `/`, `/api/state` and `/agent` answer 401. Ann's Drive survives a container restart
+on the same volume and Ben's car stays empty. No secret in the server output or container log. The
+image exits 1 with no `KTA_OWNERS`. Raw-socket path, method, cookie and content-length attacks all ended
+gated or refused. Pointing all owners at one db fails the crossing test; dropping the gate check fails
+the every-route test. Six start and stop cycles with a chat turn hold file handles, threads and Node
+children flat.
+
+**Found on the way:** `uploadCsv` never read the server's `detail`, so the 413 sentence could not reach
+the owner (fixed). `Transfer-Encoding: chunked` with a small `Content-Length` would make h11 ignore the
+length, so the gate refuses any chunked request. Login CSRF on `POST /join` (fixed with
+`Sec-Fetch-Site`). `Store` opens one connection per operation, so it needs no close method. The
+module-state grep in the brief uses `\w` and `\s`, which macOS ERE misses; the rescan found no
+per-owner state. `knowledge/proposed/` is shared, read only by the CLI, and not on the volume.
+
+**Not checked:** that Railway's edge forwards `Content-Length` (if it re-chunks, every POST gets 411, so
+try an upload first after deploying). Real memory per live owner.
+
+**Measure** (`measure.sh --tests`):
+
+```
+lines   engine=7654  server=11017  web=7882
+tests   js=3847  py=7251
+homes   engine_procs=2  stage_in_python=1  llm_callers=3  py_step_branches=58  py_tuning_consts=5  lim_fallbacks=5
+deps    py=9  web=4
+stack   runtimes=3  deploy_files=1  owner_columns=0
+debt    3 ponytail: markers
+dead    6 engine exports with no production caller: REF tableEdits smoothPreview STEP_KEYS carWords parseDriveStart
+speed   npm_test=21s  pytest=49s
+```
+
 **Next, in order:**
 
 1. Delete: items 2 and 3, `langchain-openai`, and `deploy_units` in `measure.sh` (done)
 2. One container, one URL: static export served by FastAPI, Railway service with a volume (done)
 3. Owners: invite link, one app instance per owner, upload limit, model cap, first-run notice,
-   and a test that one owner can't reach another's car
+   and a test that one owner can't reach another's car (done)
 4. Invite 5–10 owners. Track the proving Drive after a Flash, and what they asked
 5. Then the top 10 in the `review-r1.md` §7 order, with whatever owners hit first going ahead
    of it. Item 1 (Stage) and item 8 (contract check) are next by default

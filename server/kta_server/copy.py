@@ -1330,7 +1330,32 @@ def build_reply(
     }
 
 
+# The hosted beta's gate (`owners.py`): the first-run notice and its refusals.
+NOTICE_TITLE = "Before you start"
+NOTICE_PARAGRAPHS = (
+    "KTuner Assistant reads your datalogs and suggests map changes. It can be wrong, and it cannot see your engine.",
+    "You decide what to flash, and you flash it at your own risk. Keep a copy of your working map before any change. "
+    "If anything reads or feels wrong, stop and go back to that map.",
+    "This is a beta. Your logs and car details are stored on this server. Other owners cannot see them. "
+    "The person running the beta can read them, and will delete them if you ask.",
+)
+NOTICE_BUTTON = "I understand, open my car"
+GATE_TITLE = "KTuner Assistant"
+GATE_INVITE = "Open your invite link to reach your car."
+GATE_TOO_BIG = "That file is too big: the limit is {mb} MB, and a drive log is usually about 2 MB. Nothing was saved."
+GATE_NO_LENGTH = "That upload did not say how big it is. Try again from the chat."
+GATE_BAD_LENGTH = "That upload gave a size I can't read. Try again from the chat."
+
+
 __all__ = [
+    "GATE_BAD_LENGTH",
+    "GATE_INVITE",
+    "GATE_NO_LENGTH",
+    "GATE_TITLE",
+    "GATE_TOO_BIG",
+    "NOTICE_BUTTON",
+    "NOTICE_PARAGRAPHS",
+    "NOTICE_TITLE",
     "GAUGE_COLUMNS",
     "MAP_VERSION_WHAT_IT_IS",
     "STEP_STATUS_TONE",

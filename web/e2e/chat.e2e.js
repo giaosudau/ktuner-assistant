@@ -8,6 +8,8 @@
  *                           a fresh KTA_DB also runs the car-setup steps)
  *   KTA_CHAT=http://127.0.0.1:3000 KTA_SERVER=http://127.0.0.1:8000 npm run e2e
  *
+ * On the hosted beta (`kta_server.owners:app`) set KTA_INVITE=<secret>: the phone joins first.
+ *
  * The Drive is the owner's own log, read out of the engine's own fixture — the
  * browser never gets a synthetic one.
  */
@@ -21,6 +23,7 @@ const { chromium } = require('playwright');
 const CHAT = process.env.KTA_CHAT || 'http://127.0.0.1:3000';
 const SERVER = process.env.KTA_SERVER || 'http://127.0.0.1:8000';
 const EXAMPLE = process.env.KTA_EXAMPLE || 'sep01-0813';
+const INVITE = process.env.KTA_INVITE;
 const REPO = path.resolve(__dirname, '..', '..');
 
 /** The owner's real CSV, decompressed the way the engine's tests read it. */
@@ -43,7 +46,6 @@ async function run() {
     process.exitCode = 1;
     return;
   }
-  const fresh = !(await (await fetch(`${SERVER}/api/state`)).json()).carProfile;
 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kta-e2e-'));
   const csv = path.join(dir, ownerFileName(EXAMPLE));
@@ -67,6 +69,14 @@ async function run() {
 
   // A phone in a car park: 390 px, no sideways scrolling.
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+  if (INVITE) {
+    await page.goto(`${CHAT}/join/${INVITE}`);
+    await page.click('button');
+    await page.waitForURL(`${CHAT}/`);
+  }
+  // Calls outside the browser carry the cookie the button set.
+  const cookie = (await page.context().cookies()).map((c) => `${c.name}=${c.value}`).join('; ');
+  const fresh = !(await (await fetch(`${SERVER}/api/state`, { headers: cookie ? { cookie } : {} })).json()).carProfile;
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e && e.message)));
   const noOverflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
