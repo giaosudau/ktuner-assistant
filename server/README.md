@@ -22,6 +22,8 @@ server/
     chat.py · desk.py    the front agent and the front desk (greeting, where the car is)
     agent.py · verify.py the explainer with read-only engine tools, and the deterministic check
                          every model reply passes
+    llm.py               the one model client: the provider call, tool schemas, thinking and tool-call
+                         readers (chat.py and agent.py keep only their prompt, tools and loop)
     ask.py · window.py   a typed question answered over the drive window
     loopstate.py         the Car file, the stage and the one Next step the chat mirrors
     flash.py · mapcheck.py · flash_routes.py · readback.py

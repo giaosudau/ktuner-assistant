@@ -12,43 +12,43 @@
    "doc": 18,
    "family": 6,
    "mod": 5,
-   "module": 63,
+   "module": 64,
    "route": 20,
    "source": 18,
    "stage": 13,
    "table": 39,
    "term": 49,
-   "test": 45,
-   "threshold": 13,
+   "test": 46,
+   "threshold": 17,
    "trait": 5
   },
   "edges": {
    "about": 81,
    "affects": 11,
    "bounds": 59,
-   "calls": 65,
+   "calls": 66,
    "changes": 14,
    "checks": 1,
    "cites": 27,
-   "defines": 52,
+   "defines": 56,
    "explained-by": 21,
    "gated-by": 14,
    "implemented-by": 21,
-   "imports": 211,
+   "imports": 217,
    "in-family": 39,
    "loads": 4,
    "mentions": 345,
    "method": 56,
    "next": 17,
-   "reads": 60,
+   "reads": 61,
    "reads-channel": 39,
    "runs": 1,
    "serves": 20,
    "sourced-from": 100,
    "superseded-by": 7,
-   "tests": 72,
+   "tests": 74,
    "touches": 171,
-   "uses": 55,
+   "uses": 75,
    "uses-term": 697,
    "works-on": 5,
    "wraps": 1
@@ -1545,7 +1545,7 @@
    "label": "thresholds.json",
    "area": "data",
    "path": "data/thresholds.json",
-   "lines": 119
+   "lines": 147
   },
   {
    "id": "file:docs/research/afr-tuning-research.md",
@@ -1698,7 +1698,7 @@
    "area": "engine",
    "path": "engine/kta-car.js",
    "description": "KTA car module: one owner's Car history, Flashes, Shakedown drive,",
-   "lines": 2800
+   "lines": 2792
   },
   {
    "id": "file:engine/kta-drive.js",
@@ -1716,7 +1716,7 @@
    "area": "engine",
    "path": "engine/kta-engine.js",
    "description": "KTA engine 1.0: the tuning math behind Civic FE Tune Assist.",
-   "lines": 2007
+   "lines": 2013
   },
   {
    "id": "file:engine/kta-picture.js",
@@ -1778,7 +1778,7 @@
    "area": "server",
    "path": "server/kta_server/agent.py",
    "description": "The LLM agent: an explainer with read-only engine tools (ticket 08).",
-   "lines": 809
+   "lines": 722
   },
   {
    "id": "file:server/kta_server/app.py",
@@ -1805,7 +1805,7 @@
    "area": "server",
    "path": "server/kta_server/chat.py",
    "description": "The chat: one agent turn for every typed message (tuning-shop D17–D25, ADR 0005).",
-   "lines": 480
+   "lines": 460
   },
   {
    "id": "file:server/kta_server/config.py",
@@ -1823,7 +1823,7 @@
    "area": "server",
    "path": "server/kta_server/copy.py",
    "description": "The built-in reply: every word the owner reads until the model takes over.",
-   "lines": 1408
+   "lines": 1413
   },
   {
    "id": "file:server/kta_server/db.py",
@@ -1888,6 +1888,15 @@
    "path": "server/kta_server/knowledge.py",
    "description": "Knowledge cards (ticket 09): small typed cards the agent retrieves and cites.",
    "lines": 332
+  },
+  {
+   "id": "file:server/kta_server/llm.py",
+   "kind": "module",
+   "label": "llm.py",
+   "area": "server",
+   "path": "server/kta_server/llm.py",
+   "description": "The model client: the one place the provider is called (ADR 0005, AD-5).",
+   "lines": 112
   },
   {
    "id": "file:server/kta_server/loopstate.py",
@@ -1968,7 +1977,7 @@
    "area": "server",
    "path": "server/kta_server/scorecard.py",
    "description": "Eval layers 2 and 3: the model scorecard and the clarity judge (ticket 16).",
-   "lines": 834
+   "lines": 814
   },
   {
    "id": "file:server/kta_server/screenshot.py",
@@ -2022,7 +2031,7 @@
    "area": "worker",
    "path": "server/kta_worker/worker.js",
    "description": "!/usr/bin/env node",
-   "lines": 832
+   "lines": 836
   },
   {
    "id": "file:server/tests/conftest.py",
@@ -2040,7 +2049,7 @@
    "area": "tests",
    "path": "server/tests/seam1/conftest.py",
    "description": "Seam 1: the tuning loop at the server's front door (ADR 0004 §\"Where each seam's tests live\").",
-   "lines": 391
+   "lines": 398
   },
   {
    "id": "file:server/tests/seam1/replay.py",
@@ -2196,6 +2205,15 @@
    "lines": 291
   },
   {
+   "id": "file:server/tests/seam1/test_python_decides_no_number.py",
+   "kind": "test",
+   "label": "test_python_decides_no_number.py",
+   "area": "tests",
+   "path": "server/tests/seam1/test_python_decides_no_number.py",
+   "description": "AD-4: Python decides no number. Every tuning number has one row in data/thresholds.json (or the engine) and arrives in `limits`.",
+   "lines": 66
+  },
+  {
    "id": "file:server/tests/seam1/test_questions.py",
    "kind": "test",
    "label": "test_questions.py",
@@ -2211,7 +2229,7 @@
    "area": "tests",
    "path": "server/tests/seam1/test_reply_contract.py",
    "description": "The reply contract: real replies, committed as object literals `tsc` checks against the web's types.",
-   "lines": 125
+   "lines": 151
   },
   {
    "id": "file:server/tests/seam1/test_reply_words.py",
@@ -2220,7 +2238,7 @@
    "area": "tests",
    "path": "server/tests/seam1/test_reply_words.py",
    "description": "Seam 1: the words. What the owner reads is product work, so it is tested.",
-   "lines": 490
+   "lines": 473
   },
   {
    "id": "file:server/tests/seam1/test_scorecard_live.py",
@@ -2418,7 +2436,7 @@
    "area": "tests",
    "path": "test/thresholds.test.js",
    "description": "'use strict';",
-   "lines": 150
+   "lines": 158
   },
   {
    "id": "file:tools/annotate-xlsx.py",
@@ -4118,6 +4136,17 @@
    "source": "fact-check.md §4 (wastegate 2.5 % median at 15 psi and up: the turbo is near its limit, so boost moves in small steps)"
   },
   {
+   "id": "threshold:calibration_slot",
+   "kind": "threshold",
+   "label": "calibration_slot",
+   "area": "tuning",
+   "description": "The trial slot the Calibration drive's floored pulls run on.",
+   "value": "2",
+   "unit": "slot",
+   "basis": "judgement",
+   "source": "ADR 0007 and downpipe-power-research.md §8 (boost steps are written to Tune 2 alone, so the owner can switch back to Tune 1 at once); fact-check.md (Starter 21 Dual Tune 2)"
+  },
+  {
    "id": "threshold:ceiling_read",
    "kind": "threshold",
    "label": "ceiling_read",
@@ -4151,6 +4180,28 @@
    "source": "fact-check.md §2 (timing = table + limitation − retard; the remedy is never desensitize the knock sensors) and engine KTA.TABLES roles leave/never/check/preset/info"
   },
   {
+   "id": "threshold:fuel_test",
+   "kind": "threshold",
+   "label": "fuel_test",
+   "area": "tuning",
+   "description": "Two fuels whose timing pulled differs by no more than this read as no measurable difference.",
+   "value": "{\"same_deg\": 0.5}",
+   "unit": "deg",
+   "basis": "source",
+   "source": "ktuner-only-tuning.md §1 (KTuner logs Knock Retard rounded to 0.5°: never read meaning into a 0.5° change)"
+  },
+  {
+   "id": "threshold:log_brief",
+   "kind": "threshold",
+   "label": "log_brief",
+   "area": "tuning",
+   "description": "The Baseline drive's brief and its checkpoints: the fastest logging rate asked for, the moving time to keep, and the coolant temperature that counts as warm.",
+   "value": "{\"rate_hz\": 10, \"moving_s\": 600, \"warm_ect_c\": 80}",
+   "unit": "mixed (Hz, s, °C)",
+   "basis": "judgement",
+   "source": "drive-check-tuner-analysis.md §4 Gate 0 (rate at least 10 Hz and 10 minutes of moving time are the panel's own bar, with no outside source); afr-tuning-research.md §2 Step A (warm engine: ECT above about 80 °C, a civicx tip)"
+  },
+  {
    "id": "threshold:maf_curve_rising",
    "kind": "threshold",
    "label": "maf_curve_rising",
@@ -4182,6 +4233,17 @@
    "unit": "rule",
    "basis": "judgement",
    "source": "engine P4 (engine/kta-car.js carFlashPlan: one table family per Flash, the rest wait to be proven)"
+  },
+  {
+   "id": "threshold:readback",
+   "kind": "threshold",
+   "label": "readback",
+   "area": "tuning",
+   "description": "How the Flash readback places the logged Turbo Pressure Target against the cells that changed.",
+   "value": "{\"rpm_tol\": 30, \"match_psi\": 0.3, \"band_psi\": 1.5}",
+   "unit": "mixed (rpm, psi)",
+   "basis": "judgement",
+   "source": "app choice, no outside source: a sample counts for an axis row within rpm_tol of it; a logged Turbo Pressure Target within match_psi of the planned value reads as it; a reading within band_psi of a changed cell's old or new value is about that cell"
   },
   {
    "id": "threshold:wot_pairs",
@@ -6180,6 +6242,11 @@
   },
   {
    "from": "file:data/thresholds.json",
+   "to": "threshold:calibration_slot",
+   "kind": "defines"
+  },
+  {
+   "from": "file:data/thresholds.json",
    "to": "threshold:ceiling_read",
    "kind": "defines"
   },
@@ -6195,6 +6262,16 @@
   },
   {
    "from": "file:data/thresholds.json",
+   "to": "threshold:fuel_test",
+   "kind": "defines"
+  },
+  {
+   "from": "file:data/thresholds.json",
+   "to": "threshold:log_brief",
+   "kind": "defines"
+  },
+  {
+   "from": "file:data/thresholds.json",
    "to": "threshold:maf_curve_rising",
    "kind": "defines"
   },
@@ -6206,6 +6283,11 @@
   {
    "from": "file:data/thresholds.json",
    "to": "threshold:one_family_per_flash",
+   "kind": "defines"
+  },
+  {
+   "from": "file:data/thresholds.json",
+   "to": "threshold:readback",
    "kind": "defines"
   },
   {
@@ -7305,11 +7387,6 @@
   },
   {
    "from": "file:engine/kta-car.js",
-   "to": "adr:0004",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:engine/kta-car.js",
    "to": "adr:0007",
    "kind": "mentions"
   },
@@ -7765,12 +7842,32 @@
   },
   {
    "from": "file:engine/kta-engine.js",
+   "to": "threshold:calibration_slot",
+   "kind": "uses"
+  },
+  {
+   "from": "file:engine/kta-engine.js",
    "to": "threshold:editable_tables",
    "kind": "uses"
   },
   {
    "from": "file:engine/kta-engine.js",
+   "to": "threshold:fuel_test",
+   "kind": "uses"
+  },
+  {
+   "from": "file:engine/kta-engine.js",
+   "to": "threshold:log_brief",
+   "kind": "uses"
+  },
+  {
+   "from": "file:engine/kta-engine.js",
    "to": "threshold:maf_step_max_pct",
+   "kind": "uses"
+  },
+  {
+   "from": "file:engine/kta-engine.js",
+   "to": "threshold:readback",
    "kind": "uses"
   },
   {
@@ -7966,6 +8063,11 @@
   {
    "from": "file:server/kta_server/agent.py",
    "to": "file:server/kta_server/knowledge.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/kta_server/agent.py",
+   "to": "file:server/kta_server/llm.py",
    "kind": "imports"
   },
   {
@@ -8289,6 +8391,11 @@
    "kind": "uses-term"
   },
   {
+   "from": "file:server/kta_server/app.py",
+   "to": "threshold:readback",
+   "kind": "uses"
+  },
+  {
    "from": "file:server/kta_server/ask.py",
    "to": "card:kc-heat-soak",
    "kind": "mentions"
@@ -8351,7 +8458,7 @@
   {
    "from": "file:server/kta_server/chat.py",
    "to": "file:server/kta_server/agent.py",
-   "kind": "imports"
+   "kind": "mentions"
   },
   {
    "from": "file:server/kta_server/chat.py",
@@ -8371,6 +8478,11 @@
   {
    "from": "file:server/kta_server/chat.py",
    "to": "file:server/kta_server/knowledge.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/kta_server/chat.py",
+   "to": "file:server/kta_server/llm.py",
    "kind": "imports"
   },
   {
@@ -8440,11 +8552,6 @@
   },
   {
    "from": "file:server/kta_server/copy.py",
-   "to": "card:kc-calibration-drive",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:server/kta_server/copy.py",
    "to": "card:kc-cvt",
    "kind": "mentions"
   },
@@ -8490,16 +8597,6 @@
   },
   {
    "from": "file:server/kta_server/copy.py",
-   "to": "file:docs/research/drive-check-tuner-analysis.md",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:server/kta_server/copy.py",
-   "to": "file:docs/research/ktuner-only-tuning.md",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:server/kta_server/copy.py",
    "to": "file:server/kta_server/config.py",
    "kind": "imports"
   },
@@ -8527,6 +8624,11 @@
    "from": "file:server/kta_server/copy.py",
    "to": "file:server/kta_server/window.py",
    "kind": "mentions"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
+   "to": "file:server/kta_server/worker.py",
+   "kind": "imports"
   },
   {
    "from": "file:server/kta_server/copy.py",
@@ -8641,6 +8743,11 @@
   {
    "from": "file:server/kta_server/copy.py",
    "to": "threshold:ceiling_read",
+   "kind": "uses"
+  },
+  {
+   "from": "file:server/kta_server/copy.py",
+   "to": "threshold:readback",
    "kind": "uses"
   },
   {
@@ -8871,6 +8978,11 @@
   {
    "from": "file:server/kta_server/flash.py",
    "to": "threshold:ceiling_read",
+   "kind": "uses"
+  },
+  {
+   "from": "file:server/kta_server/flash.py",
+   "to": "threshold:readback",
    "kind": "uses"
   },
   {
@@ -9109,6 +9221,16 @@
    "kind": "uses"
   },
   {
+   "from": "file:server/kta_server/graph.py",
+   "to": "threshold:fuel_test",
+   "kind": "uses"
+  },
+  {
+   "from": "file:server/kta_server/graph.py",
+   "to": "threshold:readback",
+   "kind": "uses"
+  },
+  {
    "from": "file:server/kta_server/harness.py",
    "to": "adr:0004",
    "kind": "mentions"
@@ -9127,6 +9249,16 @@
    "from": "file:server/kta_server/knowledge.py",
    "to": "file:knowledge/index.json",
    "kind": "reads"
+  },
+  {
+   "from": "file:server/kta_server/llm.py",
+   "to": "adr:0005",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:server/kta_server/llm.py",
+   "to": "file:server/kta_server/verify.py",
+   "kind": "mentions"
   },
   {
    "from": "file:server/kta_server/loopstate.py",
@@ -9345,11 +9477,6 @@
   },
   {
    "from": "file:server/kta_server/owners.py",
-   "to": "file:server/kta_server/agent.py",
-   "kind": "imports"
-  },
-  {
-   "from": "file:server/kta_server/owners.py",
    "to": "file:server/kta_server/app.py",
    "kind": "imports"
   },
@@ -9366,6 +9493,11 @@
   {
    "from": "file:server/kta_server/owners.py",
    "to": "file:server/kta_server/db.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/kta_server/owners.py",
+   "to": "file:server/kta_server/llm.py",
    "kind": "imports"
   },
   {
@@ -9475,8 +9607,8 @@
   },
   {
    "from": "file:server/kta_server/readback.py",
-   "to": "file:data/thresholds.json",
-   "kind": "reads"
+   "to": "file:server/kta_server/copy.py",
+   "kind": "imports"
   },
   {
    "from": "file:server/kta_server/readback.py",
@@ -9497,6 +9629,11 @@
    "from": "file:server/kta_server/readback.py",
    "to": "term:Shakedown drive",
    "kind": "uses-term"
+  },
+  {
+   "from": "file:server/kta_server/readback.py",
+   "to": "threshold:readback",
+   "kind": "uses"
   },
   {
    "from": "file:server/kta_server/scorecard.py",
@@ -9521,6 +9658,11 @@
   {
    "from": "file:server/kta_server/scorecard.py",
    "to": "file:server/kta_server/knowledge.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/kta_server/scorecard.py",
+   "to": "file:server/kta_server/llm.py",
    "kind": "imports"
   },
   {
@@ -10041,6 +10183,11 @@
    "kind": "uses-term"
   },
   {
+   "from": "file:server/kta_worker/worker.js",
+   "to": "threshold:readback",
+   "kind": "uses"
+  },
+  {
    "from": "file:server/tests/seam1/conftest.py",
    "to": "adr:0004",
    "kind": "mentions"
@@ -10541,6 +10688,11 @@
    "kind": "uses-term"
   },
   {
+   "from": "file:server/tests/seam1/test_flash_readback.py",
+   "to": "threshold:readback",
+   "kind": "uses"
+  },
+  {
    "from": "file:server/tests/seam1/test_flash_step.py",
    "to": "adr:0007",
    "kind": "mentions"
@@ -11011,6 +11163,46 @@
    "kind": "uses-term"
   },
   {
+   "from": "file:server/tests/seam1/test_python_decides_no_number.py",
+   "to": "file:data/thresholds.json",
+   "kind": "reads"
+  },
+  {
+   "from": "file:server/tests/seam1/test_python_decides_no_number.py",
+   "to": "file:server/kta_server/copy.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/seam1/test_python_decides_no_number.py",
+   "to": "file:server/kta_server/readback.py",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:server/tests/seam1/test_python_decides_no_number.py",
+   "to": "file:server/kta_server/worker.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/seam1/test_python_decides_no_number.py",
+   "to": "file:server/tests/conftest.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_python_decides_no_number.py",
+   "to": "file:server/tests/seam1/conftest.py",
+   "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_python_decides_no_number.py",
+   "to": "route:/api/state",
+   "kind": "calls"
+  },
+  {
+   "from": "file:server/tests/seam1/test_python_decides_no_number.py",
+   "to": "threshold:readback",
+   "kind": "uses"
+  },
+  {
    "from": "file:server/tests/seam1/test_questions.py",
    "to": "file:server/tests/conftest.py",
    "kind": "imports"
@@ -11102,12 +11294,12 @@
   },
   {
    "from": "file:server/tests/seam1/test_reply_words.py",
-   "to": "file:docs/research/fact-check.md",
-   "kind": "mentions"
+   "to": "file:data/car-words.json",
+   "kind": "reads"
   },
   {
    "from": "file:server/tests/seam1/test_reply_words.py",
-   "to": "file:engine/kta-car.js",
+   "to": "file:docs/research/fact-check.md",
    "kind": "mentions"
   },
   {
@@ -11124,6 +11316,11 @@
    "from": "file:server/tests/seam1/test_reply_words.py",
    "to": "file:server/tests/seam1/conftest.py",
    "kind": "imports"
+  },
+  {
+   "from": "file:server/tests/seam1/test_reply_words.py",
+   "to": "file:test/car.test.js",
+   "kind": "mentions"
   },
   {
    "from": "file:server/tests/seam1/test_reply_words.py",
@@ -12507,6 +12704,11 @@
   },
   {
    "from": "file:test/thresholds.test.js",
+   "to": "threshold:calibration_slot",
+   "kind": "uses"
+  },
+  {
+   "from": "file:test/thresholds.test.js",
    "to": "threshold:editable_tables",
    "kind": "uses"
   },
@@ -12517,7 +12719,22 @@
   },
   {
    "from": "file:test/thresholds.test.js",
+   "to": "threshold:fuel_test",
+   "kind": "uses"
+  },
+  {
+   "from": "file:test/thresholds.test.js",
+   "to": "threshold:log_brief",
+   "kind": "uses"
+  },
+  {
+   "from": "file:test/thresholds.test.js",
    "to": "threshold:maf_step_max_pct",
+   "kind": "uses"
+  },
+  {
+   "from": "file:test/thresholds.test.js",
+   "to": "threshold:readback",
    "kind": "uses"
   },
   {
@@ -12963,6 +13180,11 @@
    "kind": "uses-term"
   },
   {
+   "from": "file:web/components/Cards.tsx",
+   "to": "threshold:readback",
+   "kind": "uses"
+  },
+  {
    "from": "file:web/components/Chart.tsx",
    "to": "file:web/components/Icons.tsx",
    "kind": "imports"
@@ -13031,6 +13253,11 @@
    "from": "file:web/components/KTunerCard.tsx",
    "to": "term:Next step",
    "kind": "uses-term"
+  },
+  {
+   "from": "file:web/components/KTunerCard.tsx",
+   "to": "threshold:readback",
+   "kind": "uses"
   },
   {
    "from": "file:web/components/Markdown.tsx",
@@ -13461,6 +13688,11 @@
    "from": "file:web/lib/types.ts",
    "to": "term:Too-short drive",
    "kind": "uses-term"
+  },
+  {
+   "from": "file:web/lib/types.ts",
+   "to": "threshold:readback",
+   "kind": "uses"
   },
   {
    "from": "file:web/lib/uiTools.ts",

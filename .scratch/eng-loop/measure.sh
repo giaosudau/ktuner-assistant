@@ -11,7 +11,7 @@ echo "tests   js=$(lines 'test/*.js')  py=$(lines 'server/tests/*.py' 'server/te
 
 echo "homes   engine_procs=$(( 1 + $(grep -c 'subprocess.run' server/kta_server/copy.py || true) ))" \
      " stage_in_python=$(grep -c '^def stage_of' server/kta_server/desk.py || true)" \
-     " llm_callers=$(grep -l 'chat/completions' server/kta_server/*.py | xargs grep -c 'chat/completions' | awk -F: '{s+=$2} END {print s}')" \
+     " llm_callers=$(cat server/kta_server/*.py | grep -c 'chat/completions')" \
      " py_step_branches=$(grep -E '(key|"key"\)) *(==|!=) *"(undo|logger|habit|channels|baseline|install|downpipe|tooShort|none)"|"key"\) (not )?in ' server/kta_server/*.py | wc -l | tr -d ' ')" \
      " py_tuning_consts=$(grep -cE '^[A-Z_]{3,} *(: *[a-z]+)? *= *[0-9]' server/kta_server/copy.py || true)" \
      " lim_fallbacks=$(grep -cE 'lim\([^)]*, *[0-9.]+\)' server/kta_server/copy.py || true)"

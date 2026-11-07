@@ -213,3 +213,43 @@ test's key list doesn't hold them.
 were read against `pictures.py` by hand.
 
 **Next:** the owner's step 4 above, then the rest of the top 10 in order.
+
+## Top 10, part 2 done (items 5 and 4)
+
+Measured with `.scratch/eng-loop/measure.sh --tests` after item 4 (before: server 11013 lines, `llm_callers=3`, pytest 474 pass):
+
+```
+lines   engine=7673  server=11008  web=8018
+tests   js=3892  py=7482
+homes   engine_procs=1  stage_in_python=0  llm_callers=1  py_step_branches=4  py_tuning_consts=0  lim_fallbacks=0
+deps    py=9  web=4
+stack   runtimes=3  deploy_files=1  owner_columns=0
+debt    3 ponytail: markers
+dead    4 engine exports with no production caller: REF tableEdits smoothPreview parseDriveStart
+speed   npm_test=22s  pytest=50s
+```
+
+`llm_callers` read 0 because the grep misread a one-file result; `measure.sh` now counts the line directly and reads 1.
+
+**Shipped:**
+
+- Item 5: `72005a7` pins all six Stages in `web/fixtures/replies.fixture.ts` and removes `KTA.carWords`. `9e21dbc` moves
+  the numbers `copy.py` held into `data/thresholds.json`, each with a source, and `lim()` raises on a missing path.
+- Item 4: `kta_server/llm.py` holds the provider call (`post_chat`), `caller_for`, `message_of`, `tool_calls_of`,
+  `extract_thinking`, `strip_thinking`, `wrap` and `tool`. `agent.py`, `chat.py`, `owners.py` and `scorecard.py` use it;
+  `_post_chat`, `_params`, `_fn` and the copied `_wrap` are gone. Model callers: 3 to 1. The scorecard's judge call (no tools) also goes
+  through `post_chat`, which leaves `tools` out of the body when the list is empty.
+- Also: a stopped engine no longer blames the owner's file (`copy.unreadable_line`): `unreadable-csv` and `engine-error` keep
+  the file sentence, every other worker code says the engine is down and the file is fine.
+
+**Tool loops: not unified.** `run_agent` and `chat_turn` share only five lines (call, read the message, thinking, append the
+assistant turn, read the tool calls), now all helpers. The rest is each loop's own verify, repair-once, `submit_reply`,
+handoff and result rules; a shared `tool_loop` would need a callback for each, which is more code than two short loops.
+`MAX_CALLS` stays 12 and 8.
+
+**Values with no outside source** (`basis: judgement` in `data/thresholds.json`, for the Tuner to check):
+
+- `log_brief`: 10 Hz, 600 s of moving time and ECT 80 C. The rate and moving time are "the panel's own bar, with no outside
+  source"; the 80 C warm engine is a civic-x tip.
+- `readback`: `rpm_tol` 30 rpm, `match_psi` 0.3, `band_psi` 1.5. "App choice, no outside source".
+- `calibration_slot`: 2 (Tune 2), from ADR 0007 and the downpipe research, not a measurement.
