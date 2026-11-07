@@ -229,9 +229,10 @@
     return n ? s / n : NaN;
   }
   function quantile(a, q, mask) {
-    var b = finite(a, mask);
-    if (!b.length) return NaN;
-    b.sort(function (x, y) { return x - y; });
+    var b = new Float64Array(a.length), n = 0; // typed sort is numeric and far faster; only ±0 order differs, and the blend below never shows it
+    for (var i = 0; i < a.length; i++) if ((!mask || mask[i]) && isNum(a[i])) b[n++] = a[i];
+    if (!n) return NaN;
+    b = b.subarray(0, n).sort();
     var pos = (b.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos);
     return b[lo] + (b[hi] - b[lo]) * (pos - lo);
   }
@@ -303,6 +304,11 @@
   // CSV parsing
   // ---------------------------------------------------------------------------
   function splitLine(line, delim) {
+    if (line.indexOf('"') < 0) { // no quotes: the plain split is the same answer, much faster
+      var parts = line.split(delim);
+      for (var p = 0; p < parts.length; p++) parts[p] = parts[p].trim();
+      return parts;
+    }
     var out = [], cur = '', q = false;
     for (var i = 0; i < line.length; i++) {
       var c = line.charAt(i);
@@ -337,6 +343,9 @@
     s = String(s).trim();
     if (!s) return NaN;
     if (decimalComma) s = s.replace(',', '.');
+    // Plain decimals: +s agrees with the regex below. Not taken for Infinity/NaN or "0x10"/"0b11"/"0o7" (letter second).
+    var v = +s;
+    if (v - v === 0 && (s.length < 2 || s.charCodeAt(1) < 58)) return v;
     var m = s.match(/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?/i);
     if (m) return parseFloat(m[0]);
     if (TEXT_TRUE.test(s)) return 1;
@@ -496,14 +505,23 @@
     wgPos: [-5, 105], wgTarget: [-5, 105], mafHz: [100, 12000], mafGs: [0, 600], torque: [-200, 800]
   };
 
+  // Upper median of each +-half window, ignoring non-finite values. The window stays sorted:
+  // each step adds one sample and drops one. Equal values keep index order, like a stable sort.
   function rollingMedian(a, half) {
     var n = a.length, out = new Float64Array(n), win = [];
+    function at(v, orEqual) {
+      var lo = 0, hi = win.length;
+      while (lo < hi) { var m = (lo + hi) >> 1; if (orEqual ? win[m] <= v : win[m] < v) lo = m + 1; else hi = m; }
+      return lo;
+    }
+    for (var j = 0; j <= Math.min(n - 1, half); j++) if (isNum(a[j])) win.splice(at(a[j], true), 0, a[j]);
     for (var i = 0; i < n; i++) {
-      win.length = 0;
-      for (var j = Math.max(0, i - half); j <= Math.min(n - 1, i + half); j++) if (isNum(a[j])) win.push(a[j]);
-      if (!win.length) { out[i] = NaN; continue; }
-      win.sort(function (x, y) { return x - y; });
-      out[i] = win[win.length >> 1];
+      if (i > 0) {
+        var add = i + half, drop = i - half - 1;
+        if (add < n && isNum(a[add])) win.splice(at(a[add], true), 0, a[add]);
+        if (drop >= 0 && isNum(a[drop])) win.splice(at(a[drop], false), 1);
+      }
+      out[i] = win.length ? win[win.length >> 1] : NaN;
     }
     return out;
   }

@@ -328,3 +328,23 @@ test('map tour copy: the Boost step on Tune 2, unlocked by the logs, no reviewer
   assert.match(copy, /24/);
   assert.match(T.tables.Boost_Target_Normal.edit, /Tune 2/);
 });
+
+test('parseCSV reads cells the same way as before the fast path: radix prefixes and words stay text', () => {
+  const cells = ['0x10', '0X1f', '0b11', '0o7', 'Infinity', '-Infinity', '+5', '-.5', '.5', '5.', '1e5', '1E-3',
+    '1e', '1e400', '12abc', 'abc', 'closed', 'open', '-0', '1 2'];
+  const read = (delim, list) => Array.from(K.parseCSV(['A', 'B', 'C'].join(delim) + '\n' +
+    [['1', '2', '3'], ...list.map((c) => ['1', c, '3'])].map((r) => r.join(delim)).join('\n')).columns[1]).slice(1);
+  const want = [0, 0, 0, 0, NaN, NaN, 5, -0.5, 0.5, 5, 100000, 0.001, 1, Infinity, 12, NaN, 1, 0, -0, 1];
+  const same = (got, exp) => assert.ok(got.length === exp.length && got.every((v, i) => Object.is(v, exp[i])), String(got));
+  same(read(',', cells), want);
+  same(read(';', [...cells, '1,5', '-2,5']), [...want, 1.5, -2.5]); // ; delimiter with 1,5: decimal comma
+});
+
+test('rollingMedian: upper median of the finite values in each window; NaN only when none', () => {
+  const rm = (a, h) => Array.from(K.util.rollingMedian(a, h));
+  assert.deepEqual(rm([3, NaN, 1, 2, NaN, NaN, 9], 1), [3, 3, 2, 2, 2, 9, 9]);
+  assert.deepEqual(rm([NaN, NaN], 2), [NaN, NaN]);
+  assert.deepEqual(rm([], 2), []);
+  assert.deepEqual(rm([7], 2), [7]);
+  assert.deepEqual(rm([1, 2, 3, 4], 100), [3, 3, 3, 3]);
+});
