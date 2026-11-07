@@ -652,21 +652,11 @@ test('the drive card carries the highest boost target measured, even unmapped', 
 // ---------------------------------------------------------------------------
 // 10 — Flash plan (engine: KTA.carFlashPlan, pure data for the Next Flash card)
 // ---------------------------------------------------------------------------
-const fs = require('fs');
-const DESK = '/Users/bean/Library/Mobile Documents/com~apple~CloudDocs/Desktop';
 let OWNER; // built once per file, each test gets its own copy
 const ownerState = () => structuredClone(OWNER = OWNER || buildOwnerState());
 function buildOwnerState() {
-  // The owner's folder when present (16 drives), else the bundled drives in time order.
+  // The bundled drives in time order.
   let s = K.carEmpty();
-  try {
-    const files = fs.readdirSync(DESK).filter((f) => /^TunerView_\d{8}_\d{6}\.csv$/.test(f)).sort();
-    if (files.length >= 10) {
-      const path = require('path');
-      for (const f of files) s = K.carIngest(s, K.readLog(fs.readFileSync(path.join(DESK, f), 'utf8')), { fileName: f, now: NOW }).state;
-      return { state: s, n: files.length };
-    }
-  } catch (e) { /* fall through to fixtures */ }
   for (const id of ['aug22-0903', 'aug22-0950', 'aug23-1959', 'aug23-2038', 'aug30-1529', 'aug30-1601', 'sep01-0813', 'sep05-0756']) {
     s = ingest(s, id).state;
   }

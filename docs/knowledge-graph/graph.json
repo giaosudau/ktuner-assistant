@@ -2382,7 +2382,7 @@
    "area": "tests",
    "path": "test/car.test.js",
    "description": "'use strict';",
-   "lines": 1976
+   "lines": 1966
   },
   {
    "id": "file:test/drive.test.js",

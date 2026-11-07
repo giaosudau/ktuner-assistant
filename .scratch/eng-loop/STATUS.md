@@ -125,8 +125,7 @@ speed   npm_test=21s  pytest=49s
    and a test that one owner can't reach another's car (done)
 4. Deploy, then invite 5–10 owners. Track the proving Drive after a Flash, and what they asked.
    This is the owner's step: it needs their Railway account and their invitees
-5. Then the top 10 in the `review-r1.md` §7 order, with whatever owners hit first going ahead
-   of it. Item 1 (Stage) and item 8 (contract check) are next by default
+5. The top 10 (done, ahead of step 4 at the owner's call; scorecard in "Top 10, part 3 done")
 
 **Independent review of steps 1–3 (2026-11-06):** suites rerun: 244 JS and 466 Python pass, `tsc`
 clean. A replay of the nine drives, old engine against new, is byte-identical. A live gate on port
@@ -282,15 +281,19 @@ speed   npm_test=6s (budget 15)  pytest=44s (budget 90)
 | Source lines engine / server+worker | engine 8,000 / server 10,500 | 7,691 / 11,008 | engine met, server missed (baseline 10,713) |
 | Test wall JS / Py | 10 s / 55 s | 6 s / 44 s | met |
 | Test CPU JS / Py | down | JS user about 20 s (was 52); Py user 227 s (was 220) | JS met, Py not down |
-| Second homes (A to G) | 2 | not recounted this part | unknown |
+| Second homes (A to G) | 2 | 1: only B is left (the frozen English the ask tools read). A, C, D, E, F and G are closed | met, counted by reading the code |
 | Processes that load the engine | 1 | 1 | met |
 | LLM loops / raw model callers | 1 / 1 | 2 / 1 | callers met, loops missed (two short loops kept on purpose) |
 | Python tuning constants / lim fallbacks | 0 / 0 | 0 / 0 | met |
 | Python step-name branches | 10 | 4 | met |
 | Server deps | 9 | 9 | met |
 | Engine exports with no prod caller | 3 | 4 (REF tableEdits smoothPreview parseDriveStart) | missed by 1 |
-| Touches to add a step kind | 3 | not measured | unknown |
+| Touches to add a step kind | 3 | 3 by design (`STEP_JUDGES`, `STEP_WORDS`, a thresholds row); no step kind has been added yet | not proven |
 | `ponytail:` markers without trigger | 0 | 0 by a crude grep | met |
 
-Noticed, not done: `car.test.js` reads the owner's iCloud Desktop folder when it holds 10 or more drives, so that test depends
-on the machine; one browser e2e run failed two steps and the same build passed all 12 on a rerun (a race to look at).
+**Independent review (2026-11-07):** suites rerun: 249 JS and 475 Python pass, `tsc` clean. `car.test.js` no
+longer reads the owner's iCloud Desktop folder; it uses the bundled drives only.
+
+**Open: one e2e failure, cause unknown.** One browser e2e run failed two steps (upload reply order and the work row),
+and the same build passed all 12 on a rerun. Five later runs through the invite gate, one fresh owner each on one
+server, all passed. Not reproduced, so not explained. If an owner sees a reply out of order, start here.
