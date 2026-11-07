@@ -18,7 +18,7 @@
    "stage": 13,
    "table": 39,
    "term": 49,
-   "test": 46,
+   "test": 44,
    "threshold": 17,
    "trait": 5
   },
@@ -26,7 +26,7 @@
    "about": 81,
    "affects": 11,
    "bounds": 59,
-   "calls": 66,
+   "calls": 65,
    "changes": 14,
    "checks": 1,
    "cites": 27,
@@ -34,7 +34,7 @@
    "explained-by": 21,
    "gated-by": 14,
    "implemented-by": 21,
-   "imports": 217,
+   "imports": 211,
    "in-family": 39,
    "loads": 4,
    "mentions": 345,
@@ -46,10 +46,10 @@
    "serves": 20,
    "sourced-from": 100,
    "superseded-by": 7,
-   "tests": 74,
+   "tests": 73,
    "touches": 171,
    "uses": 75,
-   "uses-term": 697,
+   "uses-term": 687,
    "works-on": 5,
    "wraps": 1
   }
@@ -1716,7 +1716,7 @@
    "area": "engine",
    "path": "engine/kta-engine.js",
    "description": "KTA engine 1.0: the tuning math behind Civic FE Tune Assist.",
-   "lines": 2013
+   "lines": 2031
   },
   {
    "id": "file:engine/kta-picture.js",
@@ -2085,7 +2085,7 @@
    "area": "tests",
    "path": "server/tests/seam1/test_calibration_stage.py",
    "description": "Seam 1: the Calibrate stage, the Calibration brief and the Next step (calibration drive C6, C9).",
-   "lines": 132
+   "lines": 269
   },
   {
    "id": "file:server/tests/seam1/test_car_profile.py",
@@ -2238,7 +2238,7 @@
    "area": "tests",
    "path": "server/tests/seam1/test_reply_words.py",
    "description": "Seam 1: the words. What the owner reads is product work, so it is tested.",
-   "lines": 473
+   "lines": 509
   },
   {
    "id": "file:server/tests/seam1/test_scorecard_live.py",
@@ -2256,25 +2256,7 @@
    "area": "tests",
    "path": "server/tests/seam1/test_upload_reply.py",
    "description": "Seam 1: what the owner gets for one uploaded Drive (ticket 01).",
-   "lines": 324
-  },
-  {
-   "id": "file:server/tests/seam1/test_ux_round1.py",
-   "kind": "test",
-   "label": "test_ux_round1.py",
-   "area": "tests",
-   "path": "server/tests/seam1/test_ux_round1.py",
-   "description": "Seam 1: UX round 1 on the server — the brief's slot, one Next step, and the Health report's bands.",
-   "lines": 164
-  },
-  {
-   "id": "file:server/tests/seam1/test_ux_round2.py",
-   "kind": "test",
-   "label": "test_ux_round2.py",
-   "area": "tests",
-   "path": "server/tests/seam1/test_ux_round2.py",
-   "description": "Seam 1: UX round 2 on the server — the Undo as numbered steps, and the re-upload note.",
-   "lines": 76
+   "lines": 345
   },
   {
    "id": "file:server/tests/seam1/test_worker_summaries.py",
@@ -2400,7 +2382,7 @@
    "area": "tests",
    "path": "test/car.test.js",
    "description": "'use strict';",
-   "lines": 1974
+   "lines": 1976
   },
   {
    "id": "file:test/drive.test.js",
@@ -2409,7 +2391,7 @@
    "area": "tests",
    "path": "test/drive.test.js",
    "description": "'use strict';",
-   "lines": 986
+   "lines": 983
   },
   {
    "id": "file:test/engine.test.js",
@@ -2418,7 +2400,7 @@
    "area": "tests",
    "path": "test/engine.test.js",
    "description": "'use strict';",
-   "lines": 331
+   "lines": 351
   },
   {
    "id": "file:test/sample-csv.js",
@@ -10404,7 +10386,27 @@
   },
   {
    "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "card:kc-cvt",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "card:kc-drive-brief",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
    "to": "card:kc-map-switching",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "card:kc-ranges",
+   "kind": "mentions"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "card:kc-trims",
    "kind": "mentions"
   },
   {
@@ -10434,6 +10436,11 @@
   },
   {
    "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "route:/api/ask",
+   "kind": "calls"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
    "to": "route:/api/state",
    "kind": "calls"
   },
@@ -10450,6 +10457,11 @@
   {
    "from": "file:server/tests/seam1/test_calibration_stage.py",
    "to": "term:Cool drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_calibration_stage.py",
+   "to": "term:Logger setup",
    "kind": "uses-term"
   },
   {
@@ -11379,6 +11391,11 @@
   },
   {
    "from": "file:server/tests/seam1/test_upload_reply.py",
+   "to": "file:server/kta_server/copy.py",
+   "kind": "tests"
+  },
+  {
+   "from": "file:server/tests/seam1/test_upload_reply.py",
    "to": "file:server/tests/conftest.py",
    "kind": "imports"
   },
@@ -11410,6 +11427,11 @@
   {
    "from": "file:server/tests/seam1/test_upload_reply.py",
    "to": "term:Calibration drive",
+   "kind": "uses-term"
+  },
+  {
+   "from": "file:server/tests/seam1/test_upload_reply.py",
+   "to": "term:Car file",
    "kind": "uses-term"
   },
   {
@@ -11455,136 +11477,6 @@
   {
    "from": "file:server/tests/seam1/test_upload_reply.py",
    "to": "term:Wasted drive",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "card:kc-cvt",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "card:kc-drive-brief",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "card:kc-ranges",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "card:kc-trims",
-   "kind": "mentions"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "file:server/kta_server/copy.py",
-   "kind": "tests"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "file:server/tests/conftest.py",
-   "kind": "imports"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "file:server/tests/seam1/conftest.py",
-   "kind": "imports"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "file:server/tests/seam1/test_car_profile.py",
-   "kind": "imports"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "route:/api/ask",
-   "kind": "calls"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "route:/api/state",
-   "kind": "calls"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "term:Calibration drive",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "term:Ceiling read",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "term:Drive brief",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "term:Health report",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "term:Logger setup",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "term:Map slot",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "term:Next step",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round1.py",
-   "to": "term:Pedal full reading",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round2.py",
-   "to": "file:server/kta_server/copy.py",
-   "kind": "tests"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round2.py",
-   "to": "file:server/tests/conftest.py",
-   "kind": "imports"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round2.py",
-   "to": "file:server/tests/seam1/conftest.py",
-   "kind": "imports"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round2.py",
-   "to": "file:server/tests/seam1/test_reply_words.py",
-   "kind": "imports"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round2.py",
-   "to": "term:Car file",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round2.py",
-   "to": "term:Car history",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round2.py",
-   "to": "term:Map version",
-   "kind": "uses-term"
-  },
-  {
-   "from": "file:server/tests/seam1/test_ux_round2.py",
-   "to": "term:Next step",
    "kind": "uses-term"
   },
   {

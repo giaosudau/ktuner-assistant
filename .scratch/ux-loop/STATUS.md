@@ -17,12 +17,12 @@ said twice when the Map version is known, MAF strings the first pass missed).
 | R2-1 | Round never goes backwards | journey: "Round 1 · Calibration drive" on 1 Sep (was "Round 0 · Calibrate") | done |
 | R2-2 | A proved step leads the reply | journey 30 Aug 15:29: "Done · Undo: trims back within ±5 %. Trims −2.3 % over 15 calm minutes (they were −21.4 %)" above the report | done |
 | R2-3 | "Same as last time" says why | journey 22 Aug 09:50: "This Drive settles nothing: it was too warm to be a Cool Drive…" inside the Next step | done |
-| R2-4 | Undo as three numbered steps | `test_ux_round2.py`; journey 23 Aug 20:38: save today's map · open the file you ran before and flash it · 10 calm minutes then attach; no "Stop open" | done |
+| R2-4 | Undo as three numbered steps | `test_reply_words.py`; journey 23 Aug 20:38: save today's map · open the file you ran before and flash it · 10 calm minutes then attach; no "Stop open" | done |
 | R2-5 | "Flash back" pill on an Undo | journey 23 Aug 20:38 | done |
 | R2-6 | Stop chips fit a Stop | journey 23 Aug 20:38: "Is my engine OK to drive home?", "How do I put my old map back?", "Why this step?" | done |
 | R2-7 | No map tour on a too-short drive | journey 30 Aug 15:09: no `flash-plan` | done |
 | R2-8 | One name: MAF Hz | engine tests; health row "MAF sensor headroom / MAF Hz not logged" | done |
-| R2-9 | "I read this drive before" | `test_ux_round2.py` (same CSV twice, 1 drive stored); browser: "I read this drive before, on 3 Nov: nothing new is added to your car file." | done |
+| R2-9 | "I read this drive before" | `test_upload_reply.py` (same CSV twice, 1 drive stored); browser: "I read this drive before, on 3 Nov: nothing new is added to your car file." | done |
 | R2-10 | Debt: `sendNow` reverted | `git diff e80b186~1` on Composer/page is empty | done |
 | R2-11 | Debt: no busy chat after the spinner | root cause: the graph's `suggest` model call runs after the answer's snapshot; a "Suggesting replies" live line now covers it, so spinner and busy end together; e2e passes with spinner-only idle | done |
 
@@ -72,14 +72,14 @@ their seconds, the raw Ceiling read).
 
 | # | Item | Proof | Status |
 |---|---|---|---|
-| 1 | Slot guard | `test_ux_round1.py` brief `slot` 2 / None; browser: sep01 attach pre-selects slot 2, slot 1 shows "Your drive brief asks for slot 2 (Tune 2)…", sent meta "map slot 2" | done |
+| 1 | Slot guard | `test_calibration_stage.py` brief `slot` 2 / None; browser: sep01 attach pre-selects slot 2, slot 1 shows "Your drive brief asks for slot 2 (Tune 2)…", sent meta "map slot 2" | done |
 | 2 | Honest health summary | `ask.test.js` 0/1/3 nodata; browser: "Nothing wrong seen, but 1 check couldn't be read on this log." Safety channel: the flat-DIFP-without-pulls exception is deliberate (bdfb94b); CONTEXT.md now says so | done |
-| 3 | One Next step on stage calibrate | `test_ux_round1.py`; browser: Next step "The Calibration drive: can more boost show on your car?" with what's missing first; no "no headroom" | done |
+| 3 | One Next step on stage calibrate | `test_calibration_stage.py`; browser: Next step "The Calibration drive: can more boost show on your car?" with what's missing first; no "no headroom" | done |
 | 4 | Car card explains itself | browser 390: segmented 44 px Offered / Not offered / Haven't looked, "Still to read…" line, sticky Save | done |
 | 5 | Live progress, honest time | browser: live "· N s" counter; "Worked for 1 min 17 s" after a 77 s wait | done |
 | 6 | Verdict first | DOM order reply-card → checkpoints | done |
 | 7 | Checkpoints ring | browser: "6 of 8 met" ring, unmet first, "6 met" folded; brief shows empty circles | done |
-| 8 | Health bullet bars | `test_ux_round1.py` (cited ids only, no band on Can't tell, tie rounding); browser: trims, Knock Control, intake, CVT bars, "Watch from 0.56" | done |
+| 8 | Health bullet bars | `test_calibration_stage.py` (cited ids only, no band on Can't tell, tie rounding); browser: trims, Knock Control, intake, CVT bars, "Watch from 0.56" | done |
 | 9 | Knock Control chart scale | `drive.test.js` marks/yRange; browser: 0.45–0.70 scale, Floor 0.49 / Watch 0.56 / No hard driving 0.62 lines | done |
 | 10 | Map tour strip + folds | browser 1280: "2 Locked · 1 No change · 3 Read-only" strip, six one-line folds | done |
 | 11 | Sidebar details | browser: "Map version 1 / Starter 21 Dual Tune 2" on two lines; drawer footer no longer covers open steps | done |

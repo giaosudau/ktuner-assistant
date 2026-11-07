@@ -253,3 +253,44 @@ handoff and result rules; a shared `tool_loop` would need a callback for each, w
   source"; the 80 C warm engine is a civic-x tip.
 - `readback`: `rpm_tol` 30 rpm, `match_psi` 0.3, `band_psi` 1.5. "App choice, no outside source".
 - `calibration_slot`: 2 (Tune 2), from ADR 0007 and the downpipe research, not a measurement.
+
+## Top 10, part 3 done (items 9 and 10)
+
+`measure.sh --tests` after (before: `npm_test=22s  pytest=50s`):
+
+```
+lines   engine=7691  server=11008  web=8018
+tests   js=3911  py=7438
+speed   npm_test=6s (budget 15)  pytest=44s (budget 90)
+```
+
+**Shipped:**
+
+- Item 9, `5b1cb08`: `toNum` fast path, `splitLine` plain split, `rollingMedian` sliding sorted window, `quantile` typed-array sort.
+  Profile of `car.test.js` before: `toNum` 4.6 s, `rollingMedian` 2.6 s, `finite` 2.1 s, `quantile` 1.5 s, `splitLine` 1.3 s.
+  Proof: old and new engines equal under `Object.is` on 5.8 M checks, and the nine-drive worker replay is byte-identical (`cmp`).
+  One ingest (median of 6): aug30-1601 296 to 161 ms, sep01-0813 212 to 119 ms. Two permanent pins in `test/engine.test.js`.
+- Item 10, `9f2e882`: the two round files are folded into the behaviour files (475 Python tests before and after); `car.test.js`
+  builds the owner-drives state once (it re-read 16 drives four times); `drive.test.js` replays the two ticket-02 sweeps once;
+  `measure.sh --tests` prints each budget and exits 1 when over.
+- Left alone: `finite` (still used by other callers; `quantile` no longer calls it).
+
+### Round 1 against the targets (`review-r1.md` section 7)
+
+| Metric | Round-1 target | Now | |
+|---|---|---|---|
+| Source lines engine / server+worker | engine 8,000 / server 10,500 | 7,691 / 11,008 | engine met, server missed (baseline 10,713) |
+| Test wall JS / Py | 10 s / 55 s | 6 s / 44 s | met |
+| Test CPU JS / Py | down | JS user about 20 s (was 52); Py user 227 s (was 220) | JS met, Py not down |
+| Second homes (A to G) | 2 | not recounted this part | unknown |
+| Processes that load the engine | 1 | 1 | met |
+| LLM loops / raw model callers | 1 / 1 | 2 / 1 | callers met, loops missed (two short loops kept on purpose) |
+| Python tuning constants / lim fallbacks | 0 / 0 | 0 / 0 | met |
+| Python step-name branches | 10 | 4 | met |
+| Server deps | 9 | 9 | met |
+| Engine exports with no prod caller | 3 | 4 (REF tableEdits smoothPreview parseDriveStart) | missed by 1 |
+| Touches to add a step kind | 3 | not measured | unknown |
+| `ponytail:` markers without trigger | 0 | 0 by a crude grep | met |
+
+Noticed, not done: `car.test.js` reads the owner's iCloud Desktop folder when it holds 10 or more drives, so that test depends
+on the machine; one browser e2e run failed two steps and the same build passed all 12 on a rerun (a race to look at).
