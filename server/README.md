@@ -37,7 +37,7 @@ server/
     owners.py            the hosted beta: an invite gate in front of one `create_app` per owner
   tests/                 knowledge, verify and scorecard tests
   tests/seam1/           the seam-1 harness: post an upload, assert the reply events
-                         (`test_ux_round*.py` pin each UX loop round's server changes)
+                         (each behaviour pins its server change in its own file)
 ```
 
 ## Run it

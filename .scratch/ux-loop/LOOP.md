@@ -36,7 +36,7 @@ server does not send is a server change first, never a number made up in the bro
 4. **Decide.** Score each candidate 1–3 on: owner sees the impact · prevents a mistake · fact
    backed · small diff. Take the top items (≥ 10 per run when the backlog allows). Each item gets:
    problem (owner words), fix, value, a concrete example, and **how to test and verify** it.
-5. **Build.** Test first where there is logic (`npm test`, `cd server && uv run pytest`). One writer
+5. **Build.** Test first where there is logic (`npm test`, `cd server && uv run pytest`); pin it in the behaviour's own test file, never a file per round. One writer
    per file at a time; subagents may split work by file. Reuse components and CSS tokens.
 6. **Verify.** `npm test` · `cd server && uv run pytest -q` · `cd web && npx tsc --noEmit` ·
    browser check at 390 and 1280, light and dark, with before/after screenshots in the scratchpad.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The engineering loop's scoreboard: real numbers for this repo, before and after a round.
 #   .scratch/eng-loop/measure.sh          counts only (seconds)
-#   .scratch/eng-loop/measure.sh --tests  also times npm test and pytest (~90 s)
+#   .scratch/eng-loop/measure.sh --tests  also times npm test and pytest (~60 s); exits 1 over budget
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -34,5 +34,8 @@ console.log("dead    "+dead.length+" engine exports with no production caller"+(
 
 if [[ "${1:-}" == "--tests" ]]; then
   t() { local s=$(date +%s); "$@" >/dev/null 2>&1; echo $(( $(date +%s) - s )); }
-  echo "speed   npm_test=$(t npm test)s  pytest=$( (cd server && t uv run pytest -q) )s"
+  js=$(t npm test); py=$( (cd server && t uv run pytest -q) )
+  echo "speed   npm_test=${js}s (budget 15)  pytest=${py}s (budget 90)"
+  # The wall-time budget lives here, not inside the tests: a timing assert flakes on a busy machine.
+  (( js <= 15 && py <= 90 )) || { echo "OVER BUDGET: fix the slow path, never raise the number"; exit 1; }
 fi

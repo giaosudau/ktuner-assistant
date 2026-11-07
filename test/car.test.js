@@ -654,7 +654,9 @@ test('the drive card carries the highest boost target measured, even unmapped', 
 // ---------------------------------------------------------------------------
 const fs = require('fs');
 const DESK = '/Users/bean/Library/Mobile Documents/com~apple~CloudDocs/Desktop';
-function ownerState() {
+let OWNER; // built once per file, each test gets its own copy
+const ownerState = () => structuredClone(OWNER = OWNER || buildOwnerState());
+function buildOwnerState() {
   // The owner's folder when present (16 drives), else the bundled drives in time order.
   let s = K.carEmpty();
   try {

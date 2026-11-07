@@ -648,15 +648,13 @@ const TABLE_WORDS = /\b(AFM[ _]Flow|WOT[ _]Enrich|Boost[ _]Target|MAF[ _]Scaling
 
 // Every Drive the app can be handed: the owner's real logs and the built-in
 // samples, so a remedy can never be written that the fixtures never reach.
-const ALL_LOGS = () => ['aug30-1601', 'aug30-1529', 'sep01-0813', 'sep05-0756', 'aug22-0950', 'aug22-0903', 'aug23-1959', 'aug23-2038']
-  .map((id) => K.readLog(csv(id)));
-const ALL_SAMPLES = () => ['hot', 'after'].map((name) => K.readLog(sampleCsv(name)));
-
+// The two sweeps below judge the same eleven Drives: replay each once, hand every test its own copy of the verdict.
+const SWEEP = ['aug30-1601', 'aug30-1529', 'sep01-0813', 'sep05-0756', 'aug22-0950', 'aug22-0903', 'aug23-1959', 'aug23-2038']
+  .map((id) => drive(id).report).concat(['hot', 'after'].map((name) => K.checkDrive(K.readLog(sampleCsv(name)))));
+const ALL_REPORTS = () => structuredClone(SWEEP);
 test('ticket 02: no check names a KTuner table, on any Drive the app can be given', () => {
-  const logs = ALL_LOGS().concat(ALL_SAMPLES());
   let fixes = 0;
-  logs.forEach((log, i) => {
-    const an = K.checkDrive(log).an;
+  ALL_REPORTS().forEach(({ an }) => {
     for (const g of an.gates) {
       for (const c of g.checks) {
         if (!c.fix) continue;
@@ -696,8 +694,7 @@ test('ticket 02: the Flash plan still names the tables, and is the only thing th
 
 test('ticket 02: the app\'s own copy of every remedy names no table either', () => {
   let fixes = 0;
-  ALL_LOGS().concat(ALL_SAMPLES()).forEach((log) => {
-    const an = K.checkDrive(log).an;
+  ALL_REPORTS().forEach(({ an }) => {
     for (const g of an.gates) {
       for (const c of g.checks) {
         if (c.status === 'good' || c.status === 'nodata') continue;

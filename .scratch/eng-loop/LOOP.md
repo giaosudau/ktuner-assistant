@@ -112,8 +112,10 @@ Every round runs top-down and never skips a level:
   - Named by behaviour, never by round.
   - JS replays the nine drives once per file (memo + `structuredClone`); Python uses "replay
     once, assert many" and never shares a worker.
-  - Budgets: JS ≤ 15 s wall, Python ≤ 90 s. When one trips, fix the slow path; never raise
-    the number.
+  - Budgets: JS ≤ 15 s wall, Python ≤ 90 s, enforced by `measure.sh --tests` (it prints the
+    budget beside each number and exits non-zero when one is over; never a timing assert inside
+    a test). When one trips, fix the slow path; never raise the number.
+  - A new behaviour is pinned in that behaviour's own test file, never in a file per round.
 - **Shortcuts:** a deliberate one carries `# ponytail: <ceiling>, <upgrade trigger>`. A marker
   with no trigger is debt to pay next round.
 - **Taste (indie rules):**

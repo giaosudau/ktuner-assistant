@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import json
 
-from conftest import OWNER_DRIVES, REFERENCE_VERDICTS, Loop, template_replies
+from conftest import OWNER_DRIVES, REFERENCE_VERDICTS, Loop, owner_csv, template_replies
+
+from kta_server import copy as C
 
 
 def test_upload_streams_a_reply_with_the_verdict_sentence_the_four_numbers_and_the_plan(loop: Loop):
@@ -322,3 +324,21 @@ def test_the_raw_csv_and_the_car_history_survive_a_restart(loop: Loop):
         assert "20260901-081358" in restarted.store.car_state(None)["drives"]
     finally:
         restarted.close()
+
+
+def test_a_second_upload_of_the_same_csv_says_it_was_read_before(loop: Loop):
+    csv, name = owner_csv("aug22-0903"), "TunerView_20260822_090322.csv"
+    first = loop.send(loop.upload(csv, name))
+    assert not first.errors(), first.errors()
+    assert first.card.get("repeat") is None
+    first_at = loop.store.drive("20260822-090322")["received_at"]
+
+    again = loop.send(loop.upload(csv, name))
+    assert not again.errors(), again.errors()
+    repeat = again.card["repeat"]
+    first_upload = loop.store.get_upload(loop.store.drive("20260822-090322")["upload_id"])
+    assert repeat["at"] == first_upload["received_at"] and repeat["at"] <= first_at
+    assert repeat["line"] == (
+        f"I read this drive before, on {C.stamp_day(repeat['at'])}: nothing new is added to your car file."
+    )
+    assert len(loop.store.list_drives()) == 1
