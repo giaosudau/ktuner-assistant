@@ -100,7 +100,7 @@ Every round runs top-down and never skips a level:
 - **Words** the owner reads live in `server/kta_server/copy.py`, in tables keyed by step kind,
   check id or table family. Never `if key == "…"` chains.
 - **The engine** is reached only through `server/kta_worker/worker.js`.
-- **The LLM** is reached only through `kta_server/llm.py` (once AD-5 ships).
+- **The LLM** is reached only through `kta_server/llm.py`.
 - **The contract** is `web/lib/types.ts`, checked by `tsc` against the replay fixture.
 - Replies are pinned: `web/fixtures/replies.fixture.ts` changes only with a reason.
 - **Add a feature:**

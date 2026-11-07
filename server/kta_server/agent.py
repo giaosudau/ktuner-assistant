@@ -27,57 +27,39 @@ the built-in path.
 from __future__ import annotations
 
 import json
-import re
-from typing import Any, Awaitable, Callable, Mapping
-
-import httpx
+from typing import Any, Mapping
 
 from . import verify as V
 from . import knowledge as K
 from . import pictures as PIC
 from . import tour as TOUR
 from .harness import Harness
+from .llm import Caller, caller_for, extract_thinking, message_of, strip_thinking, tool, tool_calls_of, wrap
 
 #: How many provider calls one run may spend, tools and repair included.
 MAX_CALLS = 12
 
-Message = dict[str, Any]
-#: `async (messages, tools) -> response_json`. Overridden in tests with a
-#: scripted fake so no test needs a network or a key.
-LlmCaller = Callable[[list[Message], list[dict[str, Any]]], Awaitable[dict[str, Any]]]
-
-
-def _params(properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
-    return {"type": "object", "properties": properties, "required": required, "additionalProperties": False}
-
 
 def TOOLS() -> list[dict[str, Any]]:
     """The fixed tool list: read-only, summaries only, one terminal call."""
-
-    def fn(name: str, description: str, properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
-        return {
-            "type": "function",
-            "function": {"name": name, "description": description, "parameters": _params(properties, required)},
-        }
-
     return [
-        fn(
+        tool(
             "get_overview",
             "This Drive's verdict, every safety check and the ranked action list. Read it first.",
             {}, [],
         ),
-        fn(
+        tool(
             "get_drive_facts",
             "Every number of this Drive as flat facts. Use it for the exact figures the reply quotes.",
             {}, [],
         ),
-        fn(
+        tool(
             "get_insight",
             "Numbers for one topic of this Drive. Call it for each topic the reply touches.",
             {"topic": {"type": "string", "enum": ["knock", "lugging", "heat", "mixture", "boost", "trims", "accel", "quality"]}},
             ["topic"],
         ),
-        fn(
+        tool(
             "get_channel_stats",
             "Percentiles of one logged channel over part of the Drive. Only when the insights do not answer.",
             {
@@ -86,39 +68,39 @@ def TOOLS() -> list[dict[str, Any]]:
             },
             ["channel", "where"],
         ),
-        fn(
+        tool(
             "get_timing_cell",
             "Median ignition advance and knock retard in the timing-map cell holding this rpm and manifold pressure.",
             {"rpm": {"type": "number"}, "map_psi": {"type": "number", "description": "Manifold pressure, psi gauge."}},
             ["rpm", "map_psi"],
         ),
-        fn(
+        tool(
             "get_pull",
             "One boost event (pull): rpm and speed range, peak boost and target, wastegate, intake air, mixture, timing.",
             {"index": {"type": "integer", "description": "0-based index into the Drive's pulls."}},
             ["index"],
         ),
-        fn(
+        tool(
             "get_car_history",
             "The remembered Car history this reply was read against: its Drives, the Baseline and Flashes.",
             {}, [],
         ),
-        fn(
+        tool(
             "get_open_steps",
             "The Open steps still waiting for the Drive that proves them, each with its status and reason.",
             {}, [],
         ),
-        fn(
+        tool(
             "get_next_step",
             "The decided Next step for this Drive: the one step the reply must name, and the Drive that settles it.",
             {}, [],
         ),
-        fn(
+        tool(
             "get_flash_plan",
             "The one Flash plan this Car history supports: its headline, its cells with exact values, and the boost ceiling.",
             {}, [],
         ),
-        fn(
+        tool(
             "get_map_cell",
             "One value of the Map version this Drive ran on, by table, row and column. Read-only.",
             {
@@ -128,14 +110,14 @@ def TOOLS() -> list[dict[str, Any]]:
             },
             ["table", "row", "col"],
         ),
-        fn(
+        tool(
             "get_health_report",
             "The shop's report for this Drive: every health check the engine ran (fuel, air & boost, spark, heat, CVT) "
             "with value and verdict, and whether the log met the drive brief (checkpoints). Start a Drive reply here.",
             {},
             [],
         ),
-        fn(
+        tool(
             "get_map_tour",
             "Every KTuner table family on this car in the order a tuner works (airflow, mixture, boost, ignition, "
             "knock, basemap): what it does, its tables, and its status this round — this-round (the Flash plan changes it), "
@@ -143,7 +125,7 @@ def TOOLS() -> list[dict[str, Any]]:
             {},
             [],
         ),
-        fn(
+        tool(
             "get_map_table",
             "Read one whole table of the Map version on the car: rpm axis, load columns, every value, min and max, "
             "and the row nearest an rpm. Use it to teach what a table does with the owner's real numbers. Read-only: "
@@ -154,7 +136,7 @@ def TOOLS() -> list[dict[str, Any]]:
             },
             ["table"],
         ),
-        fn(
+        tool(
             "get_fuel_test",
             "Is the premium fuel (E10 RON97 III) worth it over E10 RON95 III on this car? The engine pairs Drives tagged with "
             "each fuel that are both hot with hard pulls, intake within 8 °C, same map slot, Knock Control settled (starting at "
@@ -163,7 +145,7 @@ def TOOLS() -> list[dict[str, Any]]:
             {},
             [],
         ),
-        fn(
+        tool(
             "propose_knowledge",
             "When you need a fact that no knowledge card holds, do NOT state it as fact. Propose it here for the "
             "knowledge base instead (a reviewer checks and sources it before it can be cited), and tell the owner "
@@ -176,7 +158,7 @@ def TOOLS() -> list[dict[str, Any]]:
             },
             ["title", "claim", "why"],
         ),
-        fn(
+        tool(
             "search_knowledge",
             "General knowledge about this car: what is normal, what owners report, where things live in KTuner. "
             "Cite the card id in brackets for any claim the Drive tools do not say.",
@@ -187,7 +169,7 @@ def TOOLS() -> list[dict[str, Any]]:
             },
             ["query"],
         ),
-        fn(
+        tool(
             "show_chart",
             "Pick ONE picture that answers this reply's question. The app draws it from the engine's data; you only choose the kind. "
             "trace: a channel around a Key moment. baseline: this Drive against the Baseline. proof: before and after bars for the step "
@@ -199,7 +181,7 @@ def TOOLS() -> list[dict[str, Any]]:
             },
             ["kind"],
         ),
-        fn(
+        tool(
             "submit_reply",
             "Call once, last, with the final reply. The app checks every number, the step, every cell and every advice line.",
             {
@@ -208,16 +190,18 @@ def TOOLS() -> list[dict[str, Any]]:
                 "cells": {
                     "type": "array",
                     "description": "Flash plan cells the prose names, if any. Empty when the plan holds no change.",
-                    "items": _params(
-                        {
+                    "items": {
+                        "type": "object",
+                        "properties": {
                             "table": {"type": "string"},
                             "row": {"type": "integer"},
                             "col": {"type": "integer"},
                             "before": {"type": ["number", "null"]},
                             "after": {"type": ["number", "null"]},
                         },
-                        ["table", "row", "col"],
-                    ),
+                        "required": ["table", "row", "col"],
+                        "additionalProperties": False,
+                    },
                 },
             },
             ["prose", "action_key"],
@@ -400,25 +384,25 @@ async def _run_tool(
         return await harness.step(
             config, "openSteps", "Explain: the Open steps",
             {},
-            _wrap(store.list_open_steps()),
+            wrap(store.list_open_steps()),
         )
     if name == "get_next_step":
         return await harness.step(
             config, "nextStep", "Explain: the decided Next step",
             {"driveId": drive_id},
-            _wrap(decided),
+            wrap(decided),
         )
     if name == "get_flash_plan":
         return await harness.step(
             config, "flashPlan", "Explain: the Flash plan",
             {"through": drive_id},
-            _wrap(plan),
+            wrap(plan),
         )
     if name == "get_map_cell":
         return await harness.step(
             config, "mapCell", "Explain: one map value",
             {"table": args.get("table"), "row": args.get("row"), "col": args.get("col")},
-            _wrap(_map_cell(map_tables, args)),
+            wrap(_map_cell(map_tables, args)),
         )
     if name == "search_knowledge":
         query = str(args.get("query") or "")
@@ -432,16 +416,9 @@ async def _run_tool(
         return await harness.step(
             config, "knowledge", "Explain: what is normal on this car",
             shown,
-            _wrap(K.search(query, topics if isinstance(topics, list) else None, kind if isinstance(kind, str) else None)),
+            wrap(K.search(query, topics if isinstance(topics, list) else None, kind if isinstance(kind, str) else None)),
         )
     raise KeyError(f"Unknown tool {name}")
-
-
-def _wrap(value: Any) -> Any:
-    async def call() -> Any:
-        return value
-
-    return call
 
 
 def _map_cell(tables: Mapping[str, Any], args: Mapping[str, Any]) -> dict[str, Any]:
@@ -459,70 +436,6 @@ def _map_cell(tables: Mapping[str, Any], args: Mapping[str, Any]) -> dict[str, A
 
 
 # ---------------------------------------------------------------------------
-# The provider call (OpenAI-compatible) and thinking extraction
-# ---------------------------------------------------------------------------
-async def _post_chat(settings: Any, messages: list[Message], tools: list[dict[str, Any]]) -> dict[str, Any]:
-    base = str(settings.llm_base_url or "").rstrip("/")
-    async with httpx.AsyncClient(timeout=120) as client:
-        response = await client.post(
-            f"{base}/chat/completions",
-            headers={"authorization": f"Bearer {settings.llm_api_key}", "content-type": "application/json"},
-            json={"model": settings.llm_model, "messages": messages, "tools": tools, "tool_choice": "auto"},
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-def _message_of(response: dict[str, Any]) -> dict[str, Any]:
-    choices = response.get("choices") or []
-    if not choices:
-        raise ValueError("The model returned no choices.")
-    return dict(choices[0].get("message") or {})
-
-
-def extract_thinking(message: Mapping[str, Any]) -> str | None:
-    """The model's own thinking, kept apart and labelled unchecked downstream."""
-    parts: list[str] = []
-    for key in ("reasoning_content", "thinking"):
-        value = message.get(key)
-        if isinstance(value, str) and value.strip():
-            parts.append(value.strip())
-        elif isinstance(value, list):
-            for block in value:
-                text = block.get("thinking") if isinstance(block, Mapping) else None
-                if text:
-                    parts.append(str(text).strip())
-    content = message.get("content") or ""
-    for match in re.finditer(r"<think>(.*?)</think>", str(content), re.DOTALL):
-        if match.group(1).strip():
-            parts.append(match.group(1).strip())
-    return "\n\n".join(parts) or None
-
-
-def strip_thinking(content: Any) -> Any:
-    """Thinking tags are shown in their own block, never inside the prose."""
-    if not isinstance(content, str):
-        return content
-    return re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL)
-
-
-def _tool_calls_of(message: Mapping[str, Any]) -> list[dict[str, Any]]:
-    out = []
-    for call in message.get("tool_calls") or []:
-        fn = (call.get("function") or {}) if isinstance(call, Mapping) else {}
-        raw_args = fn.get("arguments")
-        if isinstance(raw_args, str):
-            try:
-                parsed = json.loads(raw_args) if raw_args.strip() else {}
-            except ValueError:
-                parsed = {"_unparseable": raw_args}
-        else:
-            parsed = dict(raw_args or {})
-        out.append({"id": call.get("id"), "name": fn.get("name"), "args": parsed})
-    return out
-
-
-# ---------------------------------------------------------------------------
 # The loop: tools, then one checked draft; one repair turn, then fallback
 # ---------------------------------------------------------------------------
 async def run_agent(
@@ -533,7 +446,7 @@ async def run_agent(
     settings: Any,
     harness: Harness,
     config: Any,
-    llm_caller: LlmCaller | None = None,
+    llm_caller: Caller | None = None,
     question: str | None = None,
     image: str | None = None,
 ) -> dict[str, Any]:
@@ -573,7 +486,7 @@ async def run_agent(
         {"role": "user", "content": [{"type": "text", "text": ask}, {"type": "image_url", "image_url": {"url": image}}] if image else ask},
     ]
     pictures: list[dict[str, Any]] = []
-    caller = llm_caller or (lambda msgs, tls: _post_chat(settings, msgs, tls))
+    caller = caller_for(settings, llm_caller)
     thinking: list[str] = []
     calls = 0
     repairs = 0
@@ -597,7 +510,7 @@ async def run_agent(
             return fail("turns", ["The model did not finish within its tool budget."])
         try:
             response = await caller(messages, tools)
-            message = _message_of(response)
+            message = message_of(response)
         except Exception as exc:  # noqa: BLE001 - any provider failure is the fallback, never a crash
             return fail("error", [f"The model call failed: {exc}"])
         calls += 1
@@ -608,7 +521,7 @@ async def run_agent(
         # Assistant turns go back unchanged, thinking blocks included.
         messages.append({"role": "assistant", "content": strip_thinking(message.get("content")), "tool_calls": message.get("tool_calls")})
 
-        calls_to_make = _tool_calls_of(message)
+        calls_to_make = tool_calls_of(message)
         submitted = None
         results = []
         for call in calls_to_make:
@@ -738,11 +651,11 @@ async def _shop_tool(
             "cause": reply.get("cause"),
             "calibration": reply.get("calibration"),
         }
-        return await harness.step(config, "healthReport", "Read the health report and the log checkpoints", {}, _wrap(report))
+        return await harness.step(config, "healthReport", "Read the health report and the log checkpoints", {}, wrap(report))
     if name == "get_map_tour":
         tour = dict(reply.get("tour") or TOUR.map_tour(plan, map_tables))
         tour["cards"] = _cards_for([f.get("card") for f in tour.get("families") or []])
-        return await harness.step(config, "mapTour", "Walk the map, table family by family", {}, _wrap(tour))
+        return await harness.step(config, "mapTour", "Walk the map, table family by family", {}, wrap(tour))
     if name == "get_map_table":
         table = str(args.get("table") or "")
         rpm = args.get("rpm") if isinstance(args.get("rpm"), (int, float)) else None
@@ -750,7 +663,7 @@ async def _shop_tool(
         read["cards"] = _cards_for([read.get("card")])
         return await harness.step(
             config, "mapTable", f"Read {table or 'a table'}", {"table": table, **({"rpm": rpm} if rpm is not None else {})},
-            _wrap(read),
+            wrap(read),
         )
     if name == "get_fuel_test":
         async def run() -> Any:
@@ -762,7 +675,7 @@ async def _shop_tool(
     proposal = K.propose(
         str(args.get("title") or ""), str(args.get("claim") or ""), str(args.get("why") or ""), str(args.get("source_hint") or "")
     )
-    return await harness.step(config, "proposeKnowledge", "Note a new fact for review", {"title": args.get("title")}, _wrap(proposal))
+    return await harness.step(config, "proposeKnowledge", "Note a new fact for review", {"title": args.get("title")}, wrap(proposal))
 
 
 def _cards_for(ids: list[Any]) -> list[dict[str, Any]]:
@@ -805,4 +718,4 @@ def _slim_json(value: Any) -> str:
     return text if len(text) <= 8000 else text[:8000] + "\u2026"
 
 
-__all__ = ["LlmCaller", "MAX_CALLS", "TOOLS", "extract_thinking", "run_agent", "seed_facts", "strip_thinking", "system_prompt"]
+__all__ = ["MAX_CALLS", "TOOLS", "run_agent", "seed_facts", "system_prompt"]

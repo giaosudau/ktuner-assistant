@@ -28,15 +28,15 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Awaitable, Callable, Mapping
+from typing import Any, Awaitable, Mapping
 
-from . import agent as agent_node
 from . import desk as D
 from . import knowledge as K
 from . import profile as P
 from . import verify as V
 from .ask import answer_question
 from .harness import Harness, merge as merge_harness
+from .llm import Caller, caller_for, extract_thinking, message_of, strip_thinking, tool, tool_calls_of, wrap
 
 #: Provider calls one front turn may spend, the hand-off and one repair included.
 MAX_CALLS = 8
@@ -45,34 +45,23 @@ FUELS = ("E10 RON95 III", "E10 RON97 III")
 ACTIONS = ("send", "guide", "attach", "edit-car")
 
 
-def _fn(name: str, description: str, properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
-    return {
-        "type": "function",
-        "function": {
-            "name": name,
-            "description": description,
-            "parameters": {"type": "object", "properties": properties, "required": required, "additionalProperties": False},
-        },
-    }
-
-
 # ---------------------------------------------------------------------------
 # The tools
 # ---------------------------------------------------------------------------
 def backend_tools() -> list[dict[str, Any]]:
     """Read-only tools the server runs, and the hand-off to the tuner."""
     return [
-        _fn("get_car_file", "The owner's car as the shop keeps it: the profile, parts, Map version, Round, where the car "
+        tool("get_car_file", "The owner's car as the shop keeps it: the profile, parts, Map version, Round, where the car "
             "is in the loop, the last Drive, what is open and what waits for the owner. Read it before talking about their car.", {}, []),
-        _fn("get_capabilities", "What the shop can do, can do with a limit, and can't do. Read it before promising anything.", {}, []),
-        _fn("search_knowledge", "Sourced facts about this car and KTuner. Cite a card id in brackets for any claim from it.",
+        tool("get_capabilities", "What the shop can do, can do with a limit, and can't do. Read it before promising anything.", {}, []),
+        tool("search_knowledge", "Sourced facts about this car and KTuner. Cite a card id in brackets for any claim from it.",
             {"query": {"type": "string"}}, ["query"]),
-        _fn("ask_tuner", "Hand the owner's question to the tuner: anything to explain, judge or decide about their car, "
+        tool("ask_tuner", "Hand the owner's question to the tuner: anything to explain, judge or decide about their car, "
             "their logs, their map, fuel, heat, knock, boost, AFR, MAF or a change. The tuner reads the logs with the engine and "
             "its answer is checked; it goes to the owner as it is. Use it for every tuning question.",
             {"question": {"type": "string", "description": "The owner's question, in their words, with any context from the chat."}},
             ["question"]),
-        _fn("submit_reply", "Call once, last, with your reply to the owner when you did not hand off. Plain words, markdown, "
+        tool("submit_reply", "Call once, last, with your reply to the owner when you did not hand off. Plain words, markdown, "
             "under 150 words. Every number must come from a tool.", {"prose": {"type": "string"}}, ["prose"]),
     ]
 
@@ -197,9 +186,6 @@ def ui_card(name: str, args: Mapping[str, Any], loop: Mapping[str, Any]) -> dict
 # ---------------------------------------------------------------------------
 # One turn
 # ---------------------------------------------------------------------------
-Caller = Callable[[list[dict[str, Any]], list[dict[str, Any]]], Awaitable[dict[str, Any]]]
-
-
 async def chat_turn(
     text: str,
     loop: Mapping[str, Any],
@@ -220,7 +206,7 @@ async def chat_turn(
     if not settings.has_llm:
         return await _without_model(text, loop, worker, store, settings, latest, llm_caller, on_step)
 
-    caller = llm_caller or (lambda msgs, tls: agent_node._post_chat(settings, msgs, tls))
+    caller = caller_for(settings, llm_caller)
     tools = backend_tools() + [as_function(t) for t in (ui_tools or default_ui_tools())]
     messages: list[dict[str, Any]] = [{"role": "system", "content": system_prompt(loop)}]
     for turn in (history or [])[-10:]:
@@ -246,16 +232,16 @@ async def chat_turn(
         if calls >= MAX_CALLS:
             return await fallback("turns", ["The front agent did not finish within its budget."])
         try:
-            message = agent_node._message_of(await caller(messages, tools))
+            message = message_of(await caller(messages, tools))
         except Exception as exc:  # noqa: BLE001 - a provider failure is the fixed answer, never a crash
             return await fallback("error", [f"The model call failed: {exc}"])
         calls += 1
-        if thought := agent_node.extract_thinking(message):
+        if thought := extract_thinking(message):
             thinking.append(thought)
-        messages.append({"role": "assistant", "content": agent_node.strip_thinking(message.get("content")), "tool_calls": message.get("tool_calls")})
-        tool_calls = agent_node._tool_calls_of(message)
+        messages.append({"role": "assistant", "content": strip_thinking(message.get("content")), "tool_calls": message.get("tool_calls")})
+        tool_calls = tool_calls_of(message)
         if not tool_calls:
-            prose = (agent_node.strip_thinking(message.get("content")) or "").strip()
+            prose = (strip_thinking(message.get("content")) or "").strip()
             if not prose:
                 return await fallback("empty", ["The model returned nothing."])
             tool_calls = [{"id": None, "name": "submit_reply", "args": {"prose": prose}}]
@@ -265,7 +251,7 @@ async def chat_turn(
             name, args = call["name"], call["args"] if isinstance(call["args"], Mapping) else {}
             if name == "ask_tuner":
                 question = str(args.get("question") or text)
-                await harness.step(config, "handoff", "Hand the question to the tuner", {"question": question}, _wrap({"to": "tuner"}))
+                await harness.step(config, "handoff", "Hand the question to the tuner", {"question": question}, wrap({"to": "tuner"}))
                 out = await answer_question(question, worker, store, settings, latest, llm_caller, on_step, config)
                 # The work row shows the whole turn: front steps plus the
                 # tuner's own steps, merged into one trace (harness lessons).
@@ -315,29 +301,23 @@ async def chat_turn(
 
 async def _run(name: str, args: Mapping[str, Any], loop: Mapping[str, Any], harness: Harness, config: Any) -> Any:
     if name == "get_car_file":
-        return await harness.step(config, "carFile", "Read your car file", {}, _wrap(car_file(loop)))
+        return await harness.step(config, "carFile", "Read your car file", {}, wrap(car_file(loop)))
     if name == "get_capabilities":
-        return await harness.step(config, "capabilities", "Check what I can and can't do", {}, _wrap(loop.get("capabilities") or []))
+        return await harness.step(config, "capabilities", "Check what I can and can't do", {}, wrap(loop.get("capabilities") or []))
     if name == "search_knowledge":
         query = str(args.get("query") or "")
-        return await harness.step(config, "knowledge", "Look it up in what I know", {"query": query}, _wrap(K.search(query)))
+        return await harness.step(config, "knowledge", "Look it up in what I know", {"query": query}, wrap(K.search(query)))
     if name in UI_TOOLS:
         card = ui_card(name, args, loop)
         titles = {"show_recap": "Show where your car is", "show_car_editor": "Open your car card",
                   "show_drive_brief": "Show the drive brief", "show_capabilities": "Show what I can do"}
-        await harness.step(config, name, titles[name], dict(args), _wrap({"shown": bool(card)}))
+        await harness.step(config, name, titles[name], dict(args), wrap({"shown": bool(card)}))
         return card
     return {"error": f"Unknown tool {name}"}
 
 
 def _tool_result(call: Mapping[str, Any], content: str) -> dict[str, Any]:
     return {"role": "tool", "tool_call_id": call.get("id"), "name": call.get("name"), "content": content}
-
-
-def _wrap(value: Any) -> Any:
-    async def call() -> Any:
-        return value
-    return call
 
 
 def _latest_drive(loop: Mapping[str, Any]) -> str | None:
@@ -393,7 +373,7 @@ class _NoModel:
 # Suggested replies, written by the model and checked
 # ---------------------------------------------------------------------------
 def suggest_tool() -> dict[str, Any]:
-    return _fn("suggest_replies", "Two or three short replies the owner is most likely to send next.", {
+    return tool("suggest_replies", "Two or three short replies the owner is most likely to send next.", {
         "items": {"type": "array", "maxItems": 3, "items": {"type": "object", "properties": {
             "label": {"type": "string", "description": "What the chip says, under 40 characters."},
             "action": {"type": "string", "enum": list(ACTIONS),
@@ -410,7 +390,7 @@ async def suggest(
     fixed = D.answer_suggestions(loop, answer.get("citations"))
     if not settings.has_llm:
         return fixed
-    caller = llm_caller or (lambda msgs, tls: agent_node._post_chat(settings, msgs, tls))
+    caller = caller_for(settings, llm_caller)
     prompt = "\n".join([
         "Suggest the two or three replies the owner of this car is most likely to send next, as tappable chips. Each must be "
         "something the shop can actually do (below). Prefer: the stage's next action, then a natural follow-up to the reply. "
@@ -423,8 +403,8 @@ async def suggest(
         {"role": "user", "content": f"The owner said: {owner_text}\n\nThe shop replied: {str(answer.get('answer') or '')[:1500]}"},
     ]
     try:
-        message = agent_node._message_of(await caller(messages, [suggest_tool()]))
-        call = next((c for c in agent_node._tool_calls_of(message) if c["name"] == "suggest_replies"), None)
+        message = message_of(await caller(messages, [suggest_tool()]))
+        call = next((c for c in tool_calls_of(message) if c["name"] == "suggest_replies"), None)
         chips = checked_chips((call or {}).get("args", {}).get("items") if call else None)
     except Exception:  # noqa: BLE001 - suggestions are never worth an error
         chips = []

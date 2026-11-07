@@ -332,11 +332,11 @@ def test_a_normal_upload_passes_the_limit_and_is_stored(tmp_path):
 def test_past_the_cap_no_model_call_happens_and_the_built_in_reply_stands(tmp_path, monkeypatch):
     calls: list[int] = []
 
-    async def fake_post_chat(settings, messages, tools):
+    async def fake_llm(settings, messages, tools):
         calls.append(1)
         return {"choices": [{"message": {"content": "Plain words from the model."}}]}
 
-    monkeypatch.setattr("kta_server.agent._post_chat", fake_post_chat)
+    monkeypatch.setattr("kta_server.llm.post_chat", fake_llm)
     monkeypatch.setattr(O, "MODEL_CALLS_PER_DAY", 2)
     gate = _gate(tmp_path, **KEYED)
     ask = {"text": "Why is my car slower in the heat?"}

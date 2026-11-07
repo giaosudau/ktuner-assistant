@@ -18,7 +18,7 @@ from dataclasses import dataclass, replace
 from http.cookies import CookieError, SimpleCookie
 from typing import Any
 
-from . import agent
+from . import llm
 from . import copy as C
 from .app import create_app
 from .config import Settings, load_settings
@@ -120,7 +120,7 @@ def _capped_caller(settings: Settings, store: Store) -> Any:
         if not store.count_model_call(day, MODEL_CALLS_PER_DAY):
             # Every model path treats any failed call the same way: the built-in reply stands.
             raise RuntimeError("Today's model calls are used up.")
-        return await agent._post_chat(settings, messages, tools)
+        return await llm.post_chat(settings, messages, tools)
 
     return caller
 

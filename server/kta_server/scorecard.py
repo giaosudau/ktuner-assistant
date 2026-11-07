@@ -53,6 +53,8 @@ from typing import Any, Awaitable, Callable, Mapping, Sequence
 
 import httpx
 
+from .llm import message_of, post_chat
+
 ROOT = Path(__file__).resolve().parents[2]
 
 #: The free model the ticket names. A paid id after the comma in
@@ -576,36 +578,14 @@ class _LiveLoop:
         return {"say": sentences[0] if sentences else "", "card": snapshots[-1]["reply"]}
 
 
-async def _post_chat(settings, model: str, messages: list[dict[str, str]]) -> str:
-    """One OpenAI-compatible chat call, returning the text content."""
-    base = str(settings.llm_base_url or "").rstrip("/")
-    async with httpx.AsyncClient(timeout=180) as client:
-        response = await client.post(
-            f"{base}/chat/completions",
-            headers={"authorization": f"Bearer {settings.llm_api_key}", "content-type": "application/json"},
-            json={"model": model, "messages": messages},
-        )
-        response.raise_for_status()
-        message = (response.json().get("choices") or [{}])[0].get("message") or {}
-    content = message.get("content") or ""
+async def _text_chat(settings, messages: list[dict[str, str]]) -> str:
+    """One chat call with no tools, returning the text content."""
+    content = (message_of(await post_chat(settings, messages, [], timeout=180)).get("content")) or ""
     if isinstance(content, list):
         content = "\n".join(
             block.get("text", "") for block in content if isinstance(block, Mapping)
         )
     return content if isinstance(content, str) else ""
-
-
-async def _post_chat_with_tools(settings, model: str, messages: list[dict[str, str]], tools: list[dict[str, Any]]) -> dict[str, Any]:
-    """One OpenAI-compatible chat call with tools, for the agent loop."""
-    base = str(settings.llm_base_url or "").rstrip("/")
-    async with httpx.AsyncClient(timeout=180) as client:
-        response = await client.post(
-            f"{base}/chat/completions",
-            headers={"authorization": f"Bearer {settings.llm_api_key}", "content-type": "application/json"},
-            json={"model": model, "messages": messages, "tools": tools, "tool_choice": "auto"},
-        )
-        response.raise_for_status()
-        return response.json()
 
 
 async def run_model(
@@ -627,7 +607,7 @@ async def run_model(
         llm_model=model,
     )
     recorder = DraftRecorder(
-        lambda messages, tools: _post_chat_with_tools(per_model, model, messages, tools)
+        lambda messages, tools: post_chat(per_model, messages, tools, timeout=180)
     )
     loop = await _LiveLoop(per_model, llm_caller=recorder).start()
     try:
@@ -699,7 +679,7 @@ async def run_model(
                     record["say"],
                     record["step_title"],
                     record["upload_when"],
-                    lambda messages: _post_chat(per_model, model, messages),
+                    lambda messages: _text_chat(per_model, messages),
                 )
         else:
             for record in records:
