@@ -50,7 +50,16 @@ def test_with_a_worker_that_fails_the_owner_reads_the_worker_error_not_a_stack_t
             state = loop.get("/api/state")
             assert state.status_code == 502 and state.json()["error"]["code"] == code
             reply = loop.send(loop.upload(owner_csv(OWNER_DRIVES[0][0]), OWNER_DRIVES[0][1]))
-            assert not reply.errors() and reply.say == "I could not read that file as a TunerView log."
+            assert not reply.errors() and reply.say == C.ENGINE_DOWN
             assert reply.card["error"]["code"] == code
         finally:
             loop.close()
+
+
+def test_a_file_that_is_not_a_tunerview_log_still_gets_the_file_sentence(tmp_path):
+    loop = Loop(tmp_path).start()
+    try:
+        reply = loop.send(loop.upload("Timestamp;Engine RPM\n1;2\n", "TunerView_20260101_000000.csv"))
+        assert reply.say == C.UNREADABLE_FILE and reply.card["error"]["code"] == "unreadable-csv"
+    finally:
+        loop.close()

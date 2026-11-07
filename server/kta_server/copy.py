@@ -51,6 +51,17 @@ MONTHS: list[str] = _WORDS["months"]
 CHANNEL_NAMES: dict[str, str] = _WORDS["channels"]
 
 
+#: The line for an upload the engine could not take, by worker code. A bad file is the owner's to fix;
+#: every other code (the engine is gone, its limits are missing, it broke) is ours, and the file is fine.
+UNREADABLE_FILE = "I could not read that file as a TunerView log."
+ENGINE_DOWN = "The engine isn't running right now, so I couldn't read your drive. Your file is fine: try again in a minute."
+FILE_CODES = ("unreadable-csv", "engine-error")  # engine-error: carIngest throws on a log that parses but is not a drive
+
+
+def unreadable_line(code: str | None) -> str:
+    return UNREADABLE_FILE if code in FILE_CODES else ENGINE_DOWN
+
+
 def channel_name(key: str) -> str:
     return CHANNEL_NAMES.get(key, key)
 

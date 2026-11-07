@@ -571,7 +571,7 @@ async def _reply(state: LoopState, config: RunnableConfig, store) -> dict[str, A
     base = f"reply-{state['upload_id']}"
 
     if state.get("error"):
-        line = "I could not read that file as a TunerView log."
+        line = C.unreadable_line(state["error"].get("code"))
         await harness.say(config, base, line)
         return {"messages": [AIMessage(content=line, id=base)], "reply": {"error": state["error"], "say": line}}
 
